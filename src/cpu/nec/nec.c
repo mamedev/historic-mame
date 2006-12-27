@@ -1038,7 +1038,7 @@ int v33_execute(int cycles)
  * Generic set_info
  **************************************************************************/
 
-static void nec_set_info(UINT32 state, union cpuinfo *info)
+static void nec_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1093,7 +1093,7 @@ static void nec_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void nec_get_info(UINT32 state, union cpuinfo *info)
+void nec_get_info(UINT32 state, cpuinfo *info)
 {
 	int flags;
 
@@ -1106,7 +1106,7 @@ void nec_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
 		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
-		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 5;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 15;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 80;							break;
 
@@ -1160,15 +1160,15 @@ void nec_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &nec_ICount;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "NEC"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "NEC V-Series"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.5"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "NEC emulator v1.5 by Bryan McPhail"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "NEC");					break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "NEC V-Series");		break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.5");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "NEC emulator v1.5 by Bryan McPhail"); break;
 
 		case CPUINFO_STR_FLAGS:
             flags = CompressFlags();
-            sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+            sprintf(info->s, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
                 flags & 0x8000 ? 'M':'.',
                 flags & 0x4000 ? '?':'.',
                 flags & 0x2000 ? '?':'.',
@@ -1187,22 +1187,22 @@ void nec_get_info(UINT32 state, union cpuinfo *info)
                 flags & 0x0001 ? 'C':'.');
             break;
 
-        case CPUINFO_STR_REGISTER + NEC_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", (I.sregs[CS]<<4) + I.ip); break;
-        case CPUINFO_STR_REGISTER + NEC_IP:				sprintf(info->s = cpuintrf_temp_str(), "IP:%04X", I.ip); break;
-        case CPUINFO_STR_REGISTER + NEC_SP:				sprintf(info->s = cpuintrf_temp_str(), "SP:%04X", I.regs.w[SP]); break;
-        case CPUINFO_STR_REGISTER + NEC_FLAGS:			sprintf(info->s = cpuintrf_temp_str(), "F:%04X", CompressFlags()); break;
-        case CPUINFO_STR_REGISTER + NEC_AW:				sprintf(info->s = cpuintrf_temp_str(), "AW:%04X", I.regs.w[AW]); break;
-        case CPUINFO_STR_REGISTER + NEC_CW:				sprintf(info->s = cpuintrf_temp_str(), "CW:%04X", I.regs.w[CW]); break;
-        case CPUINFO_STR_REGISTER + NEC_DW:				sprintf(info->s = cpuintrf_temp_str(), "DW:%04X", I.regs.w[DW]); break;
-        case CPUINFO_STR_REGISTER + NEC_BW:				sprintf(info->s = cpuintrf_temp_str(), "BW:%04X", I.regs.w[BW]); break;
-        case CPUINFO_STR_REGISTER + NEC_BP:				sprintf(info->s = cpuintrf_temp_str(), "BP:%04X", I.regs.w[BP]); break;
-        case CPUINFO_STR_REGISTER + NEC_IX:				sprintf(info->s = cpuintrf_temp_str(), "IX:%04X", I.regs.w[IX]); break;
-        case CPUINFO_STR_REGISTER + NEC_IY:				sprintf(info->s = cpuintrf_temp_str(), "IY:%04X", I.regs.w[IY]); break;
-        case CPUINFO_STR_REGISTER + NEC_ES:				sprintf(info->s = cpuintrf_temp_str(), "ES:%04X", I.sregs[ES]); break;
-        case CPUINFO_STR_REGISTER + NEC_CS:				sprintf(info->s = cpuintrf_temp_str(), "CS:%04X", I.sregs[CS]); break;
-        case CPUINFO_STR_REGISTER + NEC_SS:				sprintf(info->s = cpuintrf_temp_str(), "SS:%04X", I.sregs[SS]); break;
-        case CPUINFO_STR_REGISTER + NEC_DS:				sprintf(info->s = cpuintrf_temp_str(), "DS:%04X", I.sregs[DS]); break;
-        case CPUINFO_STR_REGISTER + NEC_VECTOR:			sprintf(info->s = cpuintrf_temp_str(), "V:%02X", I.int_vector); break;
+        case CPUINFO_STR_REGISTER + NEC_PC:				sprintf(info->s, "PC:%04X", (I.sregs[CS]<<4) + I.ip); break;
+        case CPUINFO_STR_REGISTER + NEC_IP:				sprintf(info->s, "IP:%04X", I.ip); break;
+        case CPUINFO_STR_REGISTER + NEC_SP:				sprintf(info->s, "SP:%04X", I.regs.w[SP]); break;
+        case CPUINFO_STR_REGISTER + NEC_FLAGS:			sprintf(info->s, "F:%04X", CompressFlags()); break;
+        case CPUINFO_STR_REGISTER + NEC_AW:				sprintf(info->s, "AW:%04X", I.regs.w[AW]); break;
+        case CPUINFO_STR_REGISTER + NEC_CW:				sprintf(info->s, "CW:%04X", I.regs.w[CW]); break;
+        case CPUINFO_STR_REGISTER + NEC_DW:				sprintf(info->s, "DW:%04X", I.regs.w[DW]); break;
+        case CPUINFO_STR_REGISTER + NEC_BW:				sprintf(info->s, "BW:%04X", I.regs.w[BW]); break;
+        case CPUINFO_STR_REGISTER + NEC_BP:				sprintf(info->s, "BP:%04X", I.regs.w[BP]); break;
+        case CPUINFO_STR_REGISTER + NEC_IX:				sprintf(info->s, "IX:%04X", I.regs.w[IX]); break;
+        case CPUINFO_STR_REGISTER + NEC_IY:				sprintf(info->s, "IY:%04X", I.regs.w[IY]); break;
+        case CPUINFO_STR_REGISTER + NEC_ES:				sprintf(info->s, "ES:%04X", I.sregs[ES]); break;
+        case CPUINFO_STR_REGISTER + NEC_CS:				sprintf(info->s, "CS:%04X", I.sregs[CS]); break;
+        case CPUINFO_STR_REGISTER + NEC_SS:				sprintf(info->s, "SS:%04X", I.sregs[SS]); break;
+        case CPUINFO_STR_REGISTER + NEC_DS:				sprintf(info->s, "DS:%04X", I.sregs[DS]); break;
+        case CPUINFO_STR_REGISTER + NEC_VECTOR:			sprintf(info->s, "V:%02X", I.int_vector); break;
 	}
 }
 
@@ -1212,7 +1212,7 @@ void nec_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void v20_get_info(UINT32 state, union cpuinfo *info)
+void v20_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1221,11 +1221,9 @@ void v20_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = v20_execute;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V20"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "V20");					break;
 
-		default:
-			nec_get_info(state, info);
-			break;
+		default:										nec_get_info(state, info);				break;
 	}
 }
 #endif
@@ -1236,7 +1234,7 @@ void v20_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void v30_get_info(UINT32 state, union cpuinfo *info)
+void v30_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1245,11 +1243,9 @@ void v30_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = v30_execute;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V30"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "V30");					break;
 
-		default:
-			nec_get_info(state, info);
-			break;
+		default:										nec_get_info(state, info);				break;
 	}
 }
 #endif
@@ -1260,7 +1256,7 @@ void v30_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void v33_get_info(UINT32 state, union cpuinfo *info)
+void v33_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1269,11 +1265,9 @@ void v33_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = v33_execute;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V33"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "V33");					break;
 
-		default:
-			nec_get_info(state, info);
-			break;
+		default:										nec_get_info(state, info);				break;
 	}
 }
 #endif

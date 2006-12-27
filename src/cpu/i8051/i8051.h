@@ -146,10 +146,10 @@ READ8_HANDLER( i8752_internal_r );
 #endif	//(HAS_8752)
 
 
-void i8051_get_info(UINT32 state, union cpuinfo *info);
-void i8052_get_info(UINT32 state, union cpuinfo *info);
-void i8751_get_info(UINT32 state, union cpuinfo *info);
-void i8752_get_info(UINT32 state, union cpuinfo *info);
+void i8051_get_info(UINT32 state, cpuinfo *info);
+void i8052_get_info(UINT32 state, cpuinfo *info);
+void i8751_get_info(UINT32 state, cpuinfo *info);
+void i8752_get_info(UINT32 state, cpuinfo *info);
 
 #endif /* _I8051_H */
 

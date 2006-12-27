@@ -465,7 +465,12 @@ static DRIVER_INIT( shootout )
 	memory_configure_bank_decrypted(1, 0, 16, decrypt + 0x8000, 0x4000);
 }
 
+static DRIVER_INIT( shootouj )
+{
+	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x4000);
+}
+
 
 GAME( 1985, shootout, 0,        shootout, shootout, shootout, ROT0, "Data East USA", "Shoot Out (US)", 0)
-GAME( 1985, shootouj, shootout, shootouj, shootouj, shootout, ROT0, "Data East USA", "Shoot Out (Japan)", 0 )
+GAME( 1985, shootouj, shootout, shootouj, shootouj, shootouj, ROT0, "Data East USA", "Shoot Out (Japan)", 0 )
 GAME( 1985, shootoub, shootout, shootouj, shootout, shootout, ROT0, "bootleg", "Shoot Out (Korean Bootleg)", 0 )

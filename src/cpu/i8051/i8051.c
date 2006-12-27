@@ -2349,13 +2349,13 @@ static WRITE8_HANDLER(i8052_internal_ram_iwrite)
  * Generic set_info
  **************************************************************************/
 
-static void i8051_set_info(UINT32 state, union cpuinfo *info)
+static void i8051_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_PC:					PC = info->i;	break;
-		case CPUINFO_INT_SP:					i8051.sp = info->i;	     			break;
+		case CPUINFO_INT_PC:							PC = info->i;							break;
+		case CPUINFO_INT_SP:							i8051.sp = info->i;	     				break;
 
 		case CPUINFO_INT_INPUT_STATE + I8051_INT0_LINE:	i8051_set_irq_line(I8051_INT0_LINE, info->i); break;
 		case CPUINFO_INT_INPUT_STATE + I8051_INT1_LINE:	i8051_set_irq_line(I8051_INT1_LINE, info->i); break;
@@ -2363,14 +2363,14 @@ static void i8051_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + I8051_T1_LINE:	i8051_set_irq_line(I8051_T1_LINE, info->i); break;
 		case CPUINFO_INT_INPUT_STATE + I8051_RX_LINE:	i8051_set_irq_line(I8051_RX_LINE, info->i); break;
 
-		case CPUINFO_INT_REGISTER + I8051_PC: 			PC = info->i; break;
-		case CPUINFO_INT_REGISTER + I8051_SP: 			R_SP = info->i; break;
-		case CPUINFO_INT_REGISTER + I8051_PSW:			i8051.psw = info->i; break;
-		case CPUINFO_INT_REGISTER + I8051_ACC:			i8051.acc = info->i; break;
-		case CPUINFO_INT_REGISTER + I8051_B:  			i8051.b = info->i; break;
-		case CPUINFO_INT_REGISTER + I8051_DPH:			i8051.dph = info->i; break;
-		case CPUINFO_INT_REGISTER + I8051_DPL:			i8051.dpl = info->i; break;
-		case CPUINFO_INT_REGISTER + I8051_IE: 			i8051.ie = info->i; break;
+		case CPUINFO_INT_REGISTER + I8051_PC: 			PC = info->i;							break;
+		case CPUINFO_INT_REGISTER + I8051_SP: 			R_SP = info->i;							break;
+		case CPUINFO_INT_REGISTER + I8051_PSW:			i8051.psw = info->i;					break;
+		case CPUINFO_INT_REGISTER + I8051_ACC:			i8051.acc = info->i;					break;
+		case CPUINFO_INT_REGISTER + I8051_B:  			i8051.b = info->i;						break;
+		case CPUINFO_INT_REGISTER + I8051_DPH:			i8051.dph = info->i;					break;
+		case CPUINFO_INT_REGISTER + I8051_DPL:			i8051.dpl = info->i;					break;
+		case CPUINFO_INT_REGISTER + I8051_IE: 			i8051.ie = info->i;						break;
 		case CPUINFO_INT_REGISTER + I8051_R0: 			i8051.IntRam[0+(8*((i8051.psw & 0x18)>>3))] = info->i; break;
 		case CPUINFO_INT_REGISTER + I8051_R1: 			i8051.IntRam[1+(8*((i8051.psw & 0x18)>>3))] = info->i; break;
 		case CPUINFO_INT_REGISTER + I8051_R2: 			i8051.IntRam[2+(8*((i8051.psw & 0x18)>>3))] = info->i; break;
@@ -2387,45 +2387,45 @@ static void i8051_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void i8051_get_info(UINT32 state, union cpuinfo *info)
+void i8051_get_info(UINT32 state, cpuinfo *info)
 {
 	I8051 *r = &i8051;
 
 	switch (state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(i8051);			break;
-		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:				info->i = 0;					break;
-		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;				break;
-		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;					break;
-		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:				info->i = 1;					break;
-		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:				info->i = 5;					break;
-		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;					break;
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(i8051);				break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 5;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 20; /* rough guess */			break;
-		case CPUINFO_INT_INPUT_LINES:        				info->i = 3;                      break;
+		case CPUINFO_INT_INPUT_LINES:        			info->i = 3;							break;
 
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;				break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;				break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;				break;
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 8;				break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 16;				break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;				break;
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:	info->i = 8;				break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 	info->i = 16;				break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 	info->i = 0;				break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:	info->i = 8;						break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 	info->i = 16;						break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 	info->i = 0;						break;
 
-		case CPUINFO_INT_PREVIOUSPC:				info->i = PPC;			break;
-		case CPUINFO_INT_PC:	 				info->i = PC;		break;
-		case CPUINFO_INT_SP:					info->i = R_SP;		break;
+		case CPUINFO_INT_PREVIOUSPC:					info->i = PPC;							break;
+		case CPUINFO_INT_PC:	 						info->i = PC;							break;
+		case CPUINFO_INT_SP:							info->i = R_SP;							break;
 
-		case CPUINFO_INT_REGISTER + I8051_PC: 			info->i = PC; break;
-		case CPUINFO_INT_REGISTER + I8051_SP: 			info->i = R_SP; break;
-		case CPUINFO_INT_REGISTER + I8051_PSW:			info->i = i8051.psw; break;
-		case CPUINFO_INT_REGISTER + I8051_ACC:			info->i = i8051.acc; break;
-		case CPUINFO_INT_REGISTER + I8051_B:  			info->i = i8051.b; break;
-		case CPUINFO_INT_REGISTER + I8051_DPH:			info->i = i8051.dph; break;
-		case CPUINFO_INT_REGISTER + I8051_DPL:			info->i = i8051.dpl; break;
-		case CPUINFO_INT_REGISTER + I8051_IE: 			info->i = i8051.ie; break;
+		case CPUINFO_INT_REGISTER + I8051_PC: 			info->i = PC;							break;
+		case CPUINFO_INT_REGISTER + I8051_SP: 			info->i = R_SP;							break;
+		case CPUINFO_INT_REGISTER + I8051_PSW:			info->i = i8051.psw;					break;
+		case CPUINFO_INT_REGISTER + I8051_ACC:			info->i = i8051.acc;					break;
+		case CPUINFO_INT_REGISTER + I8051_B:  			info->i = i8051.b;						break;
+		case CPUINFO_INT_REGISTER + I8051_DPH:			info->i = i8051.dph;					break;
+		case CPUINFO_INT_REGISTER + I8051_DPL:			info->i = i8051.dpl;					break;
+		case CPUINFO_INT_REGISTER + I8051_IE: 			info->i = i8051.ie;						break;
 		case CPUINFO_INT_REGISTER + I8051_R0: 			info->i = i8051.IntRam[0+(8*((i8051.psw & 0x18)>>3))]; break;
 		case CPUINFO_INT_REGISTER + I8051_R1: 			info->i = i8051.IntRam[1+(8*((i8051.psw & 0x18)>>3))]; break;
 		case CPUINFO_INT_REGISTER + I8051_R2: 			info->i = i8051.IntRam[2+(8*((i8051.psw & 0x18)>>3))]; break;
@@ -2437,32 +2437,32 @@ void i8051_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I8051_RB: 			info->i = i8051.IntRam[8+(8*((i8051.psw & 0x18)>>3))]; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_SET_INFO:					info->setinfo = i8051_set_info;		break;
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = i8051_set_info;			break;
 		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = i8051_get_context;	break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = i8051_set_context;	break;
-		case CPUINFO_PTR_INIT:						info->init = i8051_init;		break;
-		case CPUINFO_PTR_RESET:						info->reset = i8051_reset;		break;
-		case CPUINFO_PTR_EXIT:						info->exit = i8051_exit;		break;
-		case CPUINFO_PTR_EXECUTE:					info->execute = i8051_execute;		break;
-		case CPUINFO_PTR_BURN:						info->burn = NULL;			break;
+		case CPUINFO_PTR_INIT:							info->init = i8051_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = i8051_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = i8051_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = i8051_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 #ifdef MAME_DEBUG
-		case CPUINFO_PTR_DISASSEMBLE:						info->disassemble = i8051_dasm;		break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i8051_dasm;			break;
 #endif /* MAME_DEBUG */
-		case CPUINFO_PTR_INSTRUCTION_COUNTER:				info->icount = &i8051_icount;		break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i8051_icount;			break;
 
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = 0; break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:    info->internal_map = 0; break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_IO:      info->internal_map = 0; break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = 0;	break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:    info->internal_map = 0;	break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_IO:      info->internal_map = 0;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:						strcpy(info->s = cpuintrf_temp_str(), "I8051"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "MCS-51"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:					strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 2003-2004 Steve Ellenoff"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "I8051");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "MCS-51");				break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (c) 2003-2004 Steve Ellenoff"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				r->psw & 0x80 ? 'C':'.',
 				r->psw & 0x40 ? 'A':'.',
 				r->psw & 0x20 ? 'F':'.',
@@ -2473,73 +2473,67 @@ void i8051_get_info(UINT32 state, union cpuinfo *info)
 				r->psw & 0x01 ? 'P':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + I8051_PC:        	sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", r->pc); break;
-		case CPUINFO_STR_REGISTER + I8051_SP:        	sprintf(info->s = cpuintrf_temp_str(), "SP:%02X", r->sp); break;
-		case CPUINFO_STR_REGISTER + I8051_PSW:       	sprintf(info->s = cpuintrf_temp_str(), "PSW:%02X", r->psw); break;
-		case CPUINFO_STR_REGISTER + I8051_ACC:       	sprintf(info->s = cpuintrf_temp_str(), "A:%02X", r->acc); break;
-		case CPUINFO_STR_REGISTER + I8051_B:         	sprintf(info->s = cpuintrf_temp_str(), "B:%02X", r->b); break;
-		case CPUINFO_STR_REGISTER + I8051_DPH:       	sprintf(info->s = cpuintrf_temp_str(), "DPH:%02X", r->dph); break;
-		case CPUINFO_STR_REGISTER + I8051_DPL:       	sprintf(info->s = cpuintrf_temp_str(), "DPL:%02X", r->dpl); break;
-		case CPUINFO_STR_REGISTER + I8051_IE:        	sprintf(info->s = cpuintrf_temp_str(), "IE:%02X", r->ie); break;
-		case CPUINFO_STR_REGISTER + I8051_R0:        	sprintf(info->s = cpuintrf_temp_str(), "R0:%02X", r->IntRam[0+(8*((r->psw & 0x18)>>3))]); break;
-		case CPUINFO_STR_REGISTER + I8051_R1:        	sprintf(info->s = cpuintrf_temp_str(), "R1:%02X", r->IntRam[1+(8*((r->psw & 0x18)>>3))]); break;
-		case CPUINFO_STR_REGISTER + I8051_R2:        	sprintf(info->s = cpuintrf_temp_str(), "R2:%02X", r->IntRam[2+(8*((r->psw & 0x18)>>3))]); break;
-		case CPUINFO_STR_REGISTER + I8051_R3: 	sprintf(info->s = cpuintrf_temp_str(), "R3:%02X", r->IntRam[3+(8*((r->psw & 0x18)>>3))]); break;
-		case CPUINFO_STR_REGISTER + I8051_R4: 	sprintf(info->s = cpuintrf_temp_str(), "R4:%02X", r->IntRam[4+(8*((r->psw & 0x18)>>3))]); break;
-		case CPUINFO_STR_REGISTER + I8051_R5: 	sprintf(info->s = cpuintrf_temp_str(), "R5:%02X", r->IntRam[5+(8*((r->psw & 0x18)>>3))]); break;
-		case CPUINFO_STR_REGISTER + I8051_R6: 	sprintf(info->s = cpuintrf_temp_str(), "R6:%02X", r->IntRam[6+(8*((r->psw & 0x18)>>3))]); break;
-		case CPUINFO_STR_REGISTER + I8051_R7: 	sprintf(info->s = cpuintrf_temp_str(), "R7:%02X", r->IntRam[7+(8*((r->psw & 0x18)>>3))]); break;
-		case CPUINFO_STR_REGISTER + I8051_RB: 	sprintf(info->s = cpuintrf_temp_str(), "RB:%02X", ((r->psw & 0x18)>>3)); break;
+		case CPUINFO_STR_REGISTER + I8051_PC:        	sprintf(info->s, "PC:%04X", r->pc);		break;
+		case CPUINFO_STR_REGISTER + I8051_SP:        	sprintf(info->s, "SP:%02X", r->sp);		break;
+		case CPUINFO_STR_REGISTER + I8051_PSW:       	sprintf(info->s, "PSW:%02X", r->psw);	break;
+		case CPUINFO_STR_REGISTER + I8051_ACC:       	sprintf(info->s, "A:%02X", r->acc);		break;
+		case CPUINFO_STR_REGISTER + I8051_B:         	sprintf(info->s, "B:%02X", r->b);		break;
+		case CPUINFO_STR_REGISTER + I8051_DPH:       	sprintf(info->s, "DPH:%02X", r->dph);	break;
+		case CPUINFO_STR_REGISTER + I8051_DPL:       	sprintf(info->s, "DPL:%02X", r->dpl);	break;
+		case CPUINFO_STR_REGISTER + I8051_IE:        	sprintf(info->s, "IE:%02X", r->ie);		break;
+		case CPUINFO_STR_REGISTER + I8051_R0:        	sprintf(info->s, "R0:%02X", r->IntRam[0+(8*((r->psw & 0x18)>>3))]); break;
+		case CPUINFO_STR_REGISTER + I8051_R1:        	sprintf(info->s, "R1:%02X", r->IntRam[1+(8*((r->psw & 0x18)>>3))]); break;
+		case CPUINFO_STR_REGISTER + I8051_R2:        	sprintf(info->s, "R2:%02X", r->IntRam[2+(8*((r->psw & 0x18)>>3))]); break;
+		case CPUINFO_STR_REGISTER + I8051_R3:			sprintf(info->s, "R3:%02X", r->IntRam[3+(8*((r->psw & 0x18)>>3))]); break;
+		case CPUINFO_STR_REGISTER + I8051_R4: 			sprintf(info->s, "R4:%02X", r->IntRam[4+(8*((r->psw & 0x18)>>3))]); break;
+		case CPUINFO_STR_REGISTER + I8051_R5: 			sprintf(info->s, "R5:%02X", r->IntRam[5+(8*((r->psw & 0x18)>>3))]); break;
+		case CPUINFO_STR_REGISTER + I8051_R6: 			sprintf(info->s, "R6:%02X", r->IntRam[6+(8*((r->psw & 0x18)>>3))]); break;
+		case CPUINFO_STR_REGISTER + I8051_R7: 			sprintf(info->s, "R7:%02X", r->IntRam[7+(8*((r->psw & 0x18)>>3))]); break;
+		case CPUINFO_STR_REGISTER + I8051_RB: 			sprintf(info->s, "RB:%02X", ((r->psw & 0x18)>>3)); break;
 	}
 }
 
-void i8052_get_info(UINT32 state, union cpuinfo *info)
+void i8052_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = i8752_get_context;	break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = i8752_set_context;	break;
-		case CPUINFO_PTR_INIT:						info->init = i8752_init;		break;
-		case CPUINFO_PTR_RESET:						info->reset = i8752_reset;		break;
-		case CPUINFO_PTR_EXIT:						info->exit = i8752_exit;		break;
-		case CPUINFO_PTR_EXECUTE:					info->execute = i8752_execute;		break;
+		case CPUINFO_PTR_INIT:							info->init = i8752_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = i8752_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = i8752_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = i8752_execute;			break;
 
-		case CPUINFO_STR_NAME:	  strcpy(info->s = cpuintrf_temp_str(), "I8052"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "I8052");				break;
 
-		default:
-			i8051_get_info(state, info);
-			break;
+		default:										i8051_get_info(state, info);			break;
 	}
 }
 
-void i8751_get_info(UINT32 state, union cpuinfo *info)
+void i8751_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
-		case CPUINFO_STR_NAME:	  strcpy(info->s = cpuintrf_temp_str(), "I8751"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "I8751");				break;
 
-		default:
-			i8051_get_info(state, info);
-			break;
+		default:										i8051_get_info(state, info);			break;
 	}
 }
 
-void i8752_get_info(UINT32 state, union cpuinfo *info)
+void i8752_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = i8752_get_context;	break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = i8752_set_context;	break;
-		case CPUINFO_PTR_INIT:						info->init = i8752_init;		break;
-		case CPUINFO_PTR_RESET:						info->reset = i8752_reset;		break;
-		case CPUINFO_PTR_EXIT:						info->exit = i8752_exit;		break;
-		case CPUINFO_PTR_EXECUTE:					info->execute = i8752_execute;		break;
+		case CPUINFO_PTR_INIT:							info->init = i8752_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = i8752_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = i8752_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = i8752_execute;			break;
 
-		case CPUINFO_STR_NAME:	  strcpy(info->s = cpuintrf_temp_str(), "I8752"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "I8752");				break;
 
-		default:
-			i8051_get_info(state, info);
-			break;
+		default:										i8051_get_info(state, info);			break;
 	}
 }
 

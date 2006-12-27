@@ -750,9 +750,6 @@ void video_frame_update(void)
 			if (Machine->drv->screen[scrnum].tag != NULL)
 				video_screen_update_partial(scrnum, Machine->screen[scrnum].visarea.max_y);
 
-		/* update our movie recording state */
-		if (!paused)
-			movie_record_frame(0);
 
 		/* now add the quads for all the screens */
 		livemask = render_get_live_screens_mask();
@@ -776,6 +773,10 @@ void video_frame_update(void)
 					render_screen_add_quad(scrnum, 0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(0xff,0xff,0xff,0xff), screen->texture, PRIMFLAG_BLENDMODE(BLENDMODE_NONE) | PRIMFLAG_SCREENTEX(1));
 				}
 			}
+
+		/* update our movie recording state */
+		if (!paused)
+			movie_record_frame(0);
 
 		/* reset the screen changed flags */
 		for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)

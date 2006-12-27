@@ -71,6 +71,7 @@ TODO:
   100% fixed.
 - Input ports in Bio-ship Paladin, Strahl
 - Sound communication in Mustang might be incorrectly implemented
+- Incorrect OKI samples banking in Rapid Hero
 
 ----
 
@@ -1020,7 +1021,7 @@ static ADDRESS_MAP_START( raphero_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x100014, 0x100015) AM_WRITE(nmk_flipscreen_w)
 	AM_RANGE(0x100016, 0x100017) AM_WRITE(MWA16_NOP)	/* IRQ eanble? */
 	AM_RANGE(0x100018, 0x100019) AM_WRITE(nmk_tilebank_w)
-	AM_RANGE(0x10001e, 0x10001f) AM_WRITE(macross2_sound_command_w)	/* to Z80 */
+	AM_RANGE(0x10001e, 0x10001f) AM_WRITE(macross2_sound_command_w)	/* to sound cpu */
 	AM_RANGE(0x120000, 0x1207ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x130000, 0x1307ff) AM_WRITE(nmk_scroll_3_w) AM_BASE(&gunnail_scrollram)
 	AM_RANGE(0x140000, 0x14ffff) AM_WRITE(nmk_bgvideoram_w) AM_BASE(&nmk_bgvideoram)
@@ -1029,6 +1030,40 @@ static ADDRESS_MAP_START( raphero_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x1f0000, 0x1f7fff) AM_WRITE(MWA16_RAM)	/* Work RAM */
 	AM_RANGE(0x1f8000, 0x1f8fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x1f9000, 0x1fffff) AM_WRITE(MWA16_RAM) AM_BASE(&ram)	/* Work RAM again */
+ADDRESS_MAP_END
+
+#if 0
+/*
+    After playing the game to the end:
+
+    ff,ff,ff,ff     20,00,f8,02     20,00,f8,04     00,04,d8,09
+    0f,00,00,ff     00,00,18,03     a0,13,fe,05     40,1e,1b,09
+*/
+static int mask[4*2];
+static WRITE8_HANDLER( okibank_w )
+{
+	mask[offset] |= 1 << (data & 0x1f);
+	popmessage("%x %x %x %x - %x %x %x %x",mask[0],mask[1],mask[2],mask[3],mask[4],mask[5],mask[6],mask[7]);
+}
+#endif
+
+static WRITE8_HANDLER( raphero_sound_rombank_w )
+{
+	memory_set_bankptr(1,memory_region(REGION_CPU2) + 0x10000 + (data & 0x07) * 0x4000);
+}
+
+static ADDRESS_MAP_START( raphero_sound_mem_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE( 0x0000, 0x7fff ) AM_ROM
+	AM_RANGE( 0x8000, 0xbfff ) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0xc000, 0xc000 ) AM_READWRITE( YM2203_status_port_0_r, YM2203_control_port_0_w )
+	AM_RANGE( 0xc001, 0xc001 ) AM_READWRITE( YM2203_read_port_0_r, YM2203_write_port_0_w )
+	AM_RANGE( 0xc800, 0xc800 ) AM_READWRITE( OKIM6295_status_0_r, OKIM6295_data_0_w )
+	AM_RANGE( 0xc808, 0xc808 ) AM_READWRITE( OKIM6295_status_1_r, OKIM6295_data_1_w )
+	AM_RANGE( 0xc810, 0xc817 ) AM_WRITE( NMK112_okibank_w )
+//  AM_RANGE( 0xc810, 0xc817 ) AM_WRITE( okibank_w )
+	AM_RANGE( 0xd000, 0xd000 ) AM_WRITE( raphero_sound_rombank_w )
+	AM_RANGE( 0xd800, 0xd800 ) AM_READWRITE( soundlatch_r, soundlatch2_w )	// main cpu
+	AM_RANGE( 0xe000, 0xffff ) AM_RAM
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( macross2_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -3554,12 +3589,8 @@ static MACHINE_DRIVER_START( raphero )
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,TIME_IN_HZ(112))/* ???????? */
 
-//  MDRV_CPU_ADD(Z80, 4000000) // tmp90c841 ?
-//<ianpatt> looks like the tmp90c841 is a microcontroller from toshiba compatible with the z80 instruction set
-//<ianpatt> and luckily it isn't one of the versions with embedded ROM
-//  /* audio CPU */ /* 4 MHz ? */
-//  MDRV_CPU_PROGRAM_MAP(macross2_sound_readmem,macross2_sound_writemem)
-//  MDRV_CPU_IO_MAP(macross2_sound_readport,macross2_sound_writeport)
+	MDRV_CPU_ADD_TAG("sound",TMP90841, 8000000)
+	MDRV_CPU_PROGRAM_MAP(raphero_sound_mem_map,0)
 
 	MDRV_FRAMES_PER_SECOND(56) // measured
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -4416,8 +4447,9 @@ ROM_START( raphero )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "rhp94099.3",      0x00000, 0x80000, CRC(ec9b4f05) SHA1(e5bd797620dc449fd78b41d87e9ba5a764eb8b44) )
 
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* tmp90c841 ??? sound code/data */
+	ROM_REGION( 0x30000, REGION_CPU2, 0 )		/* tmp90c841 */
 	ROM_LOAD( "rhp94099.2",    0x00000, 0x20000, CRC(fe01ece1) SHA1(c469fb79f2774089848c814f92ddd3c9e384050f) )
+	ROM_RELOAD(                0x10000, 0x20000 )
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rhp94099.1",    0x000000, 0x020000, CRC(55a7a011) SHA1(87ded56bfdd38cbf8d3bd8b3789831f768550a12) )	/* 8x8 tiles */
@@ -4430,12 +4462,15 @@ ROM_START( raphero )
 	ROM_LOAD16_WORD_SWAP( "rhp94099.9", 0x200000, 0x200000, CRC(ea2e47f0) SHA1(97dfa8f95f27b36deb5ce1c80e3d727bad24e52b) )	/* 16x16 tiles */
 	ROM_LOAD16_WORD_SWAP( "rhp94099.10",0x400000, 0x200000, CRC(512cb839) SHA1(4a2c5ac88e4bf8a6f07c703277c4d33e649fd192) )	/* 16x16 tiles */
 
-	ROM_REGION( 0x440000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_REGION( 0x240000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	// 1ST AND 2ND HALF IDENTICAL
+	ROM_LOAD( "rhp94099.7", 0x040000, 0x200000, CRC(0d99547e) SHA1(2d9630bd55d27010f9d1d2dbdbd07ac265e8ebe6) )	/* all banked */
+
+	ROM_REGION( 0x840000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
 	ROM_LOAD( "rhp94099.5", 0x040000, 0x200000, CRC(515eba93) SHA1(c35cb5f31f4bc7327be5777624af168f9fb364a5) )	/* all banked */
 	ROM_LOAD( "rhp94099.6", 0x240000, 0x200000, CRC(f1a80e5a) SHA1(218bd7b0c3d8b283bf96b95bf888228810699370) )	/* all banked */
-
-	ROM_REGION( 0x240000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
-	ROM_LOAD( "rhp94099.7", 0x040000, 0x200000, CRC(0d99547e) SHA1(2d9630bd55d27010f9d1d2dbdbd07ac265e8ebe6) )	/* all banked */
+	ROM_LOAD( "rhp94099.7", 0x440000, 0x200000, CRC(0d99547e) SHA1(2d9630bd55d27010f9d1d2dbdbd07ac265e8ebe6) )	/* all banked */
+	ROM_LOAD( "rhp94099.7", 0x640000, 0x200000, CRC(0d99547e) SHA1(2d9630bd55d27010f9d1d2dbdbd07ac265e8ebe6) )	/* all banked */
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
 	ROM_LOAD( "prom1.u19",      0x0000, 0x0100, CRC(4299776e) SHA1(683d14d2ace14965f0fcfe0f0540c1b77d2cece5) ) /* unknown */
@@ -4886,7 +4921,7 @@ GAME( 1993, gunnail,  0,       gunnail,  gunnail,  nmk,      ROT270, "NMK / Tecm
 GAME( 1993, macross2, 0,       macross2, macross2, 0,        ROT0,   "Banpresto",						"Super Spacefortress Macross II / Chou-Jikuu Yousai Macross II", GAME_NO_COCKTAIL )
 GAME( 1993, tdragon2, 0,       tdragon2, tdragon2, 0,        ROT270, "NMK",				         	"Thunder Dragon 2", GAME_NO_COCKTAIL )
 GAME( 1993, bigbang,  tdragon2,tdragon2, tdragon2, 0,        ROT270, "NMK",				         	"Big Bang", GAME_NO_COCKTAIL )
-GAME( 1994, raphero,  0,       raphero,  raphero,  0,        ROT270, "Media Trading Corp",             "Rapid Hero (Japan?)", GAME_NO_SOUND ) // 23rd July 1993 in test mode, (c)1994 on title screen
+GAME( 1994, raphero,  0,       raphero,  raphero,  0,        ROT270, "Media Trading Corp",             "Rapid Hero (Japan?)", GAME_IMPERFECT_SOUND ) // 23rd July 1993 in test mode, (c)1994 on title screen
 
 GAME( 1992, sabotenb, 0,       bjtwin,   sabotenb, nmk,      ROT0,   "NMK / Tecmo",					"Saboten Bombers (set 1)", GAME_NO_COCKTAIL )
 GAME( 1992, sabotnba, sabotenb,bjtwin,   sabotenb, nmk,      ROT0,   "NMK / Tecmo",					"Saboten Bombers (set 2)", GAME_NO_COCKTAIL )

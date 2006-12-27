@@ -765,7 +765,7 @@ static void set_irq_line(int irqline, int state)
  * Generic set_info
  **************************************************************************/
 
-static void i8039_set_info(UINT32 state, union cpuinfo *info)
+static void i8039_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -798,7 +798,7 @@ static void i8039_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void i8039_get_info(UINT32 state, union cpuinfo *info)
+void i8039_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -860,14 +860,14 @@ void i8039_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i8039_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I8039"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Intel 8039"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.2"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 1997 by Mirko Buffoni\nBased on the original work (C) 1997 by Dan Boris"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "I8039");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Intel 8039");			break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.2");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C) 1997 by Mirko Buffoni\nBased on the original work (C) 1997 by Dan Boris"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				R.PSW & 0x80 ? 'C':'.',
 				R.PSW & 0x40 ? 'A':'.',
 				R.PSW & 0x20 ? 'F':'.',
@@ -878,21 +878,21 @@ void i8039_get_info(UINT32 state, union cpuinfo *info)
 				R.PSW & 0x01 ? '1':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + I8039_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", R.PC.w.l); break;
-		case CPUINFO_STR_REGISTER + I8039_SP:			sprintf(info->s = cpuintrf_temp_str(), "SP:%02X", R.SP); break;
-		case CPUINFO_STR_REGISTER + I8039_PSW:			sprintf(info->s = cpuintrf_temp_str(), "PSW:%02X", R.PSW); break;
-		case CPUINFO_STR_REGISTER + I8039_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", R.A); break;
-		case CPUINFO_STR_REGISTER + I8039_TC:			sprintf(info->s = cpuintrf_temp_str(), "TC:%02X", R.timer); break;
-		case CPUINFO_STR_REGISTER + I8039_P1:			sprintf(info->s = cpuintrf_temp_str(), "P1:%02X", R.P1); break;
-		case CPUINFO_STR_REGISTER + I8039_P2:			sprintf(info->s = cpuintrf_temp_str(), "P2:%02X", R.P2); break;
-		case CPUINFO_STR_REGISTER + I8039_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0:%02X", R.RAM[R.regPtr+0]); break;
-		case CPUINFO_STR_REGISTER + I8039_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1:%02X", R.RAM[R.regPtr+1]); break;
-		case CPUINFO_STR_REGISTER + I8039_R2:			sprintf(info->s = cpuintrf_temp_str(), "R2:%02X", R.RAM[R.regPtr+2]); break;
-		case CPUINFO_STR_REGISTER + I8039_R3:			sprintf(info->s = cpuintrf_temp_str(), "R3:%02X", R.RAM[R.regPtr+3]); break;
-		case CPUINFO_STR_REGISTER + I8039_R4:			sprintf(info->s = cpuintrf_temp_str(), "R4:%02X", R.RAM[R.regPtr+4]); break;
-		case CPUINFO_STR_REGISTER + I8039_R5:			sprintf(info->s = cpuintrf_temp_str(), "R5:%02X", R.RAM[R.regPtr+5]); break;
-		case CPUINFO_STR_REGISTER + I8039_R6:			sprintf(info->s = cpuintrf_temp_str(), "R6:%02X", R.RAM[R.regPtr+6]); break;
-		case CPUINFO_STR_REGISTER + I8039_R7:			sprintf(info->s = cpuintrf_temp_str(), "R7:%02X", R.RAM[R.regPtr+7]); break;
+		case CPUINFO_STR_REGISTER + I8039_PC:			sprintf(info->s, "PC:%04X", R.PC.w.l); break;
+		case CPUINFO_STR_REGISTER + I8039_SP:			sprintf(info->s, "SP:%02X", R.SP); break;
+		case CPUINFO_STR_REGISTER + I8039_PSW:			sprintf(info->s, "PSW:%02X", R.PSW); break;
+		case CPUINFO_STR_REGISTER + I8039_A:			sprintf(info->s, "A:%02X", R.A); break;
+		case CPUINFO_STR_REGISTER + I8039_TC:			sprintf(info->s, "TC:%02X", R.timer); break;
+		case CPUINFO_STR_REGISTER + I8039_P1:			sprintf(info->s, "P1:%02X", R.P1); break;
+		case CPUINFO_STR_REGISTER + I8039_P2:			sprintf(info->s, "P2:%02X", R.P2); break;
+		case CPUINFO_STR_REGISTER + I8039_R0:			sprintf(info->s, "R0:%02X", R.RAM[R.regPtr+0]); break;
+		case CPUINFO_STR_REGISTER + I8039_R1:			sprintf(info->s, "R1:%02X", R.RAM[R.regPtr+1]); break;
+		case CPUINFO_STR_REGISTER + I8039_R2:			sprintf(info->s, "R2:%02X", R.RAM[R.regPtr+2]); break;
+		case CPUINFO_STR_REGISTER + I8039_R3:			sprintf(info->s, "R3:%02X", R.RAM[R.regPtr+3]); break;
+		case CPUINFO_STR_REGISTER + I8039_R4:			sprintf(info->s, "R4:%02X", R.RAM[R.regPtr+4]); break;
+		case CPUINFO_STR_REGISTER + I8039_R5:			sprintf(info->s, "R5:%02X", R.RAM[R.regPtr+5]); break;
+		case CPUINFO_STR_REGISTER + I8039_R6:			sprintf(info->s, "R6:%02X", R.RAM[R.regPtr+6]); break;
+		case CPUINFO_STR_REGISTER + I8039_R7:			sprintf(info->s, "R7:%02X", R.RAM[R.regPtr+7]); break;
 	}
 }
 
@@ -902,16 +902,14 @@ void i8039_get_info(UINT32 state, union cpuinfo *info)
 /**************************************************************************
  * CPU-specific get_info/set_info
  **************************************************************************/
-void i8035_get_info(UINT32 state, union cpuinfo *info)
+void i8035_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I8035"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "I8035");				break;
 
-		default:
-			i8039_get_info(state, info);
-			break;
+		default:										i8039_get_info(state, info);			break;
 	}
 }
 #endif
@@ -921,16 +919,14 @@ void i8035_get_info(UINT32 state, union cpuinfo *info)
 /**************************************************************************
  * CPU-specific get_info/set_info
  **************************************************************************/
-void i8048_get_info(UINT32 state, union cpuinfo *info)
+void i8048_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I8048"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "I8048");				break;
 
-		default:
-			i8039_get_info(state, info);
-			break;
+		default:										i8039_get_info(state, info);			break;
 	}
 }
 #endif
@@ -940,16 +936,14 @@ void i8048_get_info(UINT32 state, union cpuinfo *info)
 /**************************************************************************
  * CPU-specific get_info/set_info
  **************************************************************************/
-void n7751_get_info(UINT32 state, union cpuinfo *info)
+void n7751_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "N7751"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "N7751");				break;
 
-		default:
-			i8039_get_info(state, info);
-			break;
+		default:										i8039_get_info(state, info);			break;
 	}
 }
 #endif

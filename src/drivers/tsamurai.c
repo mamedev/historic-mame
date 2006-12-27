@@ -339,12 +339,14 @@ static ADDRESS_MAP_START( readmem_sound3_m660, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xc000, 0xc000) AM_READ(sound_command3_r)
 	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xfffc, 0xffff) AM_READ(MRA8_RAM)	/* CPU reads here - music data */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem_sound3_m660, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc001, 0xc001) AM_WRITE(MWA8_NOP) /* ? - probably clear IRQ */
 	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xfffc, 0xffff) AM_WRITE(MWA8_RAM)	/* CPU writes here - music data */
 ADDRESS_MAP_END
 
 /*******************************************************************************/

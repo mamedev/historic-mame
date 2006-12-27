@@ -5,7 +5,7 @@
 
 extern int v810_ICount;
 
-void v810_get_info(UINT32, union cpuinfo*);
+void v810_get_info(UINT32, cpuinfo*);
 
 #define R_B(addr) (program_read_byte_32le(addr))
 #define R_H(addr) (program_read_word_32le(addr))

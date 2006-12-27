@@ -1467,7 +1467,7 @@ static void ppc_set_context(void *src)
  * Generic set_info
  **************************************************************************/
 
-static void ppc_set_info(UINT32 state, union cpuinfo *info)
+static void ppc_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1516,7 +1516,7 @@ static void ppc_set_info(UINT32 state, union cpuinfo *info)
 	}
 }
 
-void ppc_get_info(UINT32 state, union cpuinfo *info)
+void ppc_get_info(UINT32 state, cpuinfo *info)
 {
 	switch(state)
 	{
@@ -1541,7 +1541,7 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_INPUT_STATE:			info->i = CLEAR_LINE;	break;
+		case CPUINFO_INT_INPUT_STATE:					info->i = CLEAR_LINE;					break;
 
 		case CPUINFO_INT_PREVIOUSPC:					/* not implemented */					break;
 
@@ -1588,8 +1588,6 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + PPC_R30:			info->i = ppc.r[30];					break;
 		case CPUINFO_INT_REGISTER + PPC_R31:			info->i = ppc.r[31];					break;
 
-
-
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = ppc_get_context;		break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = ppc_set_context;		break;
@@ -1600,55 +1598,55 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &ppc_icount;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC403"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "PowerPC"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2004"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "PPC403");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "PowerPC");				break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C) 2004");	break;
 
-		case CPUINFO_STR_FLAGS:							strcpy(info->s = cpuintrf_temp_str(), " "); break;
+		case CPUINFO_STR_FLAGS:							strcpy(info->s, " ");					break;
 
-		case CPUINFO_STR_REGISTER + PPC_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC: %08X", ppc.pc); break;
-		case CPUINFO_STR_REGISTER + PPC_MSR:			sprintf(info->s = cpuintrf_temp_str(), "MSR: %08X", ppc_get_msr()); break;
-		case CPUINFO_STR_REGISTER + PPC_CR:				sprintf(info->s = cpuintrf_temp_str(), "CR: %08X", ppc_get_cr()); break;
-		case CPUINFO_STR_REGISTER + PPC_LR:				sprintf(info->s = cpuintrf_temp_str(), "LR: %08X", LR); break;
-		case CPUINFO_STR_REGISTER + PPC_CTR:			sprintf(info->s = cpuintrf_temp_str(), "CTR: %08X", CTR); break;
-		case CPUINFO_STR_REGISTER + PPC_XER:			sprintf(info->s = cpuintrf_temp_str(), "XER: %08X", XER); break;
-		case CPUINFO_STR_REGISTER + PPC_SRR0:			sprintf(info->s = cpuintrf_temp_str(), "SRR0: %08X", SRR0); break;
-		case CPUINFO_STR_REGISTER + PPC_SRR1:			sprintf(info->s = cpuintrf_temp_str(), "SRR1: %08X", SRR1); break;
+		case CPUINFO_STR_REGISTER + PPC_PC:				sprintf(info->s, "PC: %08X", ppc.pc);	break;
+		case CPUINFO_STR_REGISTER + PPC_MSR:			sprintf(info->s, "MSR: %08X", ppc_get_msr()); break;
+		case CPUINFO_STR_REGISTER + PPC_CR:				sprintf(info->s, "CR: %08X", ppc_get_cr()); break;
+		case CPUINFO_STR_REGISTER + PPC_LR:				sprintf(info->s, "LR: %08X", LR);		break;
+		case CPUINFO_STR_REGISTER + PPC_CTR:			sprintf(info->s, "CTR: %08X", CTR);		break;
+		case CPUINFO_STR_REGISTER + PPC_XER:			sprintf(info->s, "XER: %08X", XER);		break;
+		case CPUINFO_STR_REGISTER + PPC_SRR0:			sprintf(info->s, "SRR0: %08X", SRR0);	break;
+		case CPUINFO_STR_REGISTER + PPC_SRR1:			sprintf(info->s, "SRR1: %08X", SRR1);	break;
 
-		case CPUINFO_STR_REGISTER + PPC_R0:				sprintf(info->s = cpuintrf_temp_str(), "R0: %08X", ppc.r[0]); break;
-		case CPUINFO_STR_REGISTER + PPC_R1:				sprintf(info->s = cpuintrf_temp_str(), "R1: %08X", ppc.r[1]); break;
-		case CPUINFO_STR_REGISTER + PPC_R2:				sprintf(info->s = cpuintrf_temp_str(), "R2: %08X", ppc.r[2]); break;
-		case CPUINFO_STR_REGISTER + PPC_R3:				sprintf(info->s = cpuintrf_temp_str(), "R3: %08X", ppc.r[3]); break;
-		case CPUINFO_STR_REGISTER + PPC_R4:				sprintf(info->s = cpuintrf_temp_str(), "R4: %08X", ppc.r[4]); break;
-		case CPUINFO_STR_REGISTER + PPC_R5:				sprintf(info->s = cpuintrf_temp_str(), "R5: %08X", ppc.r[5]); break;
-		case CPUINFO_STR_REGISTER + PPC_R6:				sprintf(info->s = cpuintrf_temp_str(), "R6: %08X", ppc.r[6]); break;
-		case CPUINFO_STR_REGISTER + PPC_R7:				sprintf(info->s = cpuintrf_temp_str(), "R7: %08X", ppc.r[7]); break;
-		case CPUINFO_STR_REGISTER + PPC_R8:				sprintf(info->s = cpuintrf_temp_str(), "R8: %08X", ppc.r[8]); break;
-		case CPUINFO_STR_REGISTER + PPC_R9:				sprintf(info->s = cpuintrf_temp_str(), "R9: %08X", ppc.r[9]); break;
-		case CPUINFO_STR_REGISTER + PPC_R10:			sprintf(info->s = cpuintrf_temp_str(), "R10: %08X", ppc.r[10]); break;
-		case CPUINFO_STR_REGISTER + PPC_R11:			sprintf(info->s = cpuintrf_temp_str(), "R11: %08X", ppc.r[11]); break;
-		case CPUINFO_STR_REGISTER + PPC_R12:			sprintf(info->s = cpuintrf_temp_str(), "R12: %08X", ppc.r[12]); break;
-		case CPUINFO_STR_REGISTER + PPC_R13:			sprintf(info->s = cpuintrf_temp_str(), "R13: %08X", ppc.r[13]); break;
-		case CPUINFO_STR_REGISTER + PPC_R14:			sprintf(info->s = cpuintrf_temp_str(), "R14: %08X", ppc.r[14]); break;
-		case CPUINFO_STR_REGISTER + PPC_R15:			sprintf(info->s = cpuintrf_temp_str(), "R15: %08X", ppc.r[15]); break;
-		case CPUINFO_STR_REGISTER + PPC_R16:			sprintf(info->s = cpuintrf_temp_str(), "R16: %08X", ppc.r[16]); break;
-		case CPUINFO_STR_REGISTER + PPC_R17:			sprintf(info->s = cpuintrf_temp_str(), "R17: %08X", ppc.r[17]); break;
-		case CPUINFO_STR_REGISTER + PPC_R18:			sprintf(info->s = cpuintrf_temp_str(), "R18: %08X", ppc.r[18]); break;
-		case CPUINFO_STR_REGISTER + PPC_R19:			sprintf(info->s = cpuintrf_temp_str(), "R19: %08X", ppc.r[19]); break;
-		case CPUINFO_STR_REGISTER + PPC_R20:			sprintf(info->s = cpuintrf_temp_str(), "R20: %08X", ppc.r[20]); break;
-		case CPUINFO_STR_REGISTER + PPC_R21:			sprintf(info->s = cpuintrf_temp_str(), "R21: %08X", ppc.r[21]); break;
-		case CPUINFO_STR_REGISTER + PPC_R22:			sprintf(info->s = cpuintrf_temp_str(), "R22: %08X", ppc.r[22]); break;
-		case CPUINFO_STR_REGISTER + PPC_R23:			sprintf(info->s = cpuintrf_temp_str(), "R23: %08X", ppc.r[23]); break;
-		case CPUINFO_STR_REGISTER + PPC_R24:			sprintf(info->s = cpuintrf_temp_str(), "R24: %08X", ppc.r[24]); break;
-		case CPUINFO_STR_REGISTER + PPC_R25:			sprintf(info->s = cpuintrf_temp_str(), "R25: %08X", ppc.r[25]); break;
-		case CPUINFO_STR_REGISTER + PPC_R26:			sprintf(info->s = cpuintrf_temp_str(), "R26: %08X", ppc.r[26]); break;
-		case CPUINFO_STR_REGISTER + PPC_R27:			sprintf(info->s = cpuintrf_temp_str(), "R27: %08X", ppc.r[27]); break;
-		case CPUINFO_STR_REGISTER + PPC_R28:			sprintf(info->s = cpuintrf_temp_str(), "R28: %08X", ppc.r[28]); break;
-		case CPUINFO_STR_REGISTER + PPC_R29:			sprintf(info->s = cpuintrf_temp_str(), "R29: %08X", ppc.r[29]); break;
-		case CPUINFO_STR_REGISTER + PPC_R30:			sprintf(info->s = cpuintrf_temp_str(), "R30: %08X", ppc.r[30]); break;
-		case CPUINFO_STR_REGISTER + PPC_R31:			sprintf(info->s = cpuintrf_temp_str(), "R31: %08X", ppc.r[31]); break;
+		case CPUINFO_STR_REGISTER + PPC_R0:				sprintf(info->s, "R0: %08X", ppc.r[0]); break;
+		case CPUINFO_STR_REGISTER + PPC_R1:				sprintf(info->s, "R1: %08X", ppc.r[1]); break;
+		case CPUINFO_STR_REGISTER + PPC_R2:				sprintf(info->s, "R2: %08X", ppc.r[2]); break;
+		case CPUINFO_STR_REGISTER + PPC_R3:				sprintf(info->s, "R3: %08X", ppc.r[3]); break;
+		case CPUINFO_STR_REGISTER + PPC_R4:				sprintf(info->s, "R4: %08X", ppc.r[4]); break;
+		case CPUINFO_STR_REGISTER + PPC_R5:				sprintf(info->s, "R5: %08X", ppc.r[5]); break;
+		case CPUINFO_STR_REGISTER + PPC_R6:				sprintf(info->s, "R6: %08X", ppc.r[6]); break;
+		case CPUINFO_STR_REGISTER + PPC_R7:				sprintf(info->s, "R7: %08X", ppc.r[7]); break;
+		case CPUINFO_STR_REGISTER + PPC_R8:				sprintf(info->s, "R8: %08X", ppc.r[8]); break;
+		case CPUINFO_STR_REGISTER + PPC_R9:				sprintf(info->s, "R9: %08X", ppc.r[9]); break;
+		case CPUINFO_STR_REGISTER + PPC_R10:			sprintf(info->s, "R10: %08X", ppc.r[10]); break;
+		case CPUINFO_STR_REGISTER + PPC_R11:			sprintf(info->s, "R11: %08X", ppc.r[11]); break;
+		case CPUINFO_STR_REGISTER + PPC_R12:			sprintf(info->s, "R12: %08X", ppc.r[12]); break;
+		case CPUINFO_STR_REGISTER + PPC_R13:			sprintf(info->s, "R13: %08X", ppc.r[13]); break;
+		case CPUINFO_STR_REGISTER + PPC_R14:			sprintf(info->s, "R14: %08X", ppc.r[14]); break;
+		case CPUINFO_STR_REGISTER + PPC_R15:			sprintf(info->s, "R15: %08X", ppc.r[15]); break;
+		case CPUINFO_STR_REGISTER + PPC_R16:			sprintf(info->s, "R16: %08X", ppc.r[16]); break;
+		case CPUINFO_STR_REGISTER + PPC_R17:			sprintf(info->s, "R17: %08X", ppc.r[17]); break;
+		case CPUINFO_STR_REGISTER + PPC_R18:			sprintf(info->s, "R18: %08X", ppc.r[18]); break;
+		case CPUINFO_STR_REGISTER + PPC_R19:			sprintf(info->s, "R19: %08X", ppc.r[19]); break;
+		case CPUINFO_STR_REGISTER + PPC_R20:			sprintf(info->s, "R20: %08X", ppc.r[20]); break;
+		case CPUINFO_STR_REGISTER + PPC_R21:			sprintf(info->s, "R21: %08X", ppc.r[21]); break;
+		case CPUINFO_STR_REGISTER + PPC_R22:			sprintf(info->s, "R22: %08X", ppc.r[22]); break;
+		case CPUINFO_STR_REGISTER + PPC_R23:			sprintf(info->s, "R23: %08X", ppc.r[23]); break;
+		case CPUINFO_STR_REGISTER + PPC_R24:			sprintf(info->s, "R24: %08X", ppc.r[24]); break;
+		case CPUINFO_STR_REGISTER + PPC_R25:			sprintf(info->s, "R25: %08X", ppc.r[25]); break;
+		case CPUINFO_STR_REGISTER + PPC_R26:			sprintf(info->s, "R26: %08X", ppc.r[26]); break;
+		case CPUINFO_STR_REGISTER + PPC_R27:			sprintf(info->s, "R27: %08X", ppc.r[27]); break;
+		case CPUINFO_STR_REGISTER + PPC_R28:			sprintf(info->s, "R28: %08X", ppc.r[28]); break;
+		case CPUINFO_STR_REGISTER + PPC_R29:			sprintf(info->s, "R29: %08X", ppc.r[29]); break;
+		case CPUINFO_STR_REGISTER + PPC_R30:			sprintf(info->s, "R30: %08X", ppc.r[30]); break;
+		case CPUINFO_STR_REGISTER + PPC_R31:			sprintf(info->s, "R31: %08X", ppc.r[31]); break;
 	}
 }
 
@@ -1656,7 +1654,7 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 
 /* PowerPC 403 */
 #if (HAS_PPC403)
-void ppc403_set_info(UINT32 state, union cpuinfo *info)
+void ppc403_set_info(UINT32 state, cpuinfo *info)
 {
 	if (state >= CPUINFO_INT_INPUT_STATE && state <= CPUINFO_INT_INPUT_STATE + 5)
 	{
@@ -1669,7 +1667,7 @@ void ppc403_set_info(UINT32 state, union cpuinfo *info)
 	}
 }
 
-void ppc403_get_info(UINT32 state, union cpuinfo *info)
+void ppc403_get_info(UINT32 state, cpuinfo *info)
 {
 	switch(state)
 	{
@@ -1685,16 +1683,16 @@ void ppc403_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = ppcdrc403_execute;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC403"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "PPC403");				break;
 
-		default:	ppc_get_info(state, info);		break;
+		default:										ppc_get_info(state, info);				break;
 	}
 }
 #endif
 
 /* PowerPC 603 */
 #if (HAS_PPC603)
-void ppc603_set_info(UINT32 state, union cpuinfo *info)
+void ppc603_set_info(UINT32 state, cpuinfo *info)
 {
 	if (state >= CPUINFO_INT_INPUT_STATE && state <= CPUINFO_INT_INPUT_STATE + 5)
 	{
@@ -1703,19 +1701,19 @@ void ppc603_set_info(UINT32 state, union cpuinfo *info)
 	}
 	switch(state)
 	{
-		case CPUINFO_INT_REGISTER + PPC_DEC:				write_decrementer(info->i);		break;
-		default:	ppc_set_info(state, info);		break;
+		case CPUINFO_INT_REGISTER + PPC_DEC:			write_decrementer(info->i);				break;
+		default:										ppc_set_info(state, info);				break;
 	}
 }
 
-void ppc603_get_info(UINT32 state, union cpuinfo *info)
+void ppc603_get_info(UINT32 state, cpuinfo *info)
 {
 	switch(state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case CPUINFO_INT_INPUT_LINES:					info->i = 5;				break;
-		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;			break;
-		case CPUINFO_INT_REGISTER + PPC_DEC:			info->i = read_decrementer(); break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 5;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+		case CPUINFO_INT_REGISTER + PPC_DEC:			info->i = read_decrementer();			break;
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 64;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
@@ -1723,28 +1721,28 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_PAGE_SHIFT + ADDRESS_SPACE_PROGRAM: 	info->i = 17;					break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_SET_INFO:					info->setinfo = ppc603_set_info;		break;
-		case CPUINFO_PTR_INIT:						info->init = ppcdrc603_init;				break;
-		case CPUINFO_PTR_RESET:						info->reset = ppcdrc603_reset;				break;
-		case CPUINFO_PTR_EXIT:						info->exit = ppcdrc603_exit;				break;
-		case CPUINFO_PTR_EXECUTE:					info->execute = ppcdrc603_execute;			break;
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = ppc603_set_info;		break;
+		case CPUINFO_PTR_INIT:							info->init = ppcdrc603_init;			break;
+		case CPUINFO_PTR_RESET:							info->reset = ppcdrc603_reset;			break;
+		case CPUINFO_PTR_EXIT:							info->exit = ppcdrc603_exit;			break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = ppcdrc603_execute;		break;
 		case CPUINFO_PTR_READ:							info->read = ppc_read;					break;
 		case CPUINFO_PTR_WRITE:							info->write = ppc_write;				break;
 		case CPUINFO_PTR_READOP:						info->readop = ppc_readop;				break;
 		case CPUINFO_PTR_TRANSLATE:						info->translate = ppc_translate_address_cb;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC603"); break;
-		case CPUINFO_STR_REGISTER + PPC_DEC:			sprintf(info->s = cpuintrf_temp_str(), "DEC: %08X", read_decrementer()); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "PPC603");				break;
+		case CPUINFO_STR_REGISTER + PPC_DEC:			sprintf(info->s, "DEC: %08X", read_decrementer()); break;
 
-		default:	ppc_get_info(state, info);		break;
+		default:										ppc_get_info(state, info);				break;
 	}
 }
 #endif
 
 /* PowerPC 602 */
 #if (HAS_PPC602)
-void ppc602_set_info(UINT32 state, union cpuinfo *info)
+void ppc602_set_info(UINT32 state, cpuinfo *info)
 {
 	if (state >= CPUINFO_INT_INPUT_STATE && state <= CPUINFO_INT_INPUT_STATE + 5)
 	{
@@ -1757,13 +1755,13 @@ void ppc602_set_info(UINT32 state, union cpuinfo *info)
 	}
 }
 
-void ppc602_get_info(UINT32 state, union cpuinfo *info)
+void ppc602_get_info(UINT32 state, cpuinfo *info)
 {
 	switch(state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case CPUINFO_INT_INPUT_LINES:					info->i = 5;				break;
-		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;			break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 5;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 64;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
@@ -1771,20 +1769,20 @@ void ppc602_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_PAGE_SHIFT + ADDRESS_SPACE_PROGRAM: 	info->i = 17;					break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_SET_INFO:					info->setinfo = ppc602_set_info;		break;
-		case CPUINFO_PTR_INIT:						info->init = ppcdrc602_init;				break;
-		case CPUINFO_PTR_RESET:						info->reset = ppcdrc602_reset;				break;
-		case CPUINFO_PTR_EXIT:						info->exit = ppcdrc602_exit;				break;
-		case CPUINFO_PTR_EXECUTE:					info->execute = ppcdrc602_execute;			break;
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = ppc602_set_info;		break;
+		case CPUINFO_PTR_INIT:							info->init = ppcdrc602_init;			break;
+		case CPUINFO_PTR_RESET:							info->reset = ppcdrc602_reset;			break;
+		case CPUINFO_PTR_EXIT:							info->exit = ppcdrc602_exit;			break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = ppcdrc602_execute;		break;
 		case CPUINFO_PTR_READ:							info->read = ppc_read;					break;
 		case CPUINFO_PTR_WRITE:							info->write = ppc_write;				break;
 		case CPUINFO_PTR_READOP:						info->readop = ppc_readop;				break;
 		case CPUINFO_PTR_TRANSLATE:						info->translate = ppc_translate_address_cb;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC602"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "PPC602");				break;
 
-		default:	ppc_get_info(state, info);		break;
+		default:										ppc_get_info(state, info);				break;
 	}
 }
 #endif

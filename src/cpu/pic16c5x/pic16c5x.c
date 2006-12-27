@@ -925,7 +925,7 @@ static void pic16C5x_set_context (void *src)
  *  Generic set_info
  **************************************************************************/
 
-static void pic16C5x_set_info(UINT32 state, union cpuinfo *info)
+static void pic16C5x_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -957,7 +957,7 @@ static void pic16C5x_set_info(UINT32 state, union cpuinfo *info)
  *  Generic get_info
  **************************************************************************/
 
-static void pic16C5x_get_info(UINT32 state, union cpuinfo *info)
+static void pic16C5x_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1017,14 +1017,14 @@ static void pic16C5x_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &pic16C5x_icount;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PIC16C5x"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Microchip"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.12"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C)2003+ by Tony La Porta"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "PIC16C5x");			break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Microchip");			break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.12");				break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C)2003+ by Tony La Porta"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%01x%c%c%c%c%c %c%c%c%03x",
+			sprintf(info->s, "%01x%c%c%c%c%c %c%c%c%03x",
 				(R.STATUS & 0xe0) >> 5,
 				R.STATUS & 0x10 ? '.':'O',		/* WDT Overflow */
 				R.STATUS & 0x08 ? 'P':'D',		/* Power/Down */
@@ -1038,23 +1038,23 @@ static void pic16C5x_get_info(UINT32 state, union cpuinfo *info)
 				R.OPTION & 0x08 ? (1<<(R.OPTION&7)) : (2<<(R.OPTION&7)) );
 			break;
 
-		case CPUINFO_STR_REGISTER + PIC16C5x_PC:   		sprintf(info->s = cpuintrf_temp_str(), "PC:%03X",   R.PC); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_W:    		sprintf(info->s = cpuintrf_temp_str(), "W:%02X",    R.W); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_ALU:  		sprintf(info->s = cpuintrf_temp_str(), "ALU:%02X",  R.ALU); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_STR:  		sprintf(info->s = cpuintrf_temp_str(), "STR:%02X",  R.STATUS); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_TMR0: 		sprintf(info->s = cpuintrf_temp_str(), "TMR:%02X",  R.TMR0); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_WDT:  		sprintf(info->s = cpuintrf_temp_str(), "WDT:%04X",  R.WDT); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_OPT:  		sprintf(info->s = cpuintrf_temp_str(), "OPT:%02X",  R.OPTION); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_STK0: 		sprintf(info->s = cpuintrf_temp_str(), "STK0:%03X", R.STACK[0]); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_STK1: 		sprintf(info->s = cpuintrf_temp_str(), "STK1:%03X", R.STACK[1]); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_PRTA: 		sprintf(info->s = cpuintrf_temp_str(), "PRTA:%01X", ((R.PORTA) & 0xf)); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_PRTB: 		sprintf(info->s = cpuintrf_temp_str(), "PRTB:%02X", R.PORTB); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_PRTC: 		sprintf(info->s = cpuintrf_temp_str(), "PRTC:%02X", R.PORTC); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_TRSA: 		sprintf(info->s = cpuintrf_temp_str(), "TRSA:%01X", ((R.TRISA) & 0xf)); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_TRSB: 		sprintf(info->s = cpuintrf_temp_str(), "TRSB:%02X", R.TRISB); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_TRSC: 		sprintf(info->s = cpuintrf_temp_str(), "TRSC:%02X", R.TRISC); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_FSR:  		sprintf(info->s = cpuintrf_temp_str(), "FSR:%02X",  ((R.FSR) & picRAMmask)); break;
-		case CPUINFO_STR_REGISTER + PIC16C5x_PSCL: 		sprintf(info->s = cpuintrf_temp_str(), "PSCL:%c%02X", ((R.OPTION & 0x08) ? 'W':'T'), R.prescaler); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_PC:   		sprintf(info->s, "PC:%03X",   R.PC); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_W:    		sprintf(info->s, "W:%02X",    R.W); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_ALU:  		sprintf(info->s, "ALU:%02X",  R.ALU); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_STR:  		sprintf(info->s, "STR:%02X",  R.STATUS); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_TMR0: 		sprintf(info->s, "TMR:%02X",  R.TMR0); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_WDT:  		sprintf(info->s, "WDT:%04X",  R.WDT); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_OPT:  		sprintf(info->s, "OPT:%02X",  R.OPTION); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_STK0: 		sprintf(info->s, "STK0:%03X", R.STACK[0]); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_STK1: 		sprintf(info->s, "STK1:%03X", R.STACK[1]); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_PRTA: 		sprintf(info->s, "PRTA:%01X", ((R.PORTA) & 0xf)); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_PRTB: 		sprintf(info->s, "PRTB:%02X", R.PORTB); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_PRTC: 		sprintf(info->s, "PRTC:%02X", R.PORTC); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_TRSA: 		sprintf(info->s, "TRSA:%01X", ((R.TRISA) & 0xf)); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_TRSB: 		sprintf(info->s, "TRSB:%02X", R.TRISB); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_TRSC: 		sprintf(info->s, "TRSC:%02X", R.TRISC); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_FSR:  		sprintf(info->s, "FSR:%02X",  ((R.FSR) & picRAMmask)); break;
+		case CPUINFO_STR_REGISTER + PIC16C5x_PSCL: 		sprintf(info->s, "PSCL:%c%02X", ((R.OPTION & 0x08) ? 'W':'T'), R.prescaler); break;
 	}
 }
 
@@ -1094,21 +1094,19 @@ void pic16C54_reset(void)
  *  CPU-specific get_info
  **************************************************************************/
 
-void pic16C54_get_info(UINT32 state, union cpuinfo *info)
+void pic16C54_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_RESET:							info->reset = pic16C54_reset;			break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:		info->internal_map = construct_map_pic16c54_rom; break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:			info->internal_map = construct_map_pic16c54_ram; break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:	info->internal_map = construct_map_pic16c54_rom; break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:		info->internal_map = construct_map_pic16c54_ram; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PIC16C54"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "PIC16C54");			break;
 
-		default:
-			pic16C5x_get_info(state, info);
-			break;
+		default:										pic16C5x_get_info(state, info);			break;
 	}
 }
 #endif
@@ -1148,21 +1146,19 @@ void pic16C55_reset(void)
  *  CPU-specific get_info
  **************************************************************************/
 
-void pic16C55_get_info(UINT32 state, union cpuinfo *info)
+void pic16C55_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_RESET:							info->reset = pic16C55_reset;			break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:		info->internal_map = construct_map_pic16c55_rom; break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:			info->internal_map = construct_map_pic16c55_ram; break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:	info->internal_map = construct_map_pic16c55_rom; break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:		info->internal_map = construct_map_pic16c55_ram; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PIC16C55"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "PIC16C55");			break;
 
-		default:
-			pic16C5x_get_info(state, info);
-			break;
+		default:										pic16C5x_get_info(state, info);			break;
 	}
 }
 #endif
@@ -1202,23 +1198,21 @@ void pic16C56_reset(void)
  *  CPU-specific get_info
  **************************************************************************/
 
-void pic16C56_get_info(UINT32 state, union cpuinfo *info)
+void pic16C56_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_RESET:							info->reset = pic16C56_reset;			break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:		info->internal_map = construct_map_pic16c56_rom; break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:			info->internal_map = construct_map_pic16c56_ram; break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:	info->internal_map = construct_map_pic16c56_rom; break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:		info->internal_map = construct_map_pic16c56_ram; break;
 
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 10;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PIC16C56"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "PIC16C56");			break;
 
-		default:
-			pic16C5x_get_info(state, info);
-			break;
+		default:										pic16C5x_get_info(state, info);			break;
 	}
 }
 #endif
@@ -1261,24 +1255,22 @@ void pic16C57_reset(void)
  *  CPU-specific get_info
  **************************************************************************/
 
-void pic16C57_get_info(UINT32 state, union cpuinfo *info)
+void pic16C57_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_RESET:							info->reset = pic16C57_reset;			break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:		info->internal_map = construct_map_pic16c57_rom; break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:			info->internal_map = construct_map_pic16c57_ram; break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:	info->internal_map = construct_map_pic16c57_rom; break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:		info->internal_map = construct_map_pic16c57_ram; break;
 
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 11;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 7;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PIC16C57"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "PIC16C57");			break;
 
-		default:
-			pic16C5x_get_info(state, info);
-			break;
+		default:										pic16C5x_get_info(state, info);			break;
 	}
 }
 #endif
@@ -1321,24 +1313,22 @@ void pic16C58_reset(void)
  *  CPU-specific get_info
  **************************************************************************/
 
-void pic16C58_get_info(UINT32 state, union cpuinfo *info)
+void pic16C58_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_RESET:							info->reset = pic16C58_reset;			break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:		info->internal_map = construct_map_pic16c58_rom; break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:			info->internal_map = construct_map_pic16c58_ram; break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:	info->internal_map = construct_map_pic16c58_rom; break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:		info->internal_map = construct_map_pic16c58_ram; break;
 
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 11;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 7;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PIC16C58"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "PIC16C58");			break;
 
-		default:
-			pic16C5x_get_info(state, info);
-			break;
+		default:										pic16C5x_get_info(state, info);			break;
 	}
 }
 #endif

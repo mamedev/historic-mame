@@ -18,6 +18,7 @@ void neruton_update_irq(void);
 WRITE8_HANDLER( dynax_blitter_rev2_w );
 WRITE8_HANDLER( jantouki_blitter_rev2_w );
 WRITE8_HANDLER( jantouki_blitter2_rev2_w );
+WRITE8_HANDLER( tenkai_blitter_rev2_w );
 
 
 WRITE8_HANDLER( dynax_blit_pen_w );
@@ -36,12 +37,22 @@ WRITE8_HANDLER( jantouki_layer_enable_w );
 WRITE8_HANDLER( dynax_flipscreen_w );
 WRITE8_HANDLER( dynax_extra_scrollx_w );
 WRITE8_HANDLER( dynax_extra_scrolly_w );
+WRITE8_HANDLER( dynax_blit_romregion_w );
+WRITE8_HANDLER( dynax_blit2_romregion_w );
 
 WRITE8_HANDLER( hanamai_layer_half_w );
 WRITE8_HANDLER( hnoridur_layer_half2_w );
+
 WRITE8_HANDLER( hanamai_priority_w );
+WRITE8_HANDLER( tenkai_priority_w );
+
 WRITE8_HANDLER( mjdialq2_blit_dest_w );
+WRITE8_HANDLER( tenkai_blit_dest_w );
+
 WRITE8_HANDLER( mjdialq2_layer_enable_w );
+
+WRITE8_HANDLER( tenkai_blit_palette01_w );
+WRITE8_HANDLER( tenkai_blit_palette23_w );
 
 VIDEO_START( hanamai );
 VIDEO_START( hnoridur );

@@ -12,6 +12,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winioctl.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "osd_tool.h"
 
@@ -23,6 +25,14 @@
 #ifndef INVALID_SET_FILE_POINTER
 #define INVALID_SET_FILE_POINTER 0xffffffff
 #endif
+
+struct _osd_tool_dir
+{
+	HANDLE find;
+	int is_first;
+	osd_tool_dirent ent;
+	WIN32_FIND_DATA data;
+};
 
 
 
@@ -100,6 +110,27 @@ UINT64 osd_get_file_size(const char *file)
 	/* close the file and return */
 	CloseHandle(handle);
 	return filesize;
+}
+
+
+
+static osd_tool_enttype get_attributes_enttype(DWORD attributes)
+{
+	if (attributes == 0xFFFFFFFF)
+		return ENTTYPE_NONE;
+	else if (attributes & FILE_ATTRIBUTE_DIRECTORY)
+		return ENTTYPE_DIR;
+	else
+		return ENTTYPE_FILE;
+}
+
+
+
+osd_tool_enttype osd_get_file_type(const char *filename)
+{
+	DWORD attributes;
+	attributes = GetFileAttributes(filename);
+	return get_attributes_enttype(attributes);
 }
 
 
@@ -196,3 +227,62 @@ UINT64 osd_tool_flength(osd_tool_file *file)
 }
 
 
+
+osd_tool_dir *osd_tool_opendir(const char *dirname)
+{
+	osd_tool_dir *dir = NULL;
+	char *dirfilter = NULL;
+
+	dir = malloc(sizeof(*dir));
+	if (!dir)
+		goto done;
+	memset(dir, 0, sizeof(*dir));
+	dir->find = INVALID_HANDLE_VALUE;
+	dir->is_first = TRUE;
+
+	dirfilter = malloc(strlen(dirname) + 5);
+	if (!dirfilter)
+		goto done;
+	sprintf(dirfilter, "%s\\*.*", dirname);
+
+	dir->find = FindFirstFile(dirfilter, &dir->data);
+
+done:
+	if (dirfilter)
+		free(dirfilter);
+
+	if (dir && (dir->find == INVALID_HANDLE_VALUE))
+	{
+		free(dir);
+		dir = NULL;
+	}
+	return dir;
+}
+
+
+
+const osd_tool_dirent *osd_tool_readdir(osd_tool_dir *dir)
+{
+	if (!dir->is_first)
+	{
+		if (!FindNextFile(dir->find, &dir->data))
+			return NULL;
+	}
+	else
+	{
+		dir->is_first = FALSE;
+	}
+	dir->ent.name = dir->data.cFileName;
+	dir->ent.type = get_attributes_enttype(dir->data.dwFileAttributes);
+	dir->ent.size = dir->data.nFileSizeLow | ((UINT64) dir->data.nFileSizeHigh << 32);
+	return &dir->ent;
+}
+
+
+
+void osd_tool_closedir(osd_tool_dir *dir)
+{
+	if (dir->find != INVALID_HANDLE_VALUE)
+		CloseHandle(dir->find);
+	free(dir);
+}

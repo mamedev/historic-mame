@@ -323,5 +323,5 @@ offs_t ccpu_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram
 			break;
 	}
 
-	return pc - startpc;
+	return (pc - startpc) | DASMFLAG_SUPPORTED;
 }

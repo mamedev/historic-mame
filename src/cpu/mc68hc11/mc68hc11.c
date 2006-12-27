@@ -354,22 +354,22 @@ static int hc11_execute(int cycles)
 
 /*****************************************************************************/
 
-static void mc68hc11_set_info(UINT32 state, union cpuinfo *info)
+static void mc68hc11_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_PC:							hc11.pc = info->i; break;
-		case CPUINFO_INT_REGISTER + HC11_PC:			hc11.pc = info->i; change_pc(hc11.pc); break;
-		case CPUINFO_INT_REGISTER + HC11_SP:			hc11.sp = info->i; break;
-		case CPUINFO_INT_REGISTER + HC11_A:				hc11.d.d8.a = info->i; break;
-		case CPUINFO_INT_REGISTER + HC11_B:				hc11.d.d8.b = info->i; break;
-		case CPUINFO_INT_REGISTER + HC11_IX:			hc11.ix = info->i; break;
-		case CPUINFO_INT_REGISTER + HC11_IY:			hc11.iy = info->i; break;
+		case CPUINFO_INT_PC:							hc11.pc = info->i;						break;
+		case CPUINFO_INT_REGISTER + HC11_PC:			hc11.pc = info->i; change_pc(hc11.pc);	break;
+		case CPUINFO_INT_REGISTER + HC11_SP:			hc11.sp = info->i;						break;
+		case CPUINFO_INT_REGISTER + HC11_A:				hc11.d.d8.a = info->i;					break;
+		case CPUINFO_INT_REGISTER + HC11_B:				hc11.d.d8.b = info->i;					break;
+		case CPUINFO_INT_REGISTER + HC11_IX:			hc11.ix = info->i;						break;
+		case CPUINFO_INT_REGISTER + HC11_IY:			hc11.iy = info->i;						break;
 	}
 }
 
-void mc68hc11_get_info(UINT32 state, union cpuinfo *info)
+void mc68hc11_get_info(UINT32 state, cpuinfo *info)
 {
 	switch(state)
 	{
@@ -394,22 +394,22 @@ void mc68hc11_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_INPUT_STATE:			info->i = CLEAR_LINE;	break;
+		case CPUINFO_INT_INPUT_STATE:					info->i = CLEAR_LINE;					break;
 
 		case CPUINFO_INT_PREVIOUSPC:					/* not implemented */					break;
 
 		case CPUINFO_INT_PC:	/* intentional fallthrough */
 		case CPUINFO_INT_REGISTER + HC11_PC:			info->i = hc11.pc;						break;
 		case CPUINFO_INT_REGISTER + HC11_SP:			info->i = hc11.sp;						break;
-		case CPUINFO_INT_REGISTER + HC11_A:				info->i = hc11.d.d8.a;						break;
-		case CPUINFO_INT_REGISTER + HC11_B:				info->i = hc11.d.d8.b;						break;
+		case CPUINFO_INT_REGISTER + HC11_A:				info->i = hc11.d.d8.a;					break;
+		case CPUINFO_INT_REGISTER + HC11_B:				info->i = hc11.d.d8.b;					break;
 		case CPUINFO_INT_REGISTER + HC11_IX:			info->i = hc11.ix;						break;
 		case CPUINFO_INT_REGISTER + HC11_IY:			info->i = hc11.iy;						break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = mc68hc11_set_info;		break;
-		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = hc11_get_context;		break;
-		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = hc11_set_context;		break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = hc11_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = hc11_set_context;	break;
 		case CPUINFO_PTR_INIT:							info->init = hc11_init;					break;
 		case CPUINFO_PTR_RESET:							info->reset = hc11_reset;				break;
 		case CPUINFO_PTR_EXIT:							info->exit = hc11_exit;					break;
@@ -421,14 +421,14 @@ void mc68hc11_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &hc11.icount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "MC68HC11"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Motorola MC68HC11"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2004 Ville Linde"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "MC68HC11");			break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Motorola MC68HC11");	break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C) 2004 Ville Linde"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				(hc11.ccr & CC_S) ? 'S' : '.',
 				(hc11.ccr & CC_X) ? 'X' : '.',
 				(hc11.ccr & CC_H) ? 'H' : '.',
@@ -439,11 +439,11 @@ void mc68hc11_get_info(UINT32 state, union cpuinfo *info)
 				(hc11.ccr & CC_C) ? 'C' : '.');
 			break;
 
-		case CPUINFO_STR_REGISTER + HC11_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC: %04X", hc11.pc); break;
-		case CPUINFO_STR_REGISTER + HC11_SP:			sprintf(info->s = cpuintrf_temp_str(), "SP: %04X", hc11.sp); break;
-		case CPUINFO_STR_REGISTER + HC11_A:				sprintf(info->s = cpuintrf_temp_str(), "A: %02X", hc11.d.d8.a); break;
-		case CPUINFO_STR_REGISTER + HC11_B:				sprintf(info->s = cpuintrf_temp_str(), "B: %02X", hc11.d.d8.b); break;
-		case CPUINFO_STR_REGISTER + HC11_IX:			sprintf(info->s = cpuintrf_temp_str(), "IX: %04X", hc11.ix); break;
-		case CPUINFO_STR_REGISTER + HC11_IY:			sprintf(info->s = cpuintrf_temp_str(), "IY: %04X", hc11.iy); break;
+		case CPUINFO_STR_REGISTER + HC11_PC:			sprintf(info->s, "PC: %04X", hc11.pc);	break;
+		case CPUINFO_STR_REGISTER + HC11_SP:			sprintf(info->s, "SP: %04X", hc11.sp);	break;
+		case CPUINFO_STR_REGISTER + HC11_A:				sprintf(info->s, "A: %02X", hc11.d.d8.a); break;
+		case CPUINFO_STR_REGISTER + HC11_B:				sprintf(info->s, "B: %02X", hc11.d.d8.b); break;
+		case CPUINFO_STR_REGISTER + HC11_IX:			sprintf(info->s, "IX: %04X", hc11.ix);	break;
+		case CPUINFO_STR_REGISTER + HC11_IY:			sprintf(info->s, "IY: %04X", hc11.iy);	break;
 	}
 }

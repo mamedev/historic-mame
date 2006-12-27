@@ -907,7 +907,134 @@ ROM_START( youma )
 	ROM_LOAD( "yncp-7f.bin",  0x0400, 0x0100, CRC(262d0809) SHA1(a67281af02cef082023c0d7d57e3824aeef67450) )	/* sprite palette bank */
 ROM_END
 
+ROM_START( youmab )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )	/* main cpu code */
+	ROM_LOAD( "electric1.3u", 0x00000, 0x8000, CRC(cc4fdb92) SHA1(9ce963db23f91f91e775a0b9a819f00db869120f) )
+	ROM_LOAD( "electric3.3r", 0x10000, 0x8000, CRC(c1bc7387) SHA1(ad05bff02ece515465a9506e09c252c446c8f81d) )
 
+	ROM_REGION( 0x10000, REGION_USER1, 0 )	/* main cpu code */
+	/* This rom is double the size of the original one, appears to have extra (banked) code for 0x8000 */
+	ROM_LOAD( "electric2.3t", 0x00000, 0x8000, CRC(99aee3bc) SHA1(5ffd60b959dda3fd41609c89a3486a989b1e2530) )
+
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound cpu code */
+	ROM_LOAD( "electric12.5e",  0x0000, 0x4000, CRC(3d1cd329) SHA1(6abd8e0dbecddfd67c4d358b958c850136fd3c29) )
+	ROM_LOAD( "electric13.5d",  0x4000, 0x8000, CRC(ac3a0b81) SHA1(39f2c305706e313d5256c357a3c8b57bbe45d3d7) )
+
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "electric4.3m",    0x00000, 0x8000, CRC(a1954f44) SHA1(b10a22b51bd1a02c0d7b116b4d7390003c41decf) )	/* chars */
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "electric8.1f",  0x00000, 0x8000, CRC(655f0a58) SHA1(8ffe73cec68d52c7b09651b546289613d6d4dde4) ) /* tiles */
+	ROM_LOAD( "electric9.1d",  0x08000, 0x8000, CRC(77a964c1) SHA1(47eb2d4df240e5493951b0a170cd07b2d5ecc18a) ) // different (bad?)
+	ROM_LOAD( "electric10.1b", 0x10000, 0x8000, CRC(955b5c45) SHA1(936bfe2599228dd0861bbcfe15152ac5e9b906d1) )
+	ROM_LOAD( "electric11.1a", 0x18000, 0x8000, CRC(bbd2e51c) SHA1(51bc266cf8161610204e5d98e56346b1d8d3c009) )
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "electric16.1p",  0x00000, 0x8000, CRC(8df93fed) SHA1(ef37c78d4abbdbe9f427e3d9345f52464261116d) )  /* sprites */
+	ROM_LOAD( "electric17.1m",  0x08000, 0x8000, CRC(a3efd0fc) SHA1(69d40707b0570c2f1be6247f0209ba9e60a83ed0) )
+	ROM_LOAD( "electric14.1t",  0x10000, 0x8000, CRC(bff332d3) SHA1(d277ba18034b083eaafa969d90685563994416fa) )
+	ROM_LOAD( "electric15.1r",  0x18000, 0x8000, CRC(56430ed4) SHA1(68356a0f68404ef70d8dc17d5cbdf5e1f28badcf) )
+
+	ROM_REGION( 0x8000, REGION_GFX4, 0 )	/* background tilemaps */
+	ROM_LOAD( "electric7.3a",   0x0000, 0x4000, CRC(80c20d36) SHA1(f20724754824030d62059388f3ea2224f5b7a60e) )
+	ROM_LOAD( "electric6.3b",   0x4000, 0x4000, CRC(1da7a651) SHA1(5307452058164a0bc39d144dd204627a9ead7543) )
+
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )	/* Region 3 - color data */
+	ROM_LOAD( "prom82s129.2n",  0x0000, 0x0100, CRC(ea47b91a) SHA1(9921aa1ef882fb664d85d3e065223610262ca112) )	/* red */
+	ROM_LOAD( "prom82s129.2m",  0x0100, 0x0100, CRC(e94c0fed) SHA1(68581c91e9aa485f78af6b6a5c98612372cd5b17) )	/* green */
+	ROM_LOAD( "prom82s129.2l",  0x0200, 0x0100, CRC(ffb4b287) SHA1(c3c7018e6d5e18cc2db135812d0dc3824710ab4c) )	/* blue */
+	ROM_LOAD( "prom82s129.3s",  0x0300, 0x0100, CRC(23bade78) SHA1(7e2de5eb08d888f97830807b6dbe85d09bb3b7f8) )	/* sprite lookup table */
+	ROM_LOAD( "prom82s129.1l",  0x0400, 0x0100, CRC(262d0809) SHA1(a67281af02cef082023c0d7d57e3824aeef67450) )	/* sprite palette bank */
+ROM_END
+
+
+ROM_START( youmab2 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )	/* main cpu code */
+	ROM_LOAD( "1.1d",	  0x00000, 0x8000, CRC(692ae497) SHA1(572e5a1eae9b0bb48f65dce5de2df5c5ae95a3bd) )
+	ROM_LOAD( "3.4d",     0x10000, 0x8000, CRC(ebf61afc) SHA1(30235a90e8316f5033d44d31f02cca97c64f2d5e) )
+
+	ROM_REGION( 0x10000, REGION_USER1, 0 )	/* main cpu code */
+	/* This rom is double the size of the original one, appears to have extra (banked) code for 0x8000 */
+	ROM_LOAD( "2.2d", 0x00000, 0x8000, CRC(99aee3bc) SHA1(5ffd60b959dda3fd41609c89a3486a989b1e2530) ) // same as first bootleg
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound cpu code */
+	ROM_LOAD( "11.13b",  0x0000, 0x4000, CRC(3d1cd329) SHA1(6abd8e0dbecddfd67c4d358b958c850136fd3c29) )
+	ROM_LOAD( "12.15b",  0x4000, 0x8000, CRC(ac3a0b81) SHA1(39f2c305706e313d5256c357a3c8b57bbe45d3d7) )
+
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "4.7d",    0x00000, 0x8000, CRC(a1954f44) SHA1(b10a22b51bd1a02c0d7b116b4d7390003c41decf) )	/* chars */
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "7.13f",   0x00000, 0x8000, CRC(655f0a58) SHA1(8ffe73cec68d52c7b09651b546289613d6d4dde4) ) /* tiles */
+	ROM_LOAD( "8.15f",   0x08000, 0x8000, CRC(934e1703) SHA1(451f8d01d9035d91c969cdc3fb582a00007da7df) )
+	ROM_LOAD( "9.16f",   0x10000, 0x8000, CRC(955b5c45) SHA1(936bfe2599228dd0861bbcfe15152ac5e9b906d1) )
+	ROM_LOAD( "10.18f",  0x18000, 0x8000, CRC(bbd2e51c) SHA1(51bc266cf8161610204e5d98e56346b1d8d3c009) )
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "15.4h",  0x00000, 0x8000, CRC(8df93fed) SHA1(ef37c78d4abbdbe9f427e3d9345f52464261116d) )  /* sprites */
+	ROM_LOAD( "16.6h",  0x08000, 0x8000, CRC(a3efd0fc) SHA1(69d40707b0570c2f1be6247f0209ba9e60a83ed0) )
+	ROM_LOAD( "13.1h",  0x10000, 0x8000, CRC(bff332d3) SHA1(d277ba18034b083eaafa969d90685563994416fa) )
+	ROM_LOAD( "14.3h",  0x18000, 0x8000, CRC(56430ed4) SHA1(68356a0f68404ef70d8dc17d5cbdf5e1f28badcf) )
+
+	ROM_REGION( 0x8000, REGION_GFX4, 0 )	/* background tilemaps */
+	ROM_LOAD( "6.18d",   0x0000, 0x4000, CRC(80c20d36) SHA1(f20724754824030d62059388f3ea2224f5b7a60e) )
+	ROM_LOAD( "5.17d",   0x4000, 0x4000, CRC(1da7a651) SHA1(5307452058164a0bc39d144dd204627a9ead7543) )
+
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )	/* Region 3 - color data */
+	ROM_LOAD( "pr.6e",  0x0000, 0x0100, CRC(ea47b91a) SHA1(9921aa1ef882fb664d85d3e065223610262ca112) )	/* red */
+	ROM_LOAD( "pr.7e",  0x0100, 0x0100, CRC(6d66da81) SHA1(ffdd1778ce5b7614b90b5da85589c5871405d3fe) )	/* green */ // different (bad?)
+	ROM_LOAD( "pr.8e",  0x0200, 0x0100, CRC(ffb4b287) SHA1(c3c7018e6d5e18cc2db135812d0dc3824710ab4c) )	/* blue */
+	ROM_LOAD( "pr.2e",  0x0300, 0x0100, CRC(23bade78) SHA1(7e2de5eb08d888f97830807b6dbe85d09bb3b7f8) )	/* sprite lookup table */
+	ROM_LOAD( "pr.7h",  0x0400, 0x0100, CRC(262d0809) SHA1(a67281af02cef082023c0d7d57e3824aeef67450) )	/* sprite palette bank */
+ROM_END
+
+
+WRITE8_HANDLER( youmab_extra_bank_w )
+{
+	if (data==0xff)
+	{
+		memory_set_bankptr( 2, memory_region(REGION_USER1)+0x4000 );
+	}
+	else if (data==0x00)
+	{
+		memory_set_bankptr( 2, memory_region(REGION_USER1) );
+	}
+	else
+	{
+		printf("data %03x\n",data);
+	}
+}
+
+READ8_HANDLER( youmab_8a_r )
+{
+	return mame_rand(Machine);
+}
+
+WRITE8_HANDLER( youmab_81_w )
+{
+	// ??
+}
+
+WRITE8_HANDLER( youmab_84_w )
+{
+	// ??
+}
+
+DRIVER_INIT( youmab )
+{
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x82, 0x82, 0, 0, youmab_extra_bank_w); // banks rom at 0x8000? writes 0xff and 0x00 before executing code there
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xbfff, 0, 0, MRA8_BANK2);
+	memory_set_bankptr( 2, memory_region(REGION_USER1) );
+
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x81, 0x81, 0, 0, youmab_81_w); // ?? often, alternating values
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x84, 0x84, 0, 0, youmab_84_w); // ?? often, sequence..
+
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd800, 0xd81f, 0, 0, MWA8_NOP); // scrolling isn't here..
+
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x8a, 0x8a, 0, 0, youmab_8a_r); // ???
+
+}
 
 GAME( 1985, galivan,  0,        galivan,  galivan,  0, ROT270, "Nichibutsu", "Galivan - Cosmo Police (12/16/1985)", GAME_SUPPORTS_SAVE )
 GAME( 1985, galivan2, galivan,  galivan,  galivan,  0, ROT270, "Nichibutsu", "Galivan - Cosmo Police (12/11/1985)", GAME_SUPPORTS_SAVE )
@@ -916,4 +1043,6 @@ GAME( 1986, dangar2,  dangar,   galivan,  dangar2,  0, ROT270, "Nichibutsu", "Da
 GAME( 1986, dangarb,  dangar,   galivan,  dangarb,  0, ROT270, "bootleg", "Dangar - Ufo Robo (bootleg)", GAME_SUPPORTS_SAVE )
 GAME( 1986, ninjemak, 0,        ninjemak, ninjemak, 0, ROT270, "Nichibutsu", "Ninja Emaki (US)", GAME_SUPPORTS_SAVE )
 GAME( 1986, youma,    ninjemak, ninjemak, ninjemak, 0, ROT270, "Nichibutsu", "Youma Ninpou Chou (Japan)", GAME_SUPPORTS_SAVE )
+GAME( 1986, youmab,   ninjemak, ninjemak, ninjemak, youmab, ROT270, "bootleg", "Youma Ninpou Chou (Game Electronics bootleg, set 1)", GAME_NOT_WORKING|GAME_SUPPORTS_SAVE ) // scrolling doesn't work
+GAME( 1986, youmab2,  ninjemak, ninjemak, ninjemak, youmab, ROT270, "bootleg", "Youma Ninpou Chou (Game Electronics bootleg, set 2)", GAME_NOT_WORKING|GAME_SUPPORTS_SAVE ) // scrolling doesn't work
 

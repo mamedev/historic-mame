@@ -6,6 +6,6 @@
 #include "v30intrf.h"
 
 /* Public functions */
-void v20_get_info(UINT32 state, union cpuinfo *info);
+void v20_get_info(UINT32 state, cpuinfo *info);
 
 #endif

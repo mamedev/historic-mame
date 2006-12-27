@@ -248,7 +248,7 @@ static READ8_HANDLER( devram_r )
            that would reset the main cpu. We avoid this and patch
            the rom instead (main cpu has to be reset once at startup) */
 		case 0xfe0:
-			return 0/*watchdog_reset_r(0)*/;
+			return watchdog_reset_r(0);
 
 		/* Reading a word at eff2 probably yelds the product
            of the words written to eff0 and eff2 */
@@ -367,7 +367,7 @@ static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
 	AM_RANGE(0xc000, 0xcfff) AM_RAM AM_BASE(&spriteram)
 	AM_RANGE(0xd000, 0xdfff) AM_RAM
-	AM_RANGE(0xe000, 0xefff) AM_RAM AM_READ(devram_r) AM_BASE(&devram)
+	AM_RANGE(0xe000, 0xefff) AM_RAM AM_BASE(&devram) // shared with protection device
 	AM_RANGE(0xf000, 0xffff) AM_RAM AM_SHARE(1)
 ADDRESS_MAP_END
 
@@ -528,7 +528,20 @@ INPUT_PORTS_END
 
 /* Graphics Layout */
 
-static const gfx_layout gfxlayout =
+static const gfx_layout tile_gfxlayout =
+{
+	16, 16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{  1*4, 0*4, 3*4, 2*4, 5*4, 4*4, 7*4, 6*4,
+	   1*4+32*8, 0*4+32*8, 3*4+32*8, 2*4+32*8, 5*4+32*8, 4*4+32*8, 7*4+32*8, 6*4+32*8 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+	  0*32+64*8, 1*32+64*8, 2*32+64*8, 3*32+64*8, 4*32+64*8, 5*32+64*8, 6*32+64*8, 7*32+64*8 },
+	16*16*4
+};
+
+static const gfx_layout sprite_gfxlayout =
 {
 	16, 16,
 	RGN_FRAC(1,1),
@@ -545,8 +558,8 @@ static const gfx_layout gfxlayout =
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &gfxlayout,   0, 32 }, // tiles
-	{ REGION_GFX2, 0, &gfxlayout, 512, 16 }, // sprites
+	{ REGION_GFX1, 0, &tile_gfxlayout,   0, 32 }, // tiles
+	{ REGION_GFX2, 0, &sprite_gfxlayout, 512, 16 }, // sprites
 	{ -1 }
 };
 
@@ -610,6 +623,7 @@ static MACHINE_DRIVER_START( airbustr )
 	MDRV_INTERLEAVE(100)	// Palette RAM is filled by sub cpu with data supplied by main cpu
 							// Maybe a high value is safer in order to avoid glitches
 	MDRV_MACHINE_RESET(airbustr)
+	MDRV_WATCHDOG_VBLANK_INIT(DEFAULT_60HZ_3S_VBLANK_WATCHDOG)
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -635,6 +649,12 @@ static MACHINE_DRIVER_START( airbustr )
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( airbusb )
+	MDRV_IMPORT_FROM(airbustr)
+	MDRV_WATCHDOG_VBLANK_INIT(0) // no protection device or watchdog
+MACHINE_DRIVER_END
+
 
 /* ROMs */
 
@@ -686,51 +706,64 @@ ROM_START( airbustj )
 	ROM_LOAD( "pr-200.bin", 0x00000, 0x40000, CRC(a4dd3390) SHA1(2d72b46b4979857f6b66489bebda9f48799f59cf) )
 ROM_END
 
+/*
+
+Differences with the original (when running on the bootleg hardware):
+
+no title screen
+long attract modes of every level
+slow downs with corrupted screen (you can see the screen being redrawn!) when there are many sprites
+
+the board has 2 oscillators (12 and 16 mhz).  Rom 1 and 2 are program roms. 3 and 4 for sound.
+Rom 5 is on a piggyback daughterboard with a z80 and a PAL
+
+*/
+
+ROM_START( airbusb )
+	ROM_REGION( 0x24000, REGION_CPU1, 0 )
+	ROM_LOAD( "5.bin",   0x00000, 0x0c000, CRC(9e4216a2) SHA1(46572da4df5a67b10cc3ee21bdc0ec4bcecaaf93) )
+	ROM_CONTINUE(           0x10000, 0x14000 )
+
+	ROM_REGION( 0x24000, REGION_CPU2, 0 )
+	ROM_LOAD( "1.bin",   0x00000, 0x0c000, CRC(85464124) SHA1(8cce8dfdede48032c40d5f155fd58061866668de) )
+	ROM_CONTINUE(           0x10000, 0x14000 )
+
+	ROM_REGION( 0x24000, REGION_CPU3, 0 )
+	ROM_LOAD( "2.bin",  0x00000, 0x0c000, CRC(6e0a5df0) SHA1(616b7c7aaf52a9a55b63c60717c1866940635cd4) )
+	ROM_CONTINUE(           0x10000, 0x14000 )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	/* Same content as airbusj, pr-001.bin, different sized roms / interleave */
+	ROM_LOAD16_BYTE( "7.bin", 0x00000, 0x20000, CRC(2e3bf0a2) SHA1(84cabc753e5fd1164f0a8a9a9dee7d339a5607c5) )
+	ROM_LOAD16_BYTE( "9.bin", 0x00001, 0x20000, CRC(2c23c646) SHA1(41c0f8788c9715918b4138f076415f8640adc483) )
+	ROM_LOAD16_BYTE( "6.bin", 0x40000, 0x20000, CRC(0d6cd470) SHA1(329286bc6c9d1eccc74735d1c155a0f5f98f1444) )
+	ROM_LOAD16_BYTE( "8.bin", 0x40001, 0x20000, CRC(b3372e51) SHA1(aa8dcbb84c829994ae04ceecbef795ac53e72493) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	/* Same content as airbusj, pr-001.bin, different sized roms */
+	ROM_LOAD( "13.bin", 0x00000, 0x20000, CRC(75dee86d) SHA1(fe342fed5bb84ee6f35d3f91987141c559e94d5a) )
+	ROM_LOAD( "12.bin", 0x20000, 0x20000, CRC(c98a8333) SHA1(3a990460e232ee07a9297fcffdb02451406f5bf1) )
+	ROM_LOAD( "11.bin", 0x40000, 0x20000, CRC(4e9baebd) SHA1(6cf878a3fb3d344e3f5f4d031fbde6f14b653636) )
+	ROM_LOAD( "10.bin", 0x60000, 0x20000, CRC(63dc8cd8) SHA1(4b466a8ede4211fa3f51572b223eba8766990d7a) )
+
+	ROM_LOAD( "14.bin", 0x80000, 0x10000, CRC(6bbd5e46) SHA1(26563737f3f91ee0a056d35ce42217bb57d8a081) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* OKI-M6295 samples */
+	/* Same content as airbusj, pr-200.bin, different sized roms */
+	ROM_LOAD( "4.bin", 0x00000, 0x20000, CRC(21d9bfe3) SHA1(4a69458cd2a6309e389c9e7593ae29d3ef0f8daf) )
+	ROM_LOAD( "3.bin", 0x20000, 0x20000, CRC(58cd19e2) SHA1(479f22241bf29f7af67d9679fc6c20f10004fdd8) )
+ROM_END
+
 /* Driver Initialization */
 
 DRIVER_INIT( airbustr )
 {
-	int i;
-	UINT8 *ROM = memory_region(REGION_GFX1);
-
-	// One gfx rom seems to have scrambled data (bad read?): let's swap even and odd nibbles
-	for (i = 0; i < 0x80000; i++)
-	{
-		ROM[i] = ((ROM[i] & 0xf0) >> 4) + ((ROM[i] & 0x0f) << 4);
-	}
-
-	// Startup check. We need a reset so I patch a busy loop with jp 0
-	ROM = memory_region(REGION_CPU1);
-	ROM[0x37e4] = 0x00;
-	ROM[0x37e5] = 0x00;
-
-	// Include EI in the busy loop. It's a hack to repair nested nmi troubles
-	ROM = memory_region(REGION_CPU2);
-	ROM[0x0258] = 0x53;
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xefff, 0, 0, devram_r); // protection device lives here
 }
 
-DRIVER_INIT( airbustj )
-{
-	int i;
-	UINT8 *ROM = memory_region(REGION_GFX1);
-
-	// One gfx rom seems to have scrambled data (bad read?): let's swap even and odd nibbles
-	for (i = 0; i < 0x80000; i++)
-	{
-		ROM[i] = ((ROM[i] & 0xf0) >> 4) + ((ROM[i] & 0x0f) << 4);
-	}
-
-	// Startup check. We need a reset so I patch a busy loop with jp 0
-	ROM = memory_region(REGION_CPU1);
-	ROM[0x37f4] = 0x00;
-	ROM[0x37f5] = 0x00;
-
-	// Include EI in the busy loop. It's a hack to repair nested nmi troubles
-	ROM = memory_region(REGION_CPU2);
-	ROM[0x0258] = 0x53;
-}
 
 /* Game Drivers */
 
 GAME( 1990, airbustr, 0,        airbustr, airbustr, airbustr, ROT0, "Kaneko (Namco license)", "Air Buster: Trouble Specialty Raid Unit (World)" , 0)	// 891220
-GAME( 1990, airbustj, airbustr, airbustr, airbustj, airbustj, ROT0, "Kaneko (Namco license)", "Air Buster: Trouble Specialty Raid Unit (Japan)" , 0)	// 891229
+GAME( 1990, airbustj, airbustr, airbustr, airbustj, airbustr, ROT0, "Kaneko (Namco license)", "Air Buster: Trouble Specialty Raid Unit (Japan)" , 0)	// 891229
+GAME( 1990, airbusb,  airbustr, airbusb,  airbustj, 0,        ROT0, "bootleg", "Air Buster: Trouble Specialty Raid Unit (bootleg)" , 0)	// based on Japan set (891229)

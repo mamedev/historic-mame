@@ -1078,7 +1078,7 @@ void m37710_init(int index, int clock, const void *config, int (*irqcallback)(in
  * Generic set_info
  **************************************************************************/
 
-static void m37710_set_info(UINT32 state, union cpuinfo *info)
+static void m37710_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1097,8 +1097,8 @@ static void m37710_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERB1TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
 		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERB2TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
 
-		case CPUINFO_INT_PC:					REG_PB = info->i & 0xff0000; m37710_set_pc(info->i & 0xffff);	break;
-		case CPUINFO_INT_SP:					m37710_set_sp(info->i);	     			break;
+		case CPUINFO_INT_PC:							REG_PB = info->i & 0xff0000; m37710_set_pc(info->i & 0xffff); break;
+		case CPUINFO_INT_SP:							m37710_set_sp(info->i);	     			break;
 
 		case CPUINFO_INT_REGISTER + M37710_PC:			m37710_set_reg(M37710_PC, info->i);		break;
 		case CPUINFO_INT_REGISTER + M37710_S:			m37710_set_reg(M37710_S, info->i);		break;
@@ -1110,8 +1110,8 @@ static void m37710_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M37710_DB:			m37710_set_reg(M37710_DB, info->i);		break;
 		case CPUINFO_INT_REGISTER + M37710_D:			m37710_set_reg(M37710_D, info->i);		break;
 		case CPUINFO_INT_REGISTER + M37710_E:			m37710_set_reg(M37710_E, info->i);		break;
-		case CPUINFO_INT_REGISTER + M37710_NMI_STATE:		m37710_set_reg(M37710_NMI_STATE, info->i); break;
-		case CPUINFO_INT_REGISTER + M37710_IRQ_STATE:		m37710_set_reg(M37710_IRQ_STATE, info->i); break;
+		case CPUINFO_INT_REGISTER + M37710_NMI_STATE:	m37710_set_reg(M37710_NMI_STATE, info->i); break;
+		case CPUINFO_INT_REGISTER + M37710_IRQ_STATE:	m37710_set_reg(M37710_IRQ_STATE, info->i); break;
 	}
 }
 
@@ -1125,53 +1125,53 @@ ADDRESS_MAP_END
  * Generic get_info
  **************************************************************************/
 
-void m37710_get_info(UINT32 state, union cpuinfo *info)
+void m37710_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(m37710i_cpu);			break;
-		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:				info->i = 0;					break;
-		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;				break;
-		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;					break;
-		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:				info->i = 1;					break;
-		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:				info->i = 5;					break;
-		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;					break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 6;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 20; /* rough guess */			break;
-		case CPUINFO_INT_INPUT_LINES:        				info->i = M37710_LINE_MAX;                      break;
+		case CPUINFO_INT_INPUT_LINES:        			info->i = M37710_LINE_MAX;				break;
 
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;				break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;				break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;				break;
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;				break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;				break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;				break;
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:	info->i = 8;				break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 	info->i = 16;				break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 	info->i = 0;				break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ0: 	info->i = 0;				break;
-		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ1: 	info->i = 0;				break;
-		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ2: 	info->i = 0;				break;
-		case CPUINFO_INT_INPUT_STATE + M37710_LINE_RESET:	info->i = 0;				break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ0: 	info->i = 0;						break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ1: 	info->i = 0;						break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ2: 	info->i = 0;						break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_RESET:	info->i = 0;						break;
 
-		case CPUINFO_INT_PREVIOUSPC:				info->i = REG_PPC;			break;
-		case CPUINFO_INT_PC:	 				info->i = (REG_PB | REG_PC);		break;
-		case CPUINFO_INT_SP:					info->i = m37710_get_sp();		break;
+		case CPUINFO_INT_PREVIOUSPC:					info->i = REG_PPC;						break;
+		case CPUINFO_INT_PC:	 						info->i = (REG_PB | REG_PC);			break;
+		case CPUINFO_INT_SP:							info->i = m37710_get_sp();				break;
 
 		case CPUINFO_INT_REGISTER + M37710_PC:			info->i = m37710_get_reg(M37710_PC);	break;
-		case CPUINFO_INT_REGISTER + M37710_S:			info->i = m37710_get_reg(M37710_S);	break;
-		case CPUINFO_INT_REGISTER + M37710_P:			info->i = m37710_get_reg(M37710_P) | (m37710i_cpu.ipl<<8);	break;
-		case CPUINFO_INT_REGISTER + M37710_A:			info->i = m37710_get_reg(M37710_A);	break;
-		case CPUINFO_INT_REGISTER + M37710_B:			info->i = m37710_get_reg(M37710_B);	break;
-		case CPUINFO_INT_REGISTER + M37710_X:			info->i = m37710_get_reg(M37710_X);	break;
-		case CPUINFO_INT_REGISTER + M37710_Y:			info->i = m37710_get_reg(M37710_Y);	break;
+		case CPUINFO_INT_REGISTER + M37710_S:			info->i = m37710_get_reg(M37710_S);		break;
+		case CPUINFO_INT_REGISTER + M37710_P:			info->i = m37710_get_reg(M37710_P) | (m37710i_cpu.ipl<<8); break;
+		case CPUINFO_INT_REGISTER + M37710_A:			info->i = m37710_get_reg(M37710_A);		break;
+		case CPUINFO_INT_REGISTER + M37710_B:			info->i = m37710_get_reg(M37710_B);		break;
+		case CPUINFO_INT_REGISTER + M37710_X:			info->i = m37710_get_reg(M37710_X);		break;
+		case CPUINFO_INT_REGISTER + M37710_Y:			info->i = m37710_get_reg(M37710_Y);		break;
 		case CPUINFO_INT_REGISTER + M37710_PB:			info->i = m37710_get_reg(M37710_PB);	break;
 		case CPUINFO_INT_REGISTER + M37710_DB:			info->i = m37710_get_reg(M37710_DB);	break;
-		case CPUINFO_INT_REGISTER + M37710_D:			info->i = m37710_get_reg(M37710_D);	break;
-		case CPUINFO_INT_REGISTER + M37710_E:			info->i = m37710_get_reg(M37710_E);	break;
-		case CPUINFO_INT_REGISTER + M37710_NMI_STATE:	info->i = m37710_get_reg(M37710_NMI_STATE); 	break;
-		case CPUINFO_INT_REGISTER + M37710_IRQ_STATE:	info->i = m37710_get_reg(M37710_IRQ_STATE); 	break;
+		case CPUINFO_INT_REGISTER + M37710_D:			info->i = m37710_get_reg(M37710_D);		break;
+		case CPUINFO_INT_REGISTER + M37710_E:			info->i = m37710_get_reg(M37710_E);		break;
+		case CPUINFO_INT_REGISTER + M37710_NMI_STATE:	info->i = m37710_get_reg(M37710_NMI_STATE); break;
+		case CPUINFO_INT_REGISTER + M37710_IRQ_STATE:	info->i = m37710_get_reg(M37710_IRQ_STATE); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = m37710_set_info;		break;
@@ -1188,18 +1188,18 @@ void m37710_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m37710_ICount;			break;
 
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_m37710_internal_map; break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:    info->internal_map = 0; break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_IO:      info->internal_map = 0; break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:    info->internal_map = 0;	break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_IO:      info->internal_map = 0;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:						strcpy(info->s = cpuintrf_temp_str(), "M37710"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "M7700"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.2"); break;
-		case CPUINFO_STR_CORE_FILE:					strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 2004-2006 R. Belmont, based on G65816 by Karl Stenerud"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M37710");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "M7700");				break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.2");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (c) 2004-2006 R. Belmont, based on G65816 by Karl Stenerud"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				m37710i_cpu.flag_n & NFLAG_SET ? 'N':'.',
 				m37710i_cpu.flag_v & VFLAG_SET ? 'V':'.',
 				m37710i_cpu.flag_m & MFLAG_SET ? 'M':'.',
@@ -1210,12 +1210,12 @@ void m37710_get_info(UINT32 state, union cpuinfo *info)
 				m37710i_cpu.flag_c & CFLAG_SET ? 'C':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + M37710_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", m37710i_cpu.pc); break;
-		case CPUINFO_STR_REGISTER + M37710_PB:			sprintf(info->s = cpuintrf_temp_str(), "PB:%02X", m37710i_cpu.pb>>16); break;
-		case CPUINFO_STR_REGISTER + M37710_DB:			sprintf(info->s = cpuintrf_temp_str(), "DB:%02X", m37710i_cpu.db>>16); break;
-		case CPUINFO_STR_REGISTER + M37710_D:			sprintf(info->s = cpuintrf_temp_str(), "D:%04X", m37710i_cpu.d); break;
-		case CPUINFO_STR_REGISTER + M37710_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%04X", m37710i_cpu.s); break;
-		case CPUINFO_STR_REGISTER + M37710_P:			sprintf(info->s = cpuintrf_temp_str(), "P:%04X",
+		case CPUINFO_STR_REGISTER + M37710_PC:			sprintf(info->s, "PC:%04X", m37710i_cpu.pc); break;
+		case CPUINFO_STR_REGISTER + M37710_PB:			sprintf(info->s, "PB:%02X", m37710i_cpu.pb>>16); break;
+		case CPUINFO_STR_REGISTER + M37710_DB:			sprintf(info->s, "DB:%02X", m37710i_cpu.db>>16); break;
+		case CPUINFO_STR_REGISTER + M37710_D:			sprintf(info->s, "D:%04X", m37710i_cpu.d); break;
+		case CPUINFO_STR_REGISTER + M37710_S:			sprintf(info->s, "S:%04X", m37710i_cpu.s); break;
+		case CPUINFO_STR_REGISTER + M37710_P:			sprintf(info->s, "P:%04X",
 																 (m37710i_cpu.flag_n&0x80)		|
 																((m37710i_cpu.flag_v>>1)&0x40)	|
 																m37710i_cpu.flag_m				|
@@ -1224,21 +1224,21 @@ void m37710_get_info(UINT32 state, union cpuinfo *info)
 																m37710i_cpu.flag_i				|
 																((!m37710i_cpu.flag_z)<<1)		|
 																((m37710i_cpu.flag_c>>8)&1) | (m37710i_cpu.ipl<<8)); break;
-		case CPUINFO_STR_REGISTER + M37710_E:			sprintf(info->s = cpuintrf_temp_str(), "E:%d", m37710i_cpu.flag_e); break;
-		case CPUINFO_STR_REGISTER + M37710_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%04X", m37710i_cpu.a | m37710i_cpu.b); break;
-		case CPUINFO_STR_REGISTER + M37710_B:			sprintf(info->s = cpuintrf_temp_str(), "B:%04X", m37710i_cpu.ba | m37710i_cpu.bb); break;
-		case CPUINFO_STR_REGISTER + M37710_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%04X", m37710i_cpu.x); break;
-		case CPUINFO_STR_REGISTER + M37710_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%04X", m37710i_cpu.y); break;
-		case CPUINFO_STR_REGISTER + M37710_IRQ_STATE:	sprintf(info->s = cpuintrf_temp_str(), "IRQ:%X", m37710i_cpu.line_irq); break;
+		case CPUINFO_STR_REGISTER + M37710_E:			sprintf(info->s, "E:%d", m37710i_cpu.flag_e); break;
+		case CPUINFO_STR_REGISTER + M37710_A:			sprintf(info->s, "A:%04X", m37710i_cpu.a | m37710i_cpu.b); break;
+		case CPUINFO_STR_REGISTER + M37710_B:			sprintf(info->s, "B:%04X", m37710i_cpu.ba | m37710i_cpu.bb); break;
+		case CPUINFO_STR_REGISTER + M37710_X:			sprintf(info->s, "X:%04X", m37710i_cpu.x); break;
+		case CPUINFO_STR_REGISTER + M37710_Y:			sprintf(info->s, "Y:%04X", m37710i_cpu.y); break;
+		case CPUINFO_STR_REGISTER + M37710_IRQ_STATE:	sprintf(info->s, "IRQ:%X", m37710i_cpu.line_irq); break;
 	}
 }
 
 // 37702 is identical except with an internal ROM, so just change the name
-void m37702_get_info(UINT32 state, union cpuinfo *info)
+void m37702_get_info(UINT32 state, cpuinfo *info)
 {
 	if (state == CPUINFO_STR_NAME)
 	{
-		strcpy(info->s = cpuintrf_temp_str(), "M37702");
+		strcpy(info->s, "M37702");
 		return;
 	}
 

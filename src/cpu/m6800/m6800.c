@@ -2187,14 +2187,14 @@ static WRITE8_HANDLER( m6803_internal_registers_w )
  * Generic set_info
  **************************************************************************/
 
-static void m6800_set_info(UINT32 state, union cpuinfo *info)
+static void m6800_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_INPUT_STATE + M6800_IRQ_LINE:set_irq_line(M6800_IRQ_LINE, info->i);		break;
-		case CPUINFO_INT_INPUT_STATE + M6800_TIN_LINE:set_irq_line(M6800_TIN_LINE, info->i);		break;
-		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:set_irq_line(INPUT_LINE_NMI, info->i);		break;
+		case CPUINFO_INT_INPUT_STATE + M6800_IRQ_LINE:	set_irq_line(M6800_IRQ_LINE, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + M6800_TIN_LINE:	set_irq_line(M6800_TIN_LINE, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	set_irq_line(INPUT_LINE_NMI, info->i);	break;
 
 		case CPUINFO_INT_PC:							PC = info->i; CHANGE_PC();				break;
 		case CPUINFO_INT_REGISTER + M6800_PC:			m6800.pc.w.l = info->i;					break;
@@ -2213,7 +2213,7 @@ static void m6800_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void m6800_get_info(UINT32 state, union cpuinfo *info)
+void m6800_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -2269,14 +2269,14 @@ void m6800_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6800_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6800"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Motorola 6800"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.1"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "The MAME team."); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M6800");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Motorola 6800");		break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.1");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "The MAME team.");		break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				m6800.cc & 0x80 ? '?':'.',
 				m6800.cc & 0x40 ? '?':'.',
 				m6800.cc & 0x20 ? 'H':'.',
@@ -2287,13 +2287,13 @@ void m6800_get_info(UINT32 state, union cpuinfo *info)
 				m6800.cc & 0x01 ? 'C':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + M6800_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", m6800.d.b.h); break;
-		case CPUINFO_STR_REGISTER + M6800_B:			sprintf(info->s = cpuintrf_temp_str(), "B:%02X", m6800.d.b.l); break;
-		case CPUINFO_STR_REGISTER + M6800_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", m6800.pc.w.l); break;
-		case CPUINFO_STR_REGISTER + M6800_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%04X", m6800.s.w.l); break;
-		case CPUINFO_STR_REGISTER + M6800_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%04X", m6800.x.w.l); break;
-		case CPUINFO_STR_REGISTER + M6800_CC:			sprintf(info->s = cpuintrf_temp_str(), "CC:%02X", m6800.cc); break;
-		case CPUINFO_STR_REGISTER + M6800_WAI_STATE:	sprintf(info->s = cpuintrf_temp_str(), "WAI:%X", m6800.wai_state); break;
+		case CPUINFO_STR_REGISTER + M6800_A:			sprintf(info->s, "A:%02X", m6800.d.b.h); break;
+		case CPUINFO_STR_REGISTER + M6800_B:			sprintf(info->s, "B:%02X", m6800.d.b.l); break;
+		case CPUINFO_STR_REGISTER + M6800_PC:			sprintf(info->s, "PC:%04X", m6800.pc.w.l); break;
+		case CPUINFO_STR_REGISTER + M6800_S:			sprintf(info->s, "S:%04X", m6800.s.w.l); break;
+		case CPUINFO_STR_REGISTER + M6800_X:			sprintf(info->s, "X:%04X", m6800.x.w.l); break;
+		case CPUINFO_STR_REGISTER + M6800_CC:			sprintf(info->s, "CC:%02X", m6800.cc); break;
+		case CPUINFO_STR_REGISTER + M6800_WAI_STATE:	sprintf(info->s, "WAI:%X", m6800.wai_state); break;
 	}
 }
 
@@ -2303,7 +2303,7 @@ void m6800_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void m6801_get_info(UINT32 state, union cpuinfo *info)
+void m6801_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -2319,11 +2319,9 @@ void m6801_get_info(UINT32 state, union cpuinfo *info)
 #endif /* MAME_DEBUG */
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6801"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M6801");				break;
 
-		default:
-			m6800_get_info(state, info);
-			break;
+		default:										m6800_get_info(state, info);			break;
 	}
 }
 #endif
@@ -2334,7 +2332,7 @@ void m6801_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void m6802_get_info(UINT32 state, union cpuinfo *info)
+void m6802_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -2345,11 +2343,9 @@ void m6802_get_info(UINT32 state, union cpuinfo *info)
 #endif /* MAME_DEBUG */
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6802"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M6802");				break;
 
-		default:
-			m6800_get_info(state, info);
-			break;
+		default:										m6800_get_info(state, info);			break;
 	}
 }
 #endif
@@ -2360,7 +2356,7 @@ void m6802_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void m6803_get_info(UINT32 state, union cpuinfo *info)
+void m6803_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -2378,11 +2374,9 @@ void m6803_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = construct_map_m6803_mem; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6803"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M6803");				break;
 
-		default:
-			m6800_get_info(state, info);
-			break;
+		default:										m6800_get_info(state, info);			break;
 	}
 }
 #endif
@@ -2393,7 +2387,7 @@ void m6803_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void m6808_get_info(UINT32 state, union cpuinfo *info)
+void m6808_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -2404,11 +2398,9 @@ void m6808_get_info(UINT32 state, union cpuinfo *info)
 #endif /* MAME_DEBUG */
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6808"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M6808");				break;
 
-		default:
-			m6800_get_info(state, info);
-			break;
+		default:										m6800_get_info(state, info);			break;
 	}
 }
 #endif
@@ -2419,7 +2411,7 @@ void m6808_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void hd63701_get_info(UINT32 state, union cpuinfo *info)
+void hd63701_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -2435,11 +2427,9 @@ void hd63701_get_info(UINT32 state, union cpuinfo *info)
 #endif /* MAME_DEBUG */
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "HD63701"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "HD63701");				break;
 
-		default:
-			m6800_get_info(state, info);
-			break;
+		default:										m6800_get_info(state, info);			break;
 	}
 }
 #endif
@@ -2450,7 +2440,7 @@ void hd63701_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void nsc8105_get_info(UINT32 state, union cpuinfo *info)
+void nsc8105_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -2462,11 +2452,9 @@ void nsc8105_get_info(UINT32 state, union cpuinfo *info)
 #endif /* MAME_DEBUG */
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "NSC8105"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "NSC8105");				break;
 
-		default:
-			m6800_get_info(state, info);
-			break;
+		default:										m6800_get_info(state, info);			break;
 	}
 }
 #endif

@@ -307,7 +307,7 @@ typedef UINT8 (* SPU_RX_HANDLER)(void);
 typedef void  (* SPU_TX_HANDLER)(UINT8);
 typedef void (* PPC_DMA_HANDLER)(int);
 
-void ppc403_get_info(UINT32 state, union cpuinfo *info);
+void ppc403_get_info(UINT32 state, cpuinfo *info);
 void ppc403_spu_rx(UINT8 data);
 void ppc403_install_spu_rx_handler(SPU_RX_HANDLER rx_handler);
 void ppc403_install_spu_tx_handler(SPU_TX_HANDLER tx_handler);
@@ -323,15 +323,15 @@ void ppc403_install_dma_write_handler(int ch, PPC_DMA_HANDLER dma_handler, UINT8
 #endif
 
 #if (HAS_PPC403)
-void ppc403_get_info(UINT32 state, union cpuinfo *info);
+void ppc403_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_PPC602)
-void ppc602_get_info(UINT32 state, union cpuinfo *info);
+void ppc602_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_PPC603)
-void ppc603_get_info(UINT32 state, union cpuinfo *info);
+void ppc603_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #ifdef MAME_DEBUG

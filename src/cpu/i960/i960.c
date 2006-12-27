@@ -2034,7 +2034,7 @@ static void set_irq_line(int irqline, int state)
 	}
 }
 
-static void i960_set_info(UINT32 state, union cpuinfo *info)
+static void i960_set_info(UINT32 state, cpuinfo *info)
 {
 	if(state >= CPUINFO_INT_REGISTER+I960_R0 && state <= CPUINFO_INT_REGISTER + I960_G15) {
 		i960.r[state - (CPUINFO_INT_REGISTER + I960_R0)] = info->i;
@@ -2043,11 +2043,11 @@ static void i960_set_info(UINT32 state, union cpuinfo *info)
 
 	switch(state) {
 		// Interfacing
-	case CPUINFO_INT_REGISTER+I960_IP: i960.IP = info->i; change_pc(i960.IP); 	break;
-	case CPUINFO_INT_INPUT_STATE + I960_IRQ0:set_irq_line(I960_IRQ0, info->i);		break;
-	case CPUINFO_INT_INPUT_STATE + I960_IRQ1:set_irq_line(I960_IRQ1, info->i);		break;
-	case CPUINFO_INT_INPUT_STATE + I960_IRQ2:set_irq_line(I960_IRQ2, info->i);		break;
-	case CPUINFO_INT_INPUT_STATE + I960_IRQ3:set_irq_line(I960_IRQ3, info->i);		break;
+	case CPUINFO_INT_REGISTER + I960_IP:		i960.IP = info->i; change_pc(i960.IP);	break;
+	case CPUINFO_INT_INPUT_STATE + I960_IRQ0:	set_irq_line(I960_IRQ0, info->i);		break;
+	case CPUINFO_INT_INPUT_STATE + I960_IRQ1:	set_irq_line(I960_IRQ1, info->i);		break;
+	case CPUINFO_INT_INPUT_STATE + I960_IRQ2:	set_irq_line(I960_IRQ2, info->i);		break;
+	case CPUINFO_INT_INPUT_STATE + I960_IRQ3:	set_irq_line(I960_IRQ3, info->i);		break;
 
 	default:
 		fatalerror("i960_set_info %x", state);
@@ -2105,7 +2105,7 @@ static void i960_reset(void)
 	i960.rcache_pos = 0;
 }
 
-void i960_get_info(UINT32 state, union cpuinfo *info)
+void i960_get_info(UINT32 state, cpuinfo *info)
 {
 	if(state >= CPUINFO_INT_REGISTER+I960_R0 && state <= CPUINFO_INT_REGISTER + I960_G15) {
 		info->i = i960.r[state - (CPUINFO_INT_REGISTER + I960_R0)];
@@ -2114,102 +2114,102 @@ void i960_get_info(UINT32 state, union cpuinfo *info)
 
 	switch(state) {
 		// Interface functions and variables
-	case CPUINFO_PTR_SET_INFO:            info->setinfo     = i960_set_info;      break;
-	case CPUINFO_PTR_GET_CONTEXT:         info->getcontext  = i960_get_context;   break;
-	case CPUINFO_PTR_SET_CONTEXT:         info->setcontext  = i960_set_context;   break;
-	case CPUINFO_PTR_INIT:                info->init        = i960_init;          break;
-	case CPUINFO_PTR_RESET:               info->reset       = i960_reset;         break;
-	case CPUINFO_PTR_EXIT:                info->exit        = 0;                  break;
-	case CPUINFO_PTR_EXECUTE:             info->execute     = i960_execute;       break;
-	case CPUINFO_PTR_BURN:                info->burn        = 0;                  break;
+	case CPUINFO_PTR_SET_INFO:					info->setinfo     = i960_set_info;				break;
+	case CPUINFO_PTR_GET_CONTEXT:				info->getcontext  = i960_get_context;			break;
+	case CPUINFO_PTR_SET_CONTEXT:				info->setcontext  = i960_set_context;			break;
+	case CPUINFO_PTR_INIT:						info->init        = i960_init;					break;
+	case CPUINFO_PTR_RESET:						info->reset       = i960_reset;					break;
+	case CPUINFO_PTR_EXIT:						info->exit        = 0;							break;
+	case CPUINFO_PTR_EXECUTE:					info->execute     = i960_execute;				break;
+	case CPUINFO_PTR_BURN:						info->burn        = 0;							break;
 #ifdef MAME_DEBUG
-	case CPUINFO_PTR_DISASSEMBLE:         info->disassemble = i960_disasm;        break;
+	case CPUINFO_PTR_DISASSEMBLE:				info->disassemble = i960_disasm;				break;
 #endif /* MAME_DEBUG */
-	case CPUINFO_PTR_INSTRUCTION_COUNTER: info->icount      = &i960_icount;       break;
-	case CPUINFO_INT_CONTEXT_SIZE:        info->i           = sizeof(i960_state); break;
-	case CPUINFO_INT_MIN_INSTRUCTION_BYTES: info->i = 4;							break;
-	case CPUINFO_INT_MAX_INSTRUCTION_BYTES: info->i = 8;							break;
+	case CPUINFO_PTR_INSTRUCTION_COUNTER:		info->icount      = &i960_icount;				break;
+	case CPUINFO_INT_CONTEXT_SIZE:				info->i           = sizeof(i960_state);			break;
+	case CPUINFO_INT_MIN_INSTRUCTION_BYTES:		info->i           = 4;							break;
+	case CPUINFO_INT_MAX_INSTRUCTION_BYTES:		info->i           = 8;							break;
 
 		// Bus sizes
-	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32; break;
-	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32; break;
-	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;  break;
-	case CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 0;  break;
-	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:    info->i = 0;  break;
-	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA:    info->i = 0;  break;
-	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA:    info->i = 0;  break;
-	case CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACE_DATA:    info->i = 0;  break;
-	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:      info->i = 0;  break;
-	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO:      info->i = 0;  break;
-	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO:      info->i = 0;  break;
-	case CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACE_IO:      info->i = 0;  break;
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;						break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;						break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM:	info->i = 0;						break;
+	case CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 0;						break;
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;						break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;						break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA:	info->i = 0;						break;
+	case CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;						break;
+	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;						break;
+	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;						break;
+	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO:		info->i = 0;						break;
+	case CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;						break;
 
 		// Internal maps
-	case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = 0; break;
-	case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:    info->internal_map = 0; break;
-	case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_IO:      info->internal_map = 0; break;
+	case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:	info->internal_map = 0;		break;
+	case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:		info->internal_map = 0;		break;
+	case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_IO:		info->internal_map = 0;		break;
 
 		// CPU misc parameters
-	case CPUINFO_STR_NAME:               strcpy(info->s = cpuintrf_temp_str(), "i960KB"); break;
-	case CPUINFO_STR_CORE_FILE:          strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-	case CPUINFO_STR_FLAGS:	    	     strcpy(info->s = cpuintrf_temp_str(), i960_get_strflags()); break;
-	case CPUINFO_INT_ENDIANNESS:         info->i = CPU_IS_LE;                             break;
-	case CPUINFO_INT_INPUT_LINES:        info->i = 4;                                     break;
-	case CPUINFO_INT_DEFAULT_IRQ_VECTOR: info->i = -1;                                    break;
+	case CPUINFO_STR_NAME:					strcpy(info->s, "i960KB");							break;
+	case CPUINFO_STR_CORE_FILE:				strcpy(info->s, __FILE__);							break;
+	case CPUINFO_STR_FLAGS:					strcpy(info->s, i960_get_strflags());				break;
+	case CPUINFO_INT_ENDIANNESS:			info->i = CPU_IS_LE;								break;
+	case CPUINFO_INT_INPUT_LINES:			info->i = 4;										break;
+	case CPUINFO_INT_DEFAULT_IRQ_VECTOR:	info->i = -1;										break;
 
 		// CPU main state
-	case CPUINFO_INT_PC:                 info->i = i960.IP;                               break;
-	case CPUINFO_INT_SP:		     	info->i = i960.r[I960_SP];                       break;
-	case CPUINFO_INT_PREVIOUSPC:         info->i = i960.PIP;                              break;
+	case CPUINFO_INT_PC:					info->i = i960.IP;									break;
+	case CPUINFO_INT_SP:					info->i = i960.r[I960_SP];							break;
+	case CPUINFO_INT_PREVIOUSPC:			info->i = i960.PIP;									break;
 
-	case CPUINFO_INT_REGISTER + I960_SAT:  info->i = i960.SAT;                            break;
-	case CPUINFO_INT_REGISTER + I960_PRCB: info->i = i960.PRCB;                           break;
-	case CPUINFO_INT_REGISTER + I960_PC:   info->i = i960.PC;                             break;
-	case CPUINFO_INT_REGISTER + I960_AC:   info->i = i960.AC;                             break;
-	case CPUINFO_INT_REGISTER + I960_IP:   info->i = i960.IP;                             break;
-	case CPUINFO_INT_REGISTER + I960_PIP:  info->i = i960.PIP;                            break;
+	case CPUINFO_INT_REGISTER + I960_SAT:	info->i = i960.SAT;									break;
+	case CPUINFO_INT_REGISTER + I960_PRCB:	info->i = i960.PRCB;								break;
+	case CPUINFO_INT_REGISTER + I960_PC:	info->i = i960.PC;									break;
+	case CPUINFO_INT_REGISTER + I960_AC:	info->i = i960.AC;									break;
+	case CPUINFO_INT_REGISTER + I960_IP:	info->i = i960.IP;									break;
+	case CPUINFO_INT_REGISTER + I960_PIP:	info->i = i960.PIP;									break;
 
 		// CPU debug stuff
-	case CPUINFO_STR_REGISTER + I960_SAT:	sprintf(info->s = cpuintrf_temp_str(), "sat  :%08x", i960.SAT);   break;
-	case CPUINFO_STR_REGISTER + I960_PRCB:	sprintf(info->s = cpuintrf_temp_str(), "prcb :%08x", i960.PRCB);  break;
-	case CPUINFO_STR_REGISTER + I960_PC:	sprintf(info->s = cpuintrf_temp_str(), "pc   :%08x", i960.PC);    break;
-	case CPUINFO_STR_REGISTER + I960_AC:	sprintf(info->s = cpuintrf_temp_str(), "ac   :%08x", i960.AC);    break;
-	case CPUINFO_STR_REGISTER + I960_IP:	sprintf(info->s = cpuintrf_temp_str(), "ip   :%08x", i960.IP);    break;
-	case CPUINFO_STR_REGISTER + I960_PIP:	sprintf(info->s = cpuintrf_temp_str(), "pip  :%08x", i960.PIP);   break;
+	case CPUINFO_STR_REGISTER + I960_SAT:	sprintf(info->s, "sat  :%08x", i960.SAT);			break;
+	case CPUINFO_STR_REGISTER + I960_PRCB:	sprintf(info->s, "prcb :%08x", i960.PRCB);			break;
+	case CPUINFO_STR_REGISTER + I960_PC:	sprintf(info->s, "pc   :%08x", i960.PC);			break;
+	case CPUINFO_STR_REGISTER + I960_AC:	sprintf(info->s, "ac   :%08x", i960.AC);			break;
+	case CPUINFO_STR_REGISTER + I960_IP:	sprintf(info->s, "ip   :%08x", i960.IP);			break;
+	case CPUINFO_STR_REGISTER + I960_PIP:	sprintf(info->s, "pip  :%08x", i960.PIP);			break;
 
-	case CPUINFO_STR_REGISTER + I960_R0:  	sprintf(info->s = cpuintrf_temp_str(), "pfp  :%08x", i960.r[ 0]); break;
-	case CPUINFO_STR_REGISTER + I960_R1:	sprintf(info->s = cpuintrf_temp_str(), "sp   :%08x", i960.r[ 1]); break;
-	case CPUINFO_STR_REGISTER + I960_R2:	sprintf(info->s = cpuintrf_temp_str(), "rip  :%08x", i960.r[ 2]); break;
-	case CPUINFO_STR_REGISTER + I960_R3:	sprintf(info->s = cpuintrf_temp_str(), "r3   :%08x", i960.r[ 3]); break;
-	case CPUINFO_STR_REGISTER + I960_R4:	sprintf(info->s = cpuintrf_temp_str(), "r4   :%08x", i960.r[ 4]); break;
-	case CPUINFO_STR_REGISTER + I960_R5:	sprintf(info->s = cpuintrf_temp_str(), "r5   :%08x", i960.r[ 5]); break;
-	case CPUINFO_STR_REGISTER + I960_R6:	sprintf(info->s = cpuintrf_temp_str(), "r6   :%08x", i960.r[ 6]); break;
-	case CPUINFO_STR_REGISTER + I960_R7:	sprintf(info->s = cpuintrf_temp_str(), "r7   :%08x", i960.r[ 7]); break;
-	case CPUINFO_STR_REGISTER + I960_R8:	sprintf(info->s = cpuintrf_temp_str(), "r8   :%08x", i960.r[ 8]); break;
-	case CPUINFO_STR_REGISTER + I960_R9:	sprintf(info->s = cpuintrf_temp_str(), "r9   :%08x", i960.r[ 9]); break;
-	case CPUINFO_STR_REGISTER + I960_R10:	sprintf(info->s = cpuintrf_temp_str(), "r10  :%08x", i960.r[10]); break;
-	case CPUINFO_STR_REGISTER + I960_R11:	sprintf(info->s = cpuintrf_temp_str(), "r11  :%08x", i960.r[11]); break;
-	case CPUINFO_STR_REGISTER + I960_R12:	sprintf(info->s = cpuintrf_temp_str(), "r12  :%08x", i960.r[12]); break;
-	case CPUINFO_STR_REGISTER + I960_R13:	sprintf(info->s = cpuintrf_temp_str(), "r13  :%08x", i960.r[13]); break;
-	case CPUINFO_STR_REGISTER + I960_R14:	sprintf(info->s = cpuintrf_temp_str(), "r14  :%08x", i960.r[14]); break;
-	case CPUINFO_STR_REGISTER + I960_R15: 	sprintf(info->s = cpuintrf_temp_str(), "r15  :%08x", i960.r[15]); break;
+	case CPUINFO_STR_REGISTER + I960_R0:	sprintf(info->s, "pfp  :%08x", i960.r[ 0]);			break;
+	case CPUINFO_STR_REGISTER + I960_R1:	sprintf(info->s, "sp   :%08x", i960.r[ 1]);			break;
+	case CPUINFO_STR_REGISTER + I960_R2:	sprintf(info->s, "rip  :%08x", i960.r[ 2]);			break;
+	case CPUINFO_STR_REGISTER + I960_R3:	sprintf(info->s, "r3   :%08x", i960.r[ 3]);			break;
+	case CPUINFO_STR_REGISTER + I960_R4:	sprintf(info->s, "r4   :%08x", i960.r[ 4]);			break;
+	case CPUINFO_STR_REGISTER + I960_R5:	sprintf(info->s, "r5   :%08x", i960.r[ 5]);			break;
+	case CPUINFO_STR_REGISTER + I960_R6:	sprintf(info->s, "r6   :%08x", i960.r[ 6]);			break;
+	case CPUINFO_STR_REGISTER + I960_R7:	sprintf(info->s, "r7   :%08x", i960.r[ 7]);			break;
+	case CPUINFO_STR_REGISTER + I960_R8:	sprintf(info->s, "r8   :%08x", i960.r[ 8]);			break;
+	case CPUINFO_STR_REGISTER + I960_R9:	sprintf(info->s, "r9   :%08x", i960.r[ 9]);			break;
+	case CPUINFO_STR_REGISTER + I960_R10:	sprintf(info->s, "r10  :%08x", i960.r[10]);			break;
+	case CPUINFO_STR_REGISTER + I960_R11:	sprintf(info->s, "r11  :%08x", i960.r[11]);			break;
+	case CPUINFO_STR_REGISTER + I960_R12:	sprintf(info->s, "r12  :%08x", i960.r[12]);			break;
+	case CPUINFO_STR_REGISTER + I960_R13:	sprintf(info->s, "r13  :%08x", i960.r[13]);			break;
+	case CPUINFO_STR_REGISTER + I960_R14:	sprintf(info->s, "r14  :%08x", i960.r[14]);			break;
+	case CPUINFO_STR_REGISTER + I960_R15:	sprintf(info->s, "r15  :%08x", i960.r[15]);			break;
 
-	case CPUINFO_STR_REGISTER + I960_G0: 	sprintf(info->s = cpuintrf_temp_str(), "g0   :%08x", i960.r[16]); break;
-	case CPUINFO_STR_REGISTER + I960_G1: 	sprintf(info->s = cpuintrf_temp_str(), "g1   :%08x", i960.r[17]); break;
-	case CPUINFO_STR_REGISTER + I960_G2: 	sprintf(info->s = cpuintrf_temp_str(), "g2   :%08x", i960.r[18]); break;
-	case CPUINFO_STR_REGISTER + I960_G3: 	sprintf(info->s = cpuintrf_temp_str(), "g3   :%08x", i960.r[19]); break;
-	case CPUINFO_STR_REGISTER + I960_G4: 	sprintf(info->s = cpuintrf_temp_str(), "g4   :%08x", i960.r[20]); break;
-	case CPUINFO_STR_REGISTER + I960_G5: 	sprintf(info->s = cpuintrf_temp_str(), "g5   :%08x", i960.r[21]); break;
-	case CPUINFO_STR_REGISTER + I960_G6: 	sprintf(info->s = cpuintrf_temp_str(), "g6   :%08x", i960.r[22]); break;
-	case CPUINFO_STR_REGISTER + I960_G7: 	sprintf(info->s = cpuintrf_temp_str(), "g7   :%08x", i960.r[23]); break;
-	case CPUINFO_STR_REGISTER + I960_G8: 	sprintf(info->s = cpuintrf_temp_str(), "g8   :%08x", i960.r[24]); break;
-	case CPUINFO_STR_REGISTER + I960_G9:	sprintf(info->s = cpuintrf_temp_str(), "g9   :%08x", i960.r[25]); break;
-	case CPUINFO_STR_REGISTER + I960_G10:	sprintf(info->s = cpuintrf_temp_str(), "g10  :%08x", i960.r[26]); break;
-	case CPUINFO_STR_REGISTER + I960_G11:	sprintf(info->s = cpuintrf_temp_str(), "g11  :%08x", i960.r[27]); break;
-	case CPUINFO_STR_REGISTER + I960_G12:	sprintf(info->s = cpuintrf_temp_str(), "g12  :%08x", i960.r[28]); break;
-	case CPUINFO_STR_REGISTER + I960_G13:	sprintf(info->s = cpuintrf_temp_str(), "g13  :%08x", i960.r[29]); break;
-	case CPUINFO_STR_REGISTER + I960_G14:	sprintf(info->s = cpuintrf_temp_str(), "g14  :%08x", i960.r[30]); break;
-	case CPUINFO_STR_REGISTER + I960_G15:	sprintf(info->s = cpuintrf_temp_str(), "fp   :%08x", i960.r[31]); break;
+	case CPUINFO_STR_REGISTER + I960_G0:	sprintf(info->s, "g0   :%08x", i960.r[16]);			break;
+	case CPUINFO_STR_REGISTER + I960_G1:	sprintf(info->s, "g1   :%08x", i960.r[17]);			break;
+	case CPUINFO_STR_REGISTER + I960_G2:	sprintf(info->s, "g2   :%08x", i960.r[18]);			break;
+	case CPUINFO_STR_REGISTER + I960_G3:	sprintf(info->s, "g3   :%08x", i960.r[19]);			break;
+	case CPUINFO_STR_REGISTER + I960_G4:	sprintf(info->s, "g4   :%08x", i960.r[20]);			break;
+	case CPUINFO_STR_REGISTER + I960_G5:	sprintf(info->s, "g5   :%08x", i960.r[21]);			break;
+	case CPUINFO_STR_REGISTER + I960_G6:	sprintf(info->s, "g6   :%08x", i960.r[22]);			break;
+	case CPUINFO_STR_REGISTER + I960_G7:	sprintf(info->s, "g7   :%08x", i960.r[23]);			break;
+	case CPUINFO_STR_REGISTER + I960_G8:	sprintf(info->s, "g8   :%08x", i960.r[24]);			break;
+	case CPUINFO_STR_REGISTER + I960_G9:	sprintf(info->s, "g9   :%08x", i960.r[25]);			break;
+	case CPUINFO_STR_REGISTER + I960_G10:	sprintf(info->s, "g10  :%08x", i960.r[26]);			break;
+	case CPUINFO_STR_REGISTER + I960_G11:	sprintf(info->s, "g11  :%08x", i960.r[27]);			break;
+	case CPUINFO_STR_REGISTER + I960_G12:	sprintf(info->s, "g12  :%08x", i960.r[28]);			break;
+	case CPUINFO_STR_REGISTER + I960_G13:	sprintf(info->s, "g13  :%08x", i960.r[29]);			break;
+	case CPUINFO_STR_REGISTER + I960_G14:	sprintf(info->s, "g14  :%08x", i960.r[30]);			break;
+	case CPUINFO_STR_REGISTER + I960_G15:	sprintf(info->s, "fp   :%08x", i960.r[31]);			break;
 
 //  default:
 //      fatalerror("i960_get_info %x          ", state);

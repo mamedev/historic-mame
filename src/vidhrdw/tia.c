@@ -1057,6 +1057,13 @@ WRITE8_HANDLER( tia_w )
 }
 
 
+static void tia_reset(running_machine *machine)
+{
+	frame_cycles = 0;
+}
+
+
+
 void tia_init(void)
 {
 	timer_pulse(TIME_IN_HZ(60), 0, button_callback);
@@ -1074,4 +1081,5 @@ void tia_init(void)
 	prev_y = 0;
 
 	frame_cycles = 0;
+	add_reset_callback(Machine, tia_reset);
 }

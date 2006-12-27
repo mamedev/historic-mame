@@ -20,7 +20,7 @@ enum
 #define I8085_RST65_LINE	2
 #define I8085_RST75_LINE	3
 
-void i8085_get_info(UINT32 state, union cpuinfo *info);
+void i8085_get_info(UINT32 state, cpuinfo *info);
 
 /**************************************************************************
  * I8080 section
@@ -47,7 +47,7 @@ void i8085_get_info(UINT32 state, union cpuinfo *info);
 
 #define I8080_INTR_LINE         I8085_INTR_LINE
 
-void i8080_get_info(UINT32 state, union cpuinfo *info);
+void i8080_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #ifdef	MAME_DEBUG

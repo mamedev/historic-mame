@@ -34,7 +34,7 @@ enum { I8039_PC=1, I8039_SP, I8039_PSW, I8039_A,  I8039_TC,
 	   I8039_R3,   I8039_R4, I8039_R5,  I8039_R6, I8039_R7
 };
 
-extern void i8039_get_info(UINT32 state, union cpuinfo *info);
+extern void i8039_get_info(UINT32 state, cpuinfo *info);
 
 /*   This handling of special I/O ports should be better for actual MAME
  *   architecture.  (i.e., define access to ports { I8039_p1, I8039_p1, dkong_out_w })
@@ -74,7 +74,7 @@ extern void i8039_get_info(UINT32 state, union cpuinfo *info);
 #define I8035_CLOCK_DIVIDER		I8039_CLOCK_DIVIDER
 #define i8035_ICount			i8039_ICount
 
-extern void i8035_get_info(UINT32 state, union cpuinfo *info);
+extern void i8035_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 /**************************************************************************
@@ -100,7 +100,7 @@ extern void i8035_get_info(UINT32 state, union cpuinfo *info);
 #define I8048_CLOCK_DIVIDER		I8039_CLOCK_DIVIDER
 #define i8048_ICount			i8039_ICount
 
-extern void i8048_get_info(UINT32 state, union cpuinfo *info);
+extern void i8048_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 /**************************************************************************
@@ -126,7 +126,7 @@ extern void i8048_get_info(UINT32 state, union cpuinfo *info);
 #define N7751_CLOCK_DIVIDER		I8039_CLOCK_DIVIDER
 #define n7751_ICount			i8039_ICount
 
-extern void n7751_get_info(UINT32 state, union cpuinfo *info);
+extern void n7751_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 /*

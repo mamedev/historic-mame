@@ -2997,7 +2997,7 @@ static void sh2_init(int index, int clock, const void *config, int (*irqcallback
  * Generic set_info
  **************************************************************************/
 
-static void sh2_set_info(UINT32 state, union cpuinfo *info)
+static void sh2_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -3007,7 +3007,7 @@ static void sh2_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + SH2_INT_HBLIN:	set_irq_line(SH2_INT_HBLIN, info->i);	break;
 		case CPUINFO_INT_INPUT_STATE + SH2_INT_TIMER0:	set_irq_line(SH2_INT_TIMER0, info->i);	break;
 		case CPUINFO_INT_INPUT_STATE + SH2_INT_TIMER1:	set_irq_line(SH2_INT_TIMER1, info->i);	break;
-		case CPUINFO_INT_INPUT_STATE + SH2_INT_DSP:		set_irq_line(SH2_INT_DSP, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_DSP:		set_irq_line(SH2_INT_DSP, info->i);		break;
 		case CPUINFO_INT_INPUT_STATE + SH2_INT_SOUND:	set_irq_line(SH2_INT_SOUND, info->i);	break;
 		case CPUINFO_INT_INPUT_STATE + SH2_INT_SMPC:	set_irq_line(SH2_INT_SMPC, info->i);	break;
 		case CPUINFO_INT_INPUT_STATE + SH2_INT_PAD:		set_irq_line(SH2_INT_PAD, info->i);		break;
@@ -3051,7 +3051,7 @@ static void sh2_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_SH2_FRT_INPUT:					sh2_set_frt_input(cpu_getactivecpu(), info->i); break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK:		sh2.ftcsr_read_callback = (void (*) (UINT32 ))info->f;		break;
+		case CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK:		sh2.ftcsr_read_callback = (void (*) (UINT32 ))info->f; break;
 	}
 }
 
@@ -3061,7 +3061,7 @@ static void sh2_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void sh2_get_info(UINT32 state, union cpuinfo *info)
+void sh2_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -3149,14 +3149,14 @@ void sh2_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &sh2_icount;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "SH-2"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Hitachi SH7600"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.01"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 2000 Juergen Buchmueller, all rights reserved."); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "SH-2");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Hitachi SH7600");		break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.01");				break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (c) 2000 Juergen Buchmueller, all rights reserved."); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%d%c%c",
+			sprintf(info->s, "%c%c%d%c%c",
 					sh2.sr & M ? 'M':'.',
 					sh2.sr & Q ? 'Q':'.',
 					(sh2.sr & I) >> 4,
@@ -3164,30 +3164,30 @@ void sh2_get_info(UINT32 state, union cpuinfo *info)
 					sh2.sr & T ? 'T':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + SH2_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC  :%08X", sh2.pc); break;
-		case CPUINFO_STR_REGISTER + SH2_SR:				sprintf(info->s = cpuintrf_temp_str(), "SR  :%08X", sh2.sr); break;
-		case CPUINFO_STR_REGISTER + SH2_PR:				sprintf(info->s = cpuintrf_temp_str(), "PR  :%08X", sh2.pr); break;
-		case CPUINFO_STR_REGISTER + SH2_GBR:			sprintf(info->s = cpuintrf_temp_str(), "GBR :%08X", sh2.gbr); break;
-		case CPUINFO_STR_REGISTER + SH2_VBR:			sprintf(info->s = cpuintrf_temp_str(), "VBR :%08X", sh2.vbr); break;
-		case CPUINFO_STR_REGISTER + SH2_MACH:			sprintf(info->s = cpuintrf_temp_str(), "MACH:%08X", sh2.mach); break;
-		case CPUINFO_STR_REGISTER + SH2_MACL:			sprintf(info->s = cpuintrf_temp_str(), "MACL:%08X", sh2.macl); break;
-		case CPUINFO_STR_REGISTER + SH2_R0:				sprintf(info->s = cpuintrf_temp_str(), "R0  :%08X", sh2.r[ 0]); break;
-		case CPUINFO_STR_REGISTER + SH2_R1:				sprintf(info->s = cpuintrf_temp_str(), "R1  :%08X", sh2.r[ 1]); break;
-		case CPUINFO_STR_REGISTER + SH2_R2:				sprintf(info->s = cpuintrf_temp_str(), "R2  :%08X", sh2.r[ 2]); break;
-		case CPUINFO_STR_REGISTER + SH2_R3:				sprintf(info->s = cpuintrf_temp_str(), "R3  :%08X", sh2.r[ 3]); break;
-		case CPUINFO_STR_REGISTER + SH2_R4:				sprintf(info->s = cpuintrf_temp_str(), "R4  :%08X", sh2.r[ 4]); break;
-		case CPUINFO_STR_REGISTER + SH2_R5:				sprintf(info->s = cpuintrf_temp_str(), "R5  :%08X", sh2.r[ 5]); break;
-		case CPUINFO_STR_REGISTER + SH2_R6:				sprintf(info->s = cpuintrf_temp_str(), "R6  :%08X", sh2.r[ 6]); break;
-		case CPUINFO_STR_REGISTER + SH2_R7:				sprintf(info->s = cpuintrf_temp_str(), "R7  :%08X", sh2.r[ 7]); break;
-		case CPUINFO_STR_REGISTER + SH2_R8:				sprintf(info->s = cpuintrf_temp_str(), "R8  :%08X", sh2.r[ 8]); break;
-		case CPUINFO_STR_REGISTER + SH2_R9:				sprintf(info->s = cpuintrf_temp_str(), "R9  :%08X", sh2.r[ 9]); break;
-		case CPUINFO_STR_REGISTER + SH2_R10:			sprintf(info->s = cpuintrf_temp_str(), "R10 :%08X", sh2.r[10]); break;
-		case CPUINFO_STR_REGISTER + SH2_R11:			sprintf(info->s = cpuintrf_temp_str(), "R11 :%08X", sh2.r[11]); break;
-		case CPUINFO_STR_REGISTER + SH2_R12:			sprintf(info->s = cpuintrf_temp_str(), "R12 :%08X", sh2.r[12]); break;
-		case CPUINFO_STR_REGISTER + SH2_R13:			sprintf(info->s = cpuintrf_temp_str(), "R13 :%08X", sh2.r[13]); break;
-		case CPUINFO_STR_REGISTER + SH2_R14:			sprintf(info->s = cpuintrf_temp_str(), "R14 :%08X", sh2.r[14]); break;
-		case CPUINFO_STR_REGISTER + SH2_R15:			sprintf(info->s = cpuintrf_temp_str(), "R15 :%08X", sh2.r[15]); break;
-		case CPUINFO_STR_REGISTER + SH2_EA:				sprintf(info->s = cpuintrf_temp_str(), "EA  :%08X", sh2.ea);    break;
+		case CPUINFO_STR_REGISTER + SH2_PC:				sprintf(info->s, "PC  :%08X", sh2.pc); break;
+		case CPUINFO_STR_REGISTER + SH2_SR:				sprintf(info->s, "SR  :%08X", sh2.sr); break;
+		case CPUINFO_STR_REGISTER + SH2_PR:				sprintf(info->s, "PR  :%08X", sh2.pr); break;
+		case CPUINFO_STR_REGISTER + SH2_GBR:			sprintf(info->s, "GBR :%08X", sh2.gbr); break;
+		case CPUINFO_STR_REGISTER + SH2_VBR:			sprintf(info->s, "VBR :%08X", sh2.vbr); break;
+		case CPUINFO_STR_REGISTER + SH2_MACH:			sprintf(info->s, "MACH:%08X", sh2.mach); break;
+		case CPUINFO_STR_REGISTER + SH2_MACL:			sprintf(info->s, "MACL:%08X", sh2.macl); break;
+		case CPUINFO_STR_REGISTER + SH2_R0:				sprintf(info->s, "R0  :%08X", sh2.r[ 0]); break;
+		case CPUINFO_STR_REGISTER + SH2_R1:				sprintf(info->s, "R1  :%08X", sh2.r[ 1]); break;
+		case CPUINFO_STR_REGISTER + SH2_R2:				sprintf(info->s, "R2  :%08X", sh2.r[ 2]); break;
+		case CPUINFO_STR_REGISTER + SH2_R3:				sprintf(info->s, "R3  :%08X", sh2.r[ 3]); break;
+		case CPUINFO_STR_REGISTER + SH2_R4:				sprintf(info->s, "R4  :%08X", sh2.r[ 4]); break;
+		case CPUINFO_STR_REGISTER + SH2_R5:				sprintf(info->s, "R5  :%08X", sh2.r[ 5]); break;
+		case CPUINFO_STR_REGISTER + SH2_R6:				sprintf(info->s, "R6  :%08X", sh2.r[ 6]); break;
+		case CPUINFO_STR_REGISTER + SH2_R7:				sprintf(info->s, "R7  :%08X", sh2.r[ 7]); break;
+		case CPUINFO_STR_REGISTER + SH2_R8:				sprintf(info->s, "R8  :%08X", sh2.r[ 8]); break;
+		case CPUINFO_STR_REGISTER + SH2_R9:				sprintf(info->s, "R9  :%08X", sh2.r[ 9]); break;
+		case CPUINFO_STR_REGISTER + SH2_R10:			sprintf(info->s, "R10 :%08X", sh2.r[10]); break;
+		case CPUINFO_STR_REGISTER + SH2_R11:			sprintf(info->s, "R11 :%08X", sh2.r[11]); break;
+		case CPUINFO_STR_REGISTER + SH2_R12:			sprintf(info->s, "R12 :%08X", sh2.r[12]); break;
+		case CPUINFO_STR_REGISTER + SH2_R13:			sprintf(info->s, "R13 :%08X", sh2.r[13]); break;
+		case CPUINFO_STR_REGISTER + SH2_R14:			sprintf(info->s, "R14 :%08X", sh2.r[14]); break;
+		case CPUINFO_STR_REGISTER + SH2_R15:			sprintf(info->s, "R15 :%08X", sh2.r[15]); break;
+		case CPUINFO_STR_REGISTER + SH2_EA:				sprintf(info->s, "EA  :%08X", sh2.ea);    break;
 
 		case CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK:		info->f = (genf*)sh2.ftcsr_read_callback; break;
 

@@ -86,7 +86,7 @@ enum
 };
 
 /* Main interface function */
-void g65816_get_info(UINT32 state, union cpuinfo *info);
+void g65816_get_info(UINT32 state, cpuinfo *info);
 
 #undef G65816_CALL_DEBUGGER
 #define G65816_CALL_DEBUGGER CALL_MAME_DEBUG

@@ -88,8 +88,8 @@ TODO:
 #include "sound/ay8910.h"
 #include "sound/okim6295.h"
 #include "sound/2413intf.h"
+#include "machine/msm6242.h"
 #include "profiler.h"
-#include <time.h>
 
 static UINT8 *pixmap[8];
 static mame_bitmap *framebuffer;
@@ -1368,63 +1368,6 @@ if (code_pressed(KEYCODE_Z))
 	dynax_layer_enable2 = enab2;
 }
 
-
-
-/***************************************************************************
-
-    MSM6242 Real Time Clock
-
-***************************************************************************/
-
-static WRITE8_HANDLER( rtc_w )
-{
-//  logerror("%04X: RTC reg %x = %02x\n", activecpu_get_pc(), offset, data);
-}
-
-static READ8_HANDLER( rtc_r )
-{
-	mame_system_time systime;
-
-	mame_get_current_datetime(Machine, &systime);
-
-	switch(offset)
-	{
-		case 0x0:	return systime.local_time.second % 10;
-		case 0x1:	return systime.local_time.second / 10;
-		case 0x2:	return systime.local_time.minute % 10;
-		case 0x3:	return systime.local_time.minute / 10;
-		case 0x4:	return systime.local_time.hour % 10;
-		case 0x5:	return systime.local_time.hour / 10;
-		case 0x6:	return systime.local_time.mday % 10;
-		case 0x7:	return systime.local_time.mday / 10;
-		case 0x8:	return (systime.local_time.month+1) % 10;
-		case 0x9:	return (systime.local_time.month+1) / 10;
-		case 0xa:	return systime.local_time.year % 10;
-		case 0xb:	return (systime.local_time.year % 100) / 10;
-		case 0xc:	return systime.local_time.weekday;
-		case 0xd:	return 1;
-		case 0xe:	return 6;
-		case 0xf:	return 4;
-	}
-
-	return 0;
-}
-
-static WRITE16_HANDLER( rtc16_w )
-{
-	if (ACCESSING_LSB)
-		rtc_w(offset,data);
-}
-
-static READ16_HANDLER( rtc16_r )
-{
-	return rtc_r(offset);
-}
-
-
-
-
-
 READ16_HANDLER( ddenlovr_special_r )
 {
 	int res = readinputport(2) | (dynax_blitter_irq_flag << 6);
@@ -1699,7 +1642,7 @@ static ADDRESS_MAP_START( quiz365_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x300270, 0x300271) AM_READ(unk16_r					)	// ? must be 78 on startup (not necessary in ddlover)
 	AM_RANGE(0x300286, 0x300287) AM_READ(ddenlovr_gfxrom_r			)	// Video Chip
 	AM_RANGE(0x3002c0, 0x3002c1) AM_READ(OKIM6295_status_0_lsb_r	)	// Sound
-	AM_RANGE(0x300340, 0x30035f) AM_READ(rtc16_r					)	// 6242RTC
+	AM_RANGE(0x300340, 0x30035f) AM_READ(msm6242_lsb_r				)	// 6242RTC
 	AM_RANGE(0x300384, 0x300385) AM_READ(AY8910_read_port_0_lsb_r	)
 	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM					)	// RAM
 ADDRESS_MAP_END
@@ -1721,7 +1664,7 @@ static ADDRESS_MAP_START( quiz365_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x300280, 0x300283) AM_WRITE(ddenlovr_blitter_w			)
 	AM_RANGE(0x300300, 0x300301) AM_WRITE(YM2413_register_port_0_lsb_w	)
 	AM_RANGE(0x300302, 0x300303) AM_WRITE(YM2413_data_port_0_lsb_w		)
-	AM_RANGE(0x300340, 0x30035f) AM_WRITE(rtc16_w						)   // 6242RTC
+	AM_RANGE(0x300340, 0x30035f) AM_WRITE(msm6242_lsb_w					)   // 6242RTC
 	AM_RANGE(0x3003ca, 0x3003cb) AM_WRITE(ddenlovr_blitter_irq_ack_w	)	// Blitter irq acknowledge
 	AM_RANGE(0x300380, 0x300381) AM_WRITE(AY8910_control_port_0_lsb_w	)
 	AM_RANGE(0x300382, 0x300383) AM_WRITE(AY8910_write_port_0_lsb_w		)
@@ -1740,7 +1683,7 @@ static ADDRESS_MAP_START( ddenlovr_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xe00102, 0xe00103) AM_READ(input_port_1_word_r		)	// P2?
 	AM_RANGE(0xe00104, 0xe00105) AM_READ(ddenlovr_special_r			)	// Coins + ?
 	AM_RANGE(0xe00200, 0xe00201) AM_READ(input_port_3_word_r		)	// DSW
-	AM_RANGE(0xe00500, 0xe0051f) AM_READ(rtc16_r 					)	// 6242RTC
+	AM_RANGE(0xe00500, 0xe0051f) AM_READ(msm6242_lsb_r				)	// 6242RTC
 	AM_RANGE(0xe00604, 0xe00605) AM_READ(AY8910_read_port_0_lsb_r	)
 	AM_RANGE(0xe00700, 0xe00701) AM_READ(OKIM6295_status_0_lsb_r	)	// Sound
 	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM					)	// RAM
@@ -1764,7 +1707,7 @@ static ADDRESS_MAP_START( ddenlovr_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xe0030c, 0xe0030d) AM_WRITE(ddenlovr_coincounter_1_w		)	//
 	AM_RANGE(0xe00400, 0xe00401) AM_WRITE(YM2413_register_port_0_lsb_w	)
 	AM_RANGE(0xe00402, 0xe00403) AM_WRITE(YM2413_data_port_0_lsb_w		)
-	AM_RANGE(0xe00500, 0xe0051f) AM_WRITE(rtc16_w						)	// 6242RTC
+	AM_RANGE(0xe00500, 0xe0051f) AM_WRITE(msm6242_lsb_w					)	// 6242RTC
 //  AM_RANGE(0xe00302, 0xe00303) AM_WRITE(MWA16_NOP                     )   // ?
 	AM_RANGE(0xe00600, 0xe00601) AM_WRITE(AY8910_control_port_0_lsb_w	)
 	AM_RANGE(0xe00602, 0xe00603) AM_WRITE(AY8910_write_port_0_lsb_w		)
@@ -1825,7 +1768,7 @@ static ADDRESS_MAP_START( nettoqc_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200c02, 0x200c03) AM_READ(nettoqc_protection_r		)	//
 	AM_RANGE(0x300070, 0x300071) AM_READ(unk16_r					)	// ? must be 78 on startup (not necessary in ddlover)
 	AM_RANGE(0x300086, 0x300087) AM_READ(ddenlovr_gfxrom_r			)	// Video Chip
-	AM_RANGE(0x300100, 0x30011f) AM_READ(rtc16_r					)	// 6242RTC
+	AM_RANGE(0x300100, 0x30011f) AM_READ(msm6242_lsb_r				)	// 6242RTC
 	AM_RANGE(0x300180, 0x300181) AM_READ(input_port_0_word_r		)	//
 	AM_RANGE(0x300182, 0x300183) AM_READ(input_port_1_word_r		)	//
 	AM_RANGE(0x300184, 0x300185) AM_READ(nettoqc_special_r			)	// Coins + ?
@@ -1849,7 +1792,7 @@ static ADDRESS_MAP_START( nettoqc_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x300080, 0x300083) AM_WRITE(ddenlovr_blitter_w			)
 	AM_RANGE(0x3000c0, 0x3000c1) AM_WRITE(YM2413_register_port_0_lsb_w	)
 	AM_RANGE(0x3000c2, 0x3000c3) AM_WRITE(YM2413_data_port_0_lsb_w		)
-	AM_RANGE(0x300100, 0x30011f) AM_WRITE(rtc16_w						)	// 6242RTC
+	AM_RANGE(0x300100, 0x30011f) AM_WRITE(msm6242_lsb_w					)	// 6242RTC
 	AM_RANGE(0x300140, 0x300141) AM_WRITE(AY8910_control_port_0_lsb_w	)
 	AM_RANGE(0x300142, 0x300143) AM_WRITE(AY8910_write_port_0_lsb_w		)
 	AM_RANGE(0x300188, 0x300189) AM_WRITE(nettoqc_coincounter_w			)	// Coin Counters
@@ -1910,7 +1853,7 @@ static ADDRESS_MAP_START( quizchq_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FL
 	AM_RANGE(0x22, 0x23) AM_READ(rongrong_input2_r			)
 	AM_RANGE(0x40, 0x40) AM_READ(OKIM6295_status_0_r		)
 	AM_RANGE(0x98, 0x98) AM_READ(unk_r						)	// ? must be 78 on startup
-	AM_RANGE(0xa0, 0xaf) AM_READ(rtc_r						)	// 6242RTC
+	AM_RANGE(0xa0, 0xaf) AM_READ(msm6242_r					)	// 6242RTC
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( quizchq_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
@@ -1928,7 +1871,7 @@ static ADDRESS_MAP_START( quizchq_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_F
 	AM_RANGE(0x94, 0x94) AM_WRITE(dynax_bgcolor_w			)
 	AM_RANGE(0x95, 0x95) AM_WRITE(dynax_priority_w			)
 	AM_RANGE(0x96, 0x96) AM_WRITE(dynax_layer_enable_w		)
-	AM_RANGE(0xa0, 0xaf) AM_WRITE(rtc_w						)	// 6242RTC
+	AM_RANGE(0xa0, 0xaf) AM_WRITE(msm6242_w					)	// 6242RTC
 	AM_RANGE(0xc0, 0xc0) AM_WRITE(quizchq_oki_bank_w		)
 	AM_RANGE(0xc2, 0xc2) AM_WRITE(MWA8_NOP					)	// enables palette RAM at 8000
 ADDRESS_MAP_END
@@ -1952,7 +1895,7 @@ static ADDRESS_MAP_START( rongrong_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_F
 	AM_RANGE(0x03, 0x03) AM_READ(rongrong_gfxrom_r			)
 	AM_RANGE(0x1b, 0x1b) AM_READ(rongrong_blitter_busy_r	)
 	AM_RANGE(0x1c, 0x1c) AM_READ(rongrong_input_r			)
-	AM_RANGE(0x20, 0x2f) AM_READ(rtc_r						)	// 6242RTC
+	AM_RANGE(0x20, 0x2f) AM_READ(msm6242_r					)	// 6242RTC
 	AM_RANGE(0x40, 0x40) AM_READ(OKIM6295_status_0_r		)
 	AM_RANGE(0x98, 0x98) AM_READ(unk_r						)	// ? must be 78 on startup
 	AM_RANGE(0xa2, 0xa3) AM_READ(rongrong_input2_r			)
@@ -1962,7 +1905,7 @@ static ADDRESS_MAP_START( rongrong_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_
 	AM_RANGE(0x00, 0x01) AM_WRITE(rongrong_blitter_w		)
 	AM_RANGE(0x1b, 0x1b) AM_WRITE(rongrong_blitter_busy_w	)
 	AM_RANGE(0x1e, 0x1e) AM_WRITE(rongrong_select_w			)
-	AM_RANGE(0x20, 0x2f) AM_WRITE(rtc_w						)	// 6242RTC
+	AM_RANGE(0x20, 0x2f) AM_WRITE(msm6242_w					)	// 6242RTC
 	AM_RANGE(0x40, 0x40) AM_WRITE(OKIM6295_data_0_w			)
 	AM_RANGE(0x60, 0x60) AM_WRITE(YM2413_register_port_0_w	)
 	AM_RANGE(0x61, 0x61) AM_WRITE(YM2413_data_port_0_w		)
@@ -2067,7 +2010,7 @@ static ADDRESS_MAP_START( mmpanic_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mmpanic_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x0f) AM_READ(rtc_r					)	// 6242RTC
+	AM_RANGE(0x00, 0x0f) AM_READ(msm6242_r				)	// 6242RTC
 	AM_RANGE(0x38, 0x38) AM_READ(unk_r					)	// ? must be 78 on startup
 	AM_RANGE(0x58, 0x58) AM_READ(unk_r					)	// ? must be 78 on startup
 	AM_RANGE(0x63, 0x63) AM_READ(rongrong_gfxrom_r		)	// Video Chip
@@ -2081,7 +2024,7 @@ static ADDRESS_MAP_START( mmpanic_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FL
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mmpanic_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x0f) AM_WRITE(rtc_w						)	// 6242RTC
+	AM_RANGE(0x00, 0x0f) AM_WRITE(msm6242_w					)	// 6242RTC
 	// Layers 0-3:
 	AM_RANGE(0x20, 0x23) AM_WRITE(dynax_palette_base_w		)
 	AM_RANGE(0x24, 0x27) AM_WRITE(dynax_palette_mask_w		)
@@ -2243,7 +2186,7 @@ static ADDRESS_MAP_START( funkyfig_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_F
 	AM_RANGE(0x04, 0x04) AM_READ( funkyfig_busy_r		)
 	AM_RANGE(0x1c, 0x1c) AM_READ( funkyfig_dsw_r		)
 	AM_RANGE(0x23, 0x23) AM_READ( rongrong_gfxrom_r		)	// Video Chip
-	AM_RANGE(0x40, 0x4f) AM_READ( rtc_r					)	// 6242RTC
+	AM_RANGE(0x40, 0x4f) AM_READ( msm6242_r				)	// 6242RTC
 	AM_RANGE(0x78, 0x78) AM_READ( unk_r					)	// ? must be 78 on startup
 	AM_RANGE(0x82, 0x82) AM_READ( funkyfig_coin_r		)
 	AM_RANGE(0x83, 0x83) AM_READ( funkyfig_key_r		)
@@ -2256,7 +2199,7 @@ static ADDRESS_MAP_START( funkyfig_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_
 	AM_RANGE(0x02, 0x02) AM_WRITE( mmpanic_soundlatch_w		)	//
 	AM_RANGE(0x1e, 0x1e) AM_WRITE( funkyfig_rombank_w		)
 	AM_RANGE(0x20, 0x21) AM_WRITE( funkyfig_blitter_w		)
-	AM_RANGE(0x40, 0x4f) AM_WRITE( rtc_w					)	// 6242RTC
+	AM_RANGE(0x40, 0x4f) AM_WRITE( msm6242_w				)	// 6242RTC
 
 	// Layers 0-3:
 	AM_RANGE(0x60, 0x63) AM_WRITE( dynax_palette_base_w		)
@@ -2433,7 +2376,7 @@ static ADDRESS_MAP_START( hanakanz_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_F
 	AM_RANGE(0x91, 0x92) AM_READ( hanakanz_keyb_r			)
 	AM_RANGE(0x96, 0x96) AM_READ( hanakanz_rand_r			)
 	AM_RANGE(0xc0, 0xc0) AM_READ( OKIM6295_status_0_r		)
-	AM_RANGE(0xe0, 0xef) AM_READ( rtc_r						)	// 6242RTC
+	AM_RANGE(0xe0, 0xef) AM_READ( msm6242_r					)	// 6242RTC
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hanakanz_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
@@ -2448,7 +2391,7 @@ static ADDRESS_MAP_START( hanakanz_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_
 	AM_RANGE(0xa0, 0xa0) AM_WRITE( YM2413_register_port_0_w	)
 	AM_RANGE(0xa1, 0xa1) AM_WRITE( YM2413_data_port_0_w		)
 	AM_RANGE(0xc0, 0xc0) AM_WRITE( OKIM6295_data_0_w		)
-	AM_RANGE(0xe0, 0xef) AM_WRITE( rtc_w					)	// 6242RTC
+	AM_RANGE(0xe0, 0xef) AM_WRITE( msm6242_w				)	// 6242RTC
 ADDRESS_MAP_END
 
 
@@ -2460,7 +2403,7 @@ static ADDRESS_MAP_START( hkagerou_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_F
 	AM_RANGE(0xb1, 0xb2) AM_READ( hanakanz_keyb_r			)
 	AM_RANGE(0xb6, 0xb6) AM_READ( hanakanz_rand_r			)
 	AM_RANGE(0xc0, 0xc0) AM_READ( OKIM6295_status_0_r		)
-	AM_RANGE(0xe0, 0xef) AM_READ( rtc_r						)	// 6242RTC
+	AM_RANGE(0xe0, 0xef) AM_READ( msm6242_r					)	// 6242RTC
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hkagerou_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
@@ -2475,7 +2418,7 @@ static ADDRESS_MAP_START( hkagerou_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_
 	AM_RANGE(0xb3, 0xb3) AM_WRITE( hanakanz_coincounter_w	)
 	AM_RANGE(0xb4, 0xb4) AM_WRITE( hanakanz_keyb_w			)
 	AM_RANGE(0xc0, 0xc0) AM_WRITE( OKIM6295_data_0_w		)
-	AM_RANGE(0xe0, 0xef) AM_WRITE( rtc_w					)	// 6242RTC
+	AM_RANGE(0xe0, 0xef) AM_WRITE( msm6242_w				)	// 6242RTC
 ADDRESS_MAP_END
 
 
@@ -2500,7 +2443,7 @@ static ADDRESS_MAP_START( mjreach1_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_F
 	AM_RANGE(0x94, 0x94) AM_READ( input_port_0_r			)
 	AM_RANGE(0x95, 0x96) AM_READ( hanakanz_keyb_r			)
 	AM_RANGE(0xc0, 0xc0) AM_READ( OKIM6295_status_0_r		)
-	AM_RANGE(0xe0, 0xef) AM_READ( rtc_r						)	// 6242RTC
+	AM_RANGE(0xe0, 0xef) AM_READ( msm6242_r					)	// 6242RTC
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mjreach1_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
@@ -2516,7 +2459,7 @@ static ADDRESS_MAP_START( mjreach1_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_
 	AM_RANGE(0xa0, 0xa0) AM_WRITE( YM2413_register_port_0_w	)
 	AM_RANGE(0xa1, 0xa1) AM_WRITE( YM2413_data_port_0_w		)
 	AM_RANGE(0xc0, 0xc0) AM_WRITE( OKIM6295_data_0_w		)
-	AM_RANGE(0xe0, 0xef) AM_WRITE( rtc_w					)	// 6242RTC
+	AM_RANGE(0xe0, 0xef) AM_WRITE( msm6242_w				)	// 6242RTC
 ADDRESS_MAP_END
 
 
@@ -2635,7 +2578,7 @@ static ADDRESS_MAP_START( mjchuuka_readport, ADDRESS_SPACE_IO, 8 )	// 16 bit I/O
 	AM_RANGE(0x63, 0x63) AM_MIRROR(0xff00) AM_READ( input_port_14_r			)	// DSW 4
 	AM_RANGE(0x64, 0x64) AM_MIRROR(0xff00) AM_READ( input_port_15_r			)	// DSW 1-4 high bits
 	AM_RANGE(0x80, 0x80) AM_MIRROR(0xff00) AM_READ( OKIM6295_status_0_r		)
-	AM_RANGE(0xc0, 0xcf) AM_MIRROR(0xff00) AM_READ( rtc_r					)	// 6242RTC
+	AM_RANGE(0xc0, 0xcf) AM_MIRROR(0xff00) AM_READ( msm6242_r				)	// 6242RTC
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mjchuuka_writeport, ADDRESS_SPACE_IO, 8 )	// 16 bit I/O
@@ -2645,7 +2588,7 @@ static ADDRESS_MAP_START( mjchuuka_writeport, ADDRESS_SPACE_IO, 8 )	// 16 bit I/
 	AM_RANGE(0x40, 0x40) AM_MIRROR(0xff00) AM_WRITE( mjchuuka_coincounter_w		)
 	AM_RANGE(0x41, 0x41) AM_MIRROR(0xff00) AM_WRITE( hanakanz_keyb_w			)
 	AM_RANGE(0x80, 0x80) AM_MIRROR(0xff00) AM_WRITE( OKIM6295_data_0_w			)
-	AM_RANGE(0xc0, 0xcf) AM_MIRROR(0xff00) AM_WRITE( rtc_w						)	// 6242RTC
+	AM_RANGE(0xc0, 0xcf) AM_MIRROR(0xff00) AM_WRITE( msm6242_w					)	// 6242RTC
 	AM_RANGE(0xa0, 0xa0) AM_MIRROR(0xff00) AM_WRITE( YM2413_register_port_0_w	)
 	AM_RANGE(0xa1, 0xa1) AM_MIRROR(0xff00) AM_WRITE( YM2413_data_port_0_w		)
 	AM_RANGE(0xe0, 0xe0) AM_MIRROR(0xff00) AM_WRITE( AY8910_control_port_0_w	)
@@ -2757,7 +2700,7 @@ static ADDRESS_MAP_START( mjmyster_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_F
 	AM_RANGE(0x23, 0x23) AM_READ( mjmyster_keyb_r			)
 	AM_RANGE(0x40, 0x40) AM_READ( OKIM6295_status_0_r		)
 	AM_RANGE(0x44, 0x44) AM_READ( AY8910_read_port_0_r		)
-	AM_RANGE(0x60, 0x6f) AM_READ( rtc_r						)	// 6242RTC
+	AM_RANGE(0x60, 0x6f) AM_READ( msm6242_r					)	// 6242RTC
 	AM_RANGE(0x98, 0x98) AM_READ( unk_r						)	// ? must be 78 on startup
 	AM_RANGE(0xc2, 0xc2) AM_READ( hanakanz_rand_r			)
 	AM_RANGE(0xc3, 0xc3) AM_READ( mjmyster_dsw_r			)
@@ -2774,7 +2717,7 @@ static ADDRESS_MAP_START( mjmyster_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_
 	AM_RANGE(0x43, 0x43) AM_WRITE( YM2413_data_port_0_w		)
 	AM_RANGE(0x46, 0x46) AM_WRITE( AY8910_write_port_0_w	)
 	AM_RANGE(0x48, 0x48) AM_WRITE( AY8910_control_port_0_w	)
-	AM_RANGE(0x60, 0x6f) AM_WRITE( rtc_w					)	// 6242RTC
+	AM_RANGE(0x60, 0x6f) AM_WRITE( msm6242_w				)	// 6242RTC
 	AM_RANGE(0x80, 0x83) AM_WRITE( dynax_palette_base_w		)
 	AM_RANGE(0x84, 0x87) AM_WRITE( dynax_palette_mask_w		)
 	AM_RANGE(0x88, 0x8b) AM_WRITE( dynax_transparency_pen_w	)

@@ -2,7 +2,7 @@
 #define _TMS32051_H
 
 #if (HAS_TMS32051)
-void tms32051_get_info(UINT32 state, union cpuinfo *info);
+void tms32051_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #ifdef MAME_DEBUG

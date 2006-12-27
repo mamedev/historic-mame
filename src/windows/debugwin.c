@@ -11,6 +11,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <windowsx.h>
+#include <tchar.h>
 #ifdef _MSC_VER
 #include <zmouse.h>
 #endif
@@ -137,7 +138,7 @@ struct _debugwin_info
 	char					edit_defstr[256];
 	void					(*process_string)(debugwin_info *, const char *);
 	WNDPROC 				original_editproc;
-	char					history[HISTORY_LENGTH][MAX_EDIT_STRING];
+	TCHAR					history[HISTORY_LENGTH][MAX_EDIT_STRING];
 	int						history_count;
 	int						last_history;
 
@@ -1533,13 +1534,13 @@ static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, L
 					case 13:
 					{
 						// fetch the text
-						SendMessage(wnd, WM_GETTEXT, (WPARAM)sizeof(buffer), (LPARAM)buffer);
+						SendMessage(wnd, WM_GETTEXT, (WPARAM)ARRAY_LENGTH(buffer), (LPARAM)buffer);
 
 						// add to the history if it's not a repeat of the last one
-						if (buffer[0] != 0 && strcmp(buffer, &info->history[0][0]))
+						if (buffer[0] != 0 && _tcscmp(buffer, &info->history[0][0]))
 						{
 							memmove(&info->history[1][0], &info->history[0][0], (HISTORY_LENGTH - 1) * MAX_EDIT_STRING);
-							strcpy(&info->history[0][0], buffer);
+							_tcscpy(&info->history[0][0], buffer);
 							if (info->history_count < HISTORY_LENGTH)
 								info->history_count++;
 						}
@@ -1557,7 +1558,7 @@ static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, L
 						SendMessage(wnd, WM_GETTEXT, (WPARAM)sizeof(buffer), (LPARAM)buffer);
 
 						// if it's not empty, clear the text
-						if (strlen(buffer) > 0)
+						if (_tcslen(buffer) > 0)
 						{
 							info->ignore_char_lparam = lparam >> 16;
 							SendMessage(wnd, WM_SETTEXT, (WPARAM)0, (LPARAM)info->edit_defstr);
@@ -1808,7 +1809,7 @@ static void memory_create_window(void)
 	HMENU optionsmenu;
 
 	// create the window
-	info = debug_window_create("Memory", NULL);
+	info = debug_window_create(TEXT("Memory"), NULL);
 	if (!info || !debug_view_create(info, 0, DVT_MEMORY))
 		return;
 
@@ -1818,15 +1819,15 @@ static void memory_create_window(void)
 
 	// create the options menu
 	optionsmenu = CreatePopupMenu();
-	AppendMenu(optionsmenu, MF_ENABLED, ID_1_BYTE_CHUNKS, "1-byte chunks\tCtrl+1");
-	AppendMenu(optionsmenu, MF_ENABLED, ID_2_BYTE_CHUNKS, "2-byte chunks\tCtrl+2");
-	AppendMenu(optionsmenu, MF_ENABLED, ID_4_BYTE_CHUNKS, "4-byte chunks\tCtrl+4");
-	AppendMenu(optionsmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
-	AppendMenu(optionsmenu, MF_ENABLED, ID_REVERSE_VIEW, "Reverse View\tCtrl+R");
-	AppendMenu(optionsmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
-	AppendMenu(optionsmenu, MF_ENABLED, ID_INCREASE_MEM_WIDTH, "Increase bytes per line\tCtrl+P");
-	AppendMenu(optionsmenu, MF_ENABLED, ID_DECREASE_MEM_WIDTH, "Decrease bytes per line\tCtrl+O");
-	AppendMenu(GetMenu(info->wnd), MF_ENABLED | MF_POPUP, (UINT_PTR)optionsmenu, "Options");
+	AppendMenu(optionsmenu, MF_ENABLED, ID_1_BYTE_CHUNKS, TEXT("1-byte chunks\tCtrl+1"));
+	AppendMenu(optionsmenu, MF_ENABLED, ID_2_BYTE_CHUNKS, TEXT("2-byte chunks\tCtrl+2"));
+	AppendMenu(optionsmenu, MF_ENABLED, ID_4_BYTE_CHUNKS, TEXT("4-byte chunks\tCtrl+4"));
+	AppendMenu(optionsmenu, MF_DISABLED | MF_SEPARATOR, 0, TEXT(""));
+	AppendMenu(optionsmenu, MF_ENABLED, ID_REVERSE_VIEW, TEXT("Reverse View\tCtrl+R"));
+	AppendMenu(optionsmenu, MF_DISABLED | MF_SEPARATOR, 0, TEXT(""));
+	AppendMenu(optionsmenu, MF_ENABLED, ID_INCREASE_MEM_WIDTH, TEXT("Increase bytes per line\tCtrl+P"));
+	AppendMenu(optionsmenu, MF_ENABLED, ID_DECREASE_MEM_WIDTH, TEXT("Decrease bytes per line\tCtrl+O"));
+	AppendMenu(GetMenu(info->wnd), MF_ENABLED | MF_POPUP, (UINT_PTR)optionsmenu, TEXT("Options"));
 	memory_update_checkmarks(info);
 
 	// set up the view to track the initial expression
@@ -2107,19 +2108,19 @@ static void disasm_create_window(void)
 	UINT32 cpunum;
 
 	// create the window
-	info = debug_window_create("Disassembly", NULL);
+	info = debug_window_create(TEXT("Disassembly"), NULL);
 	if (!info || !debug_view_create(info, 0, DVT_DISASSEMBLY))
 		return;
 
 	// create the options menu
 	optionsmenu = CreatePopupMenu();
-	AppendMenu(optionsmenu, MF_ENABLED, ID_TOGGLE_BREAKPOINT, "Set breakpoint at cursor\tF9");
-	AppendMenu(optionsmenu, MF_ENABLED, ID_RUN_TO_CURSOR, "Run to cursor\tF4");
-	AppendMenu(optionsmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
-	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_RAW, "Raw opcodes\tCtrl+R");
-	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_ENCRYPTED, "Encrypted opcodes\tCtrl+E");
-	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_COMMENTS, "Comments\tCtrl+M");
-	AppendMenu(GetMenu(info->wnd), MF_ENABLED | MF_POPUP, (UINT_PTR)optionsmenu, "Options");
+	AppendMenu(optionsmenu, MF_ENABLED, ID_TOGGLE_BREAKPOINT, TEXT("Set breakpoint at cursor\tF9"));
+	AppendMenu(optionsmenu, MF_ENABLED, ID_RUN_TO_CURSOR, TEXT("Run to cursor\tF4"));
+	AppendMenu(optionsmenu, MF_DISABLED | MF_SEPARATOR, 0, TEXT(""));
+	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_RAW, TEXT("Raw opcodes\tCtrl+R"));
+	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_ENCRYPTED, TEXT("Encrypted opcodes\tCtrl+E"));
+	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_COMMENTS, TEXT("Comments\tCtrl+M"));
+	AppendMenu(GetMenu(info->wnd), MF_ENABLED | MF_POPUP, (UINT_PTR)optionsmenu, TEXT("Options"));
 	disasm_update_checkmarks(info);
 
 	// set the handlers
@@ -2481,7 +2482,7 @@ void console_create_window(void)
 	UINT32 cpunum;
 
 	// create the window
-	info = debug_window_create("Debug", NULL);
+	info = debug_window_create(TEXT("Debug"), NULL);
 	if (!info)
 		return;
 	main_console = info;

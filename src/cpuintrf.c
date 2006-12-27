@@ -19,173 +19,177 @@
  *
  *************************************/
 
-void dummy_get_info(UINT32 state, union cpuinfo *info);
-void z80_get_info(UINT32 state, union cpuinfo *info);
-void z180_get_info(UINT32 state, union cpuinfo *info);
-void i8080_get_info(UINT32 state, union cpuinfo *info);
-void i8085_get_info(UINT32 state, union cpuinfo *info);
-void m6502_get_info(UINT32 state, union cpuinfo *info);
-void m65c02_get_info(UINT32 state, union cpuinfo *info);
-void m65sc02_get_info(UINT32 state, union cpuinfo *info);
-void m65ce02_get_info(UINT32 state, union cpuinfo *info);
-void m6509_get_info(UINT32 state, union cpuinfo *info);
-void m6510_get_info(UINT32 state, union cpuinfo *info);
-void m6510t_get_info(UINT32 state, union cpuinfo *info);
-void m7501_get_info(UINT32 state, union cpuinfo *info);
-void m8502_get_info(UINT32 state, union cpuinfo *info);
-void n2a03_get_info(UINT32 state, union cpuinfo *info);
-void deco16_get_info(UINT32 state, union cpuinfo *info);
-void m4510_get_info(UINT32 state, union cpuinfo *info);
-void h6280_get_info(UINT32 state, union cpuinfo *info);
-void i86_get_info(UINT32 state, union cpuinfo *info);
-void i88_get_info(UINT32 state, union cpuinfo *info);
-void i186_get_info(UINT32 state, union cpuinfo *info);
-void i188_get_info(UINT32 state, union cpuinfo *info);
-void i286_get_info(UINT32 state, union cpuinfo *info);
-void v20_get_info(UINT32 state, union cpuinfo *info);
-void v30_get_info(UINT32 state, union cpuinfo *info);
-void v33_get_info(UINT32 state, union cpuinfo *info);
-void v60_get_info(UINT32 state, union cpuinfo *info);
-void v70_get_info(UINT32 state, union cpuinfo *info);
-void i8035_get_info(UINT32 state, union cpuinfo *info);
-void i8039_get_info(UINT32 state, union cpuinfo *info);
-void i8048_get_info(UINT32 state, union cpuinfo *info);
-void n7751_get_info(UINT32 state, union cpuinfo *info);
-void i8x41_get_info(UINT32 state, union cpuinfo *info);
-void i8051_get_info(UINT32 state, union cpuinfo *info);
-void i8052_get_info(UINT32 state, union cpuinfo *info);
-void i8751_get_info(UINT32 state, union cpuinfo *info);
-void i8752_get_info(UINT32 state, union cpuinfo *info);
-void m6800_get_info(UINT32 state, union cpuinfo *info);
-void m6801_get_info(UINT32 state, union cpuinfo *info);
-void m6802_get_info(UINT32 state, union cpuinfo *info);
-void m6803_get_info(UINT32 state, union cpuinfo *info);
-void m6808_get_info(UINT32 state, union cpuinfo *info);
-void hd63701_get_info(UINT32 state, union cpuinfo *info);
-void nsc8105_get_info(UINT32 state, union cpuinfo *info);
-void m6805_get_info(UINT32 state, union cpuinfo *info);
-void m68705_get_info(UINT32 state, union cpuinfo *info);
-void hd63705_get_info(UINT32 state, union cpuinfo *info);
-void hd6309_get_info(UINT32 state, union cpuinfo *info);
-void m6809_get_info(UINT32 state, union cpuinfo *info);
-void m6809e_get_info(UINT32 state, union cpuinfo *info);
-void konami_get_info(UINT32 state, union cpuinfo *info);
-void m68000_get_info(UINT32 state, union cpuinfo *info);
-void m68008_get_info(UINT32 state, union cpuinfo *info);
-void m68010_get_info(UINT32 state, union cpuinfo *info);
-void m68ec020_get_info(UINT32 state, union cpuinfo *info);
-void m68020_get_info(UINT32 state, union cpuinfo *info);
-void m68040_get_info(UINT32 state, union cpuinfo *info);
-void t11_get_info(UINT32 state, union cpuinfo *info);
-void s2650_get_info(UINT32 state, union cpuinfo *info);
-void tms34010_get_info(UINT32 state, union cpuinfo *info);
-void tms34020_get_info(UINT32 state, union cpuinfo *info);
-void ti990_10_get_info(UINT32 state, union cpuinfo *info);
-void tms9900_get_info(UINT32 state, union cpuinfo *info);
-void tms9940_get_info(UINT32 state, union cpuinfo *info);
-void tms9980a_get_info(UINT32 state, union cpuinfo *info);
-void tms9985_get_info(UINT32 state, union cpuinfo *info);
-void tms9989_get_info(UINT32 state, union cpuinfo *info);
-void tms9995_get_info(UINT32 state, union cpuinfo *info);
-void tms99105a_get_info(UINT32 state, union cpuinfo *info);
-void tms99110a_get_info(UINT32 state, union cpuinfo *info);
-void z8000_get_info(UINT32 state, union cpuinfo *info);
-void tms32010_get_info(UINT32 state, union cpuinfo *info);
-void tms32025_get_info(UINT32 state, union cpuinfo *info);
-void tms32026_get_info(UINT32 state, union cpuinfo *info);
-void tms32031_get_info(UINT32 state, union cpuinfo *info);
-void tms32051_get_info(UINT32 state, union cpuinfo *info);
-void ccpu_get_info(UINT32 state, union cpuinfo *info);
-void adsp2100_get_info(UINT32 state, union cpuinfo *info);
-void adsp2101_get_info(UINT32 state, union cpuinfo *info);
-void adsp2104_get_info(UINT32 state, union cpuinfo *info);
-void adsp2105_get_info(UINT32 state, union cpuinfo *info);
-void adsp2115_get_info(UINT32 state, union cpuinfo *info);
-void adsp2181_get_info(UINT32 state, union cpuinfo *info);
-void psxcpu_get_info(UINT32 state, union cpuinfo *info);
-void asap_get_info(UINT32 state, union cpuinfo *info);
-void upd7810_get_info(UINT32 state, union cpuinfo *info);
-void upd7807_get_info(UINT32 state, union cpuinfo *info);
-void jaguargpu_get_info(UINT32 state, union cpuinfo *info);
-void jaguardsp_get_info(UINT32 state, union cpuinfo *info);
-void r3000be_get_info(UINT32 state, union cpuinfo *info);
-void r3000le_get_info(UINT32 state, union cpuinfo *info);
-void r4600be_get_info(UINT32 state, union cpuinfo *info);
-void r4600le_get_info(UINT32 state, union cpuinfo *info);
-void r4650be_get_info(UINT32 state, union cpuinfo *info);
-void r4650le_get_info(UINT32 state, union cpuinfo *info);
-void r4700be_get_info(UINT32 state, union cpuinfo *info);
-void r4700le_get_info(UINT32 state, union cpuinfo *info);
-void r5000be_get_info(UINT32 state, union cpuinfo *info);
-void r5000le_get_info(UINT32 state, union cpuinfo *info);
-void qed5271be_get_info(UINT32 state, union cpuinfo *info);
-void qed5271le_get_info(UINT32 state, union cpuinfo *info);
-void rm7000be_get_info(UINT32 state, union cpuinfo *info);
-void rm7000le_get_info(UINT32 state, union cpuinfo *info);
-void arm_get_info(UINT32 state, union cpuinfo *info);
-void arm7_get_info(UINT32 state, union cpuinfo *info);
-void sh2_get_info(UINT32 state, union cpuinfo *info);
-void dsp32c_get_info(UINT32 state, union cpuinfo *info);
-void pic16C54_get_info(UINT32 state, union cpuinfo *info);
-void pic16C55_get_info(UINT32 state, union cpuinfo *info);
-void pic16C56_get_info(UINT32 state, union cpuinfo *info);
-void pic16C57_get_info(UINT32 state, union cpuinfo *info);
-void pic16C58_get_info(UINT32 state, union cpuinfo *info);
-void g65816_get_info(UINT32 state, union cpuinfo *info);
-void spc700_get_info(UINT32 state, union cpuinfo *info);
-void e116t_get_info(UINT32 state, union cpuinfo *info);
-void e116xt_get_info(UINT32 state, union cpuinfo *info);
-void e116xs_get_info(UINT32 state, union cpuinfo *info);
-void e116xsr_get_info(UINT32 state, union cpuinfo *info);
-void e132n_get_info(UINT32 state, union cpuinfo *info);
-void e132t_get_info(UINT32 state, union cpuinfo *info);
-void e132xn_get_info(UINT32 state, union cpuinfo *info);
-void e132xt_get_info(UINT32 state, union cpuinfo *info);
-void e132xs_get_info(UINT32 state, union cpuinfo *info);
-void e132xsr_get_info(UINT32 state, union cpuinfo *info);
-void gms30c2116_get_info(UINT32 state, union cpuinfo *info);
-void gms30c2132_get_info(UINT32 state, union cpuinfo *info);
-void gms30c2216_get_info(UINT32 state, union cpuinfo *info);
-void gms30c2232_get_info(UINT32 state, union cpuinfo *info);
-void i386_get_info(UINT32 state, union cpuinfo *info);
-void i486_get_info(UINT32 state, union cpuinfo *info);
-void pentium_get_info(UINT32 state, union cpuinfo *info);
-void mediagx_get_info(UINT32 state, union cpuinfo *info);
-void i960_get_info(UINT32 state, union cpuinfo *info);
-void h8_3002_get_info(UINT32 state, union cpuinfo *info);
-void v810_get_info(UINT32 state, union cpuinfo *info);
-void m37702_get_info(UINT32 state, union cpuinfo *info);
-void m37710_get_info(UINT32 state, union cpuinfo *info);
-void ppc403_get_info(UINT32 state, union cpuinfo *info);
-void ppc602_get_info(UINT32 state, union cpuinfo *info);
-void ppc603_get_info(UINT32 state, union cpuinfo *info);
-void SE3208_get_info(UINT32 state, union cpuinfo *info);
-void mc68hc11_get_info(UINT32 state, union cpuinfo *info);
-void adsp21062_get_info(UINT32 state, union cpuinfo *info);
-void dsp56k_get_info(UINT32 state, union cpuinfo *info);
-void rsp_get_info(UINT32 state, union cpuinfo *info);
-void alpha8201_get_info(UINT32 state, union cpuinfo *info);
-void alpha8301_get_info(UINT32 state, union cpuinfo *info);
-void cdp1802_get_info(UINT32 state, union cpuinfo *info);
-void cop420_get_info(UINT32 state, union cpuinfo *info);
-void cop410_get_info(UINT32 state, union cpuinfo *info);
-void cop411_get_info(UINT32 state, union cpuinfo *info);
+void dummy_get_info(UINT32 state, cpuinfo *info);
+void z80_get_info(UINT32 state, cpuinfo *info);
+void z180_get_info(UINT32 state, cpuinfo *info);
+void i8080_get_info(UINT32 state, cpuinfo *info);
+void i8085_get_info(UINT32 state, cpuinfo *info);
+void m6502_get_info(UINT32 state, cpuinfo *info);
+void m65c02_get_info(UINT32 state, cpuinfo *info);
+void m65sc02_get_info(UINT32 state, cpuinfo *info);
+void m65ce02_get_info(UINT32 state, cpuinfo *info);
+void m6509_get_info(UINT32 state, cpuinfo *info);
+void m6510_get_info(UINT32 state, cpuinfo *info);
+void m6510t_get_info(UINT32 state, cpuinfo *info);
+void m7501_get_info(UINT32 state, cpuinfo *info);
+void m8502_get_info(UINT32 state, cpuinfo *info);
+void n2a03_get_info(UINT32 state, cpuinfo *info);
+void deco16_get_info(UINT32 state, cpuinfo *info);
+void m4510_get_info(UINT32 state, cpuinfo *info);
+void h6280_get_info(UINT32 state, cpuinfo *info);
+void i86_get_info(UINT32 state, cpuinfo *info);
+void i88_get_info(UINT32 state, cpuinfo *info);
+void i186_get_info(UINT32 state, cpuinfo *info);
+void i188_get_info(UINT32 state, cpuinfo *info);
+void i286_get_info(UINT32 state, cpuinfo *info);
+void v20_get_info(UINT32 state, cpuinfo *info);
+void v30_get_info(UINT32 state, cpuinfo *info);
+void v33_get_info(UINT32 state, cpuinfo *info);
+void v60_get_info(UINT32 state, cpuinfo *info);
+void v70_get_info(UINT32 state, cpuinfo *info);
+void i8035_get_info(UINT32 state, cpuinfo *info);
+void i8039_get_info(UINT32 state, cpuinfo *info);
+void i8048_get_info(UINT32 state, cpuinfo *info);
+void n7751_get_info(UINT32 state, cpuinfo *info);
+void i8x41_get_info(UINT32 state, cpuinfo *info);
+void i8051_get_info(UINT32 state, cpuinfo *info);
+void i8052_get_info(UINT32 state, cpuinfo *info);
+void i8751_get_info(UINT32 state, cpuinfo *info);
+void i8752_get_info(UINT32 state, cpuinfo *info);
+void m6800_get_info(UINT32 state, cpuinfo *info);
+void m6801_get_info(UINT32 state, cpuinfo *info);
+void m6802_get_info(UINT32 state, cpuinfo *info);
+void m6803_get_info(UINT32 state, cpuinfo *info);
+void m6808_get_info(UINT32 state, cpuinfo *info);
+void hd63701_get_info(UINT32 state, cpuinfo *info);
+void nsc8105_get_info(UINT32 state, cpuinfo *info);
+void m6805_get_info(UINT32 state, cpuinfo *info);
+void m68705_get_info(UINT32 state, cpuinfo *info);
+void hd63705_get_info(UINT32 state, cpuinfo *info);
+void hd6309_get_info(UINT32 state, cpuinfo *info);
+void m6809_get_info(UINT32 state, cpuinfo *info);
+void m6809e_get_info(UINT32 state, cpuinfo *info);
+void konami_get_info(UINT32 state, cpuinfo *info);
+void m68000_get_info(UINT32 state, cpuinfo *info);
+void m68008_get_info(UINT32 state, cpuinfo *info);
+void m68010_get_info(UINT32 state, cpuinfo *info);
+void m68ec020_get_info(UINT32 state, cpuinfo *info);
+void m68020_get_info(UINT32 state, cpuinfo *info);
+void m68040_get_info(UINT32 state, cpuinfo *info);
+void t11_get_info(UINT32 state, cpuinfo *info);
+void s2650_get_info(UINT32 state, cpuinfo *info);
+void tms34010_get_info(UINT32 state, cpuinfo *info);
+void tms34020_get_info(UINT32 state, cpuinfo *info);
+void ti990_10_get_info(UINT32 state, cpuinfo *info);
+void tms9900_get_info(UINT32 state, cpuinfo *info);
+void tms9940_get_info(UINT32 state, cpuinfo *info);
+void tms9980a_get_info(UINT32 state, cpuinfo *info);
+void tms9985_get_info(UINT32 state, cpuinfo *info);
+void tms9989_get_info(UINT32 state, cpuinfo *info);
+void tms9995_get_info(UINT32 state, cpuinfo *info);
+void tms99105a_get_info(UINT32 state, cpuinfo *info);
+void tms99110a_get_info(UINT32 state, cpuinfo *info);
+void z8000_get_info(UINT32 state, cpuinfo *info);
+void tms32010_get_info(UINT32 state, cpuinfo *info);
+void tms32025_get_info(UINT32 state, cpuinfo *info);
+void tms32026_get_info(UINT32 state, cpuinfo *info);
+void tms32031_get_info(UINT32 state, cpuinfo *info);
+void tms32051_get_info(UINT32 state, cpuinfo *info);
+void ccpu_get_info(UINT32 state, cpuinfo *info);
+void adsp2100_get_info(UINT32 state, cpuinfo *info);
+void adsp2101_get_info(UINT32 state, cpuinfo *info);
+void adsp2104_get_info(UINT32 state, cpuinfo *info);
+void adsp2105_get_info(UINT32 state, cpuinfo *info);
+void adsp2115_get_info(UINT32 state, cpuinfo *info);
+void adsp2181_get_info(UINT32 state, cpuinfo *info);
+void psxcpu_get_info(UINT32 state, cpuinfo *info);
+void asap_get_info(UINT32 state, cpuinfo *info);
+void upd7810_get_info(UINT32 state, cpuinfo *info);
+void upd7807_get_info(UINT32 state, cpuinfo *info);
+void jaguargpu_get_info(UINT32 state, cpuinfo *info);
+void jaguardsp_get_info(UINT32 state, cpuinfo *info);
+void r3000be_get_info(UINT32 state, cpuinfo *info);
+void r3000le_get_info(UINT32 state, cpuinfo *info);
+void r4600be_get_info(UINT32 state, cpuinfo *info);
+void r4600le_get_info(UINT32 state, cpuinfo *info);
+void r4650be_get_info(UINT32 state, cpuinfo *info);
+void r4650le_get_info(UINT32 state, cpuinfo *info);
+void r4700be_get_info(UINT32 state, cpuinfo *info);
+void r4700le_get_info(UINT32 state, cpuinfo *info);
+void r5000be_get_info(UINT32 state, cpuinfo *info);
+void r5000le_get_info(UINT32 state, cpuinfo *info);
+void qed5271be_get_info(UINT32 state, cpuinfo *info);
+void qed5271le_get_info(UINT32 state, cpuinfo *info);
+void rm7000be_get_info(UINT32 state, cpuinfo *info);
+void rm7000le_get_info(UINT32 state, cpuinfo *info);
+void arm_get_info(UINT32 state, cpuinfo *info);
+void arm7_get_info(UINT32 state, cpuinfo *info);
+void sh2_get_info(UINT32 state, cpuinfo *info);
+void dsp32c_get_info(UINT32 state, cpuinfo *info);
+void pic16C54_get_info(UINT32 state, cpuinfo *info);
+void pic16C55_get_info(UINT32 state, cpuinfo *info);
+void pic16C56_get_info(UINT32 state, cpuinfo *info);
+void pic16C57_get_info(UINT32 state, cpuinfo *info);
+void pic16C58_get_info(UINT32 state, cpuinfo *info);
+void g65816_get_info(UINT32 state, cpuinfo *info);
+void spc700_get_info(UINT32 state, cpuinfo *info);
+void e116t_get_info(UINT32 state, cpuinfo *info);
+void e116xt_get_info(UINT32 state, cpuinfo *info);
+void e116xs_get_info(UINT32 state, cpuinfo *info);
+void e116xsr_get_info(UINT32 state, cpuinfo *info);
+void e132n_get_info(UINT32 state, cpuinfo *info);
+void e132t_get_info(UINT32 state, cpuinfo *info);
+void e132xn_get_info(UINT32 state, cpuinfo *info);
+void e132xt_get_info(UINT32 state, cpuinfo *info);
+void e132xs_get_info(UINT32 state, cpuinfo *info);
+void e132xsr_get_info(UINT32 state, cpuinfo *info);
+void gms30c2116_get_info(UINT32 state, cpuinfo *info);
+void gms30c2132_get_info(UINT32 state, cpuinfo *info);
+void gms30c2216_get_info(UINT32 state, cpuinfo *info);
+void gms30c2232_get_info(UINT32 state, cpuinfo *info);
+void i386_get_info(UINT32 state, cpuinfo *info);
+void i486_get_info(UINT32 state, cpuinfo *info);
+void pentium_get_info(UINT32 state, cpuinfo *info);
+void mediagx_get_info(UINT32 state, cpuinfo *info);
+void i960_get_info(UINT32 state, cpuinfo *info);
+void h8_3002_get_info(UINT32 state, cpuinfo *info);
+void v810_get_info(UINT32 state, cpuinfo *info);
+void m37702_get_info(UINT32 state, cpuinfo *info);
+void m37710_get_info(UINT32 state, cpuinfo *info);
+void ppc403_get_info(UINT32 state, cpuinfo *info);
+void ppc602_get_info(UINT32 state, cpuinfo *info);
+void ppc603_get_info(UINT32 state, cpuinfo *info);
+void SE3208_get_info(UINT32 state, cpuinfo *info);
+void mc68hc11_get_info(UINT32 state, cpuinfo *info);
+void adsp21062_get_info(UINT32 state, cpuinfo *info);
+void dsp56k_get_info(UINT32 state, cpuinfo *info);
+void rsp_get_info(UINT32 state, cpuinfo *info);
+void alpha8201_get_info(UINT32 state, cpuinfo *info);
+void alpha8301_get_info(UINT32 state, cpuinfo *info);
+void cdp1802_get_info(UINT32 state, cpuinfo *info);
+void cop420_get_info(UINT32 state, cpuinfo *info);
+void cop410_get_info(UINT32 state, cpuinfo *info);
+void cop411_get_info(UINT32 state, cpuinfo *info);
+void tmp90840_get_info(UINT32 state, cpuinfo *info);
+void tmp90841_get_info(UINT32 state, cpuinfo *info);
+void tmp91640_get_info(UINT32 state, cpuinfo *info);
+void tmp91641_get_info(UINT32 state, cpuinfo *info);
 
 #ifdef MESS
-void apexc_get_info(UINT32 state, union cpuinfo *info);
-void cp1610_get_info(UINT32 state, union cpuinfo *info);
-void f8_get_info(UINT32 state, union cpuinfo *info);
-void lh5801_get_info(UINT32 state, union cpuinfo *info);
-void pdp1_get_info(UINT32 state, union cpuinfo *info);
-void saturn_get_info(UINT32 state, union cpuinfo *info);
-void sc61860_get_info(UINT32 state, union cpuinfo *info);
-void tx0_64kw_get_info(UINT32 state, union cpuinfo *info);
-void tx0_8kw_get_info(UINT32 state, union cpuinfo *info);
-void z80gb_get_info(UINT32 state, union cpuinfo *info);
-void tms7000_get_info(UINT32 state, union cpuinfo *info);
-void tms7000_exl_get_info(UINT32 state, union cpuinfo *info);
-void sm8500_get_info(UINT32 state, union cpuinfo *info);
-void v30mz_get_info(UINT32 state, union cpuinfo *info);
+void apexc_get_info(UINT32 state, cpuinfo *info);
+void cp1610_get_info(UINT32 state, cpuinfo *info);
+void f8_get_info(UINT32 state, cpuinfo *info);
+void lh5801_get_info(UINT32 state, cpuinfo *info);
+void pdp1_get_info(UINT32 state, cpuinfo *info);
+void saturn_get_info(UINT32 state, cpuinfo *info);
+void sc61860_get_info(UINT32 state, cpuinfo *info);
+void tx0_64kw_get_info(UINT32 state, cpuinfo *info);
+void tx0_8kw_get_info(UINT32 state, cpuinfo *info);
+void z80gb_get_info(UINT32 state, cpuinfo *info);
+void tms7000_get_info(UINT32 state, cpuinfo *info);
+void tms7000_exl_get_info(UINT32 state, cpuinfo *info);
+void sm8500_get_info(UINT32 state, cpuinfo *info);
+void v30mz_get_info(UINT32 state, cpuinfo *info);
 #endif /* MESS */
 
 
@@ -251,7 +255,7 @@ cpu_interface cpuintrf[CPU_COUNT];
 static const struct
 {
 	int		cputype;
-	void	(*get_info)(UINT32 state, union cpuinfo *info);
+	void	(*get_info)(UINT32 state, cpuinfo *info);
 } cpuintrf_map[] =
 {
 	{ CPU_DUMMY, dummy_get_info },
@@ -689,6 +693,12 @@ static const struct
 #if (HAS_COP411)
 	{ CPU_COP411, cop411_get_info },
 #endif
+#if (HAS_TLCS90)
+	{ CPU_TMP90840, tmp90840_get_info },
+	{ CPU_TMP90841, tmp90841_get_info },
+	{ CPU_TMP91640, tmp91640_get_info },
+	{ CPU_TMP91641, tmp91641_get_info },
+#endif
 
 #ifdef MESS
 #if (HAS_APEXC)
@@ -734,23 +744,6 @@ static const struct
 	{ CPU_V30MZ, v30mz_get_info },
 #endif
 #endif /* MESS */
-};
-
-
-
-/*************************************
- *
- *  Default debugger window layout
- *
- *************************************/
-
-UINT8 default_win_layout[] =
-{
-	 0, 0,80, 5,	/* register window (top rows) */
-	 0, 5,24,17,	/* disassembler window (left, middle columns) */
-	25, 5,55, 8,	/* memory #1 window (right, upper middle) */
-	25,14,55, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1 	/* command line window (bottom row) */
 };
 
 
@@ -876,7 +869,7 @@ void cpuintrf_init(running_machine *machine)
 	{
 		int cputype = cpuintrf_map[mapindex].cputype;
 		cpu_interface *intf = &cpuintrf[cputype];
-		union cpuinfo info;
+		cpuinfo info;
 
 		/* start with the get_info routine */
 		intf->get_info = cpuintrf_map[mapindex].get_info;
@@ -1054,7 +1047,7 @@ void cpuintrf_exit_cpu(int cpunum)
 
 INT64 activecpu_get_info_int(UINT32 state)
 {
-	union cpuinfo info;
+	cpuinfo info;
 
 	VERIFY_ACTIVECPU(activecpu_get_info_int);
 	info.i = 0;
@@ -1064,7 +1057,7 @@ INT64 activecpu_get_info_int(UINT32 state)
 
 void *activecpu_get_info_ptr(UINT32 state)
 {
-	union cpuinfo info;
+	cpuinfo info;
 
 	VERIFY_ACTIVECPU(activecpu_get_info_ptr);
 	info.p = NULL;
@@ -1074,7 +1067,7 @@ void *activecpu_get_info_ptr(UINT32 state)
 
 genf *activecpu_get_info_fct(UINT32 state)
 {
-	union cpuinfo info;
+	cpuinfo info;
 
 	VERIFY_ACTIVECPU(activecpu_get_info_fct);
 	info.f = NULL;
@@ -1084,10 +1077,10 @@ genf *activecpu_get_info_fct(UINT32 state)
 
 const char *activecpu_get_info_string(UINT32 state)
 {
-	union cpuinfo info;
+	cpuinfo info;
 
 	VERIFY_ACTIVECPU(activecpu_get_info_string);
-	info.s = NULL;
+	info.s = cpuintrf_temp_str();
 	(*cpu[activecpu].intf.get_info)(state, &info);
 	return info.s;
 }
@@ -1099,7 +1092,7 @@ const char *activecpu_get_info_string(UINT32 state)
 
 void activecpu_set_info_int(UINT32 state, INT64 data)
 {
-	union cpuinfo info;
+	cpuinfo info;
 	VERIFY_ACTIVECPU(activecpu_set_info_int);
 	info.i = data;
 	(*cpu[activecpu].intf.set_info)(state, &info);
@@ -1107,7 +1100,7 @@ void activecpu_set_info_int(UINT32 state, INT64 data)
 
 void activecpu_set_info_ptr(UINT32 state, void *data)
 {
-	union cpuinfo info;
+	cpuinfo info;
 	VERIFY_ACTIVECPU(activecpu_set_info_ptr);
 	info.p = data;
 	(*cpu[activecpu].intf.set_info)(state, &info);
@@ -1115,7 +1108,7 @@ void activecpu_set_info_ptr(UINT32 state, void *data)
 
 void activecpu_set_info_fct(UINT32 state, genf *data)
 {
-	union cpuinfo info;
+	cpuinfo info;
 	VERIFY_ACTIVECPU(activecpu_set_info_fct);
 	info.f = data;
 	(*cpu[activecpu].intf.set_info)(state, &info);
@@ -1273,7 +1266,7 @@ offs_t activecpu_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 
 INT64 cpunum_get_info_int(int cpunum, UINT32 state)
 {
-	union cpuinfo info;
+	cpuinfo info;
 
 	VERIFY_CPUNUM(cpunum_get_info_int);
 	cpuintrf_push_context(cpunum);
@@ -1285,7 +1278,7 @@ INT64 cpunum_get_info_int(int cpunum, UINT32 state)
 
 void *cpunum_get_info_ptr(int cpunum, UINT32 state)
 {
-	union cpuinfo info;
+	cpuinfo info;
 
 	VERIFY_CPUNUM(cpunum_get_info_ptr);
 	cpuintrf_push_context(cpunum);
@@ -1297,7 +1290,7 @@ void *cpunum_get_info_ptr(int cpunum, UINT32 state)
 
 genf *cpunum_get_info_fct(int cpunum, UINT32 state)
 {
-	union cpuinfo info;
+	cpuinfo info;
 
 	VERIFY_CPUNUM(cpunum_get_info_fct);
 	cpuintrf_push_context(cpunum);
@@ -1309,11 +1302,11 @@ genf *cpunum_get_info_fct(int cpunum, UINT32 state)
 
 const char *cpunum_get_info_string(int cpunum, UINT32 state)
 {
-	union cpuinfo info;
+	cpuinfo info;
 
 	VERIFY_CPUNUM(cpunum_get_info_string);
 	cpuintrf_push_context(cpunum);
-	info.s = NULL;
+	info.s = cpuintrf_temp_str();
 	(*cpu[cpunum].intf.get_info)(state, &info);
 	cpuintrf_pop_context();
 	return info.s;
@@ -1326,7 +1319,7 @@ const char *cpunum_get_info_string(int cpunum, UINT32 state)
 
 void cpunum_set_info_int(int cpunum, UINT32 state, INT64 data)
 {
-	union cpuinfo info;
+	cpuinfo info;
 	VERIFY_CPUNUM(cpunum_set_info_int);
 	info.i = data;
 	cpuintrf_push_context(cpunum);
@@ -1336,7 +1329,7 @@ void cpunum_set_info_int(int cpunum, UINT32 state, INT64 data)
 
 void cpunum_set_info_ptr(int cpunum, UINT32 state, void *data)
 {
-	union cpuinfo info;
+	cpuinfo info;
 	VERIFY_CPUNUM(cpunum_set_info_ptr);
 	info.p = data;
 	cpuintrf_push_context(cpunum);
@@ -1346,7 +1339,7 @@ void cpunum_set_info_ptr(int cpunum, UINT32 state, void *data)
 
 void cpunum_set_info_fct(int cpunum, UINT32 state, genf *data)
 {
-	union cpuinfo info;
+	cpuinfo info;
 	VERIFY_CPUNUM(cpunum_set_info_ptr);
 	info.f = data;
 	cpuintrf_push_context(cpunum);
@@ -1487,7 +1480,7 @@ offs_t cpunum_dasm(int cpunum, char *buffer, offs_t pc, const UINT8 *oprom, cons
 
 INT64 cputype_get_info_int(int cputype, UINT32 state)
 {
-	union cpuinfo info;
+	cpuinfo info;
 
 	VERIFY_CPUTYPE(cputype_get_info_int);
 	info.i = 0;
@@ -1497,7 +1490,7 @@ INT64 cputype_get_info_int(int cputype, UINT32 state)
 
 void *cputype_get_info_ptr(int cputype, UINT32 state)
 {
-	union cpuinfo info;
+	cpuinfo info;
 
 	VERIFY_CPUTYPE(cputype_get_info_ptr);
 	info.p = NULL;
@@ -1507,7 +1500,7 @@ void *cputype_get_info_ptr(int cputype, UINT32 state)
 
 genf *cputype_get_info_fct(int cputype, UINT32 state)
 {
-	union cpuinfo info;
+	cpuinfo info;
 
 	VERIFY_CPUTYPE(cputype_get_info_fct);
 	info.f = NULL;
@@ -1517,10 +1510,10 @@ genf *cputype_get_info_fct(int cputype, UINT32 state)
 
 const char *cputype_get_info_string(int cputype, UINT32 state)
 {
-	union cpuinfo info;
+	cpuinfo info;
 
 	VERIFY_CPUTYPE(cputype_get_info_string);
-	info.s = NULL;
+	info.s = cpuintrf_temp_str();
 	(*cpuintrf[cputype].get_info)(state, &info);
 	return info.s;
 }
@@ -1554,11 +1547,11 @@ static offs_t dummy_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT
 	return 1;
 }
 
-static void dummy_set_info(UINT32 state, union cpuinfo *info)
+static void dummy_set_info(UINT32 state, cpuinfo *info)
 {
 }
 
-void dummy_get_info(UINT32 state, union cpuinfo *info)
+void dummy_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1602,12 +1595,12 @@ void dummy_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &dummy_icount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), ""); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "no CPU"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "0.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "The MAME team");	break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "");					break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "no CPU");				break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "0.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "The MAME team");		break;
 
-		case CPUINFO_STR_FLAGS:							strcpy(info->s = cpuintrf_temp_str(), "--"); break;
+		case CPUINFO_STR_FLAGS:							strcpy(info->s, "--");					break;
 	}
 }

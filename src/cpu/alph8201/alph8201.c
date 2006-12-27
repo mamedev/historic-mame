@@ -843,7 +843,7 @@ static void set_irq_line(int irqline, int state)
  * Generic set_info
  **************************************************************************/
 
-static void ALPHA8201_set_info(UINT32 state, union cpuinfo *info)
+static void ALPHA8201_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -851,31 +851,31 @@ static void ALPHA8201_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_HALT:	set_irq_line(INPUT_LINE_HALT, info->i);	break;
 #endif
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + ALPHA8201_PC:			PC = info->i;							break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_PC:			PC = info->i;						break;
 		case CPUINFO_INT_SP:
-		case CPUINFO_INT_REGISTER + ALPHA8201_SP:			M_WRMEM(0x001,info->i);					break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_RB:			regPTR = (info->i & 7)<<3;				break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_MB:			R.mb = info->i & 0x03;					break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_SP:			M_WRMEM(0x001,info->i);				break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_RB:			regPTR = (info->i & 7)<<3;			break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_MB:			R.mb = info->i & 0x03;				break;
 #if 0
-		case CPUINFO_INT_REGISTER + ALPHA8201_ZF:			R.zf= info->i & 0x01;					break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_CF:			R.cf= info->i & 0x01;					break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_ZF:			R.zf= info->i & 0x01;				break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_CF:			R.cf= info->i & 0x01;				break;
 #endif
-		case CPUINFO_INT_REGISTER + ALPHA8201_IX0:			IX0 = info->i;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_IX1:			IX1 = info->i;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_IX2:			IX2 = info->i;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_LP0:			LP0 = info->i;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_LP1:			LP1 = info->i;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_LP2:			LP2 = info->i;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_A:			R.A = info->i;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_B:			R.B = info->i;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R0:			R0 = info->i;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R1:			R1 = info->i;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R2:			R2 = info->i;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R3:			R3 = info->i;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R4:			R4 = info->i;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R5:			R5 = info->i;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R6:			R6 = info->i;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R7:			R7 = info->i;							break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_IX0:			IX0 = info->i;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_IX1:			IX1 = info->i;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_IX2:			IX2 = info->i;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_LP0:			LP0 = info->i;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_LP1:			LP1 = info->i;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_LP2:			LP2 = info->i;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_A:			R.A = info->i;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_B:			R.B = info->i;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R0:			R0 = info->i;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R1:			R1 = info->i;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R2:			R2 = info->i;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R3:			R3 = info->i;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R4:			R4 = info->i;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R5:			R5 = info->i;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R6:			R6 = info->i;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R7:			R7 = info->i;						break;
 	}
 }
 
@@ -886,7 +886,7 @@ static void ALPHA8201_set_info(UINT32 state, union cpuinfo *info)
  **************************************************************************/
 
 /* 8201 and 8301 */
-static void alpha8xxx_get_info(UINT32 state, union cpuinfo *info)
+static void alpha8xxx_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -913,85 +913,85 @@ static void alpha8xxx_get_info(UINT32 state, union cpuinfo *info)
 #if HANDLE_HALT_LINE
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_HALT:		info->i = R.halt ? ASSERT_LINE : CLEAR_LINE; break;
 #endif
-		case CPUINFO_INT_PREVIOUSPC:						info->i = R.PREVPC;						break;
+		case CPUINFO_INT_PREVIOUSPC:						info->i = R.PREVPC;					break;
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + ALPHA8201_PC:			info->i = PC & 0x3ff;					break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_PC:			info->i = PC & 0x3ff;				break;
 		case CPUINFO_INT_SP:
-		case CPUINFO_INT_REGISTER + ALPHA8201_SP:			info->i = M_RDMEM(0x001);				break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_RB:			info->i = regPTR;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_SP:			info->i = M_RDMEM(0x001);			break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_RB:			info->i = regPTR;					break;
 		case CPUINFO_INT_REGISTER + ALPHA8201_MB:			info->i = R.mb;						break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_ZF:			info->i = ZF;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_CF:			info->i = CF;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_IX0:			info->i = IX0;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_IX1:			info->i = IX1;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_IX2:			info->i = IX2;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_LP0:			info->i = LP0;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_LP1:			info->i = LP1;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_LP2:			info->i = LP2;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_A:			info->i = R.A;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_B:			info->i = R.B;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R0:			info->i = R0;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R1:			info->i = R1;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R2:			info->i = R2;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R3:			info->i = R3;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R4:			info->i = R4;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R5:			info->i = R5;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R6:			info->i = R6;							break;
-		case CPUINFO_INT_REGISTER + ALPHA8201_R7:			info->i = R7;							break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_ZF:			info->i = ZF;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_CF:			info->i = CF;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_IX0:			info->i = IX0;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_IX1:			info->i = IX1;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_IX2:			info->i = IX2;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_LP0:			info->i = LP0;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_LP1:			info->i = LP1;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_LP2:			info->i = LP2;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_A:			info->i = R.A;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_B:			info->i = R.B;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R0:			info->i = R0;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R1:			info->i = R1;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R2:			info->i = R2;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R3:			info->i = R3;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R4:			info->i = R4;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R5:			info->i = R5;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R6:			info->i = R6;						break;
+		case CPUINFO_INT_REGISTER + ALPHA8201_R7:			info->i = R7;						break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = ALPHA8201_set_info;		break;
-		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = ALPHA8201_get_context;	break;
-		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = ALPHA8201_set_context;	break;
-		case CPUINFO_PTR_INIT:							info->init = ALPHA8201_init;				break;
-		case CPUINFO_PTR_RESET:							info->reset = ALPHA8201_reset;				break;
-		case CPUINFO_PTR_EXIT:							info->exit = ALPHA8201_exit;				break;
-		case CPUINFO_PTR_EXECUTE:						info->execute = ALPHA8201_execute;			break;
-		case CPUINFO_PTR_BURN:							info->burn = NULL;							break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = ALPHA8201_get_context; break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = ALPHA8201_set_context; break;
+		case CPUINFO_PTR_INIT:							info->init = ALPHA8201_init;			break;
+		case CPUINFO_PTR_RESET:							info->reset = ALPHA8201_reset;			break;
+		case CPUINFO_PTR_EXIT:							info->exit = ALPHA8201_exit;			break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = ALPHA8201_execute;		break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 #ifdef MAME_DEBUG
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ALPHA8201_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ALPHA8201_dasm;		break;
 #endif /* MAME_DEBUG */
-		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &ALPHA8201_ICount;			break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &ALPHA8201_ICount;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "AlphaDenshi MCU"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "0.1"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2006 by Tatsuyuki Satoh"); break;
-		case CPUINFO_STR_FLAGS:							sprintf(info->s = cpuintrf_temp_str(), "%c%c", CF?'C':'.',ZF?'Z':'.'); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_PC:		sprintf(info->s = cpuintrf_temp_str(), "PC:%03X", PC); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_SP:		sprintf(info->s = cpuintrf_temp_str(), "SP:%02X", M_RDMEM(0x001) ); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_RB:		sprintf(info->s = cpuintrf_temp_str(), "RB:%02X", regPTR>>3); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_MB:		sprintf(info->s = cpuintrf_temp_str(), "MB:%X", R.mb); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "AlphaDenshi MCU");		break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "0.1");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C) 2006 by Tatsuyuki Satoh"); break;
+		case CPUINFO_STR_FLAGS:							sprintf(info->s, "%c%c", CF?'C':'.',ZF?'Z':'.'); break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_PC:		sprintf(info->s, "PC:%03X", PC);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_SP:		sprintf(info->s, "SP:%02X", M_RDMEM(0x001) ); break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_RB:		sprintf(info->s, "RB:%02X", regPTR>>3);	break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_MB:		sprintf(info->s, "MB:%X", R.mb);		break;
 #if 0
-		case CPUINFO_STR_REGISTER + ALPHA8201_ZF:		sprintf(info->s = cpuintrf_temp_str(), "ZF:%X", R.zf); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_CF:		sprintf(info->s = cpuintrf_temp_str(), "CF:%X", R.cf); break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_ZF:		sprintf(info->s, "ZF:%X", R.zf);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_CF:		sprintf(info->s, "CF:%X", R.cf);		break;
 #endif
-		case CPUINFO_STR_REGISTER + ALPHA8201_IX0:		sprintf(info->s = cpuintrf_temp_str(), "IX0:%02X", IX0); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_IX1:		sprintf(info->s = cpuintrf_temp_str(), "IX1:%02X", IX1); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_IX2:		sprintf(info->s = cpuintrf_temp_str(), "IX2:%02X", IX2); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_LP0:		sprintf(info->s = cpuintrf_temp_str(), "LP0:%02X", LP0); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_LP1:		sprintf(info->s = cpuintrf_temp_str(), "LP1:%02X", LP1); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_LP2:		sprintf(info->s = cpuintrf_temp_str(), "LP2:%02X", LP2); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_A:		sprintf(info->s = cpuintrf_temp_str(), "A:%02X", R.A); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_B:		sprintf(info->s = cpuintrf_temp_str(), "B:%02X", R.B); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_R0:		sprintf(info->s = cpuintrf_temp_str(), "R0:%02X", R0); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_R1:		sprintf(info->s = cpuintrf_temp_str(), "R1:%02X", R1); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_R2:		sprintf(info->s = cpuintrf_temp_str(), "R2:%02X", R2); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_R3:		sprintf(info->s = cpuintrf_temp_str(), "R3:%02X", R3); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_R4:		sprintf(info->s = cpuintrf_temp_str(), "R4:%02X", R4); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_R5:		sprintf(info->s = cpuintrf_temp_str(), "R5:%02X", R5); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_R6:		sprintf(info->s = cpuintrf_temp_str(), "R6:%02X", R6); break;
-		case CPUINFO_STR_REGISTER + ALPHA8201_R7:		sprintf(info->s = cpuintrf_temp_str(), "R7:%02X", R7); break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_IX0:		sprintf(info->s, "IX0:%02X", IX0);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_IX1:		sprintf(info->s, "IX1:%02X", IX1);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_IX2:		sprintf(info->s, "IX2:%02X", IX2);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_LP0:		sprintf(info->s, "LP0:%02X", LP0);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_LP1:		sprintf(info->s, "LP1:%02X", LP1);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_LP2:		sprintf(info->s, "LP2:%02X", LP2);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_A:		sprintf(info->s, "A:%02X", R.A);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_B:		sprintf(info->s, "B:%02X", R.B);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_R0:		sprintf(info->s, "R0:%02X", R0);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_R1:		sprintf(info->s, "R1:%02X", R1);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_R2:		sprintf(info->s, "R2:%02X", R2);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_R3:		sprintf(info->s, "R3:%02X", R3);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_R4:		sprintf(info->s, "R4:%02X", R4);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_R5:		sprintf(info->s, "R5:%02X", R5);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_R6:		sprintf(info->s, "R6:%02X", R6);		break;
+		case CPUINFO_STR_REGISTER + ALPHA8201_R7:		sprintf(info->s, "R7:%02X", R7);		break;
 	}
 }
 #if (HAS_ALPHA8201)
-void alpha8201_get_info(UINT32 state, union cpuinfo *info)
+void alpha8201_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
-	case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "ALPHA-8201");	break;
-	case CPUINFO_PTR_EXECUTE:						info->execute = ALPHA8201_execute;						break;
+	case CPUINFO_STR_NAME:							strcpy(info->s, "ALPHA-8201");				break;
+	case CPUINFO_PTR_EXECUTE:						info->execute = ALPHA8201_execute;			break;
 	default:
 		/* 8201 / 8301 */
 		alpha8xxx_get_info(state,info);
@@ -1000,12 +1000,12 @@ void alpha8201_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 #if (HAS_ALPHA8301)
-void alpha8301_get_info(UINT32 state, union cpuinfo *info)
+void alpha8301_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
-	case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "ALPHA-8301");	break;
-	case CPUINFO_PTR_EXECUTE:						info->execute = ALPHA8301_execute;						break;
+	case CPUINFO_STR_NAME:							strcpy(info->s, "ALPHA-8301");				break;
+	case CPUINFO_PTR_EXECUTE:						info->execute = ALPHA8301_execute;			break;
 	default:
 		/* 8201 / 8301 */
 		alpha8xxx_get_info(state,info);

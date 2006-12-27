@@ -284,7 +284,7 @@ static void m6509_set_irq_line(int irqline, int state)
  * Generic set_info
  **************************************************************************/
 
-static void m6509_set_info(UINT32 state, union cpuinfo *info)
+static void m6509_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -293,7 +293,7 @@ static void m6509_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + M6509_SET_OVERFLOW:m6509_set_irq_line(M6509_SET_OVERFLOW, info->i); break;
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	m6509_set_irq_line(INPUT_LINE_NMI, info->i); break;
 
-		case CPUINFO_INT_PC:							PCW = info->i; change_pc(PCD);		break;
+		case CPUINFO_INT_PC:							PCW = info->i; change_pc(PCD);			break;
 		case CPUINFO_INT_REGISTER + M6509_PC:			m6509.pc.w.l = info->i;					break;
 		case CPUINFO_INT_SP:							S = info->i;							break;
 		case CPUINFO_INT_REGISTER + M6509_S:			m6509.sp.b.l = info->i;					break;
@@ -307,8 +307,8 @@ static void m6509_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M6509_ZP:			m6509.zp.w.l = info->i;					break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	m6509.rdmem_id = (read8_handler) info->f;	break;
-		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	m6509.wrmem_id = (write8_handler) info->f;	break;
+		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	m6509.rdmem_id = (read8_handler) info->f; break;
+		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	m6509.wrmem_id = (write8_handler) info->f; break;
 	}
 }
 
@@ -318,7 +318,7 @@ static void m6509_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void m6509_get_info(UINT32 state, union cpuinfo *info)
+void m6509_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -375,19 +375,19 @@ void m6509_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6510_dasm;			break;
 #endif
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6509_ICount;			break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP:			info->internal_map = construct_map_m6509_mem;	break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP:			info->internal_map = construct_map_m6509_mem; break;
 		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	info->f = (genf *) m6509.rdmem_id;		break;
 		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	info->f = (genf *) m6509.wrmem_id;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6509"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "MOS Technology 6509"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0beta"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 1998 Juergen Buchmueller\nCopyright (c) 2000 Peter Trauner\nall rights reserved."); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M6509");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "MOS Technology 6509"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0beta");				break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (c) 1998 Juergen Buchmueller\nCopyright (c) 2000 Peter Trauner\nall rights reserved."); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				m6509.p & 0x80 ? 'N':'.',
 				m6509.p & 0x40 ? 'V':'.',
 				m6509.p & 0x20 ? 'R':'.',
@@ -398,16 +398,16 @@ void m6509_get_info(UINT32 state, union cpuinfo *info)
 				m6509.p & 0x01 ? 'C':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + M6509_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", m6509.pc.w.l); break;
-		case CPUINFO_STR_REGISTER + M6509_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%02X", m6509.sp.b.l); break;
-		case CPUINFO_STR_REGISTER + M6509_P:			sprintf(info->s = cpuintrf_temp_str(), "P:%02X", m6509.p); break;
-		case CPUINFO_STR_REGISTER + M6509_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", m6509.a); break;
-		case CPUINFO_STR_REGISTER + M6509_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%02X", m6509.x); break;
-		case CPUINFO_STR_REGISTER + M6509_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%02X", m6509.y); break;
-		case CPUINFO_STR_REGISTER + M6509_PC_BANK:		sprintf(info->s = cpuintrf_temp_str(), "0:%01X", m6509.pc_bank.b.h2); break;
-		case CPUINFO_STR_REGISTER + M6509_IND_BANK:		sprintf(info->s = cpuintrf_temp_str(), "1:%01X", m6509.ind_bank.b.h2); break;
-		case CPUINFO_STR_REGISTER + M6509_EA:			sprintf(info->s = cpuintrf_temp_str(), "EA:%04X", m6509.ea.w.l); break;
-		case CPUINFO_STR_REGISTER + M6509_ZP:			sprintf(info->s = cpuintrf_temp_str(), "ZP:%03X", m6509.zp.w.l); break;
+		case CPUINFO_STR_REGISTER + M6509_PC:			sprintf(info->s, "PC:%04X", m6509.pc.w.l); break;
+		case CPUINFO_STR_REGISTER + M6509_S:			sprintf(info->s, "S:%02X", m6509.sp.b.l); break;
+		case CPUINFO_STR_REGISTER + M6509_P:			sprintf(info->s, "P:%02X", m6509.p); break;
+		case CPUINFO_STR_REGISTER + M6509_A:			sprintf(info->s, "A:%02X", m6509.a); break;
+		case CPUINFO_STR_REGISTER + M6509_X:			sprintf(info->s, "X:%02X", m6509.x); break;
+		case CPUINFO_STR_REGISTER + M6509_Y:			sprintf(info->s, "Y:%02X", m6509.y); break;
+		case CPUINFO_STR_REGISTER + M6509_PC_BANK:		sprintf(info->s, "0:%01X", m6509.pc_bank.b.h2); break;
+		case CPUINFO_STR_REGISTER + M6509_IND_BANK:		sprintf(info->s, "1:%01X", m6509.ind_bank.b.h2); break;
+		case CPUINFO_STR_REGISTER + M6509_EA:			sprintf(info->s, "EA:%04X", m6509.ea.w.l); break;
+		case CPUINFO_STR_REGISTER + M6509_ZP:			sprintf(info->s, "ZP:%03X", m6509.zp.w.l); break;
 	}
 }
 

@@ -79,12 +79,12 @@ extern const char *v60_reg_names[];
 void v60_dasm_init(void);
 
 #if HAS_V60
-void v60_get_info(UINT32 state, union cpuinfo *info);
+void v60_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #endif
 
 #if HAS_V70
-void v70_get_info(UINT32 state, union cpuinfo *info);
+void v70_get_info(UINT32 state, cpuinfo *info);
 #endif
 

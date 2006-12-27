@@ -29,7 +29,7 @@ struct t11_setup
 };
 
 
-extern void t11_get_info(UINT32 state, union cpuinfo *info);
+extern void t11_get_info(UINT32 state, cpuinfo *info);
 
 /****************************************************************************/
 /* Read a byte from given memory location                                   */

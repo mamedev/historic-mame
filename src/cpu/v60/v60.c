@@ -454,7 +454,7 @@ offs_t v70_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
  * Generic set_info
  **************************************************************************/
 
-static void v60_set_info(UINT32 state, union cpuinfo *info)
+static void v60_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -532,7 +532,7 @@ static void v60_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void v60_get_info(UINT32 state, union cpuinfo *info)
+void v60_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -560,7 +560,7 @@ void v60_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + 0:				info->i = v60.irq_line;					break;
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = v60.nmi_line;					break;
 
-		case CPUINFO_INT_PREVIOUSPC:					info->i = v60.PPC;							break;
+		case CPUINFO_INT_PREVIOUSPC:					info->i = v60.PPC;						break;
 
 		case CPUINFO_INT_REGISTER + V60_R0:				info->i = R0;							break;
 		case CPUINFO_INT_REGISTER + V60_R1:				info->i = R1;							break;
@@ -638,72 +638,72 @@ void v60_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &v60_ICount;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V60"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "NEC V60"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Farfetch'd and R.Belmont"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "V60");					break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "NEC V60");				break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Farfetch'd and R.Belmont"); break;
 
-		case CPUINFO_STR_FLAGS:							strcpy(info->s = cpuintrf_temp_str(), " "); break;
+		case CPUINFO_STR_FLAGS:							strcpy(info->s, " ");					break;
 
-		case CPUINFO_STR_REGISTER + V60_R0:				sprintf(info->s = cpuintrf_temp_str(), "R0:%08X", R0);	break;
-		case CPUINFO_STR_REGISTER + V60_R1:				sprintf(info->s = cpuintrf_temp_str(), "R1:%08X", R1);	break;
-		case CPUINFO_STR_REGISTER + V60_R2:				sprintf(info->s = cpuintrf_temp_str(), "R2:%08X", R2);	break;
-		case CPUINFO_STR_REGISTER + V60_R3:				sprintf(info->s = cpuintrf_temp_str(), "R3:%08X", R3);	break;
-		case CPUINFO_STR_REGISTER + V60_R4:				sprintf(info->s = cpuintrf_temp_str(), "R4:%08X", R4);	break;
-		case CPUINFO_STR_REGISTER + V60_R5:				sprintf(info->s = cpuintrf_temp_str(), "R5:%08X", R5);	break;
-		case CPUINFO_STR_REGISTER + V60_R6:				sprintf(info->s = cpuintrf_temp_str(), "R6:%08X", R6);	break;
-		case CPUINFO_STR_REGISTER + V60_R7:				sprintf(info->s = cpuintrf_temp_str(), "R7:%08X", R7);	break;
-		case CPUINFO_STR_REGISTER + V60_R8:				sprintf(info->s = cpuintrf_temp_str(), "R8:%08X", R8);	break;
-		case CPUINFO_STR_REGISTER + V60_R9:				sprintf(info->s = cpuintrf_temp_str(), "R9:%08X", R9);	break;
-		case CPUINFO_STR_REGISTER + V60_R10:			sprintf(info->s = cpuintrf_temp_str(), "R10:%08X", R10); break;
-		case CPUINFO_STR_REGISTER + V60_R11:			sprintf(info->s = cpuintrf_temp_str(), "R11:%08X", R11); break;
-		case CPUINFO_STR_REGISTER + V60_R12:			sprintf(info->s = cpuintrf_temp_str(), "R12:%08X", R12); break;
-		case CPUINFO_STR_REGISTER + V60_R13:			sprintf(info->s = cpuintrf_temp_str(), "R13:%08X", R13); break;
-		case CPUINFO_STR_REGISTER + V60_R14:			sprintf(info->s = cpuintrf_temp_str(), "R14:%08X", R14); break;
-		case CPUINFO_STR_REGISTER + V60_R15:			sprintf(info->s = cpuintrf_temp_str(), "R15:%08X", R15); break;
-		case CPUINFO_STR_REGISTER + V60_R16:			sprintf(info->s = cpuintrf_temp_str(), "R16:%08X", R16); break;
-		case CPUINFO_STR_REGISTER + V60_R17:			sprintf(info->s = cpuintrf_temp_str(), "R17:%08X", R17); break;
-		case CPUINFO_STR_REGISTER + V60_R18:			sprintf(info->s = cpuintrf_temp_str(), "R18:%08X", R18); break;
-		case CPUINFO_STR_REGISTER + V60_R19:			sprintf(info->s = cpuintrf_temp_str(), "R19:%08X", R19); break;
-		case CPUINFO_STR_REGISTER + V60_R20:			sprintf(info->s = cpuintrf_temp_str(), "R20:%08X", R20); break;
-		case CPUINFO_STR_REGISTER + V60_R21:			sprintf(info->s = cpuintrf_temp_str(), "R21:%08X", R21); break;
-		case CPUINFO_STR_REGISTER + V60_R22:			sprintf(info->s = cpuintrf_temp_str(), "R22:%08X", R22); break;
-		case CPUINFO_STR_REGISTER + V60_R23:			sprintf(info->s = cpuintrf_temp_str(), "R23:%08X", R23); break;
-		case CPUINFO_STR_REGISTER + V60_R24:			sprintf(info->s = cpuintrf_temp_str(), "R24:%08X", R24); break;
-		case CPUINFO_STR_REGISTER + V60_R25:			sprintf(info->s = cpuintrf_temp_str(), "R25:%08X", R25); break;
-		case CPUINFO_STR_REGISTER + V60_R26:			sprintf(info->s = cpuintrf_temp_str(), "R26:%08X", R26); break;
-		case CPUINFO_STR_REGISTER + V60_R27:			sprintf(info->s = cpuintrf_temp_str(), "R27:%08X", R27); break;
-		case CPUINFO_STR_REGISTER + V60_R28:			sprintf(info->s = cpuintrf_temp_str(), "R28:%08X", R28); break;
-		case CPUINFO_STR_REGISTER + V60_AP:				sprintf(info->s = cpuintrf_temp_str(), "AP:%08X", AP); break;
-		case CPUINFO_STR_REGISTER + V60_FP:				sprintf(info->s = cpuintrf_temp_str(), "FP:%08X", FP); break;
-		case CPUINFO_STR_REGISTER + V60_SP:				sprintf(info->s = cpuintrf_temp_str(), "SP:%08X", SP); break;
-		case CPUINFO_STR_REGISTER + V60_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC:%08X", PC); break;
-		case CPUINFO_STR_REGISTER + V60_PSW:			sprintf(info->s = cpuintrf_temp_str(), "PSW:%08X", v60ReadPSW()); break;
-		case CPUINFO_STR_REGISTER + V60_ISP:			sprintf(info->s = cpuintrf_temp_str(), "ISP:%08X", ISP); break;
-		case CPUINFO_STR_REGISTER + V60_L0SP:			sprintf(info->s = cpuintrf_temp_str(), "L0SP:%08X", L0SP); break;
-		case CPUINFO_STR_REGISTER + V60_L1SP:			sprintf(info->s = cpuintrf_temp_str(), "L1SP:%08X", L1SP); break;
-		case CPUINFO_STR_REGISTER + V60_L2SP:			sprintf(info->s = cpuintrf_temp_str(), "L2SP:%08X", L2SP); break;
-		case CPUINFO_STR_REGISTER + V60_L3SP:			sprintf(info->s = cpuintrf_temp_str(), "L3SP:%08X", L3SP); break;
-		case CPUINFO_STR_REGISTER + V60_SBR:			sprintf(info->s = cpuintrf_temp_str(), "SBR:%08X", SBR); break;
-		case CPUINFO_STR_REGISTER + V60_TR:				sprintf(info->s = cpuintrf_temp_str(), "TR:%08X", TR); break;
-		case CPUINFO_STR_REGISTER + V60_SYCW:			sprintf(info->s = cpuintrf_temp_str(), "SYCW:%08X", SYCW); break;
-		case CPUINFO_STR_REGISTER + V60_TKCW:			sprintf(info->s = cpuintrf_temp_str(), "TKCW:%08X", TKCW); break;
-		case CPUINFO_STR_REGISTER + V60_PIR:			sprintf(info->s = cpuintrf_temp_str(), "PIR:%08X", PIR); break;
-		case CPUINFO_STR_REGISTER + V60_PSW2:			sprintf(info->s = cpuintrf_temp_str(), "PSW2:%08X", PSW2); break;
-		case CPUINFO_STR_REGISTER + V60_ATBR0:			sprintf(info->s = cpuintrf_temp_str(), "ATBR0:%08X", ATBR0); break;
-		case CPUINFO_STR_REGISTER + V60_ATLR0:			sprintf(info->s = cpuintrf_temp_str(), "ATLR0:%08X", ATLR0); break;
-		case CPUINFO_STR_REGISTER + V60_ATBR1:			sprintf(info->s = cpuintrf_temp_str(), "ATBR1:%08X", ATBR1); break;
-		case CPUINFO_STR_REGISTER + V60_ATLR1:			sprintf(info->s = cpuintrf_temp_str(), "ATLR1:%08X", ATLR1); break;
-		case CPUINFO_STR_REGISTER + V60_ATBR2:			sprintf(info->s = cpuintrf_temp_str(), "ATBR2:%08X", ATBR2); break;
-		case CPUINFO_STR_REGISTER + V60_ATLR2:			sprintf(info->s = cpuintrf_temp_str(), "ATLR2:%08X", ATLR2); break;
-		case CPUINFO_STR_REGISTER + V60_ATBR3:			sprintf(info->s = cpuintrf_temp_str(), "ATBR3:%08X", ATBR3); break;
-		case CPUINFO_STR_REGISTER + V60_ATLR3:			sprintf(info->s = cpuintrf_temp_str(), "ATLR3:%08X", ATLR3); break;
-		case CPUINFO_STR_REGISTER + V60_TRMODE:			sprintf(info->s = cpuintrf_temp_str(), "TRMODE:%08X", TRMODE); break;
-		case CPUINFO_STR_REGISTER + V60_ADTR0:			sprintf(info->s = cpuintrf_temp_str(), "ADTR0:%08X", ADTR0); break;
-		case CPUINFO_STR_REGISTER + V60_ADTR1:			sprintf(info->s = cpuintrf_temp_str(), "ADTR1:%08X", ADTR1); break;
-		case CPUINFO_STR_REGISTER + V60_ADTMR0:			sprintf(info->s = cpuintrf_temp_str(), "ADTMR0:%08X", ADTMR0); break;
-		case CPUINFO_STR_REGISTER + V60_ADTMR1:			sprintf(info->s = cpuintrf_temp_str(), "ADTMR1:%08X", ADTMR1); break;
+		case CPUINFO_STR_REGISTER + V60_R0:				sprintf(info->s, "R0:%08X", R0);		break;
+		case CPUINFO_STR_REGISTER + V60_R1:				sprintf(info->s, "R1:%08X", R1);		break;
+		case CPUINFO_STR_REGISTER + V60_R2:				sprintf(info->s, "R2:%08X", R2);		break;
+		case CPUINFO_STR_REGISTER + V60_R3:				sprintf(info->s, "R3:%08X", R3);		break;
+		case CPUINFO_STR_REGISTER + V60_R4:				sprintf(info->s, "R4:%08X", R4);		break;
+		case CPUINFO_STR_REGISTER + V60_R5:				sprintf(info->s, "R5:%08X", R5);		break;
+		case CPUINFO_STR_REGISTER + V60_R6:				sprintf(info->s, "R6:%08X", R6);		break;
+		case CPUINFO_STR_REGISTER + V60_R7:				sprintf(info->s, "R7:%08X", R7);		break;
+		case CPUINFO_STR_REGISTER + V60_R8:				sprintf(info->s, "R8:%08X", R8);		break;
+		case CPUINFO_STR_REGISTER + V60_R9:				sprintf(info->s, "R9:%08X", R9);		break;
+		case CPUINFO_STR_REGISTER + V60_R10:			sprintf(info->s, "R10:%08X", R10);		break;
+		case CPUINFO_STR_REGISTER + V60_R11:			sprintf(info->s, "R11:%08X", R11);		break;
+		case CPUINFO_STR_REGISTER + V60_R12:			sprintf(info->s, "R12:%08X", R12);		break;
+		case CPUINFO_STR_REGISTER + V60_R13:			sprintf(info->s, "R13:%08X", R13);		break;
+		case CPUINFO_STR_REGISTER + V60_R14:			sprintf(info->s, "R14:%08X", R14);		break;
+		case CPUINFO_STR_REGISTER + V60_R15:			sprintf(info->s, "R15:%08X", R15);		break;
+		case CPUINFO_STR_REGISTER + V60_R16:			sprintf(info->s, "R16:%08X", R16);		break;
+		case CPUINFO_STR_REGISTER + V60_R17:			sprintf(info->s, "R17:%08X", R17);		break;
+		case CPUINFO_STR_REGISTER + V60_R18:			sprintf(info->s, "R18:%08X", R18);		break;
+		case CPUINFO_STR_REGISTER + V60_R19:			sprintf(info->s, "R19:%08X", R19);		break;
+		case CPUINFO_STR_REGISTER + V60_R20:			sprintf(info->s, "R20:%08X", R20);		break;
+		case CPUINFO_STR_REGISTER + V60_R21:			sprintf(info->s, "R21:%08X", R21);		break;
+		case CPUINFO_STR_REGISTER + V60_R22:			sprintf(info->s, "R22:%08X", R22);		break;
+		case CPUINFO_STR_REGISTER + V60_R23:			sprintf(info->s, "R23:%08X", R23);		break;
+		case CPUINFO_STR_REGISTER + V60_R24:			sprintf(info->s, "R24:%08X", R24);		break;
+		case CPUINFO_STR_REGISTER + V60_R25:			sprintf(info->s, "R25:%08X", R25);		break;
+		case CPUINFO_STR_REGISTER + V60_R26:			sprintf(info->s, "R26:%08X", R26);		break;
+		case CPUINFO_STR_REGISTER + V60_R27:			sprintf(info->s, "R27:%08X", R27);		break;
+		case CPUINFO_STR_REGISTER + V60_R28:			sprintf(info->s, "R28:%08X", R28);		break;
+		case CPUINFO_STR_REGISTER + V60_AP:				sprintf(info->s, "AP:%08X", AP);		break;
+		case CPUINFO_STR_REGISTER + V60_FP:				sprintf(info->s, "FP:%08X", FP);		break;
+		case CPUINFO_STR_REGISTER + V60_SP:				sprintf(info->s, "SP:%08X", SP);		break;
+		case CPUINFO_STR_REGISTER + V60_PC:				sprintf(info->s, "PC:%08X", PC);		break;
+		case CPUINFO_STR_REGISTER + V60_PSW:			sprintf(info->s, "PSW:%08X", v60ReadPSW()); break;
+		case CPUINFO_STR_REGISTER + V60_ISP:			sprintf(info->s, "ISP:%08X", ISP);		break;
+		case CPUINFO_STR_REGISTER + V60_L0SP:			sprintf(info->s, "L0SP:%08X", L0SP);	break;
+		case CPUINFO_STR_REGISTER + V60_L1SP:			sprintf(info->s, "L1SP:%08X", L1SP);	break;
+		case CPUINFO_STR_REGISTER + V60_L2SP:			sprintf(info->s, "L2SP:%08X", L2SP);	break;
+		case CPUINFO_STR_REGISTER + V60_L3SP:			sprintf(info->s, "L3SP:%08X", L3SP);	break;
+		case CPUINFO_STR_REGISTER + V60_SBR:			sprintf(info->s, "SBR:%08X", SBR);		break;
+		case CPUINFO_STR_REGISTER + V60_TR:				sprintf(info->s, "TR:%08X", TR);		break;
+		case CPUINFO_STR_REGISTER + V60_SYCW:			sprintf(info->s, "SYCW:%08X", SYCW);	break;
+		case CPUINFO_STR_REGISTER + V60_TKCW:			sprintf(info->s, "TKCW:%08X", TKCW);	break;
+		case CPUINFO_STR_REGISTER + V60_PIR:			sprintf(info->s, "PIR:%08X", PIR);		break;
+		case CPUINFO_STR_REGISTER + V60_PSW2:			sprintf(info->s, "PSW2:%08X", PSW2);	break;
+		case CPUINFO_STR_REGISTER + V60_ATBR0:			sprintf(info->s, "ATBR0:%08X", ATBR0);	break;
+		case CPUINFO_STR_REGISTER + V60_ATLR0:			sprintf(info->s, "ATLR0:%08X", ATLR0);	break;
+		case CPUINFO_STR_REGISTER + V60_ATBR1:			sprintf(info->s, "ATBR1:%08X", ATBR1);	break;
+		case CPUINFO_STR_REGISTER + V60_ATLR1:			sprintf(info->s, "ATLR1:%08X", ATLR1);	break;
+		case CPUINFO_STR_REGISTER + V60_ATBR2:			sprintf(info->s, "ATBR2:%08X", ATBR2);	break;
+		case CPUINFO_STR_REGISTER + V60_ATLR2:			sprintf(info->s, "ATLR2:%08X", ATLR2);	break;
+		case CPUINFO_STR_REGISTER + V60_ATBR3:			sprintf(info->s, "ATBR3:%08X", ATBR3);	break;
+		case CPUINFO_STR_REGISTER + V60_ATLR3:			sprintf(info->s, "ATLR3:%08X", ATLR3);	break;
+		case CPUINFO_STR_REGISTER + V60_TRMODE:			sprintf(info->s, "TRMODE:%08X", TRMODE); break;
+		case CPUINFO_STR_REGISTER + V60_ADTR0:			sprintf(info->s, "ADTR0:%08X", ADTR0);	break;
+		case CPUINFO_STR_REGISTER + V60_ADTR1:			sprintf(info->s, "ADTR1:%08X", ADTR1);	break;
+		case CPUINFO_STR_REGISTER + V60_ADTMR0:			sprintf(info->s, "ADTMR0:%08X", ADTMR0); break;
+		case CPUINFO_STR_REGISTER + V60_ADTMR1:			sprintf(info->s, "ADTMR1:%08X", ADTMR1); break;
 	}
 }
 
@@ -712,7 +712,7 @@ void v60_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void v70_get_info(UINT32 state, union cpuinfo *info)
+void v70_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -728,10 +728,8 @@ void v70_get_info(UINT32 state, union cpuinfo *info)
 #endif /* MAME_DEBUG */
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V70"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "V70");					break;
 
-		default:
-			v60_get_info(state, info);
-			break;
+		default:										v60_get_info(state, info);				break;
 	}
 }

@@ -12,7 +12,7 @@ enum {
 };
 
 /* Public functions */
-void i86_get_info(UINT32 state, union cpuinfo *info);
+void i86_get_info(UINT32 state, cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned DasmI86(char* buffer, unsigned pc);

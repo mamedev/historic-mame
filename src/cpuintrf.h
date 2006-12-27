@@ -20,13 +20,11 @@
 #include "state.h"
 
 
+/***************************************************************************
+    CONSTANTS
+***************************************************************************/
 
-/*************************************
- *
- *  Enum listing all the CPUs
- *
- *************************************/
-
+/* Enum listing all the CPUs */
 enum
 {
 	CPU_DUMMY,
@@ -181,6 +179,10 @@ enum
 	CPU_COP420,
 	CPU_COP410,
 	CPU_COP411,
+	CPU_TMP90840,
+	CPU_TMP90841,
+	CPU_TMP91640,
+	CPU_TMP91641,
 #ifdef MESS
 	CPU_APEXC,
 	CPU_CP1610,
@@ -201,13 +203,7 @@ enum
 };
 
 
-
-/*************************************
- *
- *  Interrupt line constants
- *
- *************************************/
-
+/* Interrupt line constants */
 enum
 {
 	/* line states */
@@ -243,19 +239,14 @@ enum
 };
 
 
-
-/*************************************
- *
- *  CPU information constants
- *
- *************************************/
-
+/* Maximum number of registers of any CPU */
 enum
 {
-	MAX_REGS = 256				/* maximum number of register of any CPU */
+	MAX_REGS = 256
 };
 
 
+/* CPU information constants */
 enum
 {
 	/* --- the following bits of info are returned as 64-bit signed integers --- */
@@ -335,32 +326,6 @@ enum
 };
 
 
-union cpuinfo
-{
-	INT64	i;											/* generic integers */
-	void *	p;											/* generic pointers */
-	genf *  f;											/* generic function pointers */
-	char *	s;											/* generic strings */
-
-	void	(*setinfo)(UINT32 state, union cpuinfo *info);/* CPUINFO_PTR_SET_INFO */
-	void	(*getcontext)(void *context);				/* CPUINFO_PTR_GET_CONTEXT */
-	void	(*setcontext)(void *context);				/* CPUINFO_PTR_SET_CONTEXT */
-	void	(*init)(int index, int clock, const void *config, int (*irqcallback)(int));/* CPUINFO_PTR_INIT */
-	void	(*reset)(void);								/* CPUINFO_PTR_RESET */
-	void	(*exit)(void);								/* CPUINFO_PTR_EXIT */
-	int		(*execute)(int cycles);						/* CPUINFO_PTR_EXECUTE */
-	void	(*burn)(int cycles);						/* CPUINFO_PTR_BURN */
-	offs_t	(*disassemble)(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);/* CPUINFO_PTR_DISASSEMBLE */
-	int 	(*translate)(int space, offs_t *address);	/* CPUINFO_PTR_TRANSLATE */
-	int		(*read)(int space, UINT32 offset, int size, UINT64 *value);/* CPUINFO_PTR_READ */
-	int		(*write)(int space, UINT32 offset, int size, UINT64 value);/* CPUINFO_PTR_WRITE */
-	int		(*readop)(UINT32 offset, int size, UINT64 *value);/* CPUINFO_PTR_READOP */
-	void	(*setup_commands)(void);					/* CPUINFO_PTR_DEBUG_SETUP_COMMANDS */
-	int *	icount;										/* CPUINFO_PTR_INSTRUCTION_COUNTER */
-	construct_map_t internal_map;						/* CPUINFO_PTR_INTERNAL_MEMORY_MAP */
-};
-
-
 /* get_reg/set_reg constants */
 enum
 {
@@ -379,7 +344,7 @@ enum
 };
 
 
-/* endianness constants */
+/* Endianness constants */
 enum
 {
 	CPU_IS_LE = 0,				/* emulated CPU is little endian */
@@ -387,7 +352,7 @@ enum
 };
 
 
-/* disassembler constants */
+/* Disassembler constants */
 #define DASMFLAG_SUPPORTED		0x80000000	/* are disassembly flags supported? */
 #define DASMFLAG_STEP_OUT		0x40000000	/* this instruction should be the end of a step out sequence */
 #define DASMFLAG_STEP_OVER		0x20000000	/* this instruction should be stepped over by setting a breakpoint afterwards */
@@ -398,17 +363,43 @@ enum
 
 
 
-/*************************************
- *
- *  Core CPU interface structure
- *
- *************************************/
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
 
+typedef union _cpuinfo cpuinfo;
+union _cpuinfo
+{
+	INT64	i;											/* generic integers */
+	void *	p;											/* generic pointers */
+	genf *  f;											/* generic function pointers */
+	char *	s;											/* generic strings */
+
+	void	(*setinfo)(UINT32 state, cpuinfo *info);	/* CPUINFO_PTR_SET_INFO */
+	void	(*getcontext)(void *context);				/* CPUINFO_PTR_GET_CONTEXT */
+	void	(*setcontext)(void *context);				/* CPUINFO_PTR_SET_CONTEXT */
+	void	(*init)(int index, int clock, const void *config, int (*irqcallback)(int));/* CPUINFO_PTR_INIT */
+	void	(*reset)(void);								/* CPUINFO_PTR_RESET */
+	void	(*exit)(void);								/* CPUINFO_PTR_EXIT */
+	int		(*execute)(int cycles);						/* CPUINFO_PTR_EXECUTE */
+	void	(*burn)(int cycles);						/* CPUINFO_PTR_BURN */
+	offs_t	(*disassemble)(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);/* CPUINFO_PTR_DISASSEMBLE */
+	int 	(*translate)(int space, offs_t *address);	/* CPUINFO_PTR_TRANSLATE */
+	int		(*read)(int space, UINT32 offset, int size, UINT64 *value);/* CPUINFO_PTR_READ */
+	int		(*write)(int space, UINT32 offset, int size, UINT64 value);/* CPUINFO_PTR_WRITE */
+	int		(*readop)(UINT32 offset, int size, UINT64 *value);/* CPUINFO_PTR_READOP */
+	void	(*setup_commands)(void);					/* CPUINFO_PTR_DEBUG_SETUP_COMMANDS */
+	int *	icount;										/* CPUINFO_PTR_INSTRUCTION_COUNTER */
+	construct_map_t internal_map;						/* CPUINFO_PTR_INTERNAL_MEMORY_MAP */
+};
+
+
+typedef struct _cpu_interface cpu_interface;
 struct _cpu_interface
 {
 	/* table of core functions */
-	void		(*get_info)(UINT32 state, union cpuinfo *info);
-	void		(*set_info)(UINT32 state, union cpuinfo *info);
+	void		(*get_info)(UINT32 state, cpuinfo *info);
+	void		(*set_info)(UINT32 state, cpuinfo *info);
 	void		(*get_context)(void *buffer);
 	void		(*set_context)(void *buffer);
 	void		(*init)(int index, int clock, const void *config, int (*irqcallback)(int));
@@ -424,15 +415,12 @@ struct _cpu_interface
 	INT8		address_shift;
 	int *		icount;
 };
-typedef struct _cpu_interface cpu_interface;
 
 
 
-/*************************************
- *
- *   Core CPU interface functions
- *
- *************************************/
+/***************************************************************************
+    CORE CPU INTERFACE FUNCTIONS
+***************************************************************************/
 
 /* reset the internal CPU tracking */
 void cpuintrf_init(running_machine *machine);
@@ -457,11 +445,9 @@ void cpuintrf_set_dasm_override(int cpunum, offs_t (*dasm_override)(char *buffer
 
 
 
-/*************************************
- *
- *   Active CPU acccessors
- *
- *************************************/
+/***************************************************************************
+    ACTIVE CPU ACCCESSORS
+***************************************************************************/
 
 /* get info accessors */
 INT64 activecpu_get_info_int(UINT32 state);
@@ -525,11 +511,9 @@ offs_t activecpu_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 
 
 
-/*************************************
- *
- *   Specific CPU acccessors
- *
- *************************************/
+/***************************************************************************
+    SPECIFIC CPU ACCCESSORS
+***************************************************************************/
 
 /* get info accessors */
 INT64 cpunum_get_info_int(int cpunum, UINT32 state);
@@ -597,11 +581,9 @@ offs_t cpunum_dasm(int cpunum, char *buffer, offs_t pc, const UINT8 *oprom, cons
 
 
 
-/*************************************
- *
- *   CPU type acccessors
- *
- *************************************/
+/***************************************************************************
+    CPU TYPE ACCCESSORS
+***************************************************************************/
 
 /* get info accessors */
 INT64 cputype_get_info_int(int cputype, UINT32 state);
@@ -632,11 +614,9 @@ const char *cputype_get_info_string(int cputype, UINT32 state);
 
 
 
-/*************************************
- *
- *   Macros
- *
- *************************************/
+/***************************************************************************
+    MACROS
+***************************************************************************/
 
 #define		activecpu_get_previouspc()			((offs_t)activecpu_get_reg(REG_PREVIOUSPC))
 #define		activecpu_get_pc()					((offs_t)activecpu_get_reg(REG_PC))
@@ -644,11 +624,9 @@ const char *cputype_get_info_string(int cputype, UINT32 state);
 
 
 
-/*************************************
- *
- *   CPU interface accessors
- *
- *************************************/
+/***************************************************************************
+    CPU INTERFACE ACCESSORS
+***************************************************************************/
 
 /* return a pointer to the interface struct for a given CPU type */
 INLINE const cpu_interface *cputype_get_interface(int cputype)

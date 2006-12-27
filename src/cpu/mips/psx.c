@@ -3136,7 +3136,7 @@ static void docop2( int gteop )
  * Generic set_info
  **************************************************************************/
 
-static void mips_set_info(UINT32 state, union cpuinfo *info)
+static void mips_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -3292,7 +3292,7 @@ static void mips_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-static void mips_get_info(UINT32 state, union cpuinfo *info)
+static void mips_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -3481,147 +3481,147 @@ static void mips_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &mips_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PSX CPU"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "mipscpu"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.5"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright 2005 smf"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "PSX CPU");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "mipscpu");				break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.5");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright 2005 smf");	break;
 
-		case CPUINFO_STR_FLAGS:							strcpy(info->s = cpuintrf_temp_str(), " "); break;
+		case CPUINFO_STR_FLAGS:							strcpy(info->s, " ");					break;
 
-		case CPUINFO_STR_REGISTER + MIPS_PC:			sprintf( info->s = cpuintrf_temp_str(), "pc      :%08x", mipscpu.pc ); break;
-		case CPUINFO_STR_REGISTER + MIPS_DELAYV:		sprintf( info->s = cpuintrf_temp_str(), "delay   :%08x", mipscpu.delayv ); break;
-		case CPUINFO_STR_REGISTER + MIPS_DELAYR:		sprintf( info->s = cpuintrf_temp_str(), "delay %s:%02x", delayn[ mipscpu.delayr ], mipscpu.delayr ); break;
-		case CPUINFO_STR_REGISTER + MIPS_HI:			sprintf( info->s = cpuintrf_temp_str(), "hi      :%08x", mipscpu.hi ); break;
-		case CPUINFO_STR_REGISTER + MIPS_LO:			sprintf( info->s = cpuintrf_temp_str(), "lo      :%08x", mipscpu.lo ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R0:			sprintf( info->s = cpuintrf_temp_str(), "zero    :%08x", mipscpu.r[ 0 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R1:			sprintf( info->s = cpuintrf_temp_str(), "at      :%08x", mipscpu.r[ 1 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R2:			sprintf( info->s = cpuintrf_temp_str(), "v0      :%08x", mipscpu.r[ 2 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R3:			sprintf( info->s = cpuintrf_temp_str(), "v1      :%08x", mipscpu.r[ 3 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R4:			sprintf( info->s = cpuintrf_temp_str(), "a0      :%08x", mipscpu.r[ 4 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R5:			sprintf( info->s = cpuintrf_temp_str(), "a1      :%08x", mipscpu.r[ 5 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R6:			sprintf( info->s = cpuintrf_temp_str(), "a2      :%08x", mipscpu.r[ 6 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R7:			sprintf( info->s = cpuintrf_temp_str(), "a3      :%08x", mipscpu.r[ 7 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R8:			sprintf( info->s = cpuintrf_temp_str(), "t0      :%08x", mipscpu.r[ 8 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R9:			sprintf( info->s = cpuintrf_temp_str(), "t1      :%08x", mipscpu.r[ 9 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R10:			sprintf( info->s = cpuintrf_temp_str(), "t2      :%08x", mipscpu.r[ 10 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R11:			sprintf( info->s = cpuintrf_temp_str(), "t3      :%08x", mipscpu.r[ 11 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R12:			sprintf( info->s = cpuintrf_temp_str(), "t4      :%08x", mipscpu.r[ 12 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R13:			sprintf( info->s = cpuintrf_temp_str(), "t5      :%08x", mipscpu.r[ 13 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R14:			sprintf( info->s = cpuintrf_temp_str(), "t6      :%08x", mipscpu.r[ 14 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R15:			sprintf( info->s = cpuintrf_temp_str(), "t7      :%08x", mipscpu.r[ 15 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R16:			sprintf( info->s = cpuintrf_temp_str(), "s0      :%08x", mipscpu.r[ 16 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R17:			sprintf( info->s = cpuintrf_temp_str(), "s1      :%08x", mipscpu.r[ 17 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R18:			sprintf( info->s = cpuintrf_temp_str(), "s2      :%08x", mipscpu.r[ 18 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R19:			sprintf( info->s = cpuintrf_temp_str(), "s3      :%08x", mipscpu.r[ 19 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R20:			sprintf( info->s = cpuintrf_temp_str(), "s4      :%08x", mipscpu.r[ 20 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R21:			sprintf( info->s = cpuintrf_temp_str(), "s5      :%08x", mipscpu.r[ 21 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R22:			sprintf( info->s = cpuintrf_temp_str(), "s6      :%08x", mipscpu.r[ 22 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R23:			sprintf( info->s = cpuintrf_temp_str(), "s7      :%08x", mipscpu.r[ 23 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R24:			sprintf( info->s = cpuintrf_temp_str(), "t8      :%08x", mipscpu.r[ 24 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R25:			sprintf( info->s = cpuintrf_temp_str(), "t9      :%08x", mipscpu.r[ 25 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R26:			sprintf( info->s = cpuintrf_temp_str(), "k0      :%08x", mipscpu.r[ 26 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R27:			sprintf( info->s = cpuintrf_temp_str(), "k1      :%08x", mipscpu.r[ 27 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R28:			sprintf( info->s = cpuintrf_temp_str(), "gp      :%08x", mipscpu.r[ 28 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R29:			sprintf( info->s = cpuintrf_temp_str(), "sp      :%08x", mipscpu.r[ 29 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R30:			sprintf( info->s = cpuintrf_temp_str(), "fp      :%08x", mipscpu.r[ 30 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_R31:			sprintf( info->s = cpuintrf_temp_str(), "ra      :%08x", mipscpu.r[ 31 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R0:			sprintf( info->s = cpuintrf_temp_str(), "Index   :%08x", mipscpu.cp0r[ 0 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R1:			sprintf( info->s = cpuintrf_temp_str(), "Random  :%08x", mipscpu.cp0r[ 1 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R2:			sprintf( info->s = cpuintrf_temp_str(), "EntryLo :%08x", mipscpu.cp0r[ 2 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R3:			sprintf( info->s = cpuintrf_temp_str(), "cp0r3   :%08x", mipscpu.cp0r[ 3 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R4:			sprintf( info->s = cpuintrf_temp_str(), "Context :%08x", mipscpu.cp0r[ 4 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R5:			sprintf( info->s = cpuintrf_temp_str(), "cp0r5   :%08x", mipscpu.cp0r[ 5 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R6:			sprintf( info->s = cpuintrf_temp_str(), "cp0r6   :%08x", mipscpu.cp0r[ 6 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R7:			sprintf( info->s = cpuintrf_temp_str(), "cp0r7   :%08x", mipscpu.cp0r[ 7 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R8:			sprintf( info->s = cpuintrf_temp_str(), "BadVAddr:%08x", mipscpu.cp0r[ 8 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R9:			sprintf( info->s = cpuintrf_temp_str(), "cp0r9   :%08x", mipscpu.cp0r[ 9 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R10:		sprintf( info->s = cpuintrf_temp_str(), "EntryHi :%08x", mipscpu.cp0r[ 10 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R11:		sprintf( info->s = cpuintrf_temp_str(), "cp0r11  :%08x", mipscpu.cp0r[ 11 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R12:		sprintf( info->s = cpuintrf_temp_str(), "SR      :%08x", mipscpu.cp0r[ 12 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R13:		sprintf( info->s = cpuintrf_temp_str(), "Cause   :%08x", mipscpu.cp0r[ 13 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R14:		sprintf( info->s = cpuintrf_temp_str(), "EPC     :%08x", mipscpu.cp0r[ 14 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R15:		sprintf( info->s = cpuintrf_temp_str(), "PRId    :%08x", mipscpu.cp0r[ 15 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R16:		sprintf( info->s = cpuintrf_temp_str(), "cp0r16  :%08x", mipscpu.cp0r[ 16 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R17:		sprintf( info->s = cpuintrf_temp_str(), "cp0r17  :%08x", mipscpu.cp0r[ 17 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R18:		sprintf( info->s = cpuintrf_temp_str(), "cp0r18  :%08x", mipscpu.cp0r[ 18 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R19:		sprintf( info->s = cpuintrf_temp_str(), "cp0r19  :%08x", mipscpu.cp0r[ 19 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R20:		sprintf( info->s = cpuintrf_temp_str(), "cp0r20  :%08x", mipscpu.cp0r[ 20 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R21:		sprintf( info->s = cpuintrf_temp_str(), "cp0r21  :%08x", mipscpu.cp0r[ 21 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R22:		sprintf( info->s = cpuintrf_temp_str(), "cp0r22  :%08x", mipscpu.cp0r[ 22 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R23:		sprintf( info->s = cpuintrf_temp_str(), "cp0r23  :%08x", mipscpu.cp0r[ 23 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R24:		sprintf( info->s = cpuintrf_temp_str(), "cp0r24  :%08x", mipscpu.cp0r[ 24 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R25:		sprintf( info->s = cpuintrf_temp_str(), "cp0r25  :%08x", mipscpu.cp0r[ 25 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R26:		sprintf( info->s = cpuintrf_temp_str(), "cp0r26  :%08x", mipscpu.cp0r[ 26 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R27:		sprintf( info->s = cpuintrf_temp_str(), "cp0r27  :%08x", mipscpu.cp0r[ 27 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R28:		sprintf( info->s = cpuintrf_temp_str(), "cp0r28  :%08x", mipscpu.cp0r[ 28 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R29:		sprintf( info->s = cpuintrf_temp_str(), "cp0r29  :%08x", mipscpu.cp0r[ 29 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R30:		sprintf( info->s = cpuintrf_temp_str(), "cp0r30  :%08x", mipscpu.cp0r[ 30 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP0R31:		sprintf( info->s = cpuintrf_temp_str(), "cp0r31  :%08x", mipscpu.cp0r[ 31 ] ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR0:		sprintf( info->s = cpuintrf_temp_str(), "vxy0    :%08x", mipscpu.cp2dr[ 0 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR1:		sprintf( info->s = cpuintrf_temp_str(), "vz0     :%08x", mipscpu.cp2dr[ 1 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR2:		sprintf( info->s = cpuintrf_temp_str(), "vxy1    :%08x", mipscpu.cp2dr[ 2 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR3:		sprintf( info->s = cpuintrf_temp_str(), "vz1     :%08x", mipscpu.cp2dr[ 3 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR4:		sprintf( info->s = cpuintrf_temp_str(), "vxy2    :%08x", mipscpu.cp2dr[ 4 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR5:		sprintf( info->s = cpuintrf_temp_str(), "vz2     :%08x", mipscpu.cp2dr[ 5 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR6:		sprintf( info->s = cpuintrf_temp_str(), "rgb     :%08x", mipscpu.cp2dr[ 6 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR7:		sprintf( info->s = cpuintrf_temp_str(), "otz     :%08x", mipscpu.cp2dr[ 7 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR8:		sprintf( info->s = cpuintrf_temp_str(), "ir0     :%08x", mipscpu.cp2dr[ 8 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR9:		sprintf( info->s = cpuintrf_temp_str(), "ir1     :%08x", mipscpu.cp2dr[ 9 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR10:		sprintf( info->s = cpuintrf_temp_str(), "ir2     :%08x", mipscpu.cp2dr[ 10 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR11:		sprintf( info->s = cpuintrf_temp_str(), "ir3     :%08x", mipscpu.cp2dr[ 11 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR12:		sprintf( info->s = cpuintrf_temp_str(), "sxy0    :%08x", mipscpu.cp2dr[ 12 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR13:		sprintf( info->s = cpuintrf_temp_str(), "sxy1    :%08x", mipscpu.cp2dr[ 13 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR14:		sprintf( info->s = cpuintrf_temp_str(), "sxy2    :%08x", mipscpu.cp2dr[ 14 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR15:		sprintf( info->s = cpuintrf_temp_str(), "sxyp    :%08x", mipscpu.cp2dr[ 15 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR16:		sprintf( info->s = cpuintrf_temp_str(), "sz0     :%08x", mipscpu.cp2dr[ 16 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR17:		sprintf( info->s = cpuintrf_temp_str(), "sz1     :%08x", mipscpu.cp2dr[ 17 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR18:		sprintf( info->s = cpuintrf_temp_str(), "sz2     :%08x", mipscpu.cp2dr[ 18 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR19:		sprintf( info->s = cpuintrf_temp_str(), "sz3     :%08x", mipscpu.cp2dr[ 19 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR20:		sprintf( info->s = cpuintrf_temp_str(), "rgb0    :%08x", mipscpu.cp2dr[ 20 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR21:		sprintf( info->s = cpuintrf_temp_str(), "rgb1    :%08x", mipscpu.cp2dr[ 21 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR22:		sprintf( info->s = cpuintrf_temp_str(), "rgb2    :%08x", mipscpu.cp2dr[ 22 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR23:		sprintf( info->s = cpuintrf_temp_str(), "res1    :%08x", mipscpu.cp2dr[ 23 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR24:		sprintf( info->s = cpuintrf_temp_str(), "mac0    :%08x", mipscpu.cp2dr[ 24 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR25:		sprintf( info->s = cpuintrf_temp_str(), "mac1    :%08x", mipscpu.cp2dr[ 25 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR26:		sprintf( info->s = cpuintrf_temp_str(), "mac2    :%08x", mipscpu.cp2dr[ 26 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR27:		sprintf( info->s = cpuintrf_temp_str(), "mac3    :%08x", mipscpu.cp2dr[ 27 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR28:		sprintf( info->s = cpuintrf_temp_str(), "irgb    :%08x", mipscpu.cp2dr[ 28 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR29:		sprintf( info->s = cpuintrf_temp_str(), "orgb    :%08x", mipscpu.cp2dr[ 29 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR30:		sprintf( info->s = cpuintrf_temp_str(), "lzcs    :%08x", mipscpu.cp2dr[ 30 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2DR31:		sprintf( info->s = cpuintrf_temp_str(), "lzcr    :%08x", mipscpu.cp2dr[ 31 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR0:		sprintf( info->s = cpuintrf_temp_str(), "r11r12  :%08x", mipscpu.cp2cr[ 0 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR1:		sprintf( info->s = cpuintrf_temp_str(), "r13r21  :%08x", mipscpu.cp2cr[ 1 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR2:		sprintf( info->s = cpuintrf_temp_str(), "r22r23  :%08x", mipscpu.cp2cr[ 2 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR3:		sprintf( info->s = cpuintrf_temp_str(), "r31r32  :%08x", mipscpu.cp2cr[ 3 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR4:		sprintf( info->s = cpuintrf_temp_str(), "r33     :%08x", mipscpu.cp2cr[ 4 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR5:		sprintf( info->s = cpuintrf_temp_str(), "trx     :%08x", mipscpu.cp2cr[ 5 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR6:		sprintf( info->s = cpuintrf_temp_str(), "try     :%08x", mipscpu.cp2cr[ 6 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR7:		sprintf( info->s = cpuintrf_temp_str(), "trz     :%08x", mipscpu.cp2cr[ 7 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR8:		sprintf( info->s = cpuintrf_temp_str(), "l11l12  :%08x", mipscpu.cp2cr[ 8 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR9:		sprintf( info->s = cpuintrf_temp_str(), "l13l21  :%08x", mipscpu.cp2cr[ 9 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR10:		sprintf( info->s = cpuintrf_temp_str(), "l22l23  :%08x", mipscpu.cp2cr[ 10 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR11:		sprintf( info->s = cpuintrf_temp_str(), "l31l32  :%08x", mipscpu.cp2cr[ 11 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR12:		sprintf( info->s = cpuintrf_temp_str(), "l33     :%08x", mipscpu.cp2cr[ 12 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR13:		sprintf( info->s = cpuintrf_temp_str(), "rbk     :%08x", mipscpu.cp2cr[ 13 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR14:		sprintf( info->s = cpuintrf_temp_str(), "gbk     :%08x", mipscpu.cp2cr[ 14 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR15:		sprintf( info->s = cpuintrf_temp_str(), "bbk     :%08x", mipscpu.cp2cr[ 15 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR16:		sprintf( info->s = cpuintrf_temp_str(), "lr1lr2  :%08x", mipscpu.cp2cr[ 16 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR17:		sprintf( info->s = cpuintrf_temp_str(), "lr31g1  :%08x", mipscpu.cp2cr[ 17 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR18:		sprintf( info->s = cpuintrf_temp_str(), "lg2lg3  :%08x", mipscpu.cp2cr[ 18 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR19:		sprintf( info->s = cpuintrf_temp_str(), "lb1lb2  :%08x", mipscpu.cp2cr[ 19 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR20:		sprintf( info->s = cpuintrf_temp_str(), "lb3     :%08x", mipscpu.cp2cr[ 20 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR21:		sprintf( info->s = cpuintrf_temp_str(), "rfc     :%08x", mipscpu.cp2cr[ 21 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR22:		sprintf( info->s = cpuintrf_temp_str(), "gfc     :%08x", mipscpu.cp2cr[ 22 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR23:		sprintf( info->s = cpuintrf_temp_str(), "bfc     :%08x", mipscpu.cp2cr[ 23 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR24:		sprintf( info->s = cpuintrf_temp_str(), "ofx     :%08x", mipscpu.cp2cr[ 24 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR25:		sprintf( info->s = cpuintrf_temp_str(), "ofy     :%08x", mipscpu.cp2cr[ 25 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR26:		sprintf( info->s = cpuintrf_temp_str(), "h       :%08x", mipscpu.cp2cr[ 26 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR27:		sprintf( info->s = cpuintrf_temp_str(), "dqa     :%08x", mipscpu.cp2cr[ 27 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR28:		sprintf( info->s = cpuintrf_temp_str(), "dqb     :%08x", mipscpu.cp2cr[ 28 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR29:		sprintf( info->s = cpuintrf_temp_str(), "zsf3    :%08x", mipscpu.cp2cr[ 29 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR30:		sprintf( info->s = cpuintrf_temp_str(), "zsf4    :%08x", mipscpu.cp2cr[ 30 ].d ); break;
-		case CPUINFO_STR_REGISTER + MIPS_CP2CR31:		sprintf( info->s = cpuintrf_temp_str(), "flag    :%08x", mipscpu.cp2cr[ 31 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_PC:			sprintf( info->s, "pc      :%08x", mipscpu.pc ); break;
+		case CPUINFO_STR_REGISTER + MIPS_DELAYV:		sprintf( info->s, "delay   :%08x", mipscpu.delayv ); break;
+		case CPUINFO_STR_REGISTER + MIPS_DELAYR:		sprintf( info->s, "delay %s:%02x", delayn[ mipscpu.delayr ], mipscpu.delayr ); break;
+		case CPUINFO_STR_REGISTER + MIPS_HI:			sprintf( info->s, "hi      :%08x", mipscpu.hi ); break;
+		case CPUINFO_STR_REGISTER + MIPS_LO:			sprintf( info->s, "lo      :%08x", mipscpu.lo ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R0:			sprintf( info->s, "zero    :%08x", mipscpu.r[ 0 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R1:			sprintf( info->s, "at      :%08x", mipscpu.r[ 1 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R2:			sprintf( info->s, "v0      :%08x", mipscpu.r[ 2 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R3:			sprintf( info->s, "v1      :%08x", mipscpu.r[ 3 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R4:			sprintf( info->s, "a0      :%08x", mipscpu.r[ 4 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R5:			sprintf( info->s, "a1      :%08x", mipscpu.r[ 5 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R6:			sprintf( info->s, "a2      :%08x", mipscpu.r[ 6 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R7:			sprintf( info->s, "a3      :%08x", mipscpu.r[ 7 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R8:			sprintf( info->s, "t0      :%08x", mipscpu.r[ 8 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R9:			sprintf( info->s, "t1      :%08x", mipscpu.r[ 9 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R10:			sprintf( info->s, "t2      :%08x", mipscpu.r[ 10 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R11:			sprintf( info->s, "t3      :%08x", mipscpu.r[ 11 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R12:			sprintf( info->s, "t4      :%08x", mipscpu.r[ 12 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R13:			sprintf( info->s, "t5      :%08x", mipscpu.r[ 13 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R14:			sprintf( info->s, "t6      :%08x", mipscpu.r[ 14 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R15:			sprintf( info->s, "t7      :%08x", mipscpu.r[ 15 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R16:			sprintf( info->s, "s0      :%08x", mipscpu.r[ 16 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R17:			sprintf( info->s, "s1      :%08x", mipscpu.r[ 17 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R18:			sprintf( info->s, "s2      :%08x", mipscpu.r[ 18 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R19:			sprintf( info->s, "s3      :%08x", mipscpu.r[ 19 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R20:			sprintf( info->s, "s4      :%08x", mipscpu.r[ 20 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R21:			sprintf( info->s, "s5      :%08x", mipscpu.r[ 21 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R22:			sprintf( info->s, "s6      :%08x", mipscpu.r[ 22 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R23:			sprintf( info->s, "s7      :%08x", mipscpu.r[ 23 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R24:			sprintf( info->s, "t8      :%08x", mipscpu.r[ 24 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R25:			sprintf( info->s, "t9      :%08x", mipscpu.r[ 25 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R26:			sprintf( info->s, "k0      :%08x", mipscpu.r[ 26 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R27:			sprintf( info->s, "k1      :%08x", mipscpu.r[ 27 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R28:			sprintf( info->s, "gp      :%08x", mipscpu.r[ 28 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R29:			sprintf( info->s, "sp      :%08x", mipscpu.r[ 29 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R30:			sprintf( info->s, "fp      :%08x", mipscpu.r[ 30 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_R31:			sprintf( info->s, "ra      :%08x", mipscpu.r[ 31 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R0:			sprintf( info->s, "Index   :%08x", mipscpu.cp0r[ 0 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R1:			sprintf( info->s, "Random  :%08x", mipscpu.cp0r[ 1 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R2:			sprintf( info->s, "EntryLo :%08x", mipscpu.cp0r[ 2 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R3:			sprintf( info->s, "cp0r3   :%08x", mipscpu.cp0r[ 3 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R4:			sprintf( info->s, "Context :%08x", mipscpu.cp0r[ 4 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R5:			sprintf( info->s, "cp0r5   :%08x", mipscpu.cp0r[ 5 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R6:			sprintf( info->s, "cp0r6   :%08x", mipscpu.cp0r[ 6 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R7:			sprintf( info->s, "cp0r7   :%08x", mipscpu.cp0r[ 7 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R8:			sprintf( info->s, "BadVAddr:%08x", mipscpu.cp0r[ 8 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R9:			sprintf( info->s, "cp0r9   :%08x", mipscpu.cp0r[ 9 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R10:		sprintf( info->s, "EntryHi :%08x", mipscpu.cp0r[ 10 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R11:		sprintf( info->s, "cp0r11  :%08x", mipscpu.cp0r[ 11 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R12:		sprintf( info->s, "SR      :%08x", mipscpu.cp0r[ 12 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R13:		sprintf( info->s, "Cause   :%08x", mipscpu.cp0r[ 13 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R14:		sprintf( info->s, "EPC     :%08x", mipscpu.cp0r[ 14 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R15:		sprintf( info->s, "PRId    :%08x", mipscpu.cp0r[ 15 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R16:		sprintf( info->s, "cp0r16  :%08x", mipscpu.cp0r[ 16 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R17:		sprintf( info->s, "cp0r17  :%08x", mipscpu.cp0r[ 17 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R18:		sprintf( info->s, "cp0r18  :%08x", mipscpu.cp0r[ 18 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R19:		sprintf( info->s, "cp0r19  :%08x", mipscpu.cp0r[ 19 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R20:		sprintf( info->s, "cp0r20  :%08x", mipscpu.cp0r[ 20 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R21:		sprintf( info->s, "cp0r21  :%08x", mipscpu.cp0r[ 21 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R22:		sprintf( info->s, "cp0r22  :%08x", mipscpu.cp0r[ 22 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R23:		sprintf( info->s, "cp0r23  :%08x", mipscpu.cp0r[ 23 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R24:		sprintf( info->s, "cp0r24  :%08x", mipscpu.cp0r[ 24 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R25:		sprintf( info->s, "cp0r25  :%08x", mipscpu.cp0r[ 25 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R26:		sprintf( info->s, "cp0r26  :%08x", mipscpu.cp0r[ 26 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R27:		sprintf( info->s, "cp0r27  :%08x", mipscpu.cp0r[ 27 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R28:		sprintf( info->s, "cp0r28  :%08x", mipscpu.cp0r[ 28 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R29:		sprintf( info->s, "cp0r29  :%08x", mipscpu.cp0r[ 29 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R30:		sprintf( info->s, "cp0r30  :%08x", mipscpu.cp0r[ 30 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP0R31:		sprintf( info->s, "cp0r31  :%08x", mipscpu.cp0r[ 31 ] ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR0:		sprintf( info->s, "vxy0    :%08x", mipscpu.cp2dr[ 0 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR1:		sprintf( info->s, "vz0     :%08x", mipscpu.cp2dr[ 1 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR2:		sprintf( info->s, "vxy1    :%08x", mipscpu.cp2dr[ 2 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR3:		sprintf( info->s, "vz1     :%08x", mipscpu.cp2dr[ 3 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR4:		sprintf( info->s, "vxy2    :%08x", mipscpu.cp2dr[ 4 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR5:		sprintf( info->s, "vz2     :%08x", mipscpu.cp2dr[ 5 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR6:		sprintf( info->s, "rgb     :%08x", mipscpu.cp2dr[ 6 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR7:		sprintf( info->s, "otz     :%08x", mipscpu.cp2dr[ 7 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR8:		sprintf( info->s, "ir0     :%08x", mipscpu.cp2dr[ 8 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR9:		sprintf( info->s, "ir1     :%08x", mipscpu.cp2dr[ 9 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR10:		sprintf( info->s, "ir2     :%08x", mipscpu.cp2dr[ 10 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR11:		sprintf( info->s, "ir3     :%08x", mipscpu.cp2dr[ 11 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR12:		sprintf( info->s, "sxy0    :%08x", mipscpu.cp2dr[ 12 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR13:		sprintf( info->s, "sxy1    :%08x", mipscpu.cp2dr[ 13 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR14:		sprintf( info->s, "sxy2    :%08x", mipscpu.cp2dr[ 14 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR15:		sprintf( info->s, "sxyp    :%08x", mipscpu.cp2dr[ 15 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR16:		sprintf( info->s, "sz0     :%08x", mipscpu.cp2dr[ 16 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR17:		sprintf( info->s, "sz1     :%08x", mipscpu.cp2dr[ 17 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR18:		sprintf( info->s, "sz2     :%08x", mipscpu.cp2dr[ 18 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR19:		sprintf( info->s, "sz3     :%08x", mipscpu.cp2dr[ 19 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR20:		sprintf( info->s, "rgb0    :%08x", mipscpu.cp2dr[ 20 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR21:		sprintf( info->s, "rgb1    :%08x", mipscpu.cp2dr[ 21 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR22:		sprintf( info->s, "rgb2    :%08x", mipscpu.cp2dr[ 22 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR23:		sprintf( info->s, "res1    :%08x", mipscpu.cp2dr[ 23 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR24:		sprintf( info->s, "mac0    :%08x", mipscpu.cp2dr[ 24 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR25:		sprintf( info->s, "mac1    :%08x", mipscpu.cp2dr[ 25 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR26:		sprintf( info->s, "mac2    :%08x", mipscpu.cp2dr[ 26 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR27:		sprintf( info->s, "mac3    :%08x", mipscpu.cp2dr[ 27 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR28:		sprintf( info->s, "irgb    :%08x", mipscpu.cp2dr[ 28 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR29:		sprintf( info->s, "orgb    :%08x", mipscpu.cp2dr[ 29 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR30:		sprintf( info->s, "lzcs    :%08x", mipscpu.cp2dr[ 30 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2DR31:		sprintf( info->s, "lzcr    :%08x", mipscpu.cp2dr[ 31 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR0:		sprintf( info->s, "r11r12  :%08x", mipscpu.cp2cr[ 0 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR1:		sprintf( info->s, "r13r21  :%08x", mipscpu.cp2cr[ 1 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR2:		sprintf( info->s, "r22r23  :%08x", mipscpu.cp2cr[ 2 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR3:		sprintf( info->s, "r31r32  :%08x", mipscpu.cp2cr[ 3 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR4:		sprintf( info->s, "r33     :%08x", mipscpu.cp2cr[ 4 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR5:		sprintf( info->s, "trx     :%08x", mipscpu.cp2cr[ 5 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR6:		sprintf( info->s, "try     :%08x", mipscpu.cp2cr[ 6 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR7:		sprintf( info->s, "trz     :%08x", mipscpu.cp2cr[ 7 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR8:		sprintf( info->s, "l11l12  :%08x", mipscpu.cp2cr[ 8 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR9:		sprintf( info->s, "l13l21  :%08x", mipscpu.cp2cr[ 9 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR10:		sprintf( info->s, "l22l23  :%08x", mipscpu.cp2cr[ 10 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR11:		sprintf( info->s, "l31l32  :%08x", mipscpu.cp2cr[ 11 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR12:		sprintf( info->s, "l33     :%08x", mipscpu.cp2cr[ 12 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR13:		sprintf( info->s, "rbk     :%08x", mipscpu.cp2cr[ 13 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR14:		sprintf( info->s, "gbk     :%08x", mipscpu.cp2cr[ 14 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR15:		sprintf( info->s, "bbk     :%08x", mipscpu.cp2cr[ 15 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR16:		sprintf( info->s, "lr1lr2  :%08x", mipscpu.cp2cr[ 16 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR17:		sprintf( info->s, "lr31g1  :%08x", mipscpu.cp2cr[ 17 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR18:		sprintf( info->s, "lg2lg3  :%08x", mipscpu.cp2cr[ 18 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR19:		sprintf( info->s, "lb1lb2  :%08x", mipscpu.cp2cr[ 19 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR20:		sprintf( info->s, "lb3     :%08x", mipscpu.cp2cr[ 20 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR21:		sprintf( info->s, "rfc     :%08x", mipscpu.cp2cr[ 21 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR22:		sprintf( info->s, "gfc     :%08x", mipscpu.cp2cr[ 22 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR23:		sprintf( info->s, "bfc     :%08x", mipscpu.cp2cr[ 23 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR24:		sprintf( info->s, "ofx     :%08x", mipscpu.cp2cr[ 24 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR25:		sprintf( info->s, "ofy     :%08x", mipscpu.cp2cr[ 25 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR26:		sprintf( info->s, "h       :%08x", mipscpu.cp2cr[ 26 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR27:		sprintf( info->s, "dqa     :%08x", mipscpu.cp2cr[ 27 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR28:		sprintf( info->s, "dqb     :%08x", mipscpu.cp2cr[ 28 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR29:		sprintf( info->s, "zsf3    :%08x", mipscpu.cp2cr[ 29 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR30:		sprintf( info->s, "zsf4    :%08x", mipscpu.cp2cr[ 30 ].d ); break;
+		case CPUINFO_STR_REGISTER + MIPS_CP2CR31:		sprintf( info->s, "flag    :%08x", mipscpu.cp2cr[ 31 ].d ); break;
 	}
 }
 
@@ -3631,12 +3631,12 @@ static void mips_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void psxcpu_get_info(UINT32 state, union cpuinfo *info)
+void psxcpu_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PSX CPU"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "PSX CPU"); break;
 
 		default:
 			mips_get_info(state, info);

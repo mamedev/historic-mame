@@ -1094,7 +1094,7 @@ INLINE void fetch_effective_address( void )
  * Generic set_info
  **************************************************************************/
 
-static void m6809_set_info(UINT32 state, union cpuinfo *info)
+static void m6809_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1123,7 +1123,7 @@ static void m6809_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void m6809_get_info(UINT32 state, union cpuinfo *info)
+void m6809_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1150,9 +1150,9 @@ void m6809_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_INPUT_STATE + M6809_IRQ_LINE:	info->i = m6809.irq_state[M6809_IRQ_LINE]; break;
 		case CPUINFO_INT_INPUT_STATE + M6809_FIRQ_LINE:	info->i = m6809.irq_state[M6809_FIRQ_LINE]; break;
-		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = m6809.nmi_state;			break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = m6809.nmi_state;				break;
 
-		case CPUINFO_INT_PREVIOUSPC:					info->i = PPC;						break;
+		case CPUINFO_INT_PREVIOUSPC:					info->i = PPC;							break;
 
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + M6809_PC:			info->i = PC;							break;
@@ -1167,28 +1167,28 @@ void m6809_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M6809_DP:			info->i = DP;							break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_SET_INFO:						info->setinfo = m6809_set_info;				break;
-		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = m6809_get_context;			break;
-		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = m6809_set_context;			break;
-		case CPUINFO_PTR_INIT:							info->init = m6809_init;					break;
-		case CPUINFO_PTR_RESET:							info->reset = m6809_reset;					break;
-		case CPUINFO_PTR_EXIT:							info->exit = m6809_exit;					break;
-		case CPUINFO_PTR_EXECUTE:						info->execute = m6809_execute;				break;
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = m6809_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = m6809_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = m6809_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = m6809_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = m6809_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = m6809_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = m6809_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 #ifdef MAME_DEBUG
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6809_dasm;					break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6809_dasm;			break;
 #endif /* MAME_DEBUG */
-		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6809_ICount;				break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6809_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6809"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Motorola 6809"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.1"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) John Butler 1997"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M6809");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Motorola 6809");		break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.1");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C) John Butler 1997"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				m6809.cc & 0x80 ? 'E':'.',
 				m6809.cc & 0x40 ? 'F':'.',
                 m6809.cc & 0x20 ? 'H':'.',
@@ -1199,15 +1199,15 @@ void m6809_get_info(UINT32 state, union cpuinfo *info)
                 m6809.cc & 0x01 ? 'C':'.');
             break;
 
-		case CPUINFO_STR_REGISTER + M6809_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", m6809.pc.w.l); break;
-		case CPUINFO_STR_REGISTER + M6809_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%04X", m6809.s.w.l); break;
-		case CPUINFO_STR_REGISTER + M6809_CC:			sprintf(info->s = cpuintrf_temp_str(), "CC:%02X", m6809.cc); break;
-		case CPUINFO_STR_REGISTER + M6809_U:			sprintf(info->s = cpuintrf_temp_str(), "U:%04X", m6809.u.w.l); break;
-		case CPUINFO_STR_REGISTER + M6809_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", m6809.d.b.h); break;
-		case CPUINFO_STR_REGISTER + M6809_B:			sprintf(info->s = cpuintrf_temp_str(), "B:%02X", m6809.d.b.l); break;
-		case CPUINFO_STR_REGISTER + M6809_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%04X", m6809.x.w.l); break;
-		case CPUINFO_STR_REGISTER + M6809_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%04X", m6809.y.w.l); break;
-		case CPUINFO_STR_REGISTER + M6809_DP:			sprintf(info->s = cpuintrf_temp_str(), "DP:%02X", m6809.dp.b.h); break;
+		case CPUINFO_STR_REGISTER + M6809_PC:			sprintf(info->s, "PC:%04X", m6809.pc.w.l); break;
+		case CPUINFO_STR_REGISTER + M6809_S:			sprintf(info->s, "S:%04X", m6809.s.w.l); break;
+		case CPUINFO_STR_REGISTER + M6809_CC:			sprintf(info->s, "CC:%02X", m6809.cc); break;
+		case CPUINFO_STR_REGISTER + M6809_U:			sprintf(info->s, "U:%04X", m6809.u.w.l); break;
+		case CPUINFO_STR_REGISTER + M6809_A:			sprintf(info->s, "A:%02X", m6809.d.b.h); break;
+		case CPUINFO_STR_REGISTER + M6809_B:			sprintf(info->s, "B:%02X", m6809.d.b.l); break;
+		case CPUINFO_STR_REGISTER + M6809_X:			sprintf(info->s, "X:%04X", m6809.x.w.l); break;
+		case CPUINFO_STR_REGISTER + M6809_Y:			sprintf(info->s, "Y:%04X", m6809.y.w.l); break;
+		case CPUINFO_STR_REGISTER + M6809_DP:			sprintf(info->s, "DP:%02X", m6809.dp.b.h); break;
 	}
 }
 
@@ -1216,7 +1216,7 @@ void m6809_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void m6809e_get_info(UINT32 state, union cpuinfo *info)
+void m6809e_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1224,10 +1224,8 @@ void m6809e_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 4;							break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6809E"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M6809E");				break;
 
-		default:
-			m6809_get_info(state, info);
-			break;
+		default:										m6809_get_info(state, info);			break;
 	}
 }

@@ -266,7 +266,7 @@ offs_t tms32010_dasm(char *str, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 	if (op == -1)
 	{
 		sprintf(str,"???? dw %04Xh",code);
-		return cnt;
+		return cnt | DASMFLAG_SUPPORTED;
 	}
 	strtmp = str;
 	if (Op[op].extcode)

@@ -116,10 +116,6 @@ typedef union int_double
     IMPLEMENTATION
 ***************************************************************************/
 
-#if 0
-#pragma mark INLINE HELPERS
-#endif
-
 static void illegal(void)
 {
 }
@@ -147,11 +143,6 @@ INLINE void execute_one(void)
 /***************************************************************************
     CAU HELPERS
 ***************************************************************************/
-
-#if 0
-#pragma mark -
-#pragma mark CAU HELPERS
-#endif
 
 static UINT32 cau_read_pi_special(UINT8 i)
 {
@@ -289,11 +280,6 @@ INLINE void cau_write_pi_4byte(int pi, UINT32 val)
 /***************************************************************************
     DAU HELPERS
 ***************************************************************************/
-
-#if 0
-#pragma mark -
-#pragma mark DAU HELPERS
-#endif
 
 INLINE double dau_get_amult(int aidx)
 {
@@ -698,11 +684,6 @@ static int condition(int cond)
 /***************************************************************************
     CAU BRANCH INSTRUCTION IMPLEMENTATION
 ***************************************************************************/
-
-#if 0
-#pragma mark -
-#pragma mark CAU BRANCHES
-#endif
 
 static void nop(void)
 {
@@ -1174,11 +1155,6 @@ static void do_r(void)
     CAU 16-BIT ARITHMETIC IMPLEMENTATION
 ***************************************************************************/
 
-#if 0
-#pragma mark -
-#pragma mark CAU 16-BIT
-#endif
-
 static void add_si(void)
 {
 	int dr = (OP >> 21) & 0x1f;
@@ -1516,11 +1492,6 @@ static void test_di(void)
 /***************************************************************************
     CAU 24-BIT ARITHMETIC IMPLEMENTATION
 ***************************************************************************/
-
-#if 0
-#pragma mark -
-#pragma mark CAU 24-BIT
-#endif
 
 static void adde_si(void)
 {
@@ -1860,11 +1831,6 @@ static void teste_di(void)
     CAU LOAD/STORE IMPLEMENTATION
 ***************************************************************************/
 
-#if 0
-#pragma mark -
-#pragma mark CAU LOAD/STORE
-#endif
-
 static void load_hi(void)
 {
 	int dr = (OP >> 16) & 0x1f;
@@ -2047,11 +2013,6 @@ static void load24(void)
     DAU FORM 1 IMPLEMENTATION
 ***************************************************************************/
 
-#if 0
-#pragma mark -
-#pragma mark DAU FORM 1
-#endif
-
 static void d1_aMpp(void)
 {
 	double xval = dau_read_pi_double_1st(OP >> 14, 1);
@@ -2203,11 +2164,6 @@ static void d1_aMmmr(void)
     DAU FORM 2 IMPLEMENTATION
 ***************************************************************************/
 
-#if 0
-#pragma mark -
-#pragma mark DAU FORM 2
-#endif
-
 static void d2_aMpp(void)
 {
 	double xval = dau_read_pi_double_1st(OP >> 14, 1);
@@ -2284,11 +2240,6 @@ static void d2_aMmmr(void)
 /***************************************************************************
     DAU FORM 3 IMPLEMENTATION
 ***************************************************************************/
-
-#if 0
-#pragma mark -
-#pragma mark DAU FORM 3
-#endif
 
 static void d3_aMpp(void)
 {
@@ -2367,11 +2318,6 @@ static void d3_aMmmr(void)
     DAU FORM 4 IMPLEMENTATION
 ***************************************************************************/
 
-#if 0
-#pragma mark -
-#pragma mark DAU FORM 4
-#endif
-
 static void d4_pp(void)
 {
 	double xval = dau_read_pi_double_1st(OP >> 14, 1);
@@ -2448,11 +2394,6 @@ static void d4_mmr(void)
 /***************************************************************************
     DAU FORM 5 IMPLEMENTATION
 ***************************************************************************/
-
-#if 0
-#pragma mark -
-#pragma mark DAU FORM 5
-#endif
 
 static void d5_ic(void)
 {
@@ -2592,11 +2533,6 @@ static void d5_seed(void)
 /***************************************************************************
     FUNCTION TABLE
 ***************************************************************************/
-
-#if 0
-#pragma mark -
-#pragma mark FUNCTION TABLE
-#endif
 
 void (*dsp32ops[])(void) =
 {

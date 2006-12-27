@@ -6,6 +6,11 @@ Strength & Skill (c) 1984 Sun Electronics
 
     19/Jun/2001 -
 
+Notes:
+ Banbam has a Fujitsu MB8841 4-Bit MCU for protection labeled SUN 8212
+ It's not known if it has internal ROM code or if rom 12 is the program
+ code for it.  Pettan Pyuu may also have the same type of MCU.
+
 *****************************************************************************/
 
 #include "driver.h"
@@ -44,7 +49,7 @@ READ8_HANDLER( strnskil_d800_r )
 
 /****************************************************************************/
 
-static READ8_HANDLER( protection_r )
+static READ8_HANDLER( pettanp_protection_r )
 {
 	int res;
 
@@ -56,6 +61,25 @@ static READ8_HANDLER( protection_r )
 		case 0x61b9:	res = 0x60|(rand()&0x0f);	break;	/* bits 0-3 unknown */
 		case 0x6219:	res = 0x77;	break;
 		case 0x626c:	res = 0xb4;	break;
+		default:		res = 0xff; break;
+	}
+
+	logerror("%04x: protection_r -> %02x\n",activecpu_get_pc(),res);
+	return res;
+}
+
+static READ8_HANDLER( banbam_protection_r )
+{
+	int res;
+
+	switch (activecpu_get_pc())
+	{
+		case 0x6094:	res = 0xa5;	break;
+		case 0x6118:	res = 0x20;	break;	/* bits 0-3 unknown */
+		case 0x6199:	res = 0x30;	break;	/* bits 0-3 unknown */
+		case 0x61f5:	res = 0x60|(rand()&0x0f);	break;	/* bits 0-3 unknown */
+		case 0x6255:	res = 0x77;	break;
+		case 0x62a8:	res = 0xb4;	break;
 		default:		res = 0xff; break;
 	}
 
@@ -83,8 +107,6 @@ static ADDRESS_MAP_START( strnskil_readmem1, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd803, 0xd803) AM_READ(input_port_4_r) /* other inputs */
 	AM_RANGE(0xd804, 0xd804) AM_READ(input_port_2_r) /* player1 */
 	AM_RANGE(0xd805, 0xd805) AM_READ(input_port_3_r) /* player2 */
-
-	AM_RANGE(0xd806, 0xd806) AM_READ(protection_r) /* protection data read (pettanp) */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( strnskil_writemem1, ADDRESS_SPACE_PROGRAM, 8 )
@@ -97,9 +119,6 @@ static ADDRESS_MAP_START( strnskil_writemem1, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd808, 0xd808) AM_WRITE(strnskil_scrl_ctrl_w)
 	AM_RANGE(0xd809, 0xd809) AM_WRITE(MWA8_NOP) /* coin counter? */
 	AM_RANGE(0xd80a, 0xd80b) AM_WRITE(strnskil_scroll_x_w)
-
-//  AM_RANGE(0xd80c, 0xd80c) AM_WRITE(MWA8_NOP)     /* protection reset? */
-	AM_RANGE(0xd80d, 0xd80d) AM_WRITE(protection_w)	/* protection data write (pettanp) */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( strnskil_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
@@ -263,6 +282,91 @@ INPUT_PORTS_START( pettanp )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, "Freeze" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START /* d804 */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY
+
+	PORT_START /* d805 */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL
+
+	PORT_START /* d803 */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_SERVICE( 0x20, IP_ACTIVE_HIGH )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( banbam )
+	PORT_START  /* dsw1 */
+	PORT_DIPNAME( 0x01, 0x00, "Unknown 1-1" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown 1-2" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown 1-3" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown 1-4" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown 1-5" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 1-6" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown 1-7" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown 1-8" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+
+	PORT_START  /* dsw2 */
+	PORT_DIPNAME( 0x01, 0x00, "Unknown 2-1" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown 2-2" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown 2-3" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown 2-4" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown 2-5" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown 2-6" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown 2-7" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown 2-8" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
@@ -465,12 +569,67 @@ ROM_START( pettanp )
 	ROM_LOAD( "16-2.97",  0x0500,  0x0200, CRC(7f95d4b2) SHA1(68dc311739a4d5d72f4cfbace27f3a82f05316ff) ) /* bg */
 
 	ROM_REGION( 0x0100, REGION_USER1, 0 ) /* scroll control PROM */
-	ROM_LOAD( "16-6",     0x0000,  0x0100, NO_DUMP )
+	ROM_LOAD( "16-6",  0x0000,  0x0100, BAD_DUMP CRC(ec4faf5b) SHA1(7ebbf50807d04105ebadec91bded069408e399ba) ) /* Needs to be verified */
 
 	ROM_REGION( 0x1000, REGION_USER2, 0 ) /* protection? */
 	ROM_LOAD( "tvg12-16.2", 0x0000,  0x1000, CRC(3abc6ba8) SHA1(15e0b0f9d068f6094e2be4f4f1dea0ff6e85686b) )
 ROM_END
 
-GAME(  1984, strnskil, 0,        strnskil, strnskil, 0, ROT0, "Sun Electronics", "Strength & Skill", 0 )
-GAME(  1984, guiness,  strnskil, strnskil, strnskil, 0, ROT0, "Sun Electronics", "The Guiness (Japan)", 0 )
-GAME( 1984, pettanp,  0,        strnskil, pettanp,  0, ROT0, "Sun Electronics", "Pettan Pyuu (Japan)", GAME_UNEMULATED_PROTECTION )
+ROM_START( banbam )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* main CPU */
+	ROM_LOAD( "ban-rom2.ic7",  0x0000,  0x2000, CRC(a5aeef6e) SHA1(92c1ad6ccb96b723e122899150e3c1855c5017b8) )
+	ROM_CONTINUE(              0x8000,  0x2000 )
+	ROM_LOAD( "ban-rom3.ic8",  0x2000,  0x2000, CRC(f91472bf) SHA1(94988b7bf2be3d3704a802db544070251d6c6a9c) )
+	ROM_LOAD( "ban-rom4.ic9",  0x4000,  0x2000, CRC(436a09ef) SHA1(7287f741fbf3ac43d5c46b2f43ec4439cb3d0d56) )
+	ROM_LOAD( "ban-rom5.ic10", 0x6000,  0x2000, CRC(45205f86) SHA1(a11d10beb21519f797c902b8a18775c8e2aa0fae) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sub CPU */
+	ROM_LOAD( "ban-rom1.ic2",   0x0000,  0x2000, CRC(e36009f6) SHA1(72c485e8c19fbfc9c850094cfd87f1055154c0c5) )
+
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE ) /* sprite */
+	ROM_LOAD( "ban-rom6.ic90",  0x0000,  0x2000, CRC(41fc44df) SHA1(1c4f21cdc423078fab58370d5245a13292bf7fe6) )
+	ROM_LOAD( "ban-rom7.ic92",  0x2000,  0x2000, CRC(8b429c5b) SHA1(505796eac2c8dd84f9ed29a6227b3243f81ec072) )
+	ROM_LOAD( "ban-rom8.ic94",  0x4000,  0x2000, CRC(76c02d6b) SHA1(9ef7585da5376cdd604afee281594e24c69addf2) )
+
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE ) /* bg */
+	ROM_LOAD( "ban-rom11.ic102", 0x0000,  0x2000, CRC(aa827c57) SHA1(87d0c5e7df6ce40b0b2fc8f4b9dd43d4b7b0bc2e) )
+	ROM_LOAD( "ban-rom10.ic101", 0x2000,  0x2000, CRC(51bd1c5c) SHA1(f714a3168d59cb4f8512440f7a2e27b6e0726a39) )
+	ROM_LOAD( "ban-rom9.ic100",  0x4000,  0x2000, CRC(c0a5a4c8) SHA1(7f0978669218982d379a5d72c6198a33a8213ab5) )
+
+	ROM_REGION( 0x0700, REGION_PROMS, 0 ) /* color PROMs */
+	ROM_LOAD( "15-3.24s10n",  0x0000,  0x0100, CRC(dbcd3bec) SHA1(1baeec277b16c82b67e10da9d4c84cf383ef4a82) ) /* R */
+	ROM_LOAD( "15-4.24s10n",  0x0100,  0x0100, CRC(9eb7b6cf) SHA1(86451e8a510f8cfbc0be7d4e7bb1ee7dfd67f1f4) ) /* G */
+	ROM_LOAD( "15-5.24s10n",  0x0200,  0x0100, CRC(9b30a7f3) SHA1(a0aefc2c8325b95ea227e404583d14622b04a3b9) ) /* B */
+	ROM_LOAD( "16-1.mb7124h", 0x0300,  0x0200, CRC(777e2770) SHA1(7f4ef42ab4e0546c2932d498cf573bd4f4296db7) ) /* sprite */
+	ROM_LOAD( "16-2.mb7124h", 0x0500,  0x0200, CRC(7f95d4b2) SHA1(68dc311739a4d5d72f4cfbace27f3a82f05316ff) ) /* bg */
+
+	ROM_REGION( 0x0100, REGION_USER1, 0 ) /* scroll control PROM */
+	ROM_LOAD( "15-6.24s10n",  0x0000,  0x0100, CRC(ec4faf5b) SHA1(7ebbf50807d04105ebadec91bded069408e399ba) )
+
+	ROM_REGION( 0x2000, REGION_USER2, 0 ) /* protection?, used with Fujitsu MB8841 4-Bit MCU? */
+	ROM_LOAD( "ban-rom12.ic2", 0x0000,  0x2000, CRC(044bb2f6) SHA1(829b2152740061e0506c7504885d8404fb8fe360) )
+ROM_END
+
+DRIVER_INIT( pettanp )
+{
+//  AM_RANGE(0xd80c, 0xd80c) AM_WRITE(MWA8_NOP)     /* protection reset? */
+//  AM_RANGE(0xd80d, 0xd80d) AM_WRITE(protection_w) /* protection data write (pettanp) */
+//  AM_RANGE(0xd806, 0xd806) AM_READ(protection_r) /* protection data read (pettanp) */
+
+	/* Fujitsu MB8841 4-Bit MCU */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd806, 0xd806, 0, 0, pettanp_protection_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd80d, 0xd80d, 0, 0, protection_w);
+
+}
+
+DRIVER_INIT( banbam )
+{
+	/* Fujitsu MB8841 4-Bit MCU */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd806, 0xd806, 0, 0, banbam_protection_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd80d, 0xd80d, 0, 0, protection_w);
+}
+
+GAME( 1984, strnskil, 0,        strnskil, strnskil, 0, ROT0, "Sun Electronics", "Strength & Skill", 0 )
+GAME( 1984, guiness,  strnskil, strnskil, strnskil, 0, ROT0, "Sun Electronics", "The Guiness (Japan)", 0 )
+GAME( 1984, banbam,   0,        strnskil, banbam,   banbam, ROT0, "Sun Electronics", "BanBam", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAME( 1984, pettanp,  banbam,   strnskil, pettanp,  pettanp, ROT0, "Sun Electronics", "Pettan Pyuu (Japan)", GAME_UNEMULATED_PROTECTION )

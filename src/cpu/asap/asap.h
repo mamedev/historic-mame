@@ -37,6 +37,6 @@ enum
     PUBLIC FUNCTIONS
 ***************************************************************************/
 
-extern void asap_get_info(UINT32 state, union cpuinfo *info);
+extern void asap_get_info(UINT32 state, cpuinfo *info);
 
 #endif /* _ASAP_H */

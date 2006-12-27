@@ -657,16 +657,16 @@ static int deco16_execute(int cycles)
  * Generic set_info
  **************************************************************************/
 
-static void m6502_set_info(UINT32 state, union cpuinfo *info)
+static void m6502_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_INPUT_STATE + M6502_IRQ_LINE:	m6502_set_irq_line(M6502_IRQ_LINE, info->i); break;
-		case CPUINFO_INT_INPUT_STATE + M6502_SET_OVERFLOW:m6502_set_irq_line(M6502_SET_OVERFLOW, info->i); break;
-		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	m6502_set_irq_line(INPUT_LINE_NMI, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M6502_IRQ_LINE:		m6502_set_irq_line(M6502_IRQ_LINE, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M6502_SET_OVERFLOW:	m6502_set_irq_line(M6502_SET_OVERFLOW, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:		m6502_set_irq_line(INPUT_LINE_NMI, info->i); break;
 
-		case CPUINFO_INT_PC:							PCW = info->i; change_pc(PCD);		break;
+		case CPUINFO_INT_PC:							PCW = info->i; change_pc(PCD);			break;
 		case CPUINFO_INT_REGISTER + M6502_PC:			m6502.pc.w.l = info->i;					break;
 		case CPUINFO_INT_SP:							S = info->i;							break;
 		case CPUINFO_INT_REGISTER + M6502_S:			m6502.sp.b.l = info->i;					break;
@@ -678,8 +678,8 @@ static void m6502_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M6502_ZP:			m6502.zp.w.l = info->i;					break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	m6502.rdmem_id = (read8_handler) info->f;	break;
-		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	m6502.wrmem_id = (write8_handler) info->f;	break;
+		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	m6502.rdmem_id = (read8_handler) info->f; break;
+		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	m6502.wrmem_id = (write8_handler) info->f; break;
 	}
 }
 
@@ -689,7 +689,7 @@ static void m6502_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void m6502_get_info(UINT32 state, union cpuinfo *info)
+void m6502_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -714,9 +714,9 @@ void m6502_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_INPUT_STATE + M6502_IRQ_LINE:	info->i = m6502.irq_state;				break;
-		case CPUINFO_INT_INPUT_STATE + M6502_SET_OVERFLOW:info->i = m6502.so_state;				break;
-		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = m6502.nmi_state;				break;
+		case CPUINFO_INT_INPUT_STATE + M6502_IRQ_LINE:		info->i = m6502.irq_state;			break;
+		case CPUINFO_INT_INPUT_STATE + M6502_SET_OVERFLOW:	info->i = m6502.so_state;			break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:		info->i = m6502.nmi_state;			break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = m6502.ppc.w.l;				break;
 
@@ -749,14 +749,14 @@ void m6502_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	info->f = (genf *) m6502.wrmem_id;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6502"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Mostek 6502"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.2"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 1998 Juergen Buchmueller, all rights reserved."); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M6502");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Mostek 6502");			break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.2");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (c) 1998 Juergen Buchmueller, all rights reserved."); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				m6502.p & 0x80 ? 'N':'.',
 				m6502.p & 0x40 ? 'V':'.',
 				m6502.p & 0x20 ? 'R':'.',
@@ -767,14 +767,14 @@ void m6502_get_info(UINT32 state, union cpuinfo *info)
 				m6502.p & 0x01 ? 'C':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + M6502_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", m6502.pc.w.l); break;
-		case CPUINFO_STR_REGISTER + M6502_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%02X", m6502.sp.b.l); break;
-		case CPUINFO_STR_REGISTER + M6502_P:			sprintf(info->s = cpuintrf_temp_str(), "P:%02X", m6502.p); break;
-		case CPUINFO_STR_REGISTER + M6502_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", m6502.a); break;
-		case CPUINFO_STR_REGISTER + M6502_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%02X", m6502.x); break;
-		case CPUINFO_STR_REGISTER + M6502_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%02X", m6502.y); break;
-		case CPUINFO_STR_REGISTER + M6502_EA:			sprintf(info->s = cpuintrf_temp_str(), "EA:%04X", m6502.ea.w.l); break;
-		case CPUINFO_STR_REGISTER + M6502_ZP:			sprintf(info->s = cpuintrf_temp_str(), "ZP:%03X", m6502.zp.w.l); break;
+		case CPUINFO_STR_REGISTER + M6502_PC:			sprintf(info->s, "PC:%04X", m6502.pc.w.l); break;
+		case CPUINFO_STR_REGISTER + M6502_S:			sprintf(info->s, "S:%02X", m6502.sp.b.l); break;
+		case CPUINFO_STR_REGISTER + M6502_P:			sprintf(info->s, "P:%02X", m6502.p); break;
+		case CPUINFO_STR_REGISTER + M6502_A:			sprintf(info->s, "A:%02X", m6502.a); break;
+		case CPUINFO_STR_REGISTER + M6502_X:			sprintf(info->s, "X:%02X", m6502.x); break;
+		case CPUINFO_STR_REGISTER + M6502_Y:			sprintf(info->s, "Y:%02X", m6502.y); break;
+		case CPUINFO_STR_REGISTER + M6502_EA:			sprintf(info->s, "EA:%04X", m6502.ea.w.l); break;
+		case CPUINFO_STR_REGISTER + M6502_ZP:			sprintf(info->s, "ZP:%03X", m6502.zp.w.l); break;
 	}
 }
 
@@ -784,7 +784,7 @@ void m6502_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void n2a03_get_info(UINT32 state, union cpuinfo *info)
+void n2a03_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -792,11 +792,9 @@ void n2a03_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INIT:							info->init = n2a03_init;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "N2A03"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "N2A03");				break;
 
-		default:
-			m6502_get_info(state, info);
-			break;
+		default:										m6502_get_info(state, info);			break;
 	}
 }
 #endif
@@ -807,21 +805,19 @@ void n2a03_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-static void m6510_set_info(UINT32 state, union cpuinfo *info)
+static void m6510_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_M6510_PORTREAD:	m6502.port_read = (UINT8 (*)(void)) info->f;	break;
-		case CPUINFO_PTR_M6510_PORTWRITE:	m6502.port_write = (void (*)(UINT8)) info->f;	break;
+		case CPUINFO_PTR_M6510_PORTREAD:	m6502.port_read = (UINT8 (*)(void)) info->f;		break;
+		case CPUINFO_PTR_M6510_PORTWRITE:	m6502.port_write = (void (*)(UINT8)) info->f;		break;
 
-		default:
-			m6502_set_info(state, info);
-			break;
+		default:							m6502_set_info(state, info);						break;
 	}
 }
 
-void m6510_get_info(UINT32 state, union cpuinfo *info)
+void m6510_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -834,17 +830,15 @@ void m6510_get_info(UINT32 state, union cpuinfo *info)
 #endif
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP:			info->internal_map = construct_map_m6510_mem; break;
 		case CPUINFO_PTR_M6510_PORTREAD:				info->f = (genf *) m6502.port_read;		break;
-		case CPUINFO_PTR_M6510_PORTWRITE:				info->f = (genf *) m6502.port_write;		break;
+		case CPUINFO_PTR_M6510_PORTWRITE:				info->f = (genf *) m6502.port_write;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6510"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M6510");				break;
 
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_M6510_PORT:					info->i = m6510_get_port();	break;
+		case CPUINFO_INT_M6510_PORT:					info->i = m6510_get_port();				break;
 
-		default:
-			m6502_get_info(state, info);
-			break;
+		default:										m6502_get_info(state, info);			break;
 	}
 }
 #endif
@@ -855,16 +849,14 @@ void m6510_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void m6510t_get_info(UINT32 state, union cpuinfo *info)
+void m6510t_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6510T"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M6510T");				break;
 
-		default:
-			m6510_get_info(state, info);
-			break;
+		default:										m6510_get_info(state, info);			break;
 	}
 }
 #endif
@@ -875,16 +867,14 @@ void m6510t_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void m7501_get_info(UINT32 state, union cpuinfo *info)
+void m7501_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M7501"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M7501");				break;
 
-		default:
-			m6510_get_info(state, info);
-			break;
+		default:										m6510_get_info(state, info);			break;
 	}
 }
 #endif
@@ -895,16 +885,14 @@ void m7501_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void m8502_get_info(UINT32 state, union cpuinfo *info)
+void m8502_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M8502"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M8502");				break;
 
-		default:
-			m6510_get_info(state, info);
-			break;
+		default:										m6510_get_info(state, info);			break;
 	}
 }
 #endif
@@ -915,22 +903,18 @@ void m8502_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-static void m65c02_set_info(UINT32 state, union cpuinfo *info)
+static void m65c02_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	m65c02_set_irq_line(INPUT_LINE_NMI, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	m65c02_set_irq_line(INPUT_LINE_NMI, info->i); break;
 
-		/* --- the following bits of info are set as pointers to data or functions --- */
-
-		default:
-			m6502_set_info(state, info);
-			break;
+		default:										m6502_set_info(state, info);			break;
 	}
 }
 
-void m65c02_get_info(UINT32 state, union cpuinfo *info)
+void m65c02_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -940,15 +924,13 @@ void m65c02_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = m65c02_reset;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m65c02_execute;			break;
 #ifdef MAME_DEBUG
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m65c02_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m65c02_dasm;		break;
 #endif
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M65C02"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M65C02");				break;
 
-		default:
-			m6502_get_info(state, info);
-			break;
+		default:										m6502_get_info(state, info);			break;
 	}
 }
 #endif
@@ -959,26 +941,24 @@ void m65c02_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void m65sc02_get_info(UINT32 state, union cpuinfo *info)
+void m65sc02_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_INIT:							info->init = m65sc02_init;				break;
 #ifdef MAME_DEBUG
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m65sc02_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m65sc02_dasm;		break;
 #endif
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M65SC02"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Metal Oxid Semiconductor MOS 6502"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0beta"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 1998 Juergen Buchmueller\nCopyright (c) 2000 Peter Trauner\nall rights reserved."); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M65SC02");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Metal Oxid Semiconductor MOS 6502"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0beta");				break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (c) 1998 Juergen Buchmueller\nCopyright (c) 2000 Peter Trauner\nall rights reserved."); break;
 
-		default:
-			m65c02_get_info(state, info);
-			break;
+		default:										m65c02_get_info(state, info);			break;
 	}
 }
 #endif
@@ -989,24 +969,20 @@ void m65sc02_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-static void deco16_set_info(UINT32 state, union cpuinfo *info)
+static void deco16_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_INPUT_STATE + M6502_IRQ_LINE:	deco16_set_irq_line(M6502_IRQ_LINE, info->i); break;
-		case CPUINFO_INT_INPUT_STATE + M6502_SET_OVERFLOW:deco16_set_irq_line(M6502_SET_OVERFLOW, info->i); break;
-		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	deco16_set_irq_line(INPUT_LINE_NMI, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + M6502_IRQ_LINE:		deco16_set_irq_line(M6502_IRQ_LINE, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M6502_SET_OVERFLOW:	deco16_set_irq_line(M6502_SET_OVERFLOW, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:		deco16_set_irq_line(INPUT_LINE_NMI, info->i); break;
 
-		/* --- the following bits of info are set as pointers to data or functions --- */
-
-		default:
-			m6502_set_info(state, info);
-			break;
+		default:										m6502_set_info(state, info);			break;
 	}
 }
 
-void deco16_get_info(UINT32 state, union cpuinfo *info)
+void deco16_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1020,19 +996,17 @@ void deco16_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = deco16_reset;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = deco16_execute;			break;
 #ifdef MAME_DEBUG
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = deco16_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = deco16_dasm;		break;
 #endif
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "DECO CPU16"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "DECO"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "0.1"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 1998 Juergen Buchmueller\nCopyright (c) 2001-2003 Bryan McPhail\nall rights reserved."); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "DECO CPU16");			break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "DECO");				break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "0.1");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (c) 1998 Juergen Buchmueller\nCopyright (c) 2001-2003 Bryan McPhail\nall rights reserved."); break;
 
-		default:
-			m6502_get_info(state, info);
-			break;
+		default:										m6502_get_info(state, info);			break;
 	}
 }
 #endif

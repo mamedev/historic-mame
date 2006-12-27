@@ -384,7 +384,7 @@ static int m4510_translate(int space, offs_t *addr)
  * Generic set_info
  **************************************************************************/
 
-static void m4510_set_info(UINT32 state, union cpuinfo *info)
+static void m4510_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -416,10 +416,10 @@ static void m4510_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M4510_MEM7:			m4510.mem[7] = info->i;					break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	m4510.rdmem_id = (read8_handler) info->f;	break;
-		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	m4510.wrmem_id = (write8_handler) info->f;	break;
-		case CPUINFO_PTR_M6510_PORTREAD:	m4510.port_read = (UINT8 (*)(void)) info->f;	break;
-		case CPUINFO_PTR_M6510_PORTWRITE:	m4510.port_write = (void (*)(UINT8)) info->f;	break;
+		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	m4510.rdmem_id = (read8_handler) info->f; break;
+		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	m4510.wrmem_id = (write8_handler) info->f; break;
+		case CPUINFO_PTR_M6510_PORTREAD:				m4510.port_read = (UINT8 (*)(void)) info->f; break;
+		case CPUINFO_PTR_M6510_PORTWRITE:				m4510.port_write = (void (*)(UINT8)) info->f; break;
 	}
 }
 
@@ -429,7 +429,7 @@ static void m4510_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void m4510_get_info(UINT32 state, union cpuinfo *info)
+void m4510_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -483,7 +483,7 @@ void m4510_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M4510_MEM5:			info->i = m4510.mem[5];					break;
 		case CPUINFO_INT_REGISTER + M4510_MEM6:			info->i = m4510.mem[6];					break;
 		case CPUINFO_INT_REGISTER + M4510_MEM7:			info->i = m4510.mem[7];					break;
-		case CPUINFO_INT_M6510_PORT:					info->i = m4510_get_port();	break;
+		case CPUINFO_INT_M6510_PORT:					info->i = m4510_get_port();				break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = m4510_set_info;			break;
@@ -499,21 +499,21 @@ void m4510_get_info(UINT32 state, union cpuinfo *info)
 #endif
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m4510_ICount;			break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP:			info->internal_map = construct_map_m4510_mem; break;
-		case CPUINFO_PTR_TRANSLATE:						info->translate = m4510_translate;	break;
+		case CPUINFO_PTR_TRANSLATE:						info->translate = m4510_translate;		break;
 		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	info->f = (genf *) m4510.rdmem_id;		break;
 		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	info->f = (genf *) m4510.wrmem_id;		break;
 		case CPUINFO_PTR_M6510_PORTREAD:				info->f = (genf *) m4510.port_read;		break;
-		case CPUINFO_PTR_M6510_PORTWRITE:				info->f = (genf *) m4510.port_write;		break;
+		case CPUINFO_PTR_M6510_PORTWRITE:				info->f = (genf *) m4510.port_write;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M4510"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "CBM Semiconductor Group CSG 65CE02"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0beta"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 1998 Juergen Buchmueller\nCopyright (c) 2000 Peter Trauner\nall rights reserved."); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M4510");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "CBM Semiconductor Group CSG 65CE02"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0beta");				break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (c) 1998 Juergen Buchmueller\nCopyright (c) 2000 Peter Trauner\nall rights reserved."); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				m4510.p & 0x80 ? 'N':'.',
 				m4510.p & 0x40 ? 'V':'.',
 				m4510.p & 0x20 ? 'R':'.',
@@ -524,18 +524,18 @@ void m4510_get_info(UINT32 state, union cpuinfo *info)
 				m4510.p & 0x01 ? 'C':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + M4510_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", m4510.pc.w.l); break;
-		case CPUINFO_STR_REGISTER + M4510_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%02X", m4510.sp.b.l); break;
-		case CPUINFO_STR_REGISTER + M4510_P:			sprintf(info->s = cpuintrf_temp_str(), "P:%02X", m4510.p); break;
-		case CPUINFO_STR_REGISTER + M4510_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", m4510.a); break;
-		case CPUINFO_STR_REGISTER + M4510_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%02X", m4510.x); break;
-		case CPUINFO_STR_REGISTER + M4510_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%02X", m4510.y); break;
-		case CPUINFO_STR_REGISTER + M4510_Z:			sprintf(info->s = cpuintrf_temp_str(), "Z:%02X", m4510.z); break;
-		case CPUINFO_STR_REGISTER + M4510_B:			sprintf(info->s = cpuintrf_temp_str(), "B:%02X", m4510.zp.b.h); break;
-		case CPUINFO_STR_REGISTER + M4510_MEM_LOW:		sprintf(info->s = cpuintrf_temp_str(), "M0:%01X", m4510.low); break;
-		case CPUINFO_STR_REGISTER + M4510_MEM_HIGH:		sprintf(info->s = cpuintrf_temp_str(), "M1:%01X", m4510.high); break;
-		case CPUINFO_STR_REGISTER + M4510_EA:			sprintf(info->s = cpuintrf_temp_str(), "EA:%04X", m4510.ea.w.l); break;
-		case CPUINFO_STR_REGISTER + M4510_ZP:			sprintf(info->s = cpuintrf_temp_str(), "ZP:%03X", m4510.zp.w.l); break;
+		case CPUINFO_STR_REGISTER + M4510_PC:			sprintf(info->s, "PC:%04X", m4510.pc.w.l); break;
+		case CPUINFO_STR_REGISTER + M4510_S:			sprintf(info->s, "S:%02X", m4510.sp.b.l); break;
+		case CPUINFO_STR_REGISTER + M4510_P:			sprintf(info->s, "P:%02X", m4510.p); break;
+		case CPUINFO_STR_REGISTER + M4510_A:			sprintf(info->s, "A:%02X", m4510.a); break;
+		case CPUINFO_STR_REGISTER + M4510_X:			sprintf(info->s, "X:%02X", m4510.x); break;
+		case CPUINFO_STR_REGISTER + M4510_Y:			sprintf(info->s, "Y:%02X", m4510.y); break;
+		case CPUINFO_STR_REGISTER + M4510_Z:			sprintf(info->s, "Z:%02X", m4510.z); break;
+		case CPUINFO_STR_REGISTER + M4510_B:			sprintf(info->s, "B:%02X", m4510.zp.b.h); break;
+		case CPUINFO_STR_REGISTER + M4510_MEM_LOW:		sprintf(info->s, "M0:%01X", m4510.low); break;
+		case CPUINFO_STR_REGISTER + M4510_MEM_HIGH:		sprintf(info->s, "M1:%01X", m4510.high); break;
+		case CPUINFO_STR_REGISTER + M4510_EA:			sprintf(info->s, "EA:%04X", m4510.ea.w.l); break;
+		case CPUINFO_STR_REGISTER + M4510_ZP:			sprintf(info->s, "ZP:%03X", m4510.zp.w.l); break;
 	}
 }
 

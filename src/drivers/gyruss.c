@@ -78,25 +78,11 @@ WRITE8_HANDLER( gyruss_sh_irqtrigger_w );
 WRITE8_HANDLER( gyruss_i8039_irq_w );
 
 
-unsigned char *gyruss_sharedram;
-
-READ8_HANDLER( gyruss_sharedram_r )
-{
-	return gyruss_sharedram[offset];
-}
-
-WRITE8_HANDLER( gyruss_sharedram_w )
-{
-	gyruss_sharedram[offset] = data;
-}
-
-
-
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x9000, 0x9fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xa000, 0xa7ff) AM_READ(gyruss_sharedram_r)
+	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM) AM_SHARE(1)
 	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_4_r)	/* DSW1 */
 	AM_RANGE(0xc080, 0xc080) AM_READ(input_port_0_r)	/* IN0 */
 	AM_RANGE(0xc0a0, 0xc0a0) AM_READ(input_port_1_r)	/* IN1 */
@@ -110,7 +96,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0x83ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
 	AM_RANGE(0x8400, 0x87ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x9000, 0x9fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(gyruss_sharedram_w) AM_BASE(&gyruss_sharedram)
+	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_RAM) AM_SHARE(1)
 	AM_RANGE(0xc000, 0xc000) AM_WRITE(MWA8_NOP)	/* watchdog reset */
 	AM_RANGE(0xc080, 0xc080) AM_WRITE(gyruss_sh_irqtrigger_w)
 	AM_RANGE(0xc100, 0xc100) AM_WRITE(soundlatch_w)         /* command to soundb  */
@@ -121,7 +107,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( m6809_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0000) AM_READ(gyruss_scanline_r)
 	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x6000, 0x67ff) AM_READ(gyruss_sharedram_r)
+	AM_RANGE(0x6000, 0x67ff) AM_READ(MRA8_RAM) AM_SHARE(1)
 	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
 
@@ -129,7 +115,7 @@ static ADDRESS_MAP_START( m6809_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2000, 0x2000) AM_WRITE(interrupt_enable_w)
 	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x4040, 0x40ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x6000, 0x67ff) AM_WRITE(gyruss_sharedram_w)
+	AM_RANGE(0x6000, 0x67ff) AM_WRITE(MWA8_RAM) AM_SHARE(1)
 	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 

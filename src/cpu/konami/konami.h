@@ -18,7 +18,7 @@ enum
 #define KONAMI_FIRQ_LINE 1   /* FIRQ line number */
 
 /* PUBLIC FUNCTIONS */
-void konami_get_info(UINT32 state, union cpuinfo *info);
+void konami_get_info(UINT32 state, cpuinfo *info);
 
 /****************************************************************************/
 /* Read a byte from given memory location                                   */

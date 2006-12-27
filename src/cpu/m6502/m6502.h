@@ -69,7 +69,7 @@ enum
 	CPUINFO_INT_M6510_PORT = CPUINFO_INT_CPU_SPECIFIC
 };
 
-extern void m6502_get_info(UINT32 state, union cpuinfo *info);
+extern void m6502_get_info(UINT32 state, cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned m6502_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
@@ -92,7 +92,7 @@ extern unsigned m6502_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UI
 
 #define M6510_IRQ_LINE					M6502_IRQ_LINE
 
-extern void m6510_get_info(UINT32 state, union cpuinfo *info);
+extern void m6510_get_info(UINT32 state, cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned m6510_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
@@ -114,7 +114,7 @@ extern unsigned m6510_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UI
 
 #define M6510T_IRQ_LINE					M6502_IRQ_LINE
 
-extern void m6510t_get_info(UINT32 state, union cpuinfo *info);
+extern void m6510t_get_info(UINT32 state, cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned m6510t_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
@@ -136,7 +136,7 @@ extern unsigned m6510t_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const U
 
 #define M7501_IRQ_LINE					M6502_IRQ_LINE
 
-extern void m7501_get_info(UINT32 state, union cpuinfo *info);
+extern void m7501_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #ifdef HAS_M8502
@@ -153,7 +153,7 @@ extern void m7501_get_info(UINT32 state, union cpuinfo *info);
 
 #define M8502_IRQ_LINE					M6502_IRQ_LINE
 
-extern void m8502_get_info(UINT32 state, union cpuinfo *info);
+extern void m8502_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 
@@ -174,7 +174,7 @@ extern void m8502_get_info(UINT32 state, union cpuinfo *info);
 
 #define N2A03_IRQ_LINE					M6502_IRQ_LINE
 
-extern void n2a03_get_info(UINT32 state, union cpuinfo *info);
+extern void n2a03_get_info(UINT32 state, cpuinfo *info);
 
 #define N2A03_DEFAULTCLOCK (21477272.724 / 12)
 
@@ -203,7 +203,7 @@ extern void n2a03_irq(void);
 
 #define M65C02_IRQ_LINE					M6502_IRQ_LINE
 
-extern void m65c02_get_info(UINT32 state, union cpuinfo *info);
+extern void m65c02_get_info(UINT32 state, cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned m65c02_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
@@ -228,7 +228,7 @@ extern unsigned m65c02_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const U
 
 #define M65SC02_IRQ_LINE				M6502_IRQ_LINE
 
-extern void m65sc02_get_info(UINT32 state, union cpuinfo *info);
+extern void m65sc02_get_info(UINT32 state, cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned m65sc02_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
@@ -252,7 +252,7 @@ extern unsigned m65sc02_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const 
 
 #define DECO16_IRQ_LINE					M6502_IRQ_LINE
 
-extern void deco16_get_info(UINT32 state, union cpuinfo *info);
+extern void deco16_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #ifdef MAME_DEBUG

@@ -26,13 +26,18 @@ MOCAS,
 Jonemaan
 BIOS-D
 
-note:
+notes:
 Sound not working on Return of Lady Frog
 
-----
-
-Rebus seems to have some pretty nasty protection, I haven't yet managed to
-figure out what it involves
+TS 2006.12.22:
+- Funny Strip is runing on pSOS RTOS ( http://en.wikipedia.org/wiki/PSOS and http://dr-linux.net/newbase/reference/psosCD/ ) .
+  There's copyrigth text at $480
+  Also Rebus and TRoLF are running on it (the same internal code structure - traps, interrupt vectors),
+  but copyright messages are removed.
+- Rebus protection patch sits at the end of trap $b (rtos call) and in some cases returns 0 in D0.
+  It's not a real protection check i think.
+- Funy strip reads shared (?) mem in two places - both checks are patched. But game
+  is still not playable...
 
 ***************************************************************************/
 
@@ -891,9 +896,30 @@ DRIVER_INIT( roldfrog )
 
 DRIVER_INIT( rebus )
 {
+	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU1);
 	splash_bitmap_type = 1;
 	splash_sprite_attr2_shift = 0;
+
+	//d1 clear , regs restore and rte - end of trap $b
+	ROM[0x196c0/2] = 0x7200;
+	ROM[0x196c2/2] = 0x4cdf;
+	ROM[0x196c4/2] = 0x7080;
+	ROM[0x196c6/2] = 0x4e73;
+
+	//jumps to above
+	ROM[0x3ffcac/2] = 0x4ef9;
+	ROM[0x3ffcae/2] = 0x0001;
+	ROM[0x3ffcb0/2] = 0x96c0;
+
+	//rom checksum
+	ROM[0x3ff2fc/2] = 0x4e71;
+	ROM[0x3ff2fe/2] = 0x4e71;
+	ROM[0x3ff300/2] = 0x4e71;
+	ROM[0x3ff302/2] = 0x4e71;
+	ROM[0x3ff304/2] = 0x4e71;
+	ROM[0x3ff306/2] = 0x4e71;
 }
+
 
 
 DRIVER_INIT( funystrp )
@@ -906,6 +932,9 @@ DRIVER_INIT( funystrp )
 	/* part of the protection? */
 	ROM[0x04770/2] = 0x4e71;
 	ROM[0x04772/2] = 0x4e71;
+
+	ROM[0x0f77e/2] = 0x7001;
+	ROM[0x0f780/2] = 0x4e75;
 }
 
 GAME( 1992, splash,   0,        splash,   splash,   splash,   ROT0, "Gaelco",    "Splash! (Ver. 1.2 World)", 0 )

@@ -12,9 +12,6 @@ CPU:    Z80
 Sound:  AY-3-8910
 OSC:    18.432MHz and 8MHz
 
-"Mahjong If" doesn't use a Z80, it probably uses a Toshiba TLCS-90 which is
-similar to Z80 but with different opcodes
-
 -------------------------------------------------------------------------------------------
 Year + Game                 Board           Company             Notes
 -------------------------------------------------------------------------------------------
@@ -25,8 +22,9 @@ Year + Game                 Board           Company             Notes
 87 Mahjong Studio 101       D1708228L1      Dynax
 87 Tonton                   D0908288L1-0    Dynax
 89 Mahjong Derringer        D2203018L       Dynax               Larger palette
-90 Mahjong If               D29?            Dynax               Larger palette, unsupported CPU
-96 Janputer '96                             Dynax               6242 Real Time Clock
+90 Mahjong If..?            D29?            Dynax               Larger palette, TLCS-90 CPU
+95 Mahjong Tensinhai        D10010318L1     Dynax               Real Time Clock, TLCS-90 CPU
+96 Janputer '96                             Dynax               Real Time Clock
 -------------------------------------------------------------------------------------------
 
 TODO:
@@ -37,6 +35,7 @@ TODO:
 
 - majs101b: service mode doesn't work
 
+- mjtensin: random crashes, interrupts related
 
 Stephh's notes (based on the games Z80 code and some tests) :
 
@@ -76,53 +75,12 @@ Stephh's notes (based on the games Z80 code and some tests) :
 
 ****************************************************************************/
 
-#include <time.h>
 #include "driver.h"
+#include "cpu/tlcs90/tlcs90.h"
+#include "machine/msm6242.h"
 #include "sound/ay8910.h"
 
-
-/***************************************************************************
-
-    MSM6242 Real Time Clock
-
-***************************************************************************/
-
-static WRITE8_HANDLER( rtc_w )
-{
-//  logerror("%04X: RTC reg %x = %02x\n", activecpu_get_pc(), offset, data);
-}
-
-static READ8_HANDLER( rtc_r )
-{
-	mame_system_time systime;
-
-	mame_get_base_datetime(Machine, &systime);
-
-	switch(offset)
-	{
-		case 0x0:	return systime.local_time.second % 10;
-		case 0x1:	return systime.local_time.second / 10;
-		case 0x2:	return systime.local_time.minute % 10;
-		case 0x3:	return systime.local_time.minute / 10;
-		case 0x4:	return systime.local_time.hour % 10;
-		case 0x5:	return systime.local_time.hour / 10;
-		case 0x6:	return systime.local_time.mday % 10;
-		case 0x7:	return systime.local_time.mday / 10;
-		case 0x8:	return (systime.local_time.month+1) % 10;
-		case 0x9:	return (systime.local_time.month+1) / 10;
-		case 0xa:	return systime.local_time.year % 10;
-		case 0xb:	return (systime.local_time.year % 100) / 10;
-		case 0xc:	return systime.local_time.weekday;
-		case 0xd:	return 1;
-		case 0xe:	return 6;
-		case 0xf:	return 4;
-	}
-
-	return 0;
-}
-
 static int palette_base;
-
 
 PALETTE_INIT( royalmah )
 {
@@ -579,7 +537,7 @@ static ADDRESS_MAP_START( janptr96_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x1e, 0x1e) AM_READ(janptr96_dswsel_r		)
 	AM_RANGE(0x1c, 0x1c) AM_READ(janptr96_dsw_r			)
 	AM_RANGE(0x20, 0x20) AM_READ(janptr96_unknown_r		)	// ?
-	AM_RANGE(0x60, 0x6f) AM_READ(rtc_r					)	// 6242RTC
+	AM_RANGE(0x60, 0x6f) AM_READ(msm6242_r				)	// 6242RTC
 	AM_RANGE(0x81, 0x81) AM_READ(AY8910_read_port_0_r	)
 	AM_RANGE(0xd9, 0xd9) AM_READ(input_port_10_r)
 ADDRESS_MAP_END
@@ -590,12 +548,171 @@ static ADDRESS_MAP_START( janptr96_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x1e, 0x1e) AM_WRITE(janptr96_dswsel_w			)
 	AM_RANGE(0x20, 0x20) AM_WRITE(janptr96_rambank_w		)	// BANK RAM Select
 	AM_RANGE(0x50, 0x50) AM_WRITE(mjderngr_palbank_w		)
-	AM_RANGE(0x60, 0x6f) AM_WRITE(rtc_w						)	// 6242RTC
+	AM_RANGE(0x60, 0x6f) AM_WRITE(msm6242_w					)	// 6242RTC
 	AM_RANGE(0x82, 0x82) AM_WRITE(AY8910_write_port_0_w		)	// AY8910
 	AM_RANGE(0x83, 0x83) AM_WRITE(AY8910_control_port_0_w	)	//
 	AM_RANGE(0x93, 0x93) AM_WRITE(royalmah_input_port_select_w)
 	AM_RANGE(0xd8, 0xd8) AM_WRITE(janptr96_coin_counter_w)
 ADDRESS_MAP_END
+
+/****************************************************************************
+                                Mahjong If
+****************************************************************************/
+
+static UINT8 rombank;
+static UINT8 mjifb_rom_enable;
+
+static WRITE8_HANDLER( mjifb_coin_counter_w )
+{
+	flip_screen_set( data & 4);
+	coin_counter_w(0,data & 2);	// in
+	coin_counter_w(1,data & 1);	// out
+}
+
+static READ8_HANDLER( mjifb_rom_io_r )
+{
+	if (mjifb_rom_enable)
+		return ((UINT8*)(memory_region(REGION_CPU1) + 0x10000 + rombank * 0x4000))[offset];
+
+	offset += 0x8000;
+
+	switch(offset)
+	{
+		case 0x8000:	return readinputport(14);		// dsw 4
+		case 0x8200:	return readinputport(13);		// dsw 3
+		case 0x9001:	return AY8910_read_port_0_r(0);	// inputs
+		case 0x9011:	return readinputport(10);
+	}
+
+	logerror("%04X: unmapped input read at %04X\n", activecpu_get_pc(), offset);
+	return 0xff;
+}
+
+static WRITE8_HANDLER( mjifb_rom_io_w )
+{
+	if (mjifb_rom_enable)
+	{
+		royalmah_videoram_w( offset, data );
+		return;
+	}
+
+	offset += 0x8000;
+
+	switch(offset)
+	{
+		case 0x8e00:	set_vh_global_attribute(&palette_base, data & 0x1f);	return;
+		case 0x9002:	AY8910_write_port_0_w(0,data);			return;
+		case 0x9003:	AY8910_control_port_0_w(0,data);		return;
+		case 0x9010:
+			mjifb_coin_counter_w(0,data);
+			return;
+		case 0x9011:	royalmah_input_port_select_w(0,data);	return;
+		case 0x9013:
+//          if (data)   popmessage("%02x",data);
+			return;
+	}
+
+	logerror("%04X: unmapped input write at %04X = %02X\n", activecpu_get_pc(), offset,data);
+}
+
+static ADDRESS_MAP_START( mjifb_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE( 0x0000, 0x6fff ) AM_ROM
+	AM_RANGE( 0x7000, 0x7fff ) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE( 0x8000, 0xbfff ) AM_READWRITE( mjifb_rom_io_r, mjifb_rom_io_w )
+	AM_RANGE( 0xc000, 0xffff ) AM_READ( MRA8_ROM )
+	AM_RANGE( 0x8000, 0xffff ) AM_WRITE( royalmah_videoram_w ) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+ADDRESS_MAP_END
+
+static READ8_HANDLER( mjifb_p3_r )
+{
+	return readinputport(11) >> 6;
+}
+static READ8_HANDLER( mjifb_p5_r )
+{
+	return readinputport(11);
+}
+static READ8_HANDLER( mjifb_p6_r )
+{
+	return readinputport(12);
+}
+static READ8_HANDLER( mjifb_p7_r )
+{
+	return readinputport(12) >> 4;
+}
+static READ8_HANDLER( mjifb_p8_r )
+{
+	return 0xff;
+}
+
+static WRITE8_HANDLER( mjifb_p3_w )
+{
+	rombank = (rombank & 0x0f) | ((data & 0x0c) << 2);
+}
+static WRITE8_HANDLER( mjifb_p4_w )
+{
+	rombank = (rombank & 0xf0) | (data & 0x0f);
+}
+static WRITE8_HANDLER( mjifb_p8_w )
+{
+	mjifb_rom_enable = (data & 0x08);
+}
+
+static ADDRESS_MAP_START( mjifb_iomap, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE( T90_P3, T90_P3 ) AM_READWRITE( mjifb_p3_r, mjifb_p3_w )
+	AM_RANGE( T90_P4, T90_P4 ) AM_WRITE( mjifb_p4_w )
+	AM_RANGE( T90_P5, T90_P5 ) AM_READ ( mjifb_p5_r )
+	AM_RANGE( T90_P6, T90_P6 ) AM_READ ( mjifb_p6_r )
+	AM_RANGE( T90_P7, T90_P7 ) AM_READ ( mjifb_p7_r )
+	AM_RANGE( T90_P8, T90_P8 ) AM_READWRITE( mjifb_p8_r, mjifb_p8_w )
+ADDRESS_MAP_END
+
+
+/****************************************************************************
+                                Mahjong Tensinhai
+****************************************************************************/
+
+static READ8_HANDLER( mjtensin_p3_r )
+{
+	return 0xff;
+}
+
+static void mjtensin_update_rombank(void)
+{
+	memory_set_bankptr( 1, memory_region(REGION_CPU1) + 0x10000 + rombank * 0x8000 );
+}
+static WRITE8_HANDLER( mjtensin_p4_w )
+{
+	rombank = (rombank & 0xf0) | (data & 0x0f);
+	mjtensin_update_rombank();
+}
+static WRITE8_HANDLER( mjtensin_6ff3_w )
+{
+	rombank = (data << 4) | (rombank & 0x0f);
+	mjtensin_update_rombank();
+}
+
+static ADDRESS_MAP_START( mjtensin_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE( 0x0000, 0x5fff ) AM_ROM
+	AM_RANGE( 0x6000, 0x6fbf ) AM_RAM
+	AM_RANGE( 0x6fc1, 0x6fc1 ) AM_READ( AY8910_read_port_0_r )
+	AM_RANGE( 0x6fc2, 0x6fc2 ) AM_WRITE( AY8910_write_port_0_w )
+	AM_RANGE( 0x6fc3, 0x6fc3 ) AM_WRITE( AY8910_control_port_0_w )
+	AM_RANGE( 0x6fd0, 0x6fd0 ) AM_WRITE( janptr96_coin_counter_w )
+	AM_RANGE( 0x6fd1, 0x6fd1 ) AM_READWRITE( input_port_10_r, royalmah_input_port_select_w )
+	AM_RANGE( 0x6fe0, 0x6fef ) AM_READWRITE( msm6242_r, msm6242_w )
+	AM_RANGE( 0x6ff0, 0x6ff0 ) AM_READWRITE( janptr96_dsw_r, janptr96_dswsel_w )
+	AM_RANGE( 0x6ff1, 0x6ff1 ) AM_WRITE( mjderngr_palbank_w )
+	AM_RANGE( 0x6ff3, 0x6ff3 ) AM_WRITE( mjtensin_6ff3_w )
+	AM_RANGE( 0x7000, 0x7fff ) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE( 0x8000, 0xffff ) AM_READ( MRA8_BANK1 )
+	AM_RANGE( 0x8000, 0xffff ) AM_WRITE( royalmah_videoram_w ) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mjtensin_iomap, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE( T90_P3, T90_P3 ) AM_READ ( mjtensin_p3_r )
+	AM_RANGE( T90_P4, T90_P4 ) AM_WRITE( mjtensin_p4_w )
+ADDRESS_MAP_END
+
 
 
 
@@ -1695,6 +1812,429 @@ INPUT_PORTS_START( janptr96 )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( mjifb )
+	PORT_START	/* P1 IN0 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_A )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_E )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_I )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_M )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_KAN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Payout") PORT_CODE(KEYCODE_7)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P1 IN1 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_B )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_F )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_J )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_N )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_REACH )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_MAHJONG_BET )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P1 IN2 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_C )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_G )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_K )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_CHI )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_RON )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P1 IN3 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_D )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_H )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_L )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_PON )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P1 IN4 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_LAST_CHANCE )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_SCORE )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_DOUBLE_UP )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_FLIP_FLOP )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_BIG )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_MAHJONG_SMALL )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P2 IN0 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_A )PORT_PLAYER(2)
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_E )PORT_PLAYER(2)
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_I )PORT_PLAYER(2)
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_M )PORT_PLAYER(2)
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_KAN )PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P2 IN1 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_B )PORT_PLAYER(2)
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_F )PORT_PLAYER(2)
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_J )PORT_PLAYER(2)
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_N )PORT_PLAYER(2)
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_REACH )PORT_PLAYER(2)
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_MAHJONG_BET )PORT_PLAYER(2) PORT_CODE(KEYCODE_4)
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P2 IN2 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_C )PORT_PLAYER(2)
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_G )PORT_PLAYER(2)
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_K )PORT_PLAYER(2)
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_CHI )PORT_PLAYER(2)
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_RON )PORT_PLAYER(2)
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P2 IN3 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_D )PORT_PLAYER(2)
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_H )PORT_PLAYER(2)
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_L )PORT_PLAYER(2)
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_PON )PORT_PLAYER(2)
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P2 IN4 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_LAST_CHANCE )PORT_PLAYER(2)
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_SCORE )PORT_PLAYER(2)
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_DOUBLE_UP )PORT_PLAYER(2)
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_FLIP_FLOP )PORT_PLAYER(2)
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_BIG )PORT_PLAYER(2)
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_MAHJONG_SMALL )PORT_PLAYER(2)
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN10 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SERVICE1 )	/* "Note" ("Paper Money") = 10 Credits */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_SERVICE3 )	/* Memory Reset */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE2 )	/* Analizer (Statistics) */
+	PORT_SERVICE( 0x08, IP_ACTIVE_HIGH )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	// IN10 - DSW1 (P3 & P5)
+	PORT_DIPNAME( 0x0f, 0x07, "Pay Out Rate" )
+	PORT_DIPSETTING(    0x0f, "96%" )
+	PORT_DIPSETTING(    0x0e, "93%" )
+	PORT_DIPSETTING(    0x0d, "90%" )
+	PORT_DIPSETTING(    0x0c, "87%" )
+	PORT_DIPSETTING(    0x0b, "84%" )
+	PORT_DIPSETTING(    0x0a, "81%" )
+	PORT_DIPSETTING(    0x09, "78%" )
+	PORT_DIPSETTING(    0x08, "75%" )
+	PORT_DIPSETTING(    0x07, "71%" )
+	PORT_DIPSETTING(    0x06, "68%" )
+	PORT_DIPSETTING(    0x05, "65%" )
+	PORT_DIPSETTING(    0x04, "62%" )
+	PORT_DIPSETTING(    0x03, "59%" )
+	PORT_DIPSETTING(    0x02, "56%" )
+	PORT_DIPSETTING(    0x01, "53%" )
+	PORT_DIPSETTING(    0x00, "50%" )
+	PORT_DIPNAME( 0x30, 0x00, "Maximum Bet" )
+	PORT_DIPSETTING(    0x30, "1" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_DIPSETTING(    0x10, "10" )
+	PORT_DIPSETTING(    0x00, "20" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0xc0, "1" )
+	PORT_DIPSETTING(    0x80, "2" )
+	PORT_DIPSETTING(    0x40, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+
+	PORT_START	// IN11 - DSW2 (P6 & P7)
+	PORT_DIPNAME( 0x03, 0x03, "Winnings" )
+	PORT_DIPSETTING(    0x03, "32 24 16 12 8 4 2 1" )
+	PORT_DIPSETTING(    0x00, "50 30 15 8 5 3 2 1" )
+	PORT_DIPSETTING(    0x01, "100 50 25 10 5 3 2 1" )
+	PORT_DIPSETTING(    0x02, "200 100 50 10 5 3 2 1" )
+	PORT_DIPNAME( 0x04, 0x04, "Credits Per Note" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPSETTING(    0x00, "10" )
+	PORT_DIPNAME( 0x38, 0x38, "YAKUMAN Bonus" )
+	PORT_DIPSETTING(    0x38, "Cut" )
+	PORT_DIPSETTING(    0x30, "1 T" )
+	PORT_DIPSETTING(    0x28, "300" )
+	PORT_DIPSETTING(    0x20, "500" )
+	PORT_DIPSETTING(    0x18, "700" )
+	PORT_DIPSETTING(    0x10, "1000" )
+//  PORT_DIPSETTING(    0x08, "1000?" )
+//  PORT_DIPSETTING(    0x00, "1000?" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x40, "2" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, "1/4" )
+	PORT_DIPSETTING(    0x80, "2/4" )
+
+	PORT_START	// IN13 - DSW3 ($8200)
+	PORT_DIPNAME( 0x01, 0x01, "Unknown 3-0" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown 3-1" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown 3-2" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown 3-3" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 3-4" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 3-5" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 3-6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 3-7" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN14 - DSW4 ($8000)
+	PORT_DIPNAME( 0x01, 0x01, "Unknown 4-0" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown 4-1" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown 4-2" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown 4-3" )
+	PORT_DIPSETTING(    0x08, "129" )
+	PORT_DIPSETTING(    0x00, "212" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 4-6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Full Tests" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( mjtensin )
+	PORT_START	/* P1 IN0 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_A )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_E )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_I )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_M )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_KAN )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Credit Clear") PORT_CODE(KEYCODE_7)
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 Credit Clear") PORT_CODE(KEYCODE_8)
+
+	PORT_START	/* P1 IN1 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_B )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_F )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_J )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_N )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_REACH )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_MAHJONG_BET )
+	PORT_BIT(0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P1 IN2 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_C )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_G )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_K )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_CHI )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_RON )
+	PORT_BIT(0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P1 IN3 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_D )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_H )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_L )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_PON )
+	PORT_BIT(0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P1 IN4 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_LAST_CHANCE )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_SCORE )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_DOUBLE_UP )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_FLIP_FLOP )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_BIG )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_MAHJONG_SMALL )
+	PORT_BIT(0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P2 IN0 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_A )PORT_PLAYER(2)
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_E )PORT_PLAYER(2)
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_I )PORT_PLAYER(2)
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_M )PORT_PLAYER(2)
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_KAN )PORT_PLAYER(2)
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* P2 IN1 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_B )PORT_PLAYER(2)
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_F )PORT_PLAYER(2)
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_J )PORT_PLAYER(2)
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_N )PORT_PLAYER(2)
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_REACH )PORT_PLAYER(2)
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_MAHJONG_BET )PORT_PLAYER(2)
+	PORT_BIT(0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P2 IN2 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_C )PORT_PLAYER(2)
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_G )PORT_PLAYER(2)
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_K )PORT_PLAYER(2)
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_CHI )PORT_PLAYER(2)
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_RON )PORT_PLAYER(2)
+	PORT_BIT(0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P2 IN3 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_D )PORT_PLAYER(2)
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_H )PORT_PLAYER(2)
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_L )PORT_PLAYER(2)
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_PON )PORT_PLAYER(2)
+	PORT_BIT(0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* P2 IN4 */
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_LAST_CHANCE )PORT_PLAYER(2)
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_SCORE )PORT_PLAYER(2)
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_DOUBLE_UP )PORT_PLAYER(2)
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_FLIP_FLOP )PORT_PLAYER(2)
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_BIG )PORT_PLAYER(2)
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_MAHJONG_SMALL )PORT_PLAYER(2)
+	PORT_BIT(0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN10 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SERVICE1 )	/* "Note" ("Paper Money") = 10 Credits */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_SERVICE3 )	/* Memory Reset */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE2 )	/* Analizer (Statistics) */
+	PORT_SERVICE( 0x08, IP_ACTIVE_HIGH )
+	PORT_BIT(0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START_TAG("DSW4")	/* IN11 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Pay Out Rate" )
+	PORT_DIPSETTING(    0x0f, "96%" )
+	PORT_DIPSETTING(    0x0e, "93%" )
+	PORT_DIPSETTING(    0x0d, "90%" )
+	PORT_DIPSETTING(    0x0c, "87%" )
+	PORT_DIPSETTING(    0x0b, "84%" )
+	PORT_DIPSETTING(    0x0a, "81%" )
+	PORT_DIPSETTING(    0x09, "78%" )
+	PORT_DIPSETTING(    0x08, "75%" )
+	PORT_DIPSETTING(    0x07, "71%" )
+	PORT_DIPSETTING(    0x06, "68%" )
+	PORT_DIPSETTING(    0x05, "65%" )
+	PORT_DIPSETTING(    0x04, "62%" )
+	PORT_DIPSETTING(    0x03, "59%" )
+	PORT_DIPSETTING(    0x02, "56%" )
+	PORT_DIPSETTING(    0x01, "53%" )
+	PORT_DIPSETTING(    0x00, "50%" )
+	PORT_DIPNAME( 0x30, 0x30, "Odds Rate" )
+	PORT_DIPSETTING(    0x30, "1 2 4 8 12 16 24 32" )
+	PORT_DIPSETTING(    0x00, "1 2 3 5 8 15 30 50" )
+	PORT_DIPSETTING(    0x20, "2 3 6 8 12 15 30 50" )
+	PORT_DIPSETTING(    0x10, "1 2 3 5 10 25 50 100" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Maximum Bet" )
+	PORT_DIPSETTING(    0xc0, "1" )
+	PORT_DIPSETTING(    0x80, "5" )
+	PORT_DIPSETTING(    0x40, "10" )
+	PORT_DIPSETTING(    0x00, "20" )
+
+	PORT_START_TAG("DSW3")	/* IN12 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, "1 Coin/10 Credits" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Min Credits To Start" )
+	PORT_DIPSETTING(    0x0c, "1" )
+	PORT_DIPSETTING(    0x08, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x30, 0x30, "Payout" )
+	PORT_DIPSETTING(    0x30, "300" )
+	PORT_DIPSETTING(    0x20, "500" )
+	PORT_DIPSETTING(    0x10, "700" )
+	PORT_DIPSETTING(    0x00, "1000" )
+	PORT_DIPNAME( 0x40, 0x40, "W-BET" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Last Chance" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("DSW2")	/* IN13 */
+	PORT_DIPNAME( 0x03, 0x03, "YAKUMAN Bonus" )
+	PORT_DIPSETTING(    0x03, "Cut" )
+	PORT_DIPSETTING(    0x02, "500" )
+	PORT_DIPSETTING(    0x01, "700" )
+	PORT_DIPSETTING(    0x00, "1000" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x18, "0" )
+	PORT_DIPSETTING(    0x10, "1" )
+	PORT_DIPSETTING(    0x80, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x60, "0" )
+	PORT_DIPSETTING(    0x40, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("DSW1")	/* IN14 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "In Game Music" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "Girls (Demo)" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Show Clock" )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+
+	PORT_START_TAG("DSWTOP")	/* IN15 */
+	PORT_DIPNAME( 0x01, 0x01, "Credits Per Note" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "10" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 
 static struct AY8910interface ay8910_interface =
 {
@@ -1838,6 +2378,40 @@ static MACHINE_DRIVER_START( janptr96 )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( mjifb )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mjderngr)
+	MDRV_CPU_REPLACE("main",TMP90841, 8000000)	/* ? */
+	MDRV_CPU_PROGRAM_MAP(mjifb_map,0)
+	MDRV_CPU_IO_MAP(mjifb_iomap,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_VISIBLE_AREA(0, 255, 8, 255-8)
+MACHINE_DRIVER_END
+
+INTERRUPT_GEN( mjtensin_vblank_interrupt )
+{
+	switch(cpu_getiloops())
+	{
+		case 0:		cpunum_set_input_line(0, INPUT_LINE_IRQ0, HOLD_LINE);	break;	// vblank
+		case 1:		cpunum_set_input_line(0, INPUT_LINE_IRQ1, HOLD_LINE);	break;	// rtc
+	}
+}
+
+static MACHINE_DRIVER_START( mjtensin )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mjderngr)
+	MDRV_CPU_REPLACE("main",TMP90841, 12000000)	/* ? */
+	MDRV_CPU_PROGRAM_MAP(mjtensin_map,0)
+	MDRV_CPU_IO_MAP(mjtensin_iomap,0)
+	MDRV_CPU_VBLANK_INT( mjtensin_vblank_interrupt,2 )
+
+	MDRV_VISIBLE_AREA(0, 255, 8, 255-8)
+MACHINE_DRIVER_END
+
+
 /***************************************************************************
 
   Game driver(s)
@@ -1946,16 +2520,41 @@ ROM_START( mjderngr )
 	ROM_LOAD( "ic4g.bin",   0x200, 0x200, CRC(30cf7831) SHA1(b4593d51c6ceb301279a01a98665e4be8a3c403d) )
 ROM_END
 
+/***************************************************************************
+
+Mahjong If (BET type)
+(c)1990 Dynax
+
+CPU:    Unknown 64P(Toshiba TLCS-90 series?)
+Sound:  AY-3-8910
+OSC:    8.000MHz
+        18.432MHz
+
+
+2911.1B   prg.
+2902.1C
+2903.1D
+2904.1E
+2905.1F
+2906.1G
+
+D29-1.4C  color
+D29-2.4D
+
+***************************************************************************/
+
 ROM_START( mjifb )
 	ROM_REGION( 0xd0000, REGION_CPU1, 0 )
-	ROM_LOAD( "2911.1b",    0x00000, 0x08000, CRC(138a31a1) SHA1(7e77c63a968206b8e61aaa423e19a766e4142554) )
+	ROM_LOAD( "2911.1b",    0x00000, 0x10000, CRC(138a31a1) SHA1(7e77c63a968206b8e61aaa423e19a766e4142554) )
 	/* bank switched ROMs follow */
+	ROM_RELOAD(             0x10000, 0x08000 )	// bank 0 = 8000-bfff
 	ROM_CONTINUE(           0x10000, 0x08000 )
-	ROM_LOAD( "2902.1c",    0x30000, 0x10000, CRC(0ce02a98) SHA1(69f6bca9af8548038401839047a304a4aa97cfe6) )
-	ROM_LOAD( "2903.1d",    0x50000, 0x20000, CRC(90c44965) SHA1(6904bfa7475f9de921bc2abcfc337b3daf7e0fad) )
+	ROM_LOAD( "2903.1d",    0x30000, 0x20000, CRC(90c44965) SHA1(6904bfa7475f9de921bc2abcfc337b3daf7e0fad) )
+	ROM_LOAD( "2906.1g",    0x50000, 0x20000, CRC(ad469345) SHA1(914ea4c77a540467da779ea78c52e66b05c30475) )
 	ROM_LOAD( "2904.1e",    0x70000, 0x20000, CRC(2791abfa) SHA1(a8fd1a7e1cf4441b447a4605ad2f1c13775f92da) )
 	ROM_LOAD( "2905.1f",    0x90000, 0x20000, CRC(b7a73cf7) SHA1(d93111e6d5f84e331f8198d8c595e3500abed133) )
-	ROM_LOAD( "2906.1g",    0xb0000, 0x20000, CRC(ad469345) SHA1(914ea4c77a540467da779ea78c52e66b05c30475) )
+	ROM_LOAD( "2902.1c",    0xb0000, 0x10000, CRC(0ce02a98) SHA1(69f6bca9af8548038401839047a304a4aa97cfe6) )
+	ROM_RELOAD(             0xc0000, 0x10000 )
 
 	ROM_REGION( 0x400, REGION_PROMS, ROMREGION_DISPOSE )
 	ROM_LOAD( "d29-2.4d",   0x000, 0x200, CRC(78252f6a) SHA1(1869147bc6b7573c2543bdf6b17d6c3c1debdddb) )
@@ -1983,6 +2582,100 @@ ROM_START( janptr96 )
 	ROM_LOAD( "ns503a.3j", 0x200, 0x200, CRC(fe49b2f0) SHA1(a36ca005380cc92dfe473254c26be2cef2ced9b4) )
 ROM_END
 
+/***************************************************************************
+
+Mahjong Tensinhai
+Dynax, 1995
+
+PCB Layout
+----------
+
+Top board
+
+D10010318L1
+|----------------------------------------|
+|DSW2(1)  DSW4(10)                  DIP16|
+|                 |---|                  |
+|DSW1(10) DSW3(10)| * |                  |
+|                 |---|     PROM2        |
+|                                        |
+|                           PROM1        |
+|                                        |
+|                                        |
+|                                        |
+|                                        |
+|                        1001.5E         |
+| |-------------|                        |
+| |     &       |        1002.4E    |---||
+| |-------------|                   | D ||
+|12MHz                   1003.3E    | I ||
+|                                   | P ||
+|BATTERY        32.768kHz           |40 ||
+|         CLOCK          6264       |---||
+|----------------------------------------|
+Notes:
+      Most of the chips have their surface scratched off.
+      *     - Unknown PLCC44 IC. Possibly Mach110 or similar CPLD
+      &     - Unknown SDIP64 IC. Possibly a Toshiba TMP91P640? Clock input 12.000MHz
+      CLOCK - Some kind of clock IC, like Oki M6242 or similar
+      PROM1 - 82S147 PROM labelled 'D100-1'
+      PROM2 - 82S147 PROM labelled 'D100-2'
+      DIP16 - Socket for cable that joins to lower board
+      DIP40 - Socket for connector that joins to lower board
+
+
+Bottom board
+
+|--------------------------------------------------------|
+|    BATTERY 6116                                        |
+|  VOL                                                   |
+|                                                        |
+|                                              DIP40     |
+|                                                        |
+|           DSW(8)                              18.432MHz|
+|                                                        |
+|                                                        |
+|M      DIP16                                            |
+|A              4164    4164                             |
+|H                                                       |
+|J              4164    4164                             |
+|O                                                       |
+|N              4164    4164                             |
+|G                                                       |
+|2              4164    4164                             |
+|8  AY3-8910                                             |
+|               4164    4164                             |
+|                                                        |
+|               4164    4164                             |
+|                                                        |
+|               4164    4164                             |
+|                                                        |
+|               4164    4164                             |
+|--------------------------------------------------------|
+Notes:
+      DIP16 - Socket for cable that joins to upper board
+      DIP40 - Socket for connector that joins to upper board
+      AY3-8910 clock - 1.536 [18.432/12]
+      HSync - 15.5kHz
+      VSync - 60Hz
+
+***************************************************************************/
+
+ROM_START( mjtensin )
+	ROM_REGION( 0x290000, REGION_CPU1, 0 )
+	ROM_LOAD( "1001.5e", 0x000000, 0x80000, CRC(960e1fe9) SHA1(11f5164b2c75c0e684e910ee8e09de978bdaff2f) )
+	/* bank switched ROMs follow */
+	ROM_RELOAD(          0x010000, 0x80000 )
+	ROM_RELOAD(          0x090000, 0x80000 )
+
+	ROM_LOAD( "1002.4e", 0x110000, 0x80000, CRC(240eb7af) SHA1(2309e1c251fe55f6e6b97b5db94fa2fe914b88f4) )
+
+	ROM_LOAD( "1003.3e", 0x210000, 0x80000, CRC(876081bf) SHA1(fe962cfa9318a9444123bcaf3406e22fb08e8c4e) )
+
+	ROM_REGION( 0x400, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "d100-2.7e",  0x000, 0x200, CRC(6edeed23) SHA1(f4420c473ebbe3df92b0f5b1f0e4d5495fcb9fda) )
+	ROM_LOAD( "d100-1.6e",  0x200, 0x200, CRC(88befd59) SHA1(cbcb437f9f6b5e542dc69f5c9e85ccbae47080af) )
+ROM_END
 
 static DRIVER_INIT( janptr96 )
 {
@@ -1992,6 +2685,8 @@ static DRIVER_INIT( janptr96 )
 	memory_set_bankptr(3,generic_nvram);
 }
 
+
+
 GAME( 1982, royalmah, 0, royalmah, royalmah, 0,        ROT0, "Falcon",           "Royal Mahjong (Japan)",            0 )
 GAME( 1986, dondenmj, 0, dondenmj, majs101b, 0,        ROT0, "Dyna Electronics", "Don Den Mahjong [BET] (Japan)",    0 )
 GAME( 1986, suzume,   0, suzume,   suzume,   0,        ROT0, "Dyna Electronics", "Watashiha Suzumechan (Japan)",     0 )
@@ -1999,5 +2694,6 @@ GAME( 1987, mjdiplob, 0, mjdiplob, mjdiplob, 0,        ROT0, "Dynax",           
 GAME( 1987, tontonb,  0, tontonb,  tontonb,  0,        ROT0, "Dynax",            "Tonton [BET] (Japan)",             0 )
 GAME( 1988, majs101b, 0, majs101b, majs101b, 0,        ROT0, "Dynax",            "Mahjong Studio 101 [BET] (Japan)", 0 )
 GAME( 1989, mjderngr, 0, mjderngr, majs101b, 0,        ROT0, "Dynax",            "Mahjong Derringer (Japan)",        0 )
-GAME( 1990, mjifb,    0, mjderngr, majs101b, 0,        ROT0, "Dynax",            "Mahjong If [BET] (Japan)",         GAME_NOT_WORKING )
+GAME( 1990, mjifb,    0, mjifb,    mjifb,    0,        ROT0, "Dynax",            "Mahjong If...? [BET]",             0 )
+GAME( 1995, mjtensin, 0, mjtensin, mjtensin, 0,        ROT0, "Dynax",            "Mahjong Tensinhai (Japan)",        GAME_NOT_WORKING )
 GAME( 1996, janptr96, 0, janptr96, janptr96, janptr96, ROT0, "Dynax",            "Janputer '96 (Japan)",             0 )

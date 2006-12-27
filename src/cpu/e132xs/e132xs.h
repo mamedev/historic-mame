@@ -6,59 +6,59 @@
 /* Functions */
 
 #if (HAS_E116T)
-void e116t_get_info(UINT32 state, union cpuinfo *info);
+void e116t_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_E116XT)
-void e116xt_get_info(UINT32 state, union cpuinfo *info);
+void e116xt_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_E116XS)
-void e116xs_get_info(UINT32 state, union cpuinfo *info);
+void e116xs_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_E116XSR)
-void e116xsr_get_info(UINT32 state, union cpuinfo *info);
+void e116xsr_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_E132N)
-void e132n_get_info(UINT32 state, union cpuinfo *info);
+void e132n_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_E132T)
-void e132t_get_info(UINT32 state, union cpuinfo *info);
+void e132t_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_E132XN)
-void e132xn_get_info(UINT32 state, union cpuinfo *info);
+void e132xn_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_E132XT)
-void e132xt_get_info(UINT32 state, union cpuinfo *info);
+void e132xt_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_E132XS)
-void e132xs_get_info(UINT32 state, union cpuinfo *info);
+void e132xs_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_E132XSR)
-void e132xsr_get_info(UINT32 state, union cpuinfo *info);
+void e132xsr_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_GMS30C2116)
-void gms30c2116_get_info(UINT32 state, union cpuinfo *info);
+void gms30c2116_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_GMS30C2132)
-void gms30c2132_get_info(UINT32 state, union cpuinfo *info);
+void gms30c2132_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_GMS30C2216)
-void gms30c2216_get_info(UINT32 state, union cpuinfo *info);
+void gms30c2216_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_GMS30C2232)
-void gms30c2232_get_info(UINT32 state, union cpuinfo *info);
+void gms30c2232_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #ifdef MAME_DEBUG

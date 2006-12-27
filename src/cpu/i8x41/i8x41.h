@@ -79,7 +79,7 @@ enum {
  *  Public Functions
  */
 
-extern void i8x41_get_info(UINT32 state, union cpuinfo *info);
+extern void i8x41_get_info(UINT32 state, cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern offs_t i8x41_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);

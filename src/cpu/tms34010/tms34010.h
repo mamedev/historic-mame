@@ -70,14 +70,14 @@ struct tms34010_config
 
 
 /* PUBLIC FUNCTIONS - 34010 */
-void tms34010_get_info(UINT32 state, union cpuinfo *info);
+void tms34010_get_info(UINT32 state, cpuinfo *info);
 
 int 		tms34010_io_display_blanked(int cpu);
 int 		tms34010_get_DPYSTRT(int cpu);
 
 
 /* PUBLIC FUNCTIONS - 34020 */
-void tms34020_get_info(UINT32 state, union cpuinfo *info);
+void tms34020_get_info(UINT32 state, cpuinfo *info);
 
 int 		tms34020_io_display_blanked(int cpu);
 int 		tms34020_get_DPYSTRT(int cpu);

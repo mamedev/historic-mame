@@ -64,7 +64,7 @@ enum
 #define ADSP2100_IRQ2		2		/* IRQ2 */
 #define ADSP2100_IRQ3		3		/* IRQ3 */
 
-extern void adsp2100_get_info(UINT32 state, union cpuinfo *info);
+extern void adsp2100_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_ADSP2101)
@@ -81,7 +81,7 @@ extern void adsp2100_get_info(UINT32 state, union cpuinfo *info);
 #define ADSP2101_SPORT0_TX	4		/* SPORT0 transmit IRQ */
 #define ADSP2101_TIMER		5		/* internal timer IRQ */
 
-extern void adsp2101_get_info(UINT32 state, union cpuinfo *info);
+extern void adsp2101_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_ADSP2104)
@@ -98,7 +98,7 @@ extern void adsp2101_get_info(UINT32 state, union cpuinfo *info);
 #define ADSP2104_SPORT0_TX	4		/* SPORT0 transmit IRQ */
 #define ADSP2104_TIMER		5		/* internal timer IRQ */
 
-extern void adsp2104_get_info(UINT32 state, union cpuinfo *info);
+extern void adsp2104_get_info(UINT32 state, cpuinfo *info);
 extern void adsp2104_load_boot_data(UINT8 *srcdata, UINT32 *dstdata);
 #endif
 
@@ -114,7 +114,7 @@ extern void adsp2104_load_boot_data(UINT8 *srcdata, UINT32 *dstdata);
 #define ADSP2105_IRQ2		2		/* IRQ2 */
 #define ADSP2105_TIMER		5		/* internal timer IRQ */
 
-extern void adsp2105_get_info(UINT32 state, union cpuinfo *info);
+extern void adsp2105_get_info(UINT32 state, cpuinfo *info);
 extern void adsp2105_load_boot_data(UINT8 *srcdata, UINT32 *dstdata);
 #endif
 
@@ -132,7 +132,7 @@ extern void adsp2105_load_boot_data(UINT8 *srcdata, UINT32 *dstdata);
 #define ADSP2115_SPORT0_TX	4		/* SPORT0 transmit IRQ */
 #define ADSP2115_TIMER		5		/* internal timer IRQ */
 
-extern void adsp2115_get_info(UINT32 state, union cpuinfo *info);
+extern void adsp2115_get_info(UINT32 state, cpuinfo *info);
 extern void adsp2115_load_boot_data(UINT8 *srcdata, UINT32 *dstdata);
 #endif
 
@@ -153,7 +153,7 @@ extern void adsp2115_load_boot_data(UINT8 *srcdata, UINT32 *dstdata);
 #define ADSP2181_IRQL1		7		/* IRQL1 */
 #define ADSP2181_IRQL2		8		/* IRQL2 */
 
-extern void adsp2181_get_info(UINT32 state, union cpuinfo *info);
+extern void adsp2181_get_info(UINT32 state, cpuinfo *info);
 extern void adsp2181_load_boot_data(UINT8 *srcdata, UINT32 *dstdata);
 extern void adsp2181_idma_addr_w(UINT16 data);
 extern UINT16 adsp2181_idma_addr_r(void);

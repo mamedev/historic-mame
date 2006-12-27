@@ -529,7 +529,7 @@ static int konami_execute(int cycles)
  * Generic set_info
  **************************************************************************/
 
-static void konami_set_info(UINT32 state, union cpuinfo *info)
+static void konami_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -561,7 +561,7 @@ static void konami_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void konami_get_info(UINT32 state, union cpuinfo *info)
+void konami_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -620,14 +620,14 @@ void konami_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_KONAMI_SETLINES_CALLBACK:		info->f = (genf *)konami.setlines_callback;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "KONAMI"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "KONAMI 5000x"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) The MAME Team 1999"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "KONAMI");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "KONAMI 5000x");		break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C) The MAME Team 1999"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				konami.cc & 0x80 ? 'E':'.',
 				konami.cc & 0x40 ? 'F':'.',
                 konami.cc & 0x20 ? 'H':'.',
@@ -638,14 +638,14 @@ void konami_get_info(UINT32 state, union cpuinfo *info)
                 konami.cc & 0x01 ? 'C':'.');
             break;
 
-		case CPUINFO_STR_REGISTER + KONAMI_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", konami.pc.w.l); break;
-		case CPUINFO_STR_REGISTER + KONAMI_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%04X", konami.s.w.l); break;
-		case CPUINFO_STR_REGISTER + KONAMI_CC:			sprintf(info->s = cpuintrf_temp_str(), "CC:%02X", konami.cc); break;
-		case CPUINFO_STR_REGISTER + KONAMI_U:			sprintf(info->s = cpuintrf_temp_str(), "U:%04X", konami.u.w.l); break;
-		case CPUINFO_STR_REGISTER + KONAMI_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", konami.d.b.h); break;
-		case CPUINFO_STR_REGISTER + KONAMI_B:			sprintf(info->s = cpuintrf_temp_str(), "B:%02X", konami.d.b.l); break;
-		case CPUINFO_STR_REGISTER + KONAMI_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%04X", konami.x.w.l); break;
-		case CPUINFO_STR_REGISTER + KONAMI_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%04X", konami.y.w.l); break;
-		case CPUINFO_STR_REGISTER + KONAMI_DP:			sprintf(info->s = cpuintrf_temp_str(), "DP:%02X", konami.dp.b.h); break;
+		case CPUINFO_STR_REGISTER + KONAMI_PC:			sprintf(info->s, "PC:%04X", konami.pc.w.l); break;
+		case CPUINFO_STR_REGISTER + KONAMI_S:			sprintf(info->s, "S:%04X", konami.s.w.l); break;
+		case CPUINFO_STR_REGISTER + KONAMI_CC:			sprintf(info->s, "CC:%02X", konami.cc); break;
+		case CPUINFO_STR_REGISTER + KONAMI_U:			sprintf(info->s, "U:%04X", konami.u.w.l); break;
+		case CPUINFO_STR_REGISTER + KONAMI_A:			sprintf(info->s, "A:%02X", konami.d.b.h); break;
+		case CPUINFO_STR_REGISTER + KONAMI_B:			sprintf(info->s, "B:%02X", konami.d.b.l); break;
+		case CPUINFO_STR_REGISTER + KONAMI_X:			sprintf(info->s, "X:%04X", konami.x.w.l); break;
+		case CPUINFO_STR_REGISTER + KONAMI_Y:			sprintf(info->s, "Y:%04X", konami.y.w.l); break;
+		case CPUINFO_STR_REGISTER + KONAMI_DP:			sprintf(info->s, "DP:%02X", konami.dp.b.h); break;
 	}
 }

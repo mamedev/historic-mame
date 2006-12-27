@@ -1,4 +1,3 @@
-/* ex: set tabstop=4 noexpandtab: */
 /*****************************************************************************
  *
  *   i8x41.c
@@ -2101,59 +2100,32 @@ static void set_irq_line(int irqline, int state)
  * Generic set_info
  **************************************************************************/
 
-static void i8x41_set_info(UINT32 state, union cpuinfo *info)
+static void i8x41_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_INPUT_STATE + I8X41_INT_IBF:
-			set_irq_line(I8X41_INT_IBF, info->i);
-			break;
-		case CPUINFO_INT_INPUT_STATE + I8X41_INT_TEST1:
-			set_irq_line(I8X41_INT_TEST1, info->i);
-			break;
+		case CPUINFO_INT_INPUT_STATE + I8X41_INT_IBF:	set_irq_line(I8X41_INT_IBF, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + I8X41_INT_TEST1:	set_irq_line(I8X41_INT_TEST1, info->i);	break;
 
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + I8X41_PC:
-			PC = info->i & 0x7ff;
-			break;
+		case CPUINFO_INT_REGISTER + I8X41_PC:			PC = info->i & 0x7ff;					break;
+
 		case CPUINFO_INT_SP:
-		case CPUINFO_INT_REGISTER + I8X41_SP:
-			PSW = (PSW & ~SP) | (info->i & SP);
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_PSW:
-			PSW = info->i;
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_A:
-			A = info->i;
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_T:
-			TIMER = info->i & 0x1fff;
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R0:
-			SETR(0, info->i);
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R1:
-			SETR(1, info->i);
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R2:
-			SETR(2, info->i);
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R3:
-			SETR(3, info->i);
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R4:
-			SETR(4, info->i);
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R5:
-			SETR(5, info->i);
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R6:
-			SETR(6, info->i);
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R7:
-			SETR(7, info->i);
-			break;
+		case CPUINFO_INT_REGISTER + I8X41_SP:			PSW = (PSW & ~SP) | (info->i & SP);		break;
+
+		case CPUINFO_INT_REGISTER + I8X41_PSW:			PSW = info->i;							break;
+		case CPUINFO_INT_REGISTER + I8X41_A:			A = info->i;							break;
+		case CPUINFO_INT_REGISTER + I8X41_T:			TIMER = info->i & 0x1fff;				break;
+		case CPUINFO_INT_REGISTER + I8X41_R0:			SETR(0, info->i);						break;
+		case CPUINFO_INT_REGISTER + I8X41_R1:			SETR(1, info->i);						break;
+		case CPUINFO_INT_REGISTER + I8X41_R2:			SETR(2, info->i);						break;
+		case CPUINFO_INT_REGISTER + I8X41_R3:			SETR(3, info->i);						break;
+		case CPUINFO_INT_REGISTER + I8X41_R4:			SETR(4, info->i);						break;
+		case CPUINFO_INT_REGISTER + I8X41_R5:			SETR(5, info->i);						break;
+		case CPUINFO_INT_REGISTER + I8X41_R6:			SETR(6, info->i);						break;
+		case CPUINFO_INT_REGISTER + I8X41_R7:			SETR(7, info->i);						break;
+
 		case CPUINFO_INT_REGISTER + I8X41_DATA:
 			DBBI = info->i;
 			if( i8x41.subtype == 8041 ) /* plain 8041 had no split input/output DBB buffers */
@@ -2170,6 +2142,7 @@ static void i8x41_set_info(UINT32 state, union cpuinfo *info)
 				WP(0x02, (P2 & P2_HS) );	/* Assert the DBBI IRQ out on P25 */
 			}
 			break;
+
 		case CPUINFO_INT_REGISTER + I8X41_DATA_DASM:
 			/* Same as I8X41_DATA, except this is used by the */
 			/* debugger and does not upset the flag states */
@@ -2177,6 +2150,7 @@ static void i8x41_set_info(UINT32 state, union cpuinfo *info)
 			if( i8x41.subtype == 8041 ) /* plain 8041 had no split input/output DBB buffers */
 				DBBO = info->i;
 			break;
+
 		case CPUINFO_INT_REGISTER + I8X41_CMND:
 			DBBI = info->i;
 			if( i8x41.subtype == 8041 ) /* plain 8041 had no split input/output DBB buffers */
@@ -2193,6 +2167,7 @@ static void i8x41_set_info(UINT32 state, union cpuinfo *info)
 				WP(0x02, (P2 & P2_HS) );	/* Assert the DBBI IRQ out on P25 */
 			}
 			break;
+
 		case CPUINFO_INT_REGISTER + I8X41_CMND_DASM:
 			/* Same as I8X41_CMND, except this is used by the */
 			/* debugger and does not upset the flag states */
@@ -2200,6 +2175,7 @@ static void i8x41_set_info(UINT32 state, union cpuinfo *info)
 			if( i8x41.subtype == 8041 ) /* plain 8041 had no split input/output DBB buffers */
 				DBBO = info->i;
 			break;
+
 		case CPUINFO_INT_REGISTER + I8X41_STAT:
 			logerror("i8x41 #%d:%03x  Setting STAT DBBI to %02x\n", cpu_getactivecpu(), PC, (UINT8)info->i);
 			/* writing status.. hmm, should we issue interrupts here too? */
@@ -2214,119 +2190,54 @@ static void i8x41_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void i8x41_get_info(UINT32 state, union cpuinfo *info)
+void i8x41_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case CPUINFO_INT_CONTEXT_SIZE:
-			info->i = sizeof(i8x41);
-			break;
-		case CPUINFO_INT_INPUT_LINES:
-			info->i = 2;
-			break;
-		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:
-			info->i = 0;
-			break;
-		case CPUINFO_INT_ENDIANNESS:
-			info->i = CPU_IS_LE;
-			break;
-		case CPUINFO_INT_CLOCK_DIVIDER:
-			info->i = I8X41_CLOCK_DIVIDER;
-			break;
-		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:
-			info->i = 1;
-			break;
-		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:
-			info->i = 2;
-			break;
-		case CPUINFO_INT_MIN_CYCLES:
-			info->i = 1;
-			break;
-		case CPUINFO_INT_MAX_CYCLES:
-			info->i = 2;
-			break;
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(i8x41);				break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 2;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = I8X41_CLOCK_DIVIDER;			break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 2;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 2;							break;
 
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:
-			info->i = 8;
-			break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM:
-			info->i = 16;
-			break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM:
-			info->i = 0;
-			break;
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:
-			info->i = 0;
-			break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA:
-			info->i = 0;
-			break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA:
-			info->i = 0;
-			break;
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:
-			info->i = 8;
-			break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO:
-			info->i = 16;
-			break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO:
-			info->i = 0;
-			break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM:	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO:		info->i = 0;					break;
 
-		case CPUINFO_INT_INPUT_STATE + I8X41_INT_IBF:
-			info->i = (STATE & IBF) ? ASSERT_LINE : CLEAR_LINE;
-			break;
-		case CPUINFO_INT_INPUT_STATE + I8X41_INT_TEST1:
-			info->i = (STATE & TEST1) ? ASSERT_LINE : CLEAR_LINE;
-			break;
+		case CPUINFO_INT_INPUT_STATE + I8X41_INT_IBF:	info->i = (STATE & IBF) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + I8X41_INT_TEST1:	info->i = (STATE & TEST1) ? ASSERT_LINE : CLEAR_LINE; break;
 
-		case CPUINFO_INT_PREVIOUSPC:
-			info->i = PPC;
-			break;
+		case CPUINFO_INT_PREVIOUSPC:					info->i = PPC;							break;
 
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + I8X41_PC:
-			info->i = PC;
-			break;
+		case CPUINFO_INT_REGISTER + I8X41_PC:			info->i = PC;							break;
+
 		case CPUINFO_INT_SP:
-		case CPUINFO_INT_REGISTER + I8X41_SP:
-			info->i = PSW & SP;
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_PSW:
-			info->i = PSW;
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_A:
-			info->i = A;
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_T:
-			info->i = TIMER;
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R0:
-			info->i = GETR(0);
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R1:
-			info->i = GETR(1);
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R2:
-			info->i = GETR(2);
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R3:
-			info->i = GETR(3);
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R4:
-			info->i = GETR(4);
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R5:
-			info->i = GETR(5);
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R6:
-			info->i = GETR(6);
-			break;
-		case CPUINFO_INT_REGISTER + I8X41_R7:
-			info->i = GETR(7);
-			break;
+		case CPUINFO_INT_REGISTER + I8X41_SP:			info->i = PSW & SP;						break;
+
+		case CPUINFO_INT_REGISTER + I8X41_PSW:			info->i = PSW;							break;
+		case CPUINFO_INT_REGISTER + I8X41_A:			info->i = A;							break;
+		case CPUINFO_INT_REGISTER + I8X41_T:			info->i = TIMER;						break;
+		case CPUINFO_INT_REGISTER + I8X41_R0:			info->i = GETR(0);						break;
+		case CPUINFO_INT_REGISTER + I8X41_R1:			info->i = GETR(1);						break;
+		case CPUINFO_INT_REGISTER + I8X41_R2:			info->i = GETR(2);						break;
+		case CPUINFO_INT_REGISTER + I8X41_R3:			info->i = GETR(3);						break;
+		case CPUINFO_INT_REGISTER + I8X41_R4:			info->i = GETR(4);						break;
+		case CPUINFO_INT_REGISTER + I8X41_R5:			info->i = GETR(5);						break;
+		case CPUINFO_INT_REGISTER + I8X41_R6:			info->i = GETR(6);						break;
+		case CPUINFO_INT_REGISTER + I8X41_R7:			info->i = GETR(7);						break;
+
 		case CPUINFO_INT_REGISTER + I8X41_DATA:
 			STATE &= ~OBF;	/* reset the output buffer full flag */
 			if( ENABLE & FLAGS)
@@ -2338,68 +2249,41 @@ void i8x41_get_info(UINT32 state, union cpuinfo *info)
 			}
 			info->i = DBBO;
 			break;
+
 		case CPUINFO_INT_REGISTER + I8X41_DATA_DASM:
 			/* Same as I8X41_DATA, except this is used by the */
 			/* debugger and does not upset the flag states */
 			info->i = DBBO;
 			break;
+
 		case CPUINFO_INT_REGISTER + I8X41_STAT:
 			logerror("i8x41 #%d:%03x  Reading STAT %02x\n", cpu_getactivecpu(), PC, STATE);
 			info->i = STATE;
 			break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_SET_INFO:
-			info->setinfo = i8x41_set_info;
-			break;
-		case CPUINFO_PTR_GET_CONTEXT:
-			info->getcontext = i8x41_get_context;
-			break;
-		case CPUINFO_PTR_SET_CONTEXT:
-			info->setcontext = i8x41_set_context;
-			break;
-		case CPUINFO_PTR_INIT:
-			info->init = i8x41_init;
-			break;
-		case CPUINFO_PTR_RESET:
-			info->reset = i8x41_reset;
-			break;
-		case CPUINFO_PTR_EXIT:
-			info->exit = i8x41_exit;
-			break;
-		case CPUINFO_PTR_EXECUTE:
-			info->execute = i8x41_execute;
-			break;
-		case CPUINFO_PTR_BURN:
-			info->burn = NULL;
-			break;
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = i8x41_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = i8x41_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = i8x41_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = i8x41_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = i8x41_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = i8x41_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = i8x41_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 #ifdef MAME_DEBUG
-		case CPUINFO_PTR_DISASSEMBLE:
-			info->disassemble = i8x41_dasm;
-			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i8x41_dasm;			break;
 #endif /* MAME_DEBUG */
-		case CPUINFO_PTR_INSTRUCTION_COUNTER:
-			info->icount = &i8x41_ICount;
-			break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i8x41_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:
-			strcpy(info->s = cpuintrf_temp_str(), "I8X41");
-			break;
-		case CPUINFO_STR_CORE_FAMILY:
-			strcpy(info->s = cpuintrf_temp_str(), "Intel 8x41");
-			break;
-		case CPUINFO_STR_CORE_VERSION:
-			strcpy(info->s = cpuintrf_temp_str(), "0.3"); break;
-		case CPUINFO_STR_CORE_FILE:
-			strcpy(info->s = cpuintrf_temp_str(), __FILE__);
-			break;
-		case CPUINFO_STR_CORE_CREDITS:
-			strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 1999 Juergen Buchmueller, all rights reserved.");
-			break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "I8X41");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Intel 8x41");			break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "0.3");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (c) 1999 Juergen Buchmueller, all rights reserved."); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				i8x41.psw & 0x80 ? 'C':'.',
 				i8x41.psw & 0x40 ? 'A':'.',
 				i8x41.psw & 0x20 ? '0':'.',
@@ -2410,59 +2294,23 @@ void i8x41_get_info(UINT32 state, union cpuinfo *info)
 				i8x41.psw & 0x01 ? 's':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + I8X41_PC:
-			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", i8x41.pc);
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_SP:
-			sprintf(info->s = cpuintrf_temp_str(), "S:%X", i8x41.psw & SP);
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_PSW:
-			sprintf(info->s = cpuintrf_temp_str(), "PSW:%02X", i8x41.psw);
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_A:
-			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", i8x41.a);
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_T:
-			sprintf(info->s = cpuintrf_temp_str(), "T:%02X.%02X", i8x41.timer, (i8x41.prescaler & 0x1f) );
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_R0:
-			sprintf(info->s = cpuintrf_temp_str(), "R0:%02X", GETR(0));
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_R1:
-			sprintf(info->s = cpuintrf_temp_str(), "R1:%02X", GETR(1));
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_R2:
-			sprintf(info->s = cpuintrf_temp_str(), "R2:%02X", GETR(2));
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_R3:
-			sprintf(info->s = cpuintrf_temp_str(), "R3:%02X", GETR(3));
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_R4:
-			sprintf(info->s = cpuintrf_temp_str(), "R4:%02X", GETR(4));
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_R5:
-			sprintf(info->s = cpuintrf_temp_str(), "R5:%02X", GETR(5));
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_R6:
-			sprintf(info->s = cpuintrf_temp_str(), "R6:%02X", GETR(6));
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_R7:
-			sprintf(info->s = cpuintrf_temp_str(), "R7:%02X", GETR(7));
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_P1:
-			sprintf(info->s = cpuintrf_temp_str(), "P1:%02X", i8x41.p1);
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_P2:
-			sprintf(info->s = cpuintrf_temp_str(), "P2:%02X", i8x41.p2);
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_DATA_DASM:
-			sprintf(info->s = cpuintrf_temp_str(), "DBBI:%02X", i8x41.dbbi);
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_CMND_DASM:
-			sprintf(info->s = cpuintrf_temp_str(), "DBBO:%02X", i8x41.dbbo);
-			break;
-		case CPUINFO_STR_REGISTER + I8X41_STAT:
-			sprintf(info->s = cpuintrf_temp_str(), "STAT:%02X", i8x41.state);
-			break;
+		case CPUINFO_STR_REGISTER + I8X41_PC:			sprintf(info->s, "PC:%04X", i8x41.pc);	break;
+		case CPUINFO_STR_REGISTER + I8X41_SP:			sprintf(info->s, "S:%X", i8x41.psw & SP); break;
+		case CPUINFO_STR_REGISTER + I8X41_PSW:			sprintf(info->s, "PSW:%02X", i8x41.psw); break;
+		case CPUINFO_STR_REGISTER + I8X41_A:			sprintf(info->s, "A:%02X", i8x41.a);	break;
+		case CPUINFO_STR_REGISTER + I8X41_T:			sprintf(info->s, "T:%02X.%02X", i8x41.timer, (i8x41.prescaler & 0x1f) ); break;
+		case CPUINFO_STR_REGISTER + I8X41_R0:			sprintf(info->s, "R0:%02X", GETR(0));	break;
+		case CPUINFO_STR_REGISTER + I8X41_R1:			sprintf(info->s, "R1:%02X", GETR(1));	break;
+		case CPUINFO_STR_REGISTER + I8X41_R2:			sprintf(info->s, "R2:%02X", GETR(2));	break;
+		case CPUINFO_STR_REGISTER + I8X41_R3:			sprintf(info->s, "R3:%02X", GETR(3));	break;
+		case CPUINFO_STR_REGISTER + I8X41_R4:			sprintf(info->s, "R4:%02X", GETR(4));	break;
+		case CPUINFO_STR_REGISTER + I8X41_R5:			sprintf(info->s, "R5:%02X", GETR(5));	break;
+		case CPUINFO_STR_REGISTER + I8X41_R6:			sprintf(info->s, "R6:%02X", GETR(6));	break;
+		case CPUINFO_STR_REGISTER + I8X41_R7:			sprintf(info->s, "R7:%02X", GETR(7));	break;
+		case CPUINFO_STR_REGISTER + I8X41_P1:			sprintf(info->s, "P1:%02X", i8x41.p1);	break;
+		case CPUINFO_STR_REGISTER + I8X41_P2:			sprintf(info->s, "P2:%02X", i8x41.p2);	break;
+		case CPUINFO_STR_REGISTER + I8X41_DATA_DASM:	sprintf(info->s, "DBBI:%02X", i8x41.dbbi); break;
+		case CPUINFO_STR_REGISTER + I8X41_CMND_DASM:	sprintf(info->s, "DBBO:%02X", i8x41.dbbo); break;
+		case CPUINFO_STR_REGISTER + I8X41_STAT:			sprintf(info->s, "STAT:%02X", i8x41.state);	break;
 	}
 }

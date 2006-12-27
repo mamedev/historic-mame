@@ -537,41 +537,41 @@ typedef struct
 	// See section 1-22 in DSP56156UM.pdf for scrutinization...
 
 	// PCU Registers
-	UINT16			pcuProgramCounter ;			//  PC
-	UINT16			pcuStatus ;					//  MR,CCR / SR
-	UINT16			pcuLoopCounter ;			//  LC
-	UINT16			pcuLoopAddressReg ;			//  LA
-	UINT8			pcuStackPointer ;			//  SP
-	UINT8			pcuOperatingModeReg ;		//  OMR
-	PAIR			pcuSystemStack[16] ;		//  SSH,SSL (*15)
+	UINT16			pcuProgramCounter;			//  PC
+	UINT16			pcuStatus;					//  MR,CCR / SR
+	UINT16			pcuLoopCounter;				//  LC
+	UINT16			pcuLoopAddressReg;			//  LA
+	UINT8			pcuStackPointer;			//  SP
+	UINT8			pcuOperatingModeReg;		//  OMR
+	PAIR			pcuSystemStack[16];			//  SSH,SSL (*15)
 
 	// ALU Registers
-	PAIR			aluDataRegs[2] ;			//  X1,X0     &   Y1,Y0
-	PAIR64			aluAccumRegs[2] ;			//  A2,A1,A0  &   B2,B1,B0
+	PAIR			aluDataRegs[2];				//  X1,X0     &   Y1,Y0
+	PAIR64			aluAccumRegs[2];			//  A2,A1,A0  &   B2,B1,B0
 
 	// AGU Registers
-	UINT16          aguAddressRegs[4] ;			//  R0,R1,R2,R3
-	UINT16          aguOffsetRegs[4] ;			//  N0,N1,N2,N3
-	UINT16          aguModifierRegs[4] ;		//  M0,M1,M2,M3
-	UINT16          aguTempReg ;				//  TEMP
-	UINT8           aguStatusReg ;				//  Status
+	UINT16          aguAddressRegs[4];			//  R0,R1,R2,R3
+	UINT16          aguOffsetRegs[4];			//  N0,N1,N2,N3
+	UINT16          aguModifierRegs[4];			//  M0,M1,M2,M3
+	UINT16          aguTempReg;					//  TEMP
+	UINT8           aguStatusReg;				//  Status
 
 
 	// IRQ lines
-	UINT8           irq_modA ;					//  aka IRQA - can be defined edge or level sensitive (though i'm not sure how)
-	UINT8           irq_modB ;					//  aka IRQA - can be defined edge or level sensitive (though i'm not sure how)
-	UINT8           irq_modC ;					//  just modC :)
-	UINT8           irq_reset ;					//  Always level-sensitive
+	UINT8           irq_modA;					//  aka IRQA - can be defined edge or level sensitive (though i'm not sure how)
+	UINT8           irq_modB;					//  aka IRQA - can be defined edge or level sensitive (though i'm not sure how)
+	UINT8           irq_modC;					//  just modC :)
+	UINT8           irq_reset;					//  Always level-sensitive
 
-	int		(*irq_callback)(int irqline) ;
+	int		(*irq_callback)(int irqline);
 
 	// Internal Stuff
 	UINT32			ppc;						// Previous PC - for debugger
 	UINT16			op;							// Current opcode
 	int				interrupt_cycles;
 
-	int				repFlag ;					// Knowing if we're in a 'repeat' state (dunno how the processor does this)
-	UINT32			repAddr ;					// The address of the instruction to repeat...
+	int				repFlag;					// Knowing if we're in a 'repeat' state (dunno how the processor does this)
+	UINT32			repAddr;					// The address of the instruction to repeat...
 
 	// Interfaces - ports B and C *can* be these if everything's setup right.
 	dsp56k_host_interface HI;
@@ -612,15 +612,15 @@ static void set_irq_line(int irqline, int state)
 {
 	if (irqline == 3)
 	{
-		LINE_RESET = state ;
+		LINE_RESET = state;
 
 		if(LINE_RESET != CLEAR_LINE)
 		{
 			int irq_vector = (*dsp56k.irq_callback)(3);
 
-			PC = irq_vector ;
+			PC = irq_vector;
 
-			LINE_RESET = CLEAR_LINE ;
+			LINE_RESET = CLEAR_LINE;
 		}
 	}
 }
@@ -676,22 +676,22 @@ static void dsp56k_reset(void)
 		memory_set_opbase(PC);
 
 		// Handle internal stuff
-		dsp56k.interrupt_cycles = 0 ;
+		dsp56k.interrupt_cycles = 0;
 
 
 		// Internal peripheral devices are reset, and pins revert to general I/O pins
 
 		// Modifier registers are set
-		M0 = M1 = M2 = M3 = 0xffff ;
+		M0 = M1 = M2 = M3 = 0xffff;
 
 		// BCR is set - the really slow bootup mode & the Bus State status bit high (0x4xxx)
-		//BCR = 0x43ff ;
+		//BCR = 0x43ff;
 
 		// Stack pointer is cleared
-		SP = 0x00 ;					// The docs say nothing about ufBIT & seBIT, but this should be right
+		SP = 0x00;					// The docs say nothing about ufBIT & seBIT, but this should be right
 
 		// Documentation says 'MR' is setup, but it really means 'SR' is setup
-		SR = 0x0300 ;				// Only the Interrupt mask bits of the Status Register are set upon reset
+		SR = 0x0300;				// Only the Interrupt mask bits of the Status Register are set upon reset
 
 
 		// !!! GO THROUGH AND GET ALL THESE RIGHT SOMEDAY !!!
@@ -700,50 +700,50 @@ static void dsp56k_reset(void)
 
 		dsp56k_reset_HI();
 
-		OMR = 0x00 ;				// All is cleared, except for the IRQ lines below
-		IPR = 0x00 ;
+		OMR = 0x00;					// All is cleared, except for the IRQ lines below
+		IPR = 0x00;
 
-		dsp56k.repFlag = 0 ;		// Certainly not repeating to start
-		dsp56k.repAddr = 0x0000 ;	// Reset the address too...
+		dsp56k.repFlag = 0;			// Certainly not repeating to start
+		dsp56k.repAddr = 0x0000;	// Reset the address too...
 
 		// Manipulate everything you need to for the ports (!! maybe these will be callbacks someday !!)...
-		data_write_word_16le(0xffc0, 0x0000) ;	// Sets Port B Control Register to general I/O
-		data_write_word_16le(0xffc2, 0x0000) ;	// Sets Port B Data Direction Register as input
-		data_write_word_16le(0xffc1, 0x0000) ;	// Sets Port C Control Register to general I/O
-		data_write_word_16le(0xffc3, 0x0000) ;	// Sets Port C Data Direction Register as input
+		data_write_word_16le(0xffc0, 0x0000);	// Sets Port B Control Register to general I/O
+		data_write_word_16le(0xffc2, 0x0000);	// Sets Port B Data Direction Register as input
+		data_write_word_16le(0xffc1, 0x0000);	// Sets Port C Control Register to general I/O
+		data_write_word_16le(0xffc3, 0x0000);	// Sets Port C Data Direction Register as input
 
 		// Now that we're leaving, set ma, mb, and mc from MODA, MODB, and MODC lines
 		// I believe polygonet sets everyone to mode 0...  The following reflects this...
-		CLEAR_maBIT() ;
-		CLEAR_mbBIT() ;
+		CLEAR_maBIT();
+		CLEAR_mbBIT();
 
 		// switch bootup sequence based on chip operating mode
 		switch((mbBIT << 1) | maBIT)
 		{
 			// [Special Bootstrap 1] Bootstrap from an external byte-wide memory located at P:$c000
 			case 0x0:
-				PC = 0x0000 ; // 0x0030 ; // 0x0032 ; // 0x002e ; // 0x0000 ; // 0x002c ;
-				break ;
+				PC = 0x0000; // 0x0030; // 0x0032; // 0x002e; // 0x0000; // 0x002c;
+				break;
 
 			// [Special Bootstrap 2] Bootstrap from the Host port or SSI0
 			case 0x1:
-				PC = 0x0000 ;
-				break ;
+				PC = 0x0000;
+				break;
 
 			// [Normal Expanded] Internal PRAM enabled; External reset at P:$e000
 			case 0x2:
-				PC = 0xe000 ;
-				break ;
+				PC = 0xe000;
+				break;
 
 			// [Development Expanded] Int. program memory disabled; Ext. reset at P:$0000
 			case 0x3:
-				PC = 0x0000 ;
-				break ;
+				PC = 0x0000;
+				break;
 		}
 	}
 	else
 	{
-		PC = *((UINT16*)dsp56k.config) ;
+		PC = *((UINT16*)dsp56k.config);
 	}
 }
 
@@ -779,12 +779,12 @@ static int dsp56k_execute(int cycles)
 	dsp56k.interrupt_cycles = 0;
 
 	while(dsp56k_icount > 0)
-		execute_one() ;
+		execute_one();
 
 	dsp56k_icount -= dsp56k.interrupt_cycles;
 	dsp56k.interrupt_cycles = 0;
 
-	return cycles - dsp56k_icount ;
+	return cycles - dsp56k_icount;
 }
 
 
@@ -896,7 +896,7 @@ UINT16 dsp56k_get_peripheral_memory(UINT16 addr)
 {
 	if (addr >= 0xffc0)		// && addr <= 0xffff
 	{
-		return dsp56k_peripheral_ram[addr-0xffc0] ;
+		return dsp56k_peripheral_ram[addr-0xffc0];
 	}
 	else
 	{
@@ -993,11 +993,11 @@ void dsp56k_host_interface_write(UINT8 addr, UINT8 data)
 			//   cleared.
 			if (!x_txdeBIT && !hrdfBIT)
 			{
-				HTXHRX = ( ((UINT16)dsp56k.HI.TXHRXH) << 8 ) | (UINT16)dsp56k.HI.TXLRXL ;
+				HTXHRX = ( ((UINT16)dsp56k.HI.TXHRXH) << 8 ) | (UINT16)dsp56k.HI.TXLRXL;
 
 				// !!! Hack !!! Move it straight to program memory...
 				dsp56k_program_ram[hack_memory_offset] = HTXHRX;
-				logerror("Wrote memoryOffset[%d] : %04x\n", hack_memory_offset, dsp56k_program_ram[hack_memory_offset]) ;
+				logerror("Wrote memoryOffset[%d] : %04x\n", hack_memory_offset, dsp56k_program_ram[hack_memory_offset]);
 				hack_memory_offset++;
 
 				// This transfer operation sets TXDE and HRDF.
@@ -1072,73 +1072,73 @@ void dsp56k_reset_dma_offset(void)
  * Generic set_info/get_info
  **************************************************************************/
 
-static void dsp56k_set_info(UINT32 state, union cpuinfo *info)
+static void dsp56k_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
-		case CPUINFO_INT_INPUT_STATE + DSP56K_IRQ_MODA:  set_irq_line(DSP56K_IRQ_MODA, info->i);			break;
-		case CPUINFO_INT_INPUT_STATE + DSP56K_IRQ_MODB:  set_irq_line(DSP56K_IRQ_MODB, info->i);			break;
-		case CPUINFO_INT_INPUT_STATE + DSP56K_IRQ_MODC:  set_irq_line(DSP56K_IRQ_MODC, info->i);			break;
-		case CPUINFO_INT_INPUT_STATE + DSP56K_IRQ_RESET: set_irq_line(DSP56K_IRQ_RESET, info->i);			break;
+		case CPUINFO_INT_INPUT_STATE + DSP56K_IRQ_MODA:  set_irq_line(DSP56K_IRQ_MODA, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + DSP56K_IRQ_MODB:  set_irq_line(DSP56K_IRQ_MODB, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + DSP56K_IRQ_MODC:  set_irq_line(DSP56K_IRQ_MODC, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + DSP56K_IRQ_RESET: set_irq_line(DSP56K_IRQ_RESET, info->i); break;
 
 
 		// !! It might be interesting to use this section as something which masks out the unecessary bits in each register !!
 
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + DSP56K_PC:			PC  = info->i & 0xffff ;				break;
-		case CPUINFO_INT_REGISTER + DSP56K_SR:			SR  = info->i & 0xffff ;				break;
-		case CPUINFO_INT_REGISTER + DSP56K_LC:			LC  = info->i & 0xffff ;				break;
-		case CPUINFO_INT_REGISTER + DSP56K_LA:			LA  = info->i & 0xffff ;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_PC:			PC  = info->i & 0xffff;					break;
+		case CPUINFO_INT_REGISTER + DSP56K_SR:			SR  = info->i & 0xffff;					break;
+		case CPUINFO_INT_REGISTER + DSP56K_LC:			LC  = info->i & 0xffff;					break;
+		case CPUINFO_INT_REGISTER + DSP56K_LA:			LA  = info->i & 0xffff;					break;
 		case CPUINFO_INT_SP:																	// !!! I think this is correct !!!
-		case CPUINFO_INT_REGISTER + DSP56K_SP:			SP  = info->i & 0xff ;					break;
-		case CPUINFO_INT_REGISTER + DSP56K_OMR:			OMR = info->i & 0xff ;					break;
+		case CPUINFO_INT_REGISTER + DSP56K_SP:			SP  = info->i & 0xff;					break;
+		case CPUINFO_INT_REGISTER + DSP56K_OMR:			OMR = info->i & 0xff;					break;
 
-		case CPUINFO_INT_REGISTER + DSP56K_X:			X   = info->i & 0xffffffff ;			break;
-		case CPUINFO_INT_REGISTER + DSP56K_Y:			Y   = info->i & 0xffffffff ;			break;
+		case CPUINFO_INT_REGISTER + DSP56K_X:			X   = info->i & 0xffffffff;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_Y:			Y   = info->i & 0xffffffff;				break;
 
-		case CPUINFO_INT_REGISTER + DSP56K_A:			A   = info->i & (UINT64)U64(0xffffffffffffffff) ;	break;	// could benefit from a better mask?
-		case CPUINFO_INT_REGISTER + DSP56K_B:			B   = info->i & (UINT64)U64(0xffffffffffffffff) ;	break;	// could benefit from a better mask?
+		case CPUINFO_INT_REGISTER + DSP56K_A:			A   = info->i & (UINT64)U64(0xffffffffffffffff); break;	// could benefit from a better mask?
+		case CPUINFO_INT_REGISTER + DSP56K_B:			B   = info->i & (UINT64)U64(0xffffffffffffffff); break;	// could benefit from a better mask?
 
-		case CPUINFO_INT_REGISTER + DSP56K_R0:			R0  = info->i & 0xffff ;				break;
-		case CPUINFO_INT_REGISTER + DSP56K_R1:			R1  = info->i & 0xffff ;				break;
-		case CPUINFO_INT_REGISTER + DSP56K_R2:			R2  = info->i & 0xffff ;				break;
-		case CPUINFO_INT_REGISTER + DSP56K_R3:			R3  = info->i & 0xffff ;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_R0:			R0  = info->i & 0xffff;					break;
+		case CPUINFO_INT_REGISTER + DSP56K_R1:			R1  = info->i & 0xffff;					break;
+		case CPUINFO_INT_REGISTER + DSP56K_R2:			R2  = info->i & 0xffff;					break;
+		case CPUINFO_INT_REGISTER + DSP56K_R3:			R3  = info->i & 0xffff;					break;
 
-		case CPUINFO_INT_REGISTER + DSP56K_N0:			N0  = info->i & 0xffff ;				break;
-		case CPUINFO_INT_REGISTER + DSP56K_N1:			N1  = info->i & 0xffff ;				break;
-		case CPUINFO_INT_REGISTER + DSP56K_N2:			N2  = info->i & 0xffff ;				break;
-		case CPUINFO_INT_REGISTER + DSP56K_N3:			N3  = info->i & 0xffff ;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_N0:			N0  = info->i & 0xffff;					break;
+		case CPUINFO_INT_REGISTER + DSP56K_N1:			N1  = info->i & 0xffff;					break;
+		case CPUINFO_INT_REGISTER + DSP56K_N2:			N2  = info->i & 0xffff;					break;
+		case CPUINFO_INT_REGISTER + DSP56K_N3:			N3  = info->i & 0xffff;					break;
 
-		case CPUINFO_INT_REGISTER + DSP56K_M0:			M0  = info->i & 0xffff ;				break;
-		case CPUINFO_INT_REGISTER + DSP56K_M1:			M1  = info->i & 0xffff ;				break;
-		case CPUINFO_INT_REGISTER + DSP56K_M2:			M2  = info->i & 0xffff ;				break;
-		case CPUINFO_INT_REGISTER + DSP56K_M3:			M3  = info->i & 0xffff ;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_M0:			M0  = info->i & 0xffff;					break;
+		case CPUINFO_INT_REGISTER + DSP56K_M1:			M1  = info->i & 0xffff;					break;
+		case CPUINFO_INT_REGISTER + DSP56K_M2:			M2  = info->i & 0xffff;					break;
+		case CPUINFO_INT_REGISTER + DSP56K_M3:			M3  = info->i & 0xffff;					break;
 
-		case CPUINFO_INT_REGISTER + DSP56K_TEMP:		TEMP   = info->i & 0xffff ;				break;
-		case CPUINFO_INT_REGISTER + DSP56K_STATUS:		STATUS = info->i & 0xff   ;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_TEMP:		TEMP   = info->i & 0xffff;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_STATUS:		STATUS = info->i & 0xff;				break;
 
 		// The CPU stack...
-		case CPUINFO_INT_REGISTER + DSP56K_ST0:			ST0 = info->i & 0xffffffff ;			break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST1:			ST1 = info->i & 0xffffffff ;			break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST2:			ST2 = info->i & 0xffffffff ;			break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST3:			ST3 = info->i & 0xffffffff ;			break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST4:			ST4 = info->i & 0xffffffff ;			break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST5:			ST5 = info->i & 0xffffffff ;			break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST6:			ST6 = info->i & 0xffffffff ;			break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST7:			ST7 = info->i & 0xffffffff ;			break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST8:			ST8 = info->i & 0xffffffff ;			break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST9:			ST9 = info->i & 0xffffffff ;			break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST10:		ST10 = info->i & 0xffffffff ;			break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST11:		ST11 = info->i & 0xffffffff ;			break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST12:		ST12 = info->i & 0xffffffff ;			break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST13:		ST13 = info->i & 0xffffffff ;			break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST14:		ST14 = info->i & 0xffffffff ;			break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST15:		ST15 = info->i & 0xffffffff ;			break ;
+		case CPUINFO_INT_REGISTER + DSP56K_ST0:			ST0 = info->i & 0xffffffff;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST1:			ST1 = info->i & 0xffffffff;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST2:			ST2 = info->i & 0xffffffff;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST3:			ST3 = info->i & 0xffffffff;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST4:			ST4 = info->i & 0xffffffff;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST5:			ST5 = info->i & 0xffffffff;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST6:			ST6 = info->i & 0xffffffff;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST7:			ST7 = info->i & 0xffffffff;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST8:			ST8 = info->i & 0xffffffff;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST9:			ST9 = info->i & 0xffffffff;				break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST10:		ST10 = info->i & 0xffffffff;			break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST11:		ST11 = info->i & 0xffffffff;			break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST12:		ST12 = info->i & 0xffffffff;			break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST13:		ST13 = info->i & 0xffffffff;			break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST14:		ST14 = info->i & 0xffffffff;			break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST15:		ST15 = info->i & 0xffffffff;			break;
 	}
 }
 
 
-void dsp56k_get_info(UINT32 state, union cpuinfo *info)
+void dsp56k_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1204,22 +1204,22 @@ void dsp56k_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + DSP56K_STATUS:		info->i = STATUS;						break;
 
 		// The CPU stack
-		case CPUINFO_INT_REGISTER + DSP56K_ST0:			info->i = ST0 ;							break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST1:			info->i = ST1 ;							break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST2:			info->i = ST2 ;							break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST3:			info->i = ST3 ;							break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST4:			info->i = ST4 ;							break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST5:			info->i = ST5 ;							break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST6:			info->i = ST6 ;							break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST7:			info->i = ST7 ;							break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST8:			info->i = ST8 ;							break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST9:			info->i = ST9 ;							break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST10:		info->i = ST10 ;						break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST11:		info->i = ST11 ;						break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST12:		info->i = ST12 ;						break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST13:		info->i = ST13 ;						break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST14:		info->i = ST14 ;						break ;
-		case CPUINFO_INT_REGISTER + DSP56K_ST15:		info->i = ST15 ;						break ;
+		case CPUINFO_INT_REGISTER + DSP56K_ST0:			info->i = ST0;							break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST1:			info->i = ST1;							break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST2:			info->i = ST2;							break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST3:			info->i = ST3;							break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST4:			info->i = ST4;							break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST5:			info->i = ST5;							break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST6:			info->i = ST6;							break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST7:			info->i = ST7;							break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST8:			info->i = ST8;							break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST9:			info->i = ST9;							break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST10:		info->i = ST10;							break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST11:		info->i = ST11;							break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST12:		info->i = ST12;							break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST13:		info->i = ST13;							break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST14:		info->i = ST14;							break;
+		case CPUINFO_INT_REGISTER + DSP56K_ST15:		info->i = ST15;							break;
 
 
 
@@ -1245,15 +1245,15 @@ void dsp56k_get_info(UINT32 state, union cpuinfo *info)
 
 
 		// --- the following bits of info are returned as NULL-terminated strings ---
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "DSP56156"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Motorola DSP56156"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "0.1"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Andrew Gardner"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "DSP56156");			break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Motorola DSP56156");	break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "0.1");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Andrew Gardner");		break;
 
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%s%s%s%s%s%s%s%s%s%s%s%s%s%s %s%s %s%s%s%s%s%s%s",
+			sprintf(info->s, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s %s%s %s%s%s%s%s%s%s",
 				lfBIT ? "L":".",
 				fvBIT ? "F":".",
 				s1BIT ? "S":".",
@@ -1281,56 +1281,56 @@ void dsp56k_get_info(UINT32 state, union cpuinfo *info)
             break;
 
 
-		case CPUINFO_STR_REGISTER + DSP56K_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC : %04x", PC);  break;
-		case CPUINFO_STR_REGISTER + DSP56K_SR:			sprintf(info->s = cpuintrf_temp_str(), "SR : %04x", SR);  break;
-		case CPUINFO_STR_REGISTER + DSP56K_LC:			sprintf(info->s = cpuintrf_temp_str(), "LC : %04x", LC);  break;
-		case CPUINFO_STR_REGISTER + DSP56K_LA:			sprintf(info->s = cpuintrf_temp_str(), "LA : %04x", LA);  break;
-		case CPUINFO_STR_REGISTER + DSP56K_SP:			sprintf(info->s = cpuintrf_temp_str(), "SP : %02x", SP);  break;
-		case CPUINFO_STR_REGISTER + DSP56K_OMR:			sprintf(info->s = cpuintrf_temp_str(), "OMR: %02x", OMR); break;
+		case CPUINFO_STR_REGISTER + DSP56K_PC:			sprintf(info->s, "PC : %04x", PC);		break;
+		case CPUINFO_STR_REGISTER + DSP56K_SR:			sprintf(info->s, "SR : %04x", SR);		break;
+		case CPUINFO_STR_REGISTER + DSP56K_LC:			sprintf(info->s, "LC : %04x", LC);		break;
+		case CPUINFO_STR_REGISTER + DSP56K_LA:			sprintf(info->s, "LA : %04x", LA);		break;
+		case CPUINFO_STR_REGISTER + DSP56K_SP:			sprintf(info->s, "SP : %02x", SP);		break;
+		case CPUINFO_STR_REGISTER + DSP56K_OMR:			sprintf(info->s, "OMR: %02x", OMR);		break;
 
-		case CPUINFO_STR_REGISTER + DSP56K_X:			sprintf(info->s = cpuintrf_temp_str(), "X  : %04x %04x", X1, X0);   break;
-		case CPUINFO_STR_REGISTER + DSP56K_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y  : %04x %04x", Y1, Y0);   break;
+		case CPUINFO_STR_REGISTER + DSP56K_X:			sprintf(info->s, "X  : %04x %04x", X1, X0); break;
+		case CPUINFO_STR_REGISTER + DSP56K_Y:			sprintf(info->s, "Y  : %04x %04x", Y1, Y0); break;
 
 		// !! This is silly - it gives me a warning if I try to print an unsigned long with %08x
 		//    (and thus won't compile) - any suggestions?  Maybe we change it to a series of UINT16's or something?
-		case CPUINFO_STR_REGISTER + DSP56K_A:			sprintf(info->s = cpuintrf_temp_str(), "A  : %02x %04x %04x", A2,A1,A0);   break;
-		case CPUINFO_STR_REGISTER + DSP56K_B:			sprintf(info->s = cpuintrf_temp_str(), "B  : %02x %04x %04x", B2,B1,B0);   break;
+		case CPUINFO_STR_REGISTER + DSP56K_A:			sprintf(info->s, "A  : %02x %04x %04x", A2,A1,A0); break;
+		case CPUINFO_STR_REGISTER + DSP56K_B:			sprintf(info->s, "B  : %02x %04x %04x", B2,B1,B0); break;
 
-		case CPUINFO_STR_REGISTER + DSP56K_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0 : %04x", R0);  break;
-		case CPUINFO_STR_REGISTER + DSP56K_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1 : %04x", R1);  break;
-		case CPUINFO_STR_REGISTER + DSP56K_R2:			sprintf(info->s = cpuintrf_temp_str(), "R2 : %04x", R2);  break;
-		case CPUINFO_STR_REGISTER + DSP56K_R3:			sprintf(info->s = cpuintrf_temp_str(), "R3 : %04x", R3);  break;
+		case CPUINFO_STR_REGISTER + DSP56K_R0:			sprintf(info->s, "R0 : %04x", R0);		break;
+		case CPUINFO_STR_REGISTER + DSP56K_R1:			sprintf(info->s, "R1 : %04x", R1);		break;
+		case CPUINFO_STR_REGISTER + DSP56K_R2:			sprintf(info->s, "R2 : %04x", R2);		break;
+		case CPUINFO_STR_REGISTER + DSP56K_R3:			sprintf(info->s, "R3 : %04x", R3);		break;
 
-		case CPUINFO_STR_REGISTER + DSP56K_N0:			sprintf(info->s = cpuintrf_temp_str(), "N0 : %04x", N0);  break;
-		case CPUINFO_STR_REGISTER + DSP56K_N1:			sprintf(info->s = cpuintrf_temp_str(), "N1 : %04x", N1);  break;
-		case CPUINFO_STR_REGISTER + DSP56K_N2:			sprintf(info->s = cpuintrf_temp_str(), "N2 : %04x", N2);  break;
-		case CPUINFO_STR_REGISTER + DSP56K_N3:			sprintf(info->s = cpuintrf_temp_str(), "N3 : %04x", N3);  break;
+		case CPUINFO_STR_REGISTER + DSP56K_N0:			sprintf(info->s, "N0 : %04x", N0);		break;
+		case CPUINFO_STR_REGISTER + DSP56K_N1:			sprintf(info->s, "N1 : %04x", N1);		break;
+		case CPUINFO_STR_REGISTER + DSP56K_N2:			sprintf(info->s, "N2 : %04x", N2);		break;
+		case CPUINFO_STR_REGISTER + DSP56K_N3:			sprintf(info->s, "N3 : %04x", N3);		break;
 
-		case CPUINFO_STR_REGISTER + DSP56K_M0:			sprintf(info->s = cpuintrf_temp_str(), "M0 : %04x", M0);  break;
-		case CPUINFO_STR_REGISTER + DSP56K_M1:			sprintf(info->s = cpuintrf_temp_str(), "M1 : %04x", M1);  break;
-		case CPUINFO_STR_REGISTER + DSP56K_M2:			sprintf(info->s = cpuintrf_temp_str(), "M2 : %04x", M2);  break;
-		case CPUINFO_STR_REGISTER + DSP56K_M3:			sprintf(info->s = cpuintrf_temp_str(), "M3 : %04x", M3);  break;
+		case CPUINFO_STR_REGISTER + DSP56K_M0:			sprintf(info->s, "M0 : %04x", M0);		break;
+		case CPUINFO_STR_REGISTER + DSP56K_M1:			sprintf(info->s, "M1 : %04x", M1);		break;
+		case CPUINFO_STR_REGISTER + DSP56K_M2:			sprintf(info->s, "M2 : %04x", M2);		break;
+		case CPUINFO_STR_REGISTER + DSP56K_M3:			sprintf(info->s, "M3 : %04x", M3);		break;
 
-		case CPUINFO_STR_REGISTER + DSP56K_TEMP:		sprintf(info->s = cpuintrf_temp_str(), "TMP: %04x", TEMP);   break;
-		case CPUINFO_STR_REGISTER + DSP56K_STATUS:		sprintf(info->s = cpuintrf_temp_str(), "STS: %02x", STATUS); break;
+		case CPUINFO_STR_REGISTER + DSP56K_TEMP:		sprintf(info->s, "TMP: %04x", TEMP);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_STATUS:		sprintf(info->s, "STS: %02x", STATUS);	break;
 
 
 		// The CPU stack
-		case CPUINFO_STR_REGISTER + DSP56K_ST0:			sprintf(info->s = cpuintrf_temp_str(), "ST0 : %08x", ST0);	 break ;
-		case CPUINFO_STR_REGISTER + DSP56K_ST1:			sprintf(info->s = cpuintrf_temp_str(), "ST1 : %08x", ST1);	 break ;
-		case CPUINFO_STR_REGISTER + DSP56K_ST2:			sprintf(info->s = cpuintrf_temp_str(), "ST2 : %08x", ST2);	 break ;
-		case CPUINFO_STR_REGISTER + DSP56K_ST3:			sprintf(info->s = cpuintrf_temp_str(), "ST3 : %08x", ST3);	 break ;
-		case CPUINFO_STR_REGISTER + DSP56K_ST4:			sprintf(info->s = cpuintrf_temp_str(), "ST4 : %08x", ST4);	 break ;
-		case CPUINFO_STR_REGISTER + DSP56K_ST5:			sprintf(info->s = cpuintrf_temp_str(), "ST5 : %08x", ST5);	 break ;
-		case CPUINFO_STR_REGISTER + DSP56K_ST6:			sprintf(info->s = cpuintrf_temp_str(), "ST6 : %08x", ST6);	 break ;
-		case CPUINFO_STR_REGISTER + DSP56K_ST7:			sprintf(info->s = cpuintrf_temp_str(), "ST7 : %08x", ST7);	 break ;
-		case CPUINFO_STR_REGISTER + DSP56K_ST8:			sprintf(info->s = cpuintrf_temp_str(), "ST8 : %08x", ST8);	 break ;
-		case CPUINFO_STR_REGISTER + DSP56K_ST9:			sprintf(info->s = cpuintrf_temp_str(), "ST9 : %08x", ST9);	 break ;
-		case CPUINFO_STR_REGISTER + DSP56K_ST10:		sprintf(info->s = cpuintrf_temp_str(), "ST10: %08x", ST10);	 break ;
-		case CPUINFO_STR_REGISTER + DSP56K_ST11:		sprintf(info->s = cpuintrf_temp_str(), "ST11: %08x", ST11);	 break ;
-		case CPUINFO_STR_REGISTER + DSP56K_ST12:		sprintf(info->s = cpuintrf_temp_str(), "ST12: %08x", ST12);	 break ;
-		case CPUINFO_STR_REGISTER + DSP56K_ST13:		sprintf(info->s = cpuintrf_temp_str(), "ST13: %08x", ST13);	 break ;
-		case CPUINFO_STR_REGISTER + DSP56K_ST14:		sprintf(info->s = cpuintrf_temp_str(), "ST14: %08x", ST14);	 break ;
-		case CPUINFO_STR_REGISTER + DSP56K_ST15:		sprintf(info->s = cpuintrf_temp_str(), "ST15: %08x", ST15);	 break ;
+		case CPUINFO_STR_REGISTER + DSP56K_ST0:			sprintf(info->s, "ST0 : %08x", ST0);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_ST1:			sprintf(info->s, "ST1 : %08x", ST1);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_ST2:			sprintf(info->s, "ST2 : %08x", ST2);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_ST3:			sprintf(info->s, "ST3 : %08x", ST3);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_ST4:			sprintf(info->s, "ST4 : %08x", ST4);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_ST5:			sprintf(info->s, "ST5 : %08x", ST5);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_ST6:			sprintf(info->s, "ST6 : %08x", ST6);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_ST7:			sprintf(info->s, "ST7 : %08x", ST7);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_ST8:			sprintf(info->s, "ST8 : %08x", ST8);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_ST9:			sprintf(info->s, "ST9 : %08x", ST9);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_ST10:		sprintf(info->s, "ST10: %08x", ST10);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_ST11:		sprintf(info->s, "ST11: %08x", ST11);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_ST12:		sprintf(info->s, "ST12: %08x", ST12);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_ST13:		sprintf(info->s, "ST13: %08x", ST13);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_ST14:		sprintf(info->s, "ST14: %08x", ST14);	break;
+		case CPUINFO_STR_REGISTER + DSP56K_ST15:		sprintf(info->s, "ST15: %08x", ST15);	break;
 	}
 }

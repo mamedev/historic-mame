@@ -21,7 +21,7 @@ enum {
 /* Fake Sense Line */
 #define S2650_SENSE_PORT 0x102
 
-extern void s2650_get_info(UINT32 state, union cpuinfo *info);
+extern void s2650_get_info(UINT32 state, cpuinfo *info);
 
 #ifdef  MAME_DEBUG
 extern offs_t s2650_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);

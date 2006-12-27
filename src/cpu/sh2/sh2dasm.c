@@ -1,6 +1,5 @@
 #include "debugger.h"
 #include "sh2.h"
-#include "debug/eainfo.h"
 
 #define SIGNX8(x)	(((INT32)(x) << 24) >> 24)
 #define SIGNX12(x)	(((INT32)(x) << 20) >> 20)
@@ -16,8 +15,6 @@ static const char *regname[16] = {
 static UINT32 op0000(char *buffer, UINT32 pc, UINT16 opcode)
 {
 	UINT32  flags = 0;
-	const char *sym;
-
 	switch(opcode & 0x3f)
 	{
 	case 0x02:
@@ -77,20 +74,16 @@ static UINT32 op0000(char *buffer, UINT32 pc, UINT16 opcode)
 		switch(opcode & 15)
 		{
 		case  0:
-			sym = set_ea_info(0, opcode, EA_UINT16, EA_VALUE);
-			sprintf(buffer, "??????  %s", sym);
+			sprintf(buffer, "??????  $%04X", opcode);
 			break;
 		case  1:
-			sym = set_ea_info(0, opcode, EA_UINT16, EA_VALUE);
-			sprintf(buffer, "??????  %s", sym);
+			sprintf(buffer, "??????  $%04X", opcode);
 			break;
 		case  2:
-			sym = set_ea_info(0, opcode, EA_UINT16, EA_VALUE);
-			sprintf(buffer, "??????  %s", sym);
+			sprintf(buffer, "??????  $%04X", opcode);
 			break;
 		case  3:
-			sym = set_ea_info(0, opcode, EA_UINT16, EA_VALUE);
-			sprintf(buffer, "??????  %s", sym);
+			sprintf(buffer, "??????  $%04X", opcode);
 			break;
 		case  4:
 			sprintf(buffer, "MOV.B   %s,@(R0,%s)", regname[Rm], regname[Rn]);
@@ -105,20 +98,16 @@ static UINT32 op0000(char *buffer, UINT32 pc, UINT16 opcode)
 			sprintf(buffer, "MUL.L   %s,%s\n", regname[Rm], regname[Rn]);
 			break;
 		case  8:
-			sym = set_ea_info(0, opcode, EA_UINT16, EA_VALUE);
-			sprintf(buffer, "??????  %s", sym);
+			sprintf(buffer, "??????  $%04X", opcode);
 			break;
 		case  9:
-			sym = set_ea_info(0, opcode, EA_UINT16, EA_VALUE);
-			sprintf(buffer, "??????  %s", sym);
+			sprintf(buffer, "??????  $%04X", opcode);
 			break;
 		case 10:
-			sym = set_ea_info(0, opcode, EA_UINT16, EA_VALUE);
-			sprintf(buffer, "??????  %s", sym);
+			sprintf(buffer, "??????  $%04X", opcode);
 			break;
 		case 11:
-			sym = set_ea_info(0, opcode, EA_UINT16, EA_VALUE);
-			sprintf(buffer, "??????  %s", sym);
+			sprintf(buffer, "??????  $%04X", opcode);
 			break;
 		case 12:
 			sprintf(buffer, "MOV.B   @(R0,%s),%s", regname[Rm], regname[Rn]);
@@ -139,9 +128,7 @@ static UINT32 op0000(char *buffer, UINT32 pc, UINT16 opcode)
 
 static UINT32 op0001(char *buffer, UINT32 pc, UINT16 opcode)
 {
-	const char *sym;
-	sym = set_ea_info(0, (opcode & 15) * 4, EA_UINT8, EA_VALUE);
-	sprintf(buffer,"MOV.L   %s,@(%s,%s)\n", regname[Rm], sym, regname[Rn]);
+	sprintf(buffer, "MOV.L   %s,@($%02X,%s)\n", regname[Rm], (opcode & 15) * 4, regname[Rn]);
 	return 0;
 }
 
@@ -388,9 +375,7 @@ static UINT32 op0100(char *buffer, UINT32 pc, UINT16 opcode)
 
 static UINT32 op0101(char *buffer, UINT32 pc, UINT16 opcode)
 {
-	const char *sym;
-	sym = set_ea_info(0, (opcode & 15) * 4, EA_UINT8, EA_VALUE);
-	sprintf(buffer, "MOV.L   @(%s,%s),%s\n", sym, regname[Rm], regname[Rn]);
+	sprintf(buffer, "MOV.L   @($%02X,%s),%s\n", (opcode & 15) * 4, regname[Rm], regname[Rn]);
 	return 0;
 }
 
@@ -453,154 +438,118 @@ static UINT32 op0110(char *buffer, UINT32 pc, UINT16 opcode)
 
 static UINT32 op0111(char *buffer, UINT32 pc, UINT16 opcode)
 {
-	const char *sym;
-	sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
-	sprintf(buffer, "ADD     #%s,%s\n", sym, regname[Rn]);
+	sprintf(buffer, "ADD     #$%02X,%s\n", opcode & 0xff, regname[Rn]);
 	return 0;
 }
 
 static UINT32 op1000(char *buffer, UINT32 pc, UINT16 opcode)
 {
-	const char *sym;
 	switch((opcode >> 8) & 15)
 	{
 	case  0:
-		sym = set_ea_info(0, (opcode & 15), EA_UINT8, EA_VALUE);
-		sprintf(buffer, "MOV.B   R0,@(%s,%s)", sym, regname[Rm]);
+		sprintf(buffer, "MOV.B   R0,@($%02X,%s)", (opcode & 15), regname[Rm]);
 		break;
 	case  1:
-		sym = set_ea_info(0, (opcode & 15) * 2, EA_UINT8, EA_VALUE);
-		sprintf(buffer, "MOV.W   R0,@(%s,%s)", sym, regname[Rm]);
+		sprintf(buffer, "MOV.W   R0,@($%02X,%s)", (opcode & 15) * 2, regname[Rm]);
 		break;
 	case  4:
-		sym = set_ea_info(0, (opcode & 15), EA_UINT8, EA_VALUE);
-		sprintf(buffer, "MOV.B   @(%s,%s),R0", sym, regname[Rm]);
+		sprintf(buffer, "MOV.B   @($%02X,%s),R0", (opcode & 15), regname[Rm]);
 		break;
 	case  5:
-		sym = set_ea_info(0, (opcode & 15), EA_UINT8, EA_VALUE);
-		sprintf(buffer, "MOV.W   @(%s,%s),R0", sym, regname[Rm]);
+		sprintf(buffer, "MOV.W   @($%02X,%s),R0", (opcode & 15), regname[Rm]);
 		break;
 	case  8:
-		sym = set_ea_info(0, (opcode & 0xff), EA_UINT8, EA_VALUE);
-		sprintf(buffer, "CMP/EQ  #%s,R0", sym);
+		sprintf(buffer, "CMP/EQ  #$%02X,R0", (opcode & 0xff));
 		break;
 	case  9:
-		sym = set_ea_info(0, pc, SIGNX8(opcode & 0xff) * 2 + 2, EA_REL_PC);
-		sprintf(buffer, "BT      %s", sym);
+		sprintf(buffer, "BT      $%08X", pc + SIGNX8(opcode & 0xff) * 2 + 2);
 		break;
 	case 11:
-		sym = set_ea_info(0, pc, SIGNX8(opcode & 0xff) * 2 + 2, EA_REL_PC);
-		sprintf(buffer, "BF      %s", sym);
+		sprintf(buffer, "BF      $%08X", pc + SIGNX8(opcode & 0xff) * 2 + 2);
 		break;
 	case 13:
-		sym = set_ea_info(0, pc, SIGNX8(opcode & 0xff) * 2 + 2, EA_REL_PC);
-		sprintf(buffer, "BTS     %s", sym);
+		sprintf(buffer, "BTS     $%08X", pc + SIGNX8(opcode & 0xff) * 2 + 2);
 		break;
 	case 15:
-		sym = set_ea_info(0, pc, SIGNX8(opcode & 0xff) * 2 + 2, EA_REL_PC);
-		sprintf(buffer, "BFS     %s", sym);
+		sprintf(buffer, "BFS     $%08X", pc + SIGNX8(opcode & 0xff) * 2 + 2);
 		break;
 	default :
-		sym = set_ea_info(0, opcode, EA_UINT16, EA_VALUE);
-		sprintf(buffer, "invalid %s\n", sym);
+		sprintf(buffer, "invalid $%04X\n", opcode);
 	}
 	return 0;
 }
 
 static UINT32 op1001(char *buffer, UINT32 pc, UINT16 opcode)
 {
-	const char *sym;
-	sym = set_ea_info(0, (opcode & 0xff) * 2, EA_UINT16, EA_VALUE);
-	sprintf(buffer, "MOV.W   @(%s,PC),%s", sym, regname[Rn]);
+	sprintf(buffer, "MOV.W   @($%04X,PC),%s", (opcode & 0xff) * 2, regname[Rn]);
 	return 0;
 }
 
 static UINT32 op1010(char *buffer, UINT32 pc, UINT16 opcode)
 {
-	const char *sym;
-	sym = set_ea_info(0, SIGNX12(opcode & 0xfff) * 2 + pc + 2, EA_UINT32, EA_ABS_PC);
-	sprintf(buffer, "BRA     %s", sym);
+	sprintf(buffer, "BRA     $%08X", SIGNX12(opcode & 0xfff) * 2 + pc + 2);
 	return 0;
 }
 
 static UINT32 op1011(char *buffer, UINT32 pc, UINT16 opcode)
 {
-	const char *sym;
-	sym = set_ea_info(0, SIGNX12(opcode & 0xfff) * 2 + pc + 2, EA_UINT32, EA_ABS_PC);
-	sprintf(buffer, "BSR     %s", sym);
+	sprintf(buffer, "BSR     $%08X", SIGNX12(opcode & 0xfff) * 2 + pc + 2);
 	return DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 }
 
 static UINT32 op1100(char *buffer, UINT32 pc, UINT16 opcode)
 {
 	UINT32 flags = 0;
-	const char *sym;
 	switch((opcode >> 8) & 15)
 	{
 	case  0:
-		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
-		sprintf(buffer, "MOV.B   R0,@(%s,GBR)", sym);
+		sprintf(buffer, "MOV.B   R0,@($%02X,GBR)", opcode & 0xff);
 		break;
 	case  1:
-		sym = set_ea_info(0, (opcode & 0xff) * 2, EA_UINT16, EA_VALUE);
-		sprintf(buffer, "MOV.W   R0,@(%s,GBR)", sym);
+		sprintf(buffer, "MOV.W   R0,@($%04X,GBR)", (opcode & 0xff) * 2);
 		break;
 	case  2:
-		sym = set_ea_info(0, (opcode & 0xff) * 4, EA_UINT16, EA_VALUE);
-		sprintf(buffer, "MOV.L   R0,@(%s,GBR)", sym);
+		sprintf(buffer, "MOV.L   R0,@($%04X,GBR)", (opcode & 0xff) * 4);
 		break;
 	case  3:
-		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
-		sprintf(buffer, "TRAPA   #%s", sym);
+		sprintf(buffer, "TRAPA   #$%02X", opcode & 0xff);
 		flags = DASMFLAG_STEP_OVER;
 		break;
 	case  4:
-		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
-		sprintf(buffer, "MOV.B   @(%s,GBR),R0", sym);
+		sprintf(buffer, "MOV.B   @($%02X,GBR),R0", opcode & 0xff);
 		break;
 	case  5:
-		sym = set_ea_info(0, (opcode & 0xff) * 2, EA_UINT16, EA_VALUE);
-		sprintf(buffer, "MOV.W   @(%s,GBR),R0", sym);
+		sprintf(buffer, "MOV.W   @($%04X,GBR),R0", (opcode & 0xff) * 2);
 		break;
 	case  6:
-		sym = set_ea_info(0, (opcode & 0xff) * 4, EA_UINT16, EA_VALUE);
-		sprintf(buffer, "MOV.L   @(%s,GBR),R0", sym);
+		sprintf(buffer, "MOV.L   @($%04X,GBR),R0", (opcode & 0xff) * 4);
 		break;
 	case  7:
-		sym = set_ea_info(0, (opcode & 0xff) * 4, EA_UINT16, EA_VALUE);
-		sprintf(buffer, "MOVA    @(%s,PC),R0", sym);
+		sprintf(buffer, "MOVA    @($%04X,PC),R0", (opcode & 0xff) * 4);
 		break;
 	case  8:
-		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
-		sprintf(buffer, "TST     #%s,R0", sym);
+		sprintf(buffer, "TST     #$%02X,R0", opcode & 0xff);
 		break;
 	case  9:
-		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
-		sprintf(buffer, "AND     #%s,R0", sym);
+		sprintf(buffer, "AND     #$%02X,R0", opcode & 0xff);
 		break;
 	case 10:
-		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
-		sprintf(buffer, "XOR     #%s,R0", sym);
+		sprintf(buffer, "XOR     #$%02X,R0", opcode & 0xff);
 		break;
 	case 11:
-		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
-		sprintf(buffer, "OR      #%s,R0", sym);
+		sprintf(buffer, "OR      #$%02X,R0", opcode & 0xff);
 		break;
 	case 12:
-		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
-		sprintf(buffer, "TST.B   #%s,@(R0,GBR)", sym);
+		sprintf(buffer, "TST.B   #$%02X,@(R0,GBR)", opcode & 0xff);
 		break;
 	case 13:
-		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
-		sprintf(buffer, "AND.B   #%s,@(R0,GBR)", sym);
+		sprintf(buffer, "AND.B   #$%02X,@(R0,GBR)", opcode & 0xff);
 		break;
 	case 14:
-		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
-		sprintf(buffer, "XOR.B   #%s,@(R0,GBR)", sym);
+		sprintf(buffer, "XOR.B   #$%02X,@(R0,GBR)", opcode & 0xff);
 		break;
 	case 15:
-		sym = set_ea_info(0, opcode & 0xff, EA_UINT8, EA_VALUE);
-		sprintf(buffer, "OR.B    #%s,@(R0,GBR)", sym);
+		sprintf(buffer, "OR.B    #$%02X,@(R0,GBR)", opcode & 0xff);
 		break;
 	}
 	return flags;
@@ -608,25 +557,19 @@ static UINT32 op1100(char *buffer, UINT32 pc, UINT16 opcode)
 
 static UINT32 op1101(char *buffer, UINT32 pc, UINT16 opcode)
 {
-	const char *sym;
-	sym = set_ea_info(0, (opcode & 0xff) * 4, EA_UINT8, EA_VALUE);
-	sprintf(buffer, "MOV.L   @(%s,PC),%s", sym, regname[Rn]);
+	sprintf(buffer, "MOV.L   @($%02X,PC),%s", (opcode * 4) & 0xff, regname[Rn]);
 	return 0;
 }
 
 static UINT32 op1110(char *buffer, UINT32 pc, UINT16 opcode)
 {
-	const char *sym;
-	sym = set_ea_info(0, (UINT32)(INT32)(INT16)(INT8)(opcode & 0xff), EA_UINT8, EA_VALUE);
-	sprintf(buffer, "MOV     #%s,%s", sym, regname[Rn]);
+	sprintf(buffer, "MOV     #$%02X,%s", (opcode & 0xff), regname[Rn]);
 	return 0;
 }
 
 static UINT32 op1111(char *buffer, UINT32 pc, UINT16 opcode)
 {
-	const char *sym;
-	sym = set_ea_info(0, opcode, EA_UINT16, EA_VALUE);
-	sprintf(buffer, "unknown %s", sym);
+	sprintf(buffer, "unknown $%04X", opcode);
 	return 0;
 }
 

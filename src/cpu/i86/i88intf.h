@@ -4,6 +4,6 @@
 #include "i86intf.h"
 
 /* Public functions */
-void i88_get_info(UINT32 state, union cpuinfo *info);
+void i88_get_info(UINT32 state, cpuinfo *info);
 
 #endif

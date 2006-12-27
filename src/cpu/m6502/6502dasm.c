@@ -26,7 +26,6 @@
 /* 9. May 2000 PeT added m4510 */
 
 #include "debugger.h"
-#include "debug/eainfo.h"
 #include "m6502.h"
 #if (HAS_M65CE02)
 #include "m65ce02.h"
@@ -39,29 +38,29 @@
 #endif
 
 enum addr_mode {
-	non,   /* no additional arguments */
-	imp,   /* implicit */
-	acc,   /* accumulator */
-	imm,   /* immediate */
-	iw2,   /* immediate word (65ce02) */
-	iw3,   /* augment (65ce02) */
-	adr,   /* absolute address (jmp,jsr) */
-	aba,   /* absolute */
-	zpg,   /* zero page */
-	zpx,   /* zero page + X */
-	zpy,   /* zero page + Y */
-	zpi,   /* zero page indirect (65c02) */
-	zpb,   /* zero page and branch (65c02 bbr,bbs) */
-	abx,   /* absolute + X */
-	aby,   /* absolute + Y */
-	rel,   /* relative */
-	rw2,   /* relative word (65cs02, 65ce02) */
-	idx,   /* zero page pre indexed */
-	idy,   /* zero page post indexed */
-	idz,   /* zero page post indexed (65ce02) */
-	isy,   /* zero page pre indexed sp and post indexed y (65ce02) */
-	ind,   /* indirect (jmp) */
-	iax    /* indirect + X (65c02 jmp) */
+	non,	/* no additional arguments */
+	imp,	/* implicit */
+	acc,	/* accumulator */
+	imm,	/* immediate */
+	iw2,	/* immediate word (65ce02) */
+	iw3,	/* augment (65ce02) */
+	adr,	/* absolute address (jmp,jsr) */
+	aba,	/* absolute */
+	zpg,	/* zero page */
+	zpx,	/* zero page + X */
+	zpy,	/* zero page + Y */
+	zpi,	/* zero page indirect (65c02) */
+	zpb,	/* zero page and branch (65c02 bbr,bbs) */
+	abx,	/* absolute + X */
+	aby,	/* absolute + Y */
+	rel,	/* relative */
+	rw2,	/* relative word (65cs02, 65ce02) */
+	idx,	/* zero page pre indexed */
+	idy,	/* zero page post indexed */
+	idz,	/* zero page post indexed (65ce02) */
+	isy,	/* zero page pre indexed sp and post indexed y (65ce02) */
+	ind,	/* indirect (jmp) */
+	iax		/* indirect + X (65c02 jmp) */
 };
 
 enum opcodes {
@@ -110,14 +109,14 @@ static const char *token[]=
 	"ill",
 /* 65c02 mnemonics */
 	"bbr", "bbs", "bra", "rmb", "smb", "stz", "trb", "tsb",
-/* 65sc02 (only) mnemonics */
+/* 65sc02 mnemonics */
 	"bsr",
 /* 6510 mnemonics */
 	"anc", "asr", "ast", "arr", "asx", "axa", "dcp", "dea",
 	"dop", "ina", "isc", "lax", "phx", "phy", "plx", "ply",
 	"rla", "rra", "sax", "slo", "sre", "sah", "say", "ssh",
 	"sxh", "syh", "top", "oal", "kil",
-	/* 65ce02 mnemonics */
+/* 65ce02 mnemonics */
 	"cle", "see", "rtn", "aug",
 	"tab", "tba", "taz", "tza", "tys", "tsy",
 	"ldz", "stz",
@@ -132,506 +131,488 @@ static const char *token[]=
 	"u3F", "uBB", "u23"
 };
 
-/* Some really short names for the EA access modes */
-#define VAL EA_VALUE
-#define JMP EA_ABS_PC
-#define BRA EA_REL_PC
-#define MRD EA_MEM_RD
-#define MWR EA_MEM_WR
-#define MRW EA_MEM_RDWR
-#define ZRD EA_ZPG_RD
-#define ZWR EA_ZPG_WR
-#define ZRW EA_ZPG_RDWR
-
-/* words */
-#define MRD2 EA_MEM_RD
-#define MRW2 EA_MEM_RDWR
-#define ZRD2 EA_ZPG_RD
-#define ZRW2 EA_ZPG_RDWR
-
 struct op6502_info
 {
 	UINT8 opc;
 	UINT8 arg;
-	UINT8 access;
 };
 
 static const struct op6502_info op6502[256] = {
-	{m6502_brk,imm,VAL},{ora,idx,MRD},{ill,non,0	},{ill,non,0 },/* 00 */
-	{ill,non,0	},{ora,zpg,ZRD},{asl,zpg,ZRW},{ill,non,0 },
-	{php,imp,0	},{ora,imm,VAL},{asl,acc,0	},{ill,non,0 },
-	{ill,non,0	},{ora,aba,MRD},{asl,aba,MRW},{ill,non,0 },
-	{bpl,rel,BRA},{ora,idy,MRD},{ill,non,0	},{ill,non,0 },/* 10 */
-	{ill,non,0	},{ora,zpx,ZRD},{asl,zpx,ZRW},{ill,non,0 },
-	{clc,imp,0	},{ora,aby,MRD},{ill,non,0	},{ill,non,0 },
-	{ill,non,0	},{ora,abx,MRD},{asl,abx,MRW},{ill,non,0 },
-	{jsr,adr,JMP},{and,idx,MRD},{ill,non,0	},{ill,non,0 },/* 20 */
-	{bit,zpg,ZRD},{and,zpg,ZRD},{rol,zpg,ZRW},{ill,non,0 },
-	{plp,imp,0	},{and,imm,VAL},{rol,acc,0	},{ill,non,0 },
-	{bit,aba,MRD},{and,aba,MRD},{rol,aba,MRW},{ill,non,0 },
-	{bmi,rel,BRA},{and,idy,MRD},{ill,non,0	},{ill,non,0 },/* 30 */
-	{ill,non,0	},{and,zpx,ZRD},{rol,zpx,ZRW},{ill,non,0 },
-	{sec,imp,0	},{and,aby,MRD},{ill,non,0	},{ill,non,0 },
-	{ill,non,0	},{and,abx,MRD},{rol,abx,MRW},{ill,non,0 },
-	{rti,imp,0	},{eor,idx,MRD},{ill,non,0	},{ill,non,0 },/* 40 */
-	{ill,non,0	},{eor,zpg,ZRD},{lsr,zpg,ZRW},{ill,non,0  },
-	{pha,imp,0	},{eor,imm,VAL},{lsr,acc,0	},{ill,non,0 },
-	{jmp,adr,JMP},{eor,aba,MRD},{lsr,aba,MRW},{ill,non,0 },
-	{bvc,rel,BRA},{eor,idy,MRD},{ill,non,0	},{ill,non,0 },/* 50 */
-	{ill,non,0	},{eor,zpx,ZRD},{lsr,zpx,ZRW},{ill,non,0 },
-	{cli,imp,0	},{eor,aby,MRD},{ill,non,0	},{ill,non,0 },
-	{ill,non,0	},{eor,abx,MRD},{lsr,abx,MRW},{ill,non,0 },
-	{rts,imp,0	},{adc,idx,MRD},{ill,non,0	},{ill,non,0 },/* 60 */
-	{ill,non,0	},{adc,zpg,ZRD},{ror,zpg,ZRW},{ill,non,0 },
-	{pla,imp,0	},{adc,imm,VAL},{ror,acc,0	},{ill,non,0 },
-	{jmp,ind,JMP},{adc,aba,MRD},{ror,aba,MRW},{ill,non,0 },
-	{bvs,rel,BRA},{adc,idy,MRD},{ill,non,0	},{ill,non,0 },/* 70 */
-	{ill,non,0	},{adc,zpx,ZRD},{ror,zpx,ZRW},{ill,non,0 },
-	{sei,imp,0	},{adc,aby,MRD},{ill,non,0	},{ill,non,0 },
-	{ill,non,0	},{adc,abx,MRD},{ror,abx,MRW},{ill,non,0 },
-	{ill,non,0	},{sta,idx,MWR},{ill,non,0	},{ill,non,0 },/* 80 */
-	{sty,zpg,ZWR},{sta,zpg,ZWR},{stx,zpg,ZWR},{ill,non,0 },
-	{dey,imp,0	},{ill,non,0  },{txa,imp,0	},{ill,non,0 },
-	{sty,aba,MWR},{sta,aba,MWR},{stx,aba,MWR},{ill,non,0 },
-	{bcc,rel,BRA},{sta,idy,MWR},{ill,non,0	},{ill,non,0 },/* 90 */
-	{sty,zpx,ZWR},{sta,zpx,ZWR},{stx,zpy,ZWR},{ill,non,0 },
-	{tya,imp,0	},{sta,aby,MWR},{txs,imp,0	},{ill,non,0 },
-	{ill,non,0	},{sta,abx,MWR},{ill,non,0	},{ill,non,0 },
-	{ldy,imm,VAL},{lda,idx,MRD},{ldx,imm,VAL},{ill,non,0 },/* a0 */
-	{ldy,zpg,ZRD},{lda,zpg,ZRD},{ldx,zpg,ZRD},{ill,non,0 },
-	{tay,imp,0	},{lda,imm,VAL},{tax,imp,0	},{ill,non,0 },
-	{ldy,aba,MRD},{lda,aba,MRD},{ldx,aba,MRD},{ill,non,0 },
-	{bcs,rel,BRA},{lda,idy,MRD},{ill,non,0	},{ill,non,0 },/* b0 */
-	{ldy,zpx,ZRD},{lda,zpx,ZRD},{ldx,zpy,ZRD},{ill,non,0 },
-	{clv,imp,0	},{lda,aby,MRD},{tsx,imp,0	},{ill,non,0 },
-	{ldy,abx,MRD},{lda,abx,MRD},{ldx,aby,MRD},{ill,non,0 },
-	{cpy,imm,VAL},{cmp,idx,MRD},{ill,non,0	},{ill,non,0 },/* c0 */
-	{cpy,zpg,ZRD},{cmp,zpg,ZRD},{dec,zpg,ZRW},{ill,non,0 },
-	{iny,imp,0	},{cmp,imm,VAL},{dex,imp,0	},{ill,non,0 },
-	{cpy,aba,MRD},{cmp,aba,MRD},{dec,aba,MRW},{ill,non,0 },
-	{bne,rel,BRA},{cmp,idy,MRD},{ill,non,0	},{ill,non,0 },/* d0 */
-	{ill,non,0	},{cmp,zpx,ZRD},{dec,zpx,ZRW},{ill,non,0 },
-	{cld,imp,0	},{cmp,aby,MRD},{ill,non,0	},{ill,non,0 },
-	{ill,non,0	},{cmp,abx,MRD},{dec,abx,MRW},{ill,non,0 },
-	{cpx,imm,VAL},{sbc,idx,MRD},{ill,non,0	},{ill,non,0 },/* e0 */
-	{cpx,zpg,ZRD},{sbc,zpg,ZRD},{inc,zpg,ZRW},{ill,non,0 },
-	{inx,imp,0	},{sbc,imm,VAL},{nop,imp,0	},{ill,non,0 },
-	{cpx,aba,MRD},{sbc,aba,MRD},{inc,aba,MRW},{ill,non,0 },
-	{beq,rel,BRA},{sbc,idy,MRD},{ill,non,0	},{ill,non,0 },/* f0 */
-	{ill,non,0	},{sbc,zpx,ZRD},{inc,zpx,ZRW},{ill,non,0 },
-	{sed,imp,0	},{sbc,aby,MRD},{ill,non,0	},{ill,non,0 },
-	{ill,non,0	},{sbc,abx,MRD},{inc,abx,MRW},{ill,non,0 }
+	{m6502_brk,imm},{ora,idx},{ill,non},{ill,non},/* 00 */
+	{ill,non},{ora,zpg},{asl,zpg},{ill,non},
+	{php,imp},{ora,imm},{asl,acc},{ill,non},
+	{ill,non},{ora,aba},{asl,aba},{ill,non},
+	{bpl,rel},{ora,idy},{ill,non},{ill,non},/* 10 */
+	{ill,non},{ora,zpx},{asl,zpx},{ill,non},
+	{clc,imp},{ora,aby},{ill,non},{ill,non},
+	{ill,non},{ora,abx},{asl,abx},{ill,non},
+	{jsr,adr},{and,idx},{ill,non},{ill,non},/* 20 */
+	{bit,zpg},{and,zpg},{rol,zpg},{ill,non},
+	{plp,imp},{and,imm},{rol,acc},{ill,non},
+	{bit,aba},{and,aba},{rol,aba},{ill,non},
+	{bmi,rel},{and,idy},{ill,non},{ill,non},/* 30 */
+	{ill,non},{and,zpx},{rol,zpx},{ill,non},
+	{sec,imp},{and,aby},{ill,non},{ill,non},
+	{ill,non},{and,abx},{rol,abx},{ill,non},
+	{rti,imp},{eor,idx},{ill,non},{ill,non},/* 40 */
+	{ill,non},{eor,zpg},{lsr,zpg},{ill,non},
+	{pha,imp},{eor,imm},{lsr,acc},{ill,non},
+	{jmp,adr},{eor,aba},{lsr,aba},{ill,non},
+	{bvc,rel},{eor,idy},{ill,non},{ill,non},/* 50 */
+	{ill,non},{eor,zpx},{lsr,zpx},{ill,non},
+	{cli,imp},{eor,aby},{ill,non},{ill,non},
+	{ill,non},{eor,abx},{lsr,abx},{ill,non},
+	{rts,imp},{adc,idx},{ill,non},{ill,non},/* 60 */
+	{ill,non},{adc,zpg},{ror,zpg},{ill,non},
+	{pla,imp},{adc,imm},{ror,acc},{ill,non},
+	{jmp,ind},{adc,aba},{ror,aba},{ill,non},
+	{bvs,rel},{adc,idy},{ill,non},{ill,non},/* 70 */
+	{ill,non},{adc,zpx},{ror,zpx},{ill,non},
+	{sei,imp},{adc,aby},{ill,non},{ill,non},
+	{ill,non},{adc,abx},{ror,abx},{ill,non},
+	{ill,non},{sta,idx},{ill,non},{ill,non},/* 80 */
+	{sty,zpg},{sta,zpg},{stx,zpg},{ill,non},
+	{dey,imp},{ill,non},{txa,imp},{ill,non},
+	{sty,aba},{sta,aba},{stx,aba},{ill,non},
+	{bcc,rel},{sta,idy},{ill,non},{ill,non},/* 90 */
+	{sty,zpx},{sta,zpx},{stx,zpy},{ill,non},
+	{tya,imp},{sta,aby},{txs,imp},{ill,non},
+	{ill,non},{sta,abx},{ill,non},{ill,non},
+	{ldy,imm},{lda,idx},{ldx,imm},{ill,non},/* a0 */
+	{ldy,zpg},{lda,zpg},{ldx,zpg},{ill,non},
+	{tay,imp},{lda,imm},{tax,imp},{ill,non},
+	{ldy,aba},{lda,aba},{ldx,aba},{ill,non},
+	{bcs,rel},{lda,idy},{ill,non},{ill,non},/* b0 */
+	{ldy,zpx},{lda,zpx},{ldx,zpy},{ill,non},
+	{clv,imp},{lda,aby},{tsx,imp},{ill,non},
+	{ldy,abx},{lda,abx},{ldx,aby},{ill,non},
+	{cpy,imm},{cmp,idx},{ill,non},{ill,non},/* c0 */
+	{cpy,zpg},{cmp,zpg},{dec,zpg},{ill,non},
+	{iny,imp},{cmp,imm},{dex,imp},{ill,non},
+	{cpy,aba},{cmp,aba},{dec,aba},{ill,non},
+	{bne,rel},{cmp,idy},{ill,non},{ill,non},/* d0 */
+	{ill,non},{cmp,zpx},{dec,zpx},{ill,non},
+	{cld,imp},{cmp,aby},{ill,non},{ill,non},
+	{ill,non},{cmp,abx},{dec,abx},{ill,non},
+	{cpx,imm},{sbc,idx},{ill,non},{ill,non},/* e0 */
+	{cpx,zpg},{sbc,zpg},{inc,zpg},{ill,non},
+	{inx,imp},{sbc,imm},{nop,imp},{ill,non},
+	{cpx,aba},{sbc,aba},{inc,aba},{ill,non},
+	{beq,rel},{sbc,idy},{ill,non},{ill,non},/* f0 */
+	{ill,non},{sbc,zpx},{inc,zpx},{ill,non},
+	{sed,imp},{sbc,aby},{ill,non},{ill,non},
+	{ill,non},{sbc,abx},{inc,abx},{ill,non}
 };
 
 static const struct op6502_info op65c02[256] = {
-	{m6502_brk,imm,VAL},{ora,idx,MRD},{ill,non,0	},{ill,non,0 },/* 00 */
-	{tsb,zpg,0	},{ora,zpg,ZRD},{asl,zpg,ZRW},{rmb,zpg,ZRW},
-	{php,imp,0	},{ora,imm,VAL},{asl,acc,MRW},{ill,non,0 },
-	{tsb,aba,MRD},{ora,aba,MRD},{asl,aba,MRW},{bbr,zpb,ZRD},
-	{bpl,rel,BRA},{ora,idy,MRD},{ora,zpi,MRD},{ill,non,0 },/* 10 */
-	{trb,zpg,ZRD},{ora,zpx,ZRD},{asl,zpx,ZRW},{rmb,zpg,ZRW},
-	{clc,imp,0	},{ora,aby,MRD},{ina,imp,0	},{ill,non,0 },
-	{trb,aba,MRD},{ora,abx,MRD},{asl,abx,MRW},{bbr,zpb,ZRD},
-	{jsr,adr,0	},{and,idx,MRD},{ill,non,0	},{ill,non,0 },/* 20 */
-	{bit,zpg,ZRD},{and,zpg,ZRD},{rol,zpg,ZRW},{rmb,zpg,ZRW},
-	{plp,imp,0	},{and,imm,VAL},{rol,acc,0	},{ill,non,0 },
-	{bit,aba,MRD},{and,aba,MRD},{rol,aba,MRW},{bbr,zpb,ZRD},
-	{bmi,rel,BRA},{and,idy,MRD},{and,zpi,MRD},{ill,non,0 },/* 30 */
-	{bit,zpx,ZRD},{and,zpx,ZRD},{rol,zpx,ZRW},{rmb,zpg,ZRW},
-	{sec,imp,0	},{and,aby,MRD},{dea,imp,0	},{ill,non,0 },
-	{bit,abx,MRD},{and,abx,MRD},{rol,abx,MRW},{bbr,zpb,ZRD},
-	{rti,imp,0	},{eor,idx,MRD},{ill,non,0	},{ill,non,0 },/* 40 */
-	{ill,non,0	},{eor,zpg,ZRD},{lsr,zpg,ZRW},{rmb,zpg,ZRW},
-	{pha,imp,0	},{eor,imm,VAL},{lsr,acc,0	},{ill,non,0 },
-	{jmp,adr,JMP},{eor,aba,MRD},{lsr,aba,MRW},{bbr,zpb,ZRD},
-	{bvc,rel,BRA},{eor,idy,MRD},{eor,zpi,MRD},{ill,non,0 },/* 50 */
-	{ill,non,0	},{eor,zpx,ZRD},{lsr,zpx,ZRW},{rmb,zpg,ZRW},
-	{cli,imp,0	},{eor,aby,MRD},{phy,imp,0	},{ill,non,0 },
-	{ill,non,0	},{eor,abx,MRD},{lsr,abx,MRW},{bbr,zpb,ZRD},
-	{rts,imp,0	},{adc,idx,MRD},{ill,non,0	},{ill,non,0 },/* 60 */
-	{stz,zpg,ZWR},{adc,zpg,ZRD},{ror,zpg,ZRW},{rmb,zpg,ZRW},
-	{pla,imp,0	},{adc,imm,VAL},{ror,acc,0	},{ill,non,0 },
-	{jmp,ind,JMP},{adc,aba,MRD},{ror,aba,MRW},{bbr,zpb,ZRD},
-	{bvs,rel,BRA},{adc,idy,MRD},{adc,zpi,MRD},{ill,non,0 },/* 70 */
-	{stz,zpx,ZWR},{adc,zpx,ZRD},{ror,zpx,ZRW},{rmb,zpg,ZRW},
-	{sei,imp,0	},{adc,aby,MRD},{ply,imp,0	},{ill,non,0 },
-	{jmp,iax,JMP},{adc,abx,MRD},{ror,abx,MRW},{bbr,zpb,ZRD},
-	{bra,rel,BRA},{sta,idx,MWR},{ill,non,0	},{ill,non,0 },/* 80 */
-	{sty,zpg,ZWR},{sta,zpg,ZWR},{stx,zpg,ZWR},{smb,zpg,ZRW},
-	{dey,imp,0	},{bit,imm,VAL},{txa,imp,0	},{ill,non,0 },
-	{sty,aba,MWR},{sta,aba,MWR},{stx,aba,MWR},{bbs,zpb,ZRD},
-	{bcc,rel,BRA},{sta,idy,MWR},{sta,zpi,MWR},{ill,non,0 },/* 90 */
-	{sty,zpx,ZWR},{sta,zpx,ZWR},{stx,zpy,ZWR},{smb,zpg,ZRW},
-	{tya,imp,0	},{sta,aby,MWR},{txs,imp,0	},{ill,non,0 },
-	{stz,aba,MWR},{sta,abx,MWR},{stz,abx,MWR},{bbs,zpb,ZRD},
-	{ldy,imm,VAL},{lda,idx,MRD},{ldx,imm,VAL},{ill,non,0 },/* a0 */
-	{ldy,zpg,ZRD},{lda,zpg,ZRD},{ldx,zpg,ZRD},{smb,zpg,ZRW},
-	{tay,imp,0	},{lda,imm,VAL},{tax,imp,0	},{ill,non,0 },
-	{ldy,aba,MRD},{lda,aba,MRD},{ldx,aba,MRD},{bbs,zpb,ZRD},
-	{bcs,rel,BRA},{lda,idy,MRD},{lda,zpi,MRD},{ill,non,0 },/* b0 */
-	{ldy,zpx,ZRD},{lda,zpx,ZRD},{ldx,zpy,ZRD},{smb,zpg,ZRW},
-	{clv,imp,0	},{lda,aby,MRD},{tsx,imp,0	},{ill,non,0 },
-	{ldy,abx,MRD},{lda,abx,MRD},{ldx,aby,MRD},{bbs,zpb,ZRD},
-	{cpy,imm,VAL},{cmp,idx,MRD},{ill,non,0	},{ill,non,0 },/* c0 */
-	{cpy,zpg,ZRD},{cmp,zpg,ZRD},{dec,zpg,ZRW},{smb,zpg,ZRW},
-	{iny,imp,0	},{cmp,imm,VAL},{dex,imp,0	},{ill,non,0 },
-	{cpy,aba,MRD},{cmp,aba,MRD},{dec,aba,MRW},{bbs,zpb,ZRD},
-	{bne,rel,BRA},{cmp,idy,MRD},{cmp,zpi,MRD},{ill,non,0 },/* d0 */
-	{ill,non,0	},{cmp,zpx,ZRD},{dec,zpx,ZRW},{smb,zpg,ZRW},
-	{cld,imp,0	},{cmp,aby,MRD},{phx,imp,0	},{ill,non,0 },
-	{ill,non,0	},{cmp,abx,MRD},{dec,abx,MRW},{bbs,zpb,ZRD},
-	{cpx,imm,VAL},{sbc,idx,MRD},{ill,non,0	},{ill,non,0 },/* e0 */
-	{cpx,zpg,ZRD},{sbc,zpg,ZRD},{inc,zpg,ZRW},{smb,zpg,ZRW},
-	{inx,imp,0	},{sbc,imm,VAL},{nop,imp,0	},{ill,non,0 },
-	{cpx,aba,MRD},{sbc,aba,MRD},{inc,aba,MRW},{bbs,zpb,ZRD},
-	{beq,rel,BRA},{sbc,idy,MRD},{sbc,zpi,MRD},{ill,non,0 },/* f0 */
-	{ill,non,0	},{sbc,zpx,ZRD},{inc,zpx,ZRW},{smb,zpg,ZRW},
-	{sed,imp,0	},{sbc,aby,MRD},{plx,imp,0	},{ill,non,0 },
-	{ill,non,0	},{sbc,abx,MRD},{inc,abx,MRW},{bbs,zpb,ZRD}
+	{m6502_brk,imm},{ora,idx},{ill,non},{ill,non},/* 00 */
+	{tsb,zpg},{ora,zpg},{asl,zpg},{rmb,zpg},
+	{php,imp},{ora,imm},{asl,acc},{ill,non},
+	{tsb,aba},{ora,aba},{asl,aba},{bbr,zpb},
+	{bpl,rel},{ora,idy},{ora,zpi},{ill,non},/* 10 */
+	{trb,zpg},{ora,zpx},{asl,zpx},{rmb,zpg},
+	{clc,imp},{ora,aby},{ina,imp},{ill,non},
+	{trb,aba},{ora,abx},{asl,abx},{bbr,zpb},
+	{jsr,adr},{and,idx},{ill,non},{ill,non},/* 20 */
+	{bit,zpg},{and,zpg},{rol,zpg},{rmb,zpg},
+	{plp,imp},{and,imm},{rol,acc},{ill,non},
+	{bit,aba},{and,aba},{rol,aba},{bbr,zpb},
+	{bmi,rel},{and,idy},{and,zpi},{ill,non},/* 30 */
+	{bit,zpx},{and,zpx},{rol,zpx},{rmb,zpg},
+	{sec,imp},{and,aby},{dea,imp},{ill,non},
+	{bit,abx},{and,abx},{rol,abx},{bbr,zpb},
+	{rti,imp},{eor,idx},{ill,non},{ill,non},/* 40 */
+	{ill,non},{eor,zpg},{lsr,zpg},{rmb,zpg},
+	{pha,imp},{eor,imm},{lsr,acc},{ill,non},
+	{jmp,adr},{eor,aba},{lsr,aba},{bbr,zpb},
+	{bvc,rel},{eor,idy},{eor,zpi},{ill,non},/* 50 */
+	{ill,non},{eor,zpx},{lsr,zpx},{rmb,zpg},
+	{cli,imp},{eor,aby},{phy,imp},{ill,non},
+	{ill,non},{eor,abx},{lsr,abx},{bbr,zpb},
+	{rts,imp},{adc,idx},{ill,non},{ill,non},/* 60 */
+	{stz,zpg},{adc,zpg},{ror,zpg},{rmb,zpg},
+	{pla,imp},{adc,imm},{ror,acc},{ill,non},
+	{jmp,ind},{adc,aba},{ror,aba},{bbr,zpb},
+	{bvs,rel},{adc,idy},{adc,zpi},{ill,non},/* 70 */
+	{stz,zpx},{adc,zpx},{ror,zpx},{rmb,zpg},
+	{sei,imp},{adc,aby},{ply,imp},{ill,non},
+	{jmp,iax},{adc,abx},{ror,abx},{bbr,zpb},
+	{bra,rel},{sta,idx},{ill,non},{ill,non},/* 80 */
+	{sty,zpg},{sta,zpg},{stx,zpg},{smb,zpg},
+	{dey,imp},{bit,imm},{txa,imp},{ill,non},
+	{sty,aba},{sta,aba},{stx,aba},{bbs,zpb},
+	{bcc,rel},{sta,idy},{sta,zpi},{ill,non},/* 90 */
+	{sty,zpx},{sta,zpx},{stx,zpy},{smb,zpg},
+	{tya,imp},{sta,aby},{txs,imp},{ill,non},
+	{stz,aba},{sta,abx},{stz,abx},{bbs,zpb},
+	{ldy,imm},{lda,idx},{ldx,imm},{ill,non},/* a0 */
+	{ldy,zpg},{lda,zpg},{ldx,zpg},{smb,zpg},
+	{tay,imp},{lda,imm},{tax,imp},{ill,non},
+	{ldy,aba},{lda,aba},{ldx,aba},{bbs,zpb},
+	{bcs,rel},{lda,idy},{lda,zpi},{ill,non},/* b0 */
+	{ldy,zpx},{lda,zpx},{ldx,zpy},{smb,zpg},
+	{clv,imp},{lda,aby},{tsx,imp},{ill,non},
+	{ldy,abx},{lda,abx},{ldx,aby},{bbs,zpb},
+	{cpy,imm},{cmp,idx},{ill,non},{ill,non},/* c0 */
+	{cpy,zpg},{cmp,zpg},{dec,zpg},{smb,zpg},
+	{iny,imp},{cmp,imm},{dex,imp},{ill,non},
+	{cpy,aba},{cmp,aba},{dec,aba},{bbs,zpb},
+	{bne,rel},{cmp,idy},{cmp,zpi},{ill,non},/* d0 */
+	{ill,non},{cmp,zpx},{dec,zpx},{smb,zpg},
+	{cld,imp},{cmp,aby},{phx,imp},{ill,non},
+	{ill,non},{cmp,abx},{dec,abx},{bbs,zpb},
+	{cpx,imm},{sbc,idx},{ill,non},{ill,non},/* e0 */
+	{cpx,zpg},{sbc,zpg},{inc,zpg},{smb,zpg},
+	{inx,imp},{sbc,imm},{nop,imp},{ill,non},
+	{cpx,aba},{sbc,aba},{inc,aba},{bbs,zpb},
+	{beq,rel},{sbc,idy},{sbc,zpi},{ill,non},/* f0 */
+	{ill,non},{sbc,zpx},{inc,zpx},{smb,zpg},
+	{sed,imp},{sbc,aby},{plx,imp},{ill,non},
+	{ill,non},{sbc,abx},{inc,abx},{bbs,zpb}
 };
 
 /* only bsr additional to 65c02 yet */
 static const struct op6502_info op65sc02[256] = {
-	{m6502_brk,imm,VAL},{ora,idx,MRD},{ill,non,0	},{ill,non,0 },/* 00 */
-	{tsb,zpg,0	},{ora,zpg,ZRD},{asl,zpg,ZRW},{rmb,zpg,ZRW},
-	{php,imp,0	},{ora,imm,VAL},{asl,acc,MRW},{ill,non,0 },
-	{tsb,aba,MRD},{ora,aba,MRD},{asl,aba,MRW},{bbr,zpb,ZRD},
-	{bpl,rel,BRA},{ora,idy,MRD},{ora,zpi,MRD},{ill,non,0 },/* 10 */
-	{trb,zpg,ZRD},{ora,zpx,ZRD},{asl,zpx,ZRW},{rmb,zpg,ZRW},
-	{clc,imp,0	},{ora,aby,MRD},{ina,imp,0	},{ill,non,0 },
-	{trb,aba,MRD},{ora,abx,MRD},{asl,abx,MRW},{bbr,zpb,ZRD},
-	{jsr,adr,0	},{and,idx,MRD},{ill,non,0	},{ill,non,0 },/* 20 */
-	{bit,zpg,ZRD},{and,zpg,ZRD},{rol,zpg,ZRW},{rmb,zpg,ZRW},
-	{plp,imp,0	},{and,imm,VAL},{rol,acc,0	},{ill,non,0 },
-	{bit,aba,MRD},{and,aba,MRD},{rol,aba,MRW},{bbr,zpb,ZRD},
-	{bmi,rel,BRA},{and,idy,MRD},{and,zpi,MRD},{ill,non,0 },/* 30 */
-	{bit,zpx,ZRD},{and,zpx,ZRD},{rol,zpx,ZRW},{rmb,zpg,ZRW},
-	{sec,imp,0	},{and,aby,MRD},{dea,imp,0	},{ill,non,0 },
-	{bit,abx,MRD},{and,abx,MRD},{rol,abx,MRW},{bbr,zpb,ZRD},
-	{rti,imp,0	},{eor,idx,MRD},{ill,non,0	},{ill,non,0 },/* 40 */
-	{ill,non,0	},{eor,zpg,ZRD},{lsr,zpg,ZRW},{rmb,zpg,ZRW},
-	{pha,imp,0	},{eor,imm,VAL},{lsr,acc,0	},{ill,non,0 },
-	{jmp,adr,JMP},{eor,aba,MRD},{lsr,aba,MRW},{bbr,zpb,ZRD},
-	{bvc,rel,BRA},{eor,idy,MRD},{eor,zpi,MRD},{ill,non,0 },/* 50 */
-	{ill,non,0	},{eor,zpx,ZRD},{lsr,zpx,ZRW},{rmb,zpg,ZRW},
-	{cli,imp,0	},{eor,aby,MRD},{phy,imp,0	},{ill,non,0 },
-	{ill,non,0	},{eor,abx,MRD},{lsr,abx,MRW},{bbr,zpb,ZRD},
-	{rts,imp,0	},{adc,idx,MRD},{ill,non,0	},{bsr,rw2,BRA},/* 60 */
-	{stz,zpg,ZWR},{adc,zpg,ZRD},{ror,zpg,ZRW},{rmb,zpg,ZRW},
-	{pla,imp,0	},{adc,imm,VAL},{ror,acc,0	},{ill,non,0 },
-	{jmp,ind,JMP},{adc,aba,MRD},{ror,aba,MRW},{bbr,zpb,ZRD},
-	{bvs,rel,BRA},{adc,idy,MRD},{adc,zpi,MRD},{ill,non,0 },/* 70 */
-	{stz,zpx,ZWR},{adc,zpx,ZRD},{ror,zpx,ZRW},{rmb,zpg,ZRW},
-	{sei,imp,0	},{adc,aby,MRD},{ply,imp,0	},{ill,non,0 },
-	{jmp,iax,JMP},{adc,abx,MRD},{ror,abx,MRW},{bbr,zpb,ZRD},
-	{bra,rel,BRA},{sta,idx,MWR},{ill,non,0	},{ill,non,0 },/* 80 */
-	{sty,zpg,ZWR},{sta,zpg,ZWR},{stx,zpg,ZWR},{smb,zpg,ZRW},
-	{dey,imp,0	},{bit,imm,VAL},{txa,imp,0	},{ill,non,0 },
-	{sty,aba,MWR},{sta,aba,MWR},{stx,aba,MWR},{bbs,zpb,ZRD},
-	{bcc,rel,BRA},{sta,idy,MWR},{sta,zpi,MWR},{ill,non,0 },/* 90 */
-	{sty,zpx,ZWR},{sta,zpx,ZWR},{stx,zpy,ZWR},{smb,zpg,ZRW},
-	{tya,imp,0	},{sta,aby,MWR},{txs,imp,0	},{ill,non,0 },
-	{stz,aba,MWR},{sta,abx,MWR},{stz,abx,MWR},{bbs,zpb,ZRD},
-	{ldy,imm,VAL},{lda,idx,MRD},{ldx,imm,VAL},{ill,non,0 },/* a0 */
-	{ldy,zpg,ZRD},{lda,zpg,ZRD},{ldx,zpg,ZRD},{smb,zpg,ZRW},
-	{tay,imp,0	},{lda,imm,VAL},{tax,imp,0	},{ill,non,0 },
-	{ldy,aba,MRD},{lda,aba,MRD},{ldx,aba,MRD},{bbs,zpb,ZRD},
-	{bcs,rel,BRA},{lda,idy,MRD},{lda,zpi,MRD},{ill,non,0 },/* b0 */
-	{ldy,zpx,ZRD},{lda,zpx,ZRD},{ldx,zpy,ZRD},{smb,zpg,ZRW},
-	{clv,imp,0	},{lda,aby,MRD},{tsx,imp,0	},{ill,non,0 },
-	{ldy,abx,MRD},{lda,abx,MRD},{ldx,aby,MRD},{bbs,zpb,ZRD},
-	{cpy,imm,VAL},{cmp,idx,MRD},{ill,non,0	},{ill,non,0 },/* c0 */
-	{cpy,zpg,ZRD},{cmp,zpg,ZRD},{dec,zpg,ZRW},{smb,zpg,ZRW},
-	{iny,imp,0	},{cmp,imm,VAL},{dex,imp,0	},{ill,non,0 },
-	{cpy,aba,MRD},{cmp,aba,MRD},{dec,aba,MRW},{bbs,zpb,ZRD},
-	{bne,rel,BRA},{cmp,idy,MRD},{cmp,zpi,MRD},{ill,non,0 },/* d0 */
-	{ill,non,0	},{cmp,zpx,ZRD},{dec,zpx,ZRW},{smb,zpg,ZRW},
-	{cld,imp,0	},{cmp,aby,MRD},{phx,imp,0	},{ill,non,0 },
-	{ill,non,0	},{cmp,abx,MRD},{dec,abx,MRW},{bbs,zpb,ZRD},
-	{cpx,imm,VAL},{sbc,idx,MRD},{ill,non,0	},{ill,non,0 },/* e0 */
-	{cpx,zpg,ZRD},{sbc,zpg,ZRD},{inc,zpg,ZRW},{smb,zpg,ZRW},
-	{inx,imp,0	},{sbc,imm,VAL},{nop,imp,0	},{ill,non,0 },
-	{cpx,aba,MRD},{sbc,aba,MRD},{inc,aba,MRW},{bbs,zpb,ZRD},
-	{beq,rel,BRA},{sbc,idy,MRD},{sbc,zpi,MRD},{ill,non,0 },/* f0 */
-	{ill,non,0	},{sbc,zpx,ZRD},{inc,zpx,ZRW},{smb,zpg,ZRW},
-	{sed,imp,0	},{sbc,aby,MRD},{plx,imp,0	},{ill,non,0 },
-	{ill,non,0	},{sbc,abx,MRD},{inc,abx,MRW},{bbs,zpb,ZRD}
+	{m6502_brk,imm},{ora,idx},{ill,non},{ill,non},/* 00 */
+	{tsb,zpg},{ora,zpg},{asl,zpg},{rmb,zpg},
+	{php,imp},{ora,imm},{asl,acc},{ill,non},
+	{tsb,aba},{ora,aba},{asl,aba},{bbr,zpb},
+	{bpl,rel},{ora,idy},{ora,zpi},{ill,non},/* 10 */
+	{trb,zpg},{ora,zpx},{asl,zpx},{rmb,zpg},
+	{clc,imp},{ora,aby},{ina,imp},{ill,non},
+	{trb,aba},{ora,abx},{asl,abx},{bbr,zpb},
+	{jsr,adr},{and,idx},{ill,non},{ill,non},/* 20 */
+	{bit,zpg},{and,zpg},{rol,zpg},{rmb,zpg},
+	{plp,imp},{and,imm},{rol,acc},{ill,non},
+	{bit,aba},{and,aba},{rol,aba},{bbr,zpb},
+	{bmi,rel},{and,idy},{and,zpi},{ill,non},/* 30 */
+	{bit,zpx},{and,zpx},{rol,zpx},{rmb,zpg},
+	{sec,imp},{and,aby},{dea,imp},{ill,non},
+	{bit,abx},{and,abx},{rol,abx},{bbr,zpb},
+	{rti,imp},{eor,idx},{ill,non},{ill,non},/* 40 */
+	{ill,non},{eor,zpg},{lsr,zpg},{rmb,zpg},
+	{pha,imp},{eor,imm},{lsr,acc},{ill,non},
+	{jmp,adr},{eor,aba},{lsr,aba},{bbr,zpb},
+	{bvc,rel},{eor,idy},{eor,zpi},{ill,non},/* 50 */
+	{ill,non},{eor,zpx},{lsr,zpx},{rmb,zpg},
+	{cli,imp},{eor,aby},{phy,imp},{ill,non},
+	{ill,non},{eor,abx},{lsr,abx},{bbr,zpb},
+	{rts,imp},{adc,idx},{ill,non},{bsr,rw2},/* 60 */
+	{stz,zpg},{adc,zpg},{ror,zpg},{rmb,zpg},
+	{pla,imp},{adc,imm},{ror,acc},{ill,non},
+	{jmp,ind},{adc,aba},{ror,aba},{bbr,zpb},
+	{bvs,rel},{adc,idy},{adc,zpi},{ill,non},/* 70 */
+	{stz,zpx},{adc,zpx},{ror,zpx},{rmb,zpg},
+	{sei,imp},{adc,aby},{ply,imp},{ill,non},
+	{jmp,iax},{adc,abx},{ror,abx},{bbr,zpb},
+	{bra,rel},{sta,idx},{ill,non},{ill,non},/* 80 */
+	{sty,zpg},{sta,zpg},{stx,zpg},{smb,zpg},
+	{dey,imp},{bit,imm},{txa,imp},{ill,non},
+	{sty,aba},{sta,aba},{stx,aba},{bbs,zpb},
+	{bcc,rel},{sta,idy},{sta,zpi},{ill,non},/* 90 */
+	{sty,zpx},{sta,zpx},{stx,zpy},{smb,zpg},
+	{tya,imp},{sta,aby},{txs,imp},{ill,non},
+	{stz,aba},{sta,abx},{stz,abx},{bbs,zpb},
+	{ldy,imm},{lda,idx},{ldx,imm},{ill,non},/* a0 */
+	{ldy,zpg},{lda,zpg},{ldx,zpg},{smb,zpg},
+	{tay,imp},{lda,imm},{tax,imp},{ill,non},
+	{ldy,aba},{lda,aba},{ldx,aba},{bbs,zpb},
+	{bcs,rel},{lda,idy},{lda,zpi},{ill,non},/* b0 */
+	{ldy,zpx},{lda,zpx},{ldx,zpy},{smb,zpg},
+	{clv,imp},{lda,aby},{tsx,imp},{ill,non},
+	{ldy,abx},{lda,abx},{ldx,aby},{bbs,zpb},
+	{cpy,imm},{cmp,idx},{ill,non},{ill,non},/* c0 */
+	{cpy,zpg},{cmp,zpg},{dec,zpg},{smb,zpg},
+	{iny,imp},{cmp,imm},{dex,imp},{ill,non},
+	{cpy,aba},{cmp,aba},{dec,aba},{bbs,zpb},
+	{bne,rel},{cmp,idy},{cmp,zpi},{ill,non},/* d0 */
+	{ill,non},{cmp,zpx},{dec,zpx},{smb,zpg},
+	{cld,imp},{cmp,aby},{phx,imp},{ill,non},
+	{ill,non},{cmp,abx},{dec,abx},{bbs,zpb},
+	{cpx,imm},{sbc,idx},{ill,non},{ill,non},/* e0 */
+	{cpx,zpg},{sbc,zpg},{inc,zpg},{smb,zpg},
+	{inx,imp},{sbc,imm},{nop,imp},{ill,non},
+	{cpx,aba},{sbc,aba},{inc,aba},{bbs,zpb},
+	{beq,rel},{sbc,idy},{sbc,zpi},{ill,non},/* f0 */
+	{ill,non},{sbc,zpx},{inc,zpx},{smb,zpg},
+	{sed,imp},{sbc,aby},{plx,imp},{ill,non},
+	{ill,non},{sbc,abx},{inc,abx},{bbs,zpb}
 };
 
 static const struct op6502_info op6510[256] = {
-	{m6502_brk,imm,VAL},{ora,idx,MRD},{kil,non,0	},{slo,idx,MRW},/* 00 */
-	{dop,imm,VAL},{ora,zpg,ZRD},{asl,zpg,ZRW},{slo,zpg,ZRW},
-	{php,imp,0	},{ora,imm,VAL},{asl,acc,0	},{anc,imm,VAL},
-	{top,iw2,VAL},{ora,aba,MRD},{asl,aba,MRW},{slo,aba,MRW},
-	{bpl,rel,BRA},{ora,idy,MRD},{nop,imp,0	},{slo,idy,MRW},/* 10 */
-	{dop,imm,VAL},{ora,zpx,ZRD},{asl,zpx,ZRW},{slo,zpx,ZRW},
-	{clc,imp,0	},{ora,aby,MRD},{kil,non,0	},{slo,aby,MRW},
-	{top,iw2,VAL},{ora,abx,MRD},{asl,abx,MRW},{slo,abx,MRW},
-	{jsr,adr,JMP},{and,idx,MRD},{kil,non,0	},{rla,idx,MRW},/* 20 */
-	{bit,zpg,ZRD},{and,zpg,ZRD},{rol,zpg,ZRW},{rla,zpg,ZRW},
-	{plp,imp,0	},{and,imm,VAL},{rol,acc,0	},{anc,imm,VAL},
-	{bit,aba,MRD},{and,aba,MRD},{rol,aba,MRW},{rla,aba,MRW},
-	{bmi,rel,BRA},{and,idy,MRD},{kil,non,0	},{rla,idy,MRW},/* 30 */
-	{dop,imm,VAL},{and,zpx,ZRD},{rol,zpx,ZRW},{rla,zpx,ZRW},
-	{sec,imp,0	},{and,aby,MRD},{nop,imp,0	},{rla,aby,MRW},
-	{top,iw2,VAL},{and,abx,MRD},{rol,abx,MRW},{rla,abx,MRW},
-	{rti,imp,0	},{eor,idx,MRD},{kil,non,0	},{sre,idx,MRW},/* 40 */
-	{dop,imm,VAL},{eor,zpg,ZRD},{lsr,zpg,ZRW},{sre,zpg,ZRW},
-	{pha,imp,0	},{eor,imm,VAL},{lsr,acc,0	},{asr,imm,VAL},
-	{jmp,adr,JMP},{eor,aba,MRD},{lsr,aba,MRW},{sre,aba,MRW},
-	{bvc,rel,BRA},{eor,idy,MRD},{kil,non,0	},{sre,idy,MRW},/* 50 */
-	{dop,imm,VAL},{eor,zpx,ZRD},{lsr,zpx,ZRW},{sre,zpx,ZRW},
-	{cli,imp,0	},{eor,aby,MRD},{nop,imp,0	},{sre,aby,MRW},
-	{top,iw2,VAL},{eor,abx,MRD},{lsr,abx,MRW},{sre,abx,MRW},
-	{rts,imp,0	},{adc,idx,MRD},{kil,non,0	},{rra,idx,MRW},/* 60 */
-	{dop,imm,VAL},{adc,zpg,ZRD},{ror,zpg,ZRW},{rra,zpg,ZRW},
-	{pla,imp,0	},{adc,imm,VAL},{ror,acc,0	},{arr,imm,VAL},
-	{jmp,ind,JMP},{adc,aba,MRD},{ror,aba,MRW},{rra,aba,MRW},
-	{bvs,rel,BRA},{adc,idy,MRD},{kil,non,0	},{rra,idy,MRW},/* 70 */
-	{dop,imm,VAL},{adc,zpx,ZRD},{ror,zpx,ZRW},{rra,zpx,ZRW},
-	{sei,imp,0	},{adc,aby,MRD},{nop,imp,0	},{rra,aby,MRW},
-	{top,iw2,VAL},{adc,abx,MRD},{ror,abx,MRW},{rra,abx,MRW},
-	{dop,imm,VAL},{sta,idx,MWR},{dop,imm,VAL},{sax,idx,MWR},/* 80 */
-	{sty,zpg,ZWR},{sta,zpg,ZWR},{stx,zpg,ZWR},{sax,zpg,ZWR},
-	{dey,imp,0	},{dop,imm,VAL},{txa,imp,0  },{axa,imm,VAL},
-	{sty,aba,MWR},{sta,aba,MWR},{stx,aba,MWR},{sax,aba,MWR},
-	{bcc,rel,BRA},{sta,idy,MWR},{kil,non,0	},{say,idy,MWR},/* 90 */
-	{sty,zpx,ZWR},{sta,zpx,ZWR},{stx,zpy,ZWR},{sax,zpx,ZWR},
-	{tya,imp,0	},{sta,aby,MWR},{txs,imp,0	},{ssh,aby,MWR},
-	{syh,abx,0	},{sta,abx,MWR},{sxh,aby,MWR},{sah,aby,MWR},
-	{ldy,imm,VAL},{lda,idx,MRD},{ldx,imm,VAL},{lax,idx,MRD},/* a0 */
-	{ldy,zpg,ZRD},{lda,zpg,ZRD},{ldx,zpg,ZRD},{lax,zpg,ZRD},
-	{tay,imp,0	},{lda,imm,VAL},{tax,imp,0	},{oal,imm,VAL},
-	{ldy,aba,MRD},{lda,aba,MRD},{ldx,aba,MRD},{lax,aba,MRD},
-	{bcs,rel,BRA},{lda,idy,MRD},{kil,non,0	},{lax,idy,MRD},/* b0 */
-	{ldy,zpx,ZRD},{lda,zpx,ZRD},{ldx,zpy,ZRD},{lax,zpx,ZRD},
-	{clv,imp,0	},{lda,aby,MRD},{tsx,imp,0	},{ast,aby,MRD},
-	{ldy,abx,MRD},{lda,abx,MRD},{ldx,aby,MRD},{lax,abx,MRD},
-	{cpy,imm,VAL},{cmp,idx,MRD},{dop,imm,VAL},{dcp,idx,MRW},/* c0 */
-	{cpy,zpg,ZRD},{cmp,zpg,ZRD},{dec,zpg,ZRW},{dcp,zpg,ZRW},
-	{iny,imp,0	},{cmp,imm,VAL},{dex,imp,0	},{asx,imm,VAL},
-	{cpy,aba,MRD},{cmp,aba,MRD},{dec,aba,MRW},{dcp,aba,MRW},
-	{bne,rel,BRA},{cmp,idy,MRD},{kil,non,0	},{dcp,idy,MRW},/* d0 */
-	{dop,imm,VAL},{cmp,zpx,ZRD},{dec,zpx,ZRW},{dcp,zpx,ZRW},
-	{cld,imp,0	},{cmp,aby,MRD},{nop,imp,0	},{dcp,aby,MRW},
-	{top,iw2,VAL},{cmp,abx,MRD},{dec,abx,MRW},{dcp,abx,MRW},
-	{cpx,imm,VAL},{sbc,idx,MRD},{dop,imm,VAL},{isc,idx,MRW},/* e0 */
-	{cpx,zpg,ZRD},{sbc,zpg,ZRD},{inc,zpg,ZRW},{isc,zpg,ZRW},
-	{inx,imp,0	},{sbc,imm,VAL},{nop,imp,0	},{sbc,imm,VAL},
-	{cpx,aba,MRD},{sbc,aba,MRD},{inc,aba,MRW},{isc,aba,MRW},
-	{beq,rel,BRA},{sbc,idy,MRD},{kil,non,0	},{isc,idy,MRW},/* f0 */
-	{dop,imm,VAL},{sbc,zpx,ZRD},{inc,zpx,ZRW},{isc,zpx,ZRW},
-	{sed,imp,0	},{sbc,aby,MRD},{nop,imp,0	},{isc,aby,MRW},
-	{top,iw2,VAL},{sbc,abx,MRD},{inc,abx,MRW},{isc,abx,MRW}
+	{m6502_brk,imm},{ora,idx},{kil,non},{slo,idx},/* 00 */
+	{dop,imm},{ora,zpg},{asl,zpg},{slo,zpg},
+	{php,imp},{ora,imm},{asl,acc},{anc,imm},
+	{top,iw2},{ora,aba},{asl,aba},{slo,aba},
+	{bpl,rel},{ora,idy},{nop,imp},{slo,idy},/* 10 */
+	{dop,imm},{ora,zpx},{asl,zpx},{slo,zpx},
+	{clc,imp},{ora,aby},{kil,non},{slo,aby},
+	{top,iw2},{ora,abx},{asl,abx},{slo,abx},
+	{jsr,adr},{and,idx},{kil,non},{rla,idx},/* 20 */
+	{bit,zpg},{and,zpg},{rol,zpg},{rla,zpg},
+	{plp,imp},{and,imm},{rol,acc},{anc,imm},
+	{bit,aba},{and,aba},{rol,aba},{rla,aba},
+	{bmi,rel},{and,idy},{kil,non},{rla,idy},/* 30 */
+	{dop,imm},{and,zpx},{rol,zpx},{rla,zpx},
+	{sec,imp},{and,aby},{nop,imp},{rla,aby},
+	{top,iw2},{and,abx},{rol,abx},{rla,abx},
+	{rti,imp},{eor,idx},{kil,non},{sre,idx},/* 40 */
+	{dop,imm},{eor,zpg},{lsr,zpg},{sre,zpg},
+	{pha,imp},{eor,imm},{lsr,acc},{asr,imm},
+	{jmp,adr},{eor,aba},{lsr,aba},{sre,aba},
+	{bvc,rel},{eor,idy},{kil,non},{sre,idy},/* 50 */
+	{dop,imm},{eor,zpx},{lsr,zpx},{sre,zpx},
+	{cli,imp},{eor,aby},{nop,imp},{sre,aby},
+	{top,iw2},{eor,abx},{lsr,abx},{sre,abx},
+	{rts,imp},{adc,idx},{kil,non},{rra,idx},/* 60 */
+	{dop,imm},{adc,zpg},{ror,zpg},{rra,zpg},
+	{pla,imp},{adc,imm},{ror,acc},{arr,imm},
+	{jmp,ind},{adc,aba},{ror,aba},{rra,aba},
+	{bvs,rel},{adc,idy},{kil,non},{rra,idy},/* 70 */
+	{dop,imm},{adc,zpx},{ror,zpx},{rra,zpx},
+	{sei,imp},{adc,aby},{nop,imp},{rra,aby},
+	{top,iw2},{adc,abx},{ror,abx},{rra,abx},
+	{dop,imm},{sta,idx},{dop,imm},{sax,idx},/* 80 */
+	{sty,zpg},{sta,zpg},{stx,zpg},{sax,zpg},
+	{dey,imp},{dop,imm},{txa,imp},{axa,imm},
+	{sty,aba},{sta,aba},{stx,aba},{sax,aba},
+	{bcc,rel},{sta,idy},{kil,non},{say,idy},/* 90 */
+	{sty,zpx},{sta,zpx},{stx,zpy},{sax,zpx},
+	{tya,imp},{sta,aby},{txs,imp},{ssh,aby},
+	{syh,abx},{sta,abx},{sxh,aby},{sah,aby},
+	{ldy,imm},{lda,idx},{ldx,imm},{lax,idx},/* a0 */
+	{ldy,zpg},{lda,zpg},{ldx,zpg},{lax,zpg},
+	{tay,imp},{lda,imm},{tax,imp},{oal,imm},
+	{ldy,aba},{lda,aba},{ldx,aba},{lax,aba},
+	{bcs,rel},{lda,idy},{kil,non},{lax,idy},/* b0 */
+	{ldy,zpx},{lda,zpx},{ldx,zpy},{lax,zpx},
+	{clv,imp},{lda,aby},{tsx,imp},{ast,aby},
+	{ldy,abx},{lda,abx},{ldx,aby},{lax,abx},
+	{cpy,imm},{cmp,idx},{dop,imm},{dcp,idx},/* c0 */
+	{cpy,zpg},{cmp,zpg},{dec,zpg},{dcp,zpg},
+	{iny,imp},{cmp,imm},{dex,imp},{asx,imm},
+	{cpy,aba},{cmp,aba},{dec,aba},{dcp,aba},
+	{bne,rel},{cmp,idy},{kil,non},{dcp,idy},/* d0 */
+	{dop,imm},{cmp,zpx},{dec,zpx},{dcp,zpx},
+	{cld,imp},{cmp,aby},{nop,imp},{dcp,aby},
+	{top,iw2},{cmp,abx},{dec,abx},{dcp,abx},
+	{cpx,imm},{sbc,idx},{dop,imm},{isc,idx},/* e0 */
+	{cpx,zpg},{sbc,zpg},{inc,zpg},{isc,zpg},
+	{inx,imp},{sbc,imm},{nop,imp},{sbc,imm},
+	{cpx,aba},{sbc,aba},{inc,aba},{isc,aba},
+	{beq,rel},{sbc,idy},{kil,non},{isc,idy},/* f0 */
+	{dop,imm},{sbc,zpx},{inc,zpx},{isc,zpx},
+	{sed,imp},{sbc,aby},{nop,imp},{isc,aby},
+	{top,iw2},{sbc,abx},{inc,abx},{isc,abx}
 };
 
 #if (HAS_M65CE02)
 static const struct op6502_info op65ce02[256] = {
-	{m6502_brk,imm,VAL},{ora,idx,MRD},{cle,imp,0	},{see,imp,0  },/* 00 */
-	{tsb,zpg,0	},{ora,zpg,ZRD},{asl,zpg,ZRW},{rmb,zpg,ZRW},
-	{php,imp,0	},{ora,imm,VAL},{asl,acc,MRW},{tsy,imp,0  },
-	{tsb,aba,MRD},{ora,aba,MRD},{asl,aba,MRW},{bbr,zpb,ZRD},
-	{bpl,rel,BRA},{ora,idy,MRD},{ora,idz,MRD},{bpl,rw2,BRA},/* 10 */
-	{trb,zpg,ZRD},{ora,zpx,ZRD},{asl,zpx,ZRW},{rmb,zpg,ZRW},
-	{clc,imp,0	},{ora,aby,MRD},{ina,imp,0	},{inz,imp,0  },
-	{trb,aba,MRD},{ora,abx,MRD},{asl,abx,MRW},{bbr,zpb,ZRD},
-	{jsr,adr,0	},{and,idx,MRD},{jsr,ind,0	},{jsr,iax,0  },/* 20 */
-	{bit,zpg,ZRD},{and,zpg,ZRD},{rol,zpg,ZRW},{rmb,zpg,ZRW},
-	{plp,imp,0	},{and,imm,VAL},{rol,acc,0	},{tys,imp,0  },
-	{bit,aba,MRD},{and,aba,MRD},{rol,aba,MRW},{bbr,zpb,ZRD},
-	{bmi,rel,BRA},{and,idz,MRD},{and,zpi,MRD},{bmi,rw2,BRA},/* 30 */
-	{bit,zpx,ZRD},{and,zpx,ZRD},{rol,zpx,ZRW},{rmb,zpg,ZRW},
-	{sec,imp,0	},{and,aby,MRD},{dea,imp,0	},{dez,imp,0  },
-	{bit,abx,MRD},{and,abx,MRD},{rol,abx,MRW},{bbr,zpb,ZRD},
-	{rti,imp,0	},{eor,idx,MRD},{neg,imp,0	},{asr2,imp,0 },/* 40 */
-	{asr2,zpg,ZRW},{eor,zpg,ZRD},{lsr,zpg,ZRW},{rmb,zpg,ZRW},
-	{pha,imp,0	},{eor,imm,VAL},{lsr,acc,0	},{taz,imp,0  },
-	{jmp,adr,JMP},{eor,aba,MRD},{lsr,aba,MRW},{bbr,zpb,ZRD},
-	{bvc,rel,BRA},{eor,idy,MRD},{eor,idz,MRD},{bvc,rw2,BRA},/* 50 */
-	{asr2,zpx,ZRW},{eor,zpx,ZRD},{lsr,zpx,ZRW},{rmb,zpg,ZRW},
-	{cli,imp,0	},{eor,aby,MRD},{phy,imp,0	},{tab,imp,0  },
-	{aug,iw3,0	},{eor,abx,MRD},{lsr,abx,MRW},{bbr,zpb,ZRD},
-	{rts,imp,0	},{adc,idx,MRD},{rtn,imm,VAL},{bsr,rw2,BRA},/* 60 */
-	{stz2,zpg,ZWR},{adc,zpg,ZRD},{ror,zpg,ZRW},{rmb,zpg,ZRW},
-	{pla,imp,0	},{adc,imm,VAL},{ror,acc,0	},{tza,imp,0  },
-	{jmp,ind,JMP},{adc,aba,MRD},{ror,aba,MRW},{bbr,zpb,ZRD},
-	{bvs,rel,BRA},{adc,idy,MRD},{adc,zpi,MRD},{bvs,rw2,BRA},/* 70 */
-	{stz2,zpx,ZWR},{adc,zpx,ZRD},{ror,zpx,ZRW},{rmb,zpg,ZRW},
-	{sei,imp,0	},{adc,aby,MRD},{ply,imp,0	},{tba,imp,0  },
-	{jmp,iax,JMP},{adc,abx,MRD},{ror,abx,MRW},{bbr,zpb,ZRD},
-	{bra,rel,BRA},{sta,idx,MWR},{sta,isy,MWR},{bra,rw2,BRA},/* 80 */
-	{sty,zpg,ZWR},{sta,zpg,ZWR},{stx,zpg,ZWR},{smb,zpg,ZRW},
-	{dey,imp,0	},{bit,imm,VAL},{txa,imp,0	},{sty,abx,MWR},
-	{sty,aba,MWR},{sta,aba,MWR},{stx,aba,MWR},{bbs,zpb,ZRD},
-	{bcc,rel,BRA},{sta,idy,MWR},{sta,inz,MWR},{bcc,rw2,BRA},/* 90 */
-	{sty,zpx,ZWR},{sta,zpx,ZWR},{stx,zpy,ZWR},{smb,zpg,ZRW},
-	{tya,imp,0	},{sta,aby,MWR},{txs,imp,0	},{stx,aby,MWR},
-	{stz2,aba,MWR},{sta,abx,MWR},{stz2,abx,MWR},{bbs,zpb,ZRD},
-	{ldy,imm,VAL},{lda,idx,MRD},{ldx,imm,VAL},{ldz,imm,VAL},/* a0 */
-	{ldy,zpg,ZRD},{lda,zpg,ZRD},{ldx,zpg,ZRD},{smb,zpg,ZRW},
-	{tay,imp,0	},{lda,imm,VAL},{tax,imp,0	},{ldz,aba,MRD},
-	{ldy,aba,MRD},{lda,aba,MRD},{ldx,aba,MRD},{bbs,zpb,ZRD},
-	{bcs,rel,BRA},{lda,idy,MRD},{lda,inz,MRD},{bcs,rw2,BRA},/* b0 */
-	{ldy,zpx,ZRD},{lda,zpx,ZRD},{ldx,zpy,ZRD},{smb,zpg,ZRW},
-	{clv,imp,0	},{lda,aby,MRD},{tsx,imp,0	},{ldz,abx,MRD},
-	{ldy,abx,MRD},{lda,abx,MRD},{ldx,aby,MRD},{bbs,zpb,ZRD},
-	{cpy,imm,VAL},{cmp,idx,MRD},{cpz,imm,VAL},{dew,zpg,ZRW2},/* c0 */
-	{cpy,zpg,ZRD},{cmp,zpg,ZRD},{dec,zpg,ZRW},{smb,zpg,ZRW},
-	{iny,imp,0	},{cmp,imm,VAL},{dex,imp,0	},{asw,aba,MRW2},
-	{cpy,aba,MRD},{cmp,aba,MRD},{dec,aba,MRW},{bbs,zpb,ZRD},
-	{bne,rel,BRA},{cmp,idy,MRD},{cmp,idz,MRD},{bne,rw2,BRA},/* d0 */
-	{cpz,zpg,MRD},{cmp,zpx,ZRD},{dec,zpx,ZRW},{smb,zpg,ZRW},
-	{cld,imp,0	},{cmp,aby,MRD},{phx,imp,0	},{phz,imp,0  },
-	{cpz,aba,MRD},{cmp,abx,MRD},{dec,abx,MRW},{bbs,zpb,ZRD},
-	{cpx,imm,VAL},{sbc,idx,MRD},{lda,isy,MRD},{inw,zpg,ZRW2},/* e0 */
-	{cpx,zpg,ZRD},{sbc,zpg,ZRD},{inc,zpg,ZRW},{smb,zpg,ZRW},
-	{inx,imp,0	},{sbc,imm,VAL},{nop,imp,0	},{row,aba,MRW2},
-	{cpx,aba,MRD},{sbc,aba,MRD},{inc,aba,MRW},{bbs,zpb,ZRD},
-	{beq,rel,BRA},{sbc,idy,MRD},{sbc,idz,MRD},{beq,rw2,BRA},/* f0 */
-	{phw,iw2,VAL},{sbc,zpx,ZRD},{inc,zpx,ZRW},{smb,zpg,ZRW},
-	{sed,imp,0	},{sbc,aby,MRD},{plx,imp,0	},{plz,imp,0  },
-	{phw,aba,MRD2},{sbc,abx,MRD},{inc,abx,MRW},{bbs,zpb,ZRD}
+	{m6502_brk,imm},{ora,idx},{cle,imp},{see,imp},/* 00 */
+	{tsb,zpg},{ora,zpg},{asl,zpg},{rmb,zpg},
+	{php,imp},{ora,imm},{asl,acc},{tsy,imp},
+	{tsb,aba},{ora,aba},{asl,aba},{bbr,zpb},
+	{bpl,rel},{ora,idy},{ora,idz},{bpl,rw2},/* 10 */
+	{trb,zpg},{ora,zpx},{asl,zpx},{rmb,zpg},
+	{clc,imp},{ora,aby},{ina,imp},{inz,imp},
+	{trb,aba},{ora,abx},{asl,abx},{bbr,zpb},
+	{jsr,adr},{and,idx},{jsr,ind},{jsr,iax},/* 20 */
+	{bit,zpg},{and,zpg},{rol,zpg},{rmb,zpg},
+	{plp,imp},{and,imm},{rol,acc},{tys,imp},
+	{bit,aba},{and,aba},{rol,aba},{bbr,zpb},
+	{bmi,rel},{and,idz},{and,zpi},{bmi,rw2},/* 30 */
+	{bit,zpx},{and,zpx},{rol,zpx},{rmb,zpg},
+	{sec,imp},{and,aby},{dea,imp},{dez,imp},
+	{bit,abx},{and,abx},{rol,abx},{bbr,zpb},
+	{rti,imp},{eor,idx},{neg,imp},{asr2,imp},/* 40 */
+	{asr2,zpg},{eor,zpg},{lsr,zpg},{rmb,zpg},
+	{pha,imp},{eor,imm},{lsr,acc},{taz,imp},
+	{jmp,adr},{eor,aba},{lsr,aba},{bbr,zpb},
+	{bvc,rel},{eor,idy},{eor,idz},{bvc,rw2},/* 50 */
+	{asr2,zpx},{eor,zpx},{lsr,zpx},{rmb,zpg},
+	{cli,imp},{eor,aby},{phy,imp},{tab,imp},
+	{aug,iw3},{eor,abx},{lsr,abx},{bbr,zpb},
+	{rts,imp},{adc,idx},{rtn,imm},{bsr,rw2},/* 60 */
+	{stz2,zpg},{adc,zpg},{ror,zpg},{rmb,zpg},
+	{pla,imp},{adc,imm},{ror,acc},{tza,imp},
+	{jmp,ind},{adc,aba},{ror,aba},{bbr,zpb},
+	{bvs,rel},{adc,idy},{adc,zpi},{bvs,rw2},/* 70 */
+	{stz2,zpx},{adc,zpx},{ror,zpx},{rmb,zpg},
+	{sei,imp},{adc,aby},{ply,imp},{tba,imp},
+	{jmp,iax},{adc,abx},{ror,abx},{bbr,zpb},
+	{bra,rel},{sta,idx},{sta,isy},{bra,rw2},/* 80 */
+	{sty,zpg},{sta,zpg},{stx,zpg},{smb,zpg},
+	{dey,imp},{bit,imm},{txa,imp},{sty,abx},
+	{sty,aba},{sta,aba},{stx,aba},{bbs,zpb},
+	{bcc,rel},{sta,idy},{sta,inz},{bcc,rw2},/* 90 */
+	{sty,zpx},{sta,zpx},{stx,zpy},{smb,zpg},
+	{tya,imp},{sta,aby},{txs,imp},{stx,aby},
+	{stz2,aba},{sta,abx},{stz2,abx},{bbs,zpb},
+	{ldy,imm},{lda,idx},{ldx,imm},{ldz,imm},/* a0 */
+	{ldy,zpg},{lda,zpg},{ldx,zpg},{smb,zpg},
+	{tay,imp},{lda,imm},{tax,imp},{ldz,aba},
+	{ldy,aba},{lda,aba},{ldx,aba},{bbs,zpb},
+	{bcs,rel},{lda,idy},{lda,inz},{bcs,rw2},/* b0 */
+	{ldy,zpx},{lda,zpx},{ldx,zpy},{smb,zpg},
+	{clv,imp},{lda,aby},{tsx,imp},{ldz,abx},
+	{ldy,abx},{lda,abx},{ldx,aby},{bbs,zpb},
+	{cpy,imm},{cmp,idx},{cpz,imm},{dew,zpg},/* c0 */
+	{cpy,zpg},{cmp,zpg},{dec,zpg},{smb,zpg},
+	{iny,imp},{cmp,imm},{dex,imp},{asw,aba},
+	{cpy,aba},{cmp,aba},{dec,aba},{bbs,zpb},
+	{bne,rel},{cmp,idy},{cmp,idz},{bne,rw2},/* d0 */
+	{cpz,zpg},{cmp,zpx},{dec,zpx},{smb,zpg},
+	{cld,imp},{cmp,aby},{phx,imp},{phz,imp},
+	{cpz,aba},{cmp,abx},{dec,abx},{bbs,zpb},
+	{cpx,imm},{sbc,idx},{lda,isy},{inw,zpg},/* e0 */
+	{cpx,zpg},{sbc,zpg},{inc,zpg},{smb,zpg},
+	{inx,imp},{sbc,imm},{nop,imp},{row,aba},
+	{cpx,aba},{sbc,aba},{inc,aba},{bbs,zpb},
+	{beq,rel},{sbc,idy},{sbc,idz},{beq,rw2},/* f0 */
+	{phw,iw2},{sbc,zpx},{inc,zpx},{smb,zpg},
+	{sed,imp},{sbc,aby},{plx,imp},{plz,imp},
+	{phw,aba},{sbc,abx},{inc,abx},{bbs,zpb}
 };
 #endif
 
 #if (HAS_M4510)
 // only map instead of aug and 20 bit memory management
 static const struct op6502_info op4510[256] = {
-	{m6502_brk,imm,VAL},{ora,idx,MRD},{cle,imp,0	},{see,imp,0  },/* 00 */
-	{tsb,zpg,0	},{ora,zpg,ZRD},{asl,zpg,ZRW},{rmb,zpg,ZRW},
-	{php,imp,0	},{ora,imm,VAL},{asl,acc,MRW},{tsy,imp,0  },
-	{tsb,aba,MRD},{ora,aba,MRD},{asl,aba,MRW},{bbr,zpb,ZRD},
-	{bpl,rel,BRA},{ora,idy,MRD},{ora,idz,MRD},{bpl,rw2,BRA},/* 10 */
-	{trb,zpg,ZRD},{ora,zpx,ZRD},{asl,zpx,ZRW},{rmb,zpg,ZRW},
-	{clc,imp,0	},{ora,aby,MRD},{ina,imp,0	},{inz,imp,0  },
-	{trb,aba,MRD},{ora,abx,MRD},{asl,abx,MRW},{bbr,zpb,ZRD},
-	{jsr,adr,0	},{and,idx,MRD},{jsr,ind,0	},{jsr,iax,0  },/* 20 */
-	{bit,zpg,ZRD},{and,zpg,ZRD},{rol,zpg,ZRW},{rmb,zpg,ZRW},
-	{plp,imp,0	},{and,imm,VAL},{rol,acc,0	},{tys,imp,0  },
-	{bit,aba,MRD},{and,aba,MRD},{rol,aba,MRW},{bbr,zpb,ZRD},
-	{bmi,rel,BRA},{and,idz,MRD},{and,zpi,MRD},{bmi,rw2,BRA},/* 30 */
-	{bit,zpx,ZRD},{and,zpx,ZRD},{rol,zpx,ZRW},{rmb,zpg,ZRW},
-	{sec,imp,0	},{and,aby,MRD},{dea,imp,0	},{dez,imp,0  },
-	{bit,abx,MRD},{and,abx,MRD},{rol,abx,MRW},{bbr,zpb,ZRD},
-	{rti,imp,0	},{eor,idx,MRD},{neg,imp,0	},{asr2,imp,0 },/* 40 */
-	{asr2,zpg,ZRW},{eor,zpg,ZRD},{lsr,zpg,ZRW},{rmb,zpg,ZRW},
-	{pha,imp,0	},{eor,imm,VAL},{lsr,acc,0	},{taz,imp,0  },
-	{jmp,adr,JMP},{eor,aba,MRD},{lsr,aba,MRW},{bbr,zpb,ZRD},
-	{bvc,rel,BRA},{eor,idy,MRD},{eor,idz,MRD},{bvc,rw2,BRA},/* 50 */
-	{asr2,zpx,ZRW},{eor,zpx,ZRD},{lsr,zpx,ZRW},{rmb,zpg,ZRW},
-	{cli,imp,0	},{eor,aby,MRD},{phy,imp,0	},{tab,imp,0  },
-	{map,imp,0	},{eor,abx,MRD},{lsr,abx,MRW},{bbr,zpb,ZRD},
-	{rts,imp,0	},{adc,idx,MRD},{rtn,imm,VAL},{bsr,rw2,BRA},/* 60 */
-	{stz2,zpg,ZWR},{adc,zpg,ZRD},{ror,zpg,ZRW},{rmb,zpg,ZRW},
-	{pla,imp,0	},{adc,imm,VAL},{ror,acc,0	},{tza,imp,0  },
-	{jmp,ind,JMP},{adc,aba,MRD},{ror,aba,MRW},{bbr,zpb,ZRD},
-	{bvs,rel,BRA},{adc,idy,MRD},{adc,zpi,MRD},{bvs,rw2,BRA},/* 70 */
-	{stz2,zpx,ZWR},{adc,zpx,ZRD},{ror,zpx,ZRW},{rmb,zpg,ZRW},
-	{sei,imp,0	},{adc,aby,MRD},{ply,imp,0	},{tba,imp,0  },
-	{jmp,iax,JMP},{adc,abx,MRD},{ror,abx,MRW},{bbr,zpb,ZRD},
-	{bra,rel,BRA},{sta,idx,MWR},{sta,isy,MWR},{bra,rw2,BRA},/* 80 */
-	{sty,zpg,ZWR},{sta,zpg,ZWR},{stx,zpg,ZWR},{smb,zpg,ZRW},
-	{dey,imp,0	},{bit,imm,VAL},{txa,imp,0	},{sty,abx,MWR},
-	{sty,aba,MWR},{sta,aba,MWR},{stx,aba,MWR},{bbs,zpb,ZRD},
-	{bcc,rel,BRA},{sta,idy,MWR},{sta,inz,MWR},{bcc,rw2,BRA},/* 90 */
-	{sty,zpx,ZWR},{sta,zpx,ZWR},{stx,zpy,ZWR},{smb,zpg,ZRW},
-	{tya,imp,0	},{sta,aby,MWR},{txs,imp,0	},{stx,aby,MWR},
-	{stz2,aba,MWR},{sta,abx,MWR},{stz2,abx,MWR},{bbs,zpb,ZRD},
-	{ldy,imm,VAL},{lda,idx,MRD},{ldx,imm,VAL},{ldz,imm,VAL},/* a0 */
-	{ldy,zpg,ZRD},{lda,zpg,ZRD},{ldx,zpg,ZRD},{smb,zpg,ZRW},
-	{tay,imp,0	},{lda,imm,VAL},{tax,imp,0	},{ldz,aba,MRD},
-	{ldy,aba,MRD},{lda,aba,MRD},{ldx,aba,MRD},{bbs,zpb,ZRD},
-	{bcs,rel,BRA},{lda,idy,MRD},{lda,inz,MRD},{bcs,rw2,BRA},/* b0 */
-	{ldy,zpx,ZRD},{lda,zpx,ZRD},{ldx,zpy,ZRD},{smb,zpg,ZRW},
-	{clv,imp,0	},{lda,aby,MRD},{tsx,imp,0	},{ldz,abx,MRD},
-	{ldy,abx,MRD},{lda,abx,MRD},{ldx,aby,MRD},{bbs,zpb,ZRD},
-	{cpy,imm,VAL},{cmp,idx,MRD},{cpz,imm,VAL},{dew,zpg,ZRW2},/* c0 */
-	{cpy,zpg,ZRD},{cmp,zpg,ZRD},{dec,zpg,ZRW},{smb,zpg,ZRW},
-	{iny,imp,0	},{cmp,imm,VAL},{dex,imp,0	},{asw,aba,MRW2},
-	{cpy,aba,MRD},{cmp,aba,MRD},{dec,aba,MRW},{bbs,zpb,ZRD},
-	{bne,rel,BRA},{cmp,idy,MRD},{cmp,idz,MRD},{bne,rw2,BRA},/* d0 */
-	{cpz,zpg,MRD},{cmp,zpx,ZRD},{dec,zpx,ZRW},{smb,zpg,ZRW},
-	{cld,imp,0	},{cmp,aby,MRD},{phx,imp,0	},{phz,imp,0  },
-	{cpz,aba,MRD},{cmp,abx,MRD},{dec,abx,MRW},{bbs,zpb,ZRD},
-	{cpx,imm,VAL},{sbc,idx,MRD},{lda,isy,MRD},{inw,zpg,ZRW2},/* e0 */
-	{cpx,zpg,ZRD},{sbc,zpg,ZRD},{inc,zpg,ZRW},{smb,zpg,ZRW},
-	{inx,imp,0	},{sbc,imm,VAL},{nop,imp,0	},{row,aba,MRW2},
-	{cpx,aba,MRD},{sbc,aba,MRD},{inc,aba,MRW},{bbs,zpb,ZRD},
-	{beq,rel,BRA},{sbc,idy,MRD},{sbc,idz,MRD},{beq,rw2,BRA},/* f0 */
-	{phw,iw2,VAL},{sbc,zpx,ZRD},{inc,zpx,ZRW},{smb,zpg,ZRW},
-	{sed,imp,0	},{sbc,aby,MRD},{plx,imp,0	},{plz,imp,0  },
-	{phw,aba,MRD2},{sbc,abx,MRD},{inc,abx,MRW},{bbs,zpb,ZRD}
+	{m6502_brk,imm},{ora,idx},{cle,imp},{see,imp},/* 00 */
+	{tsb,zpg},{ora,zpg},{asl,zpg},{rmb,zpg},
+	{php,imp},{ora,imm},{asl,acc},{tsy,imp},
+	{tsb,aba},{ora,aba},{asl,aba},{bbr,zpb},
+	{bpl,rel},{ora,idy},{ora,idz},{bpl,rw2},/* 10 */
+	{trb,zpg},{ora,zpx},{asl,zpx},{rmb,zpg},
+	{clc,imp},{ora,aby},{ina,imp},{inz,imp},
+	{trb,aba},{ora,abx},{asl,abx},{bbr,zpb},
+	{jsr,adr},{and,idx},{jsr,ind},{jsr,iax},/* 20 */
+	{bit,zpg},{and,zpg},{rol,zpg},{rmb,zpg},
+	{plp,imp},{and,imm},{rol,acc},{tys,imp},
+	{bit,aba},{and,aba},{rol,aba},{bbr,zpb},
+	{bmi,rel},{and,idz},{and,zpi},{bmi,rw2},/* 30 */
+	{bit,zpx},{and,zpx},{rol,zpx},{rmb,zpg},
+	{sec,imp},{and,aby},{dea,imp},{dez,imp},
+	{bit,abx},{and,abx},{rol,abx},{bbr,zpb},
+	{rti,imp},{eor,idx},{neg,imp},{asr2,imp},/* 40 */
+	{asr2,zpg},{eor,zpg},{lsr,zpg},{rmb,zpg},
+	{pha,imp},{eor,imm},{lsr,acc},{taz,imp},
+	{jmp,adr},{eor,aba},{lsr,aba},{bbr,zpb},
+	{bvc,rel},{eor,idy},{eor,idz},{bvc,rw2},/* 50 */
+	{asr2,zpx},{eor,zpx},{lsr,zpx},{rmb,zpg},
+	{cli,imp},{eor,aby},{phy,imp},{tab,imp},
+	{map,imp},{eor,abx},{lsr,abx},{bbr,zpb},
+	{rts,imp},{adc,idx},{rtn,imm},{bsr,rw2},/* 60 */
+	{stz2,zpg},{adc,zpg},{ror,zpg},{rmb,zpg},
+	{pla,imp},{adc,imm},{ror,acc},{tza,imp},
+	{jmp,ind},{adc,aba},{ror,aba},{bbr,zpb},
+	{bvs,rel},{adc,idy},{adc,zpi},{bvs,rw2},/* 70 */
+	{stz2,zpx},{adc,zpx},{ror,zpx},{rmb,zpg},
+	{sei,imp},{adc,aby},{ply,imp},{tba,imp},
+	{jmp,iax},{adc,abx},{ror,abx},{bbr,zpb},
+	{bra,rel},{sta,idx},{sta,isy},{bra,rw2},/* 80 */
+	{sty,zpg},{sta,zpg},{stx,zpg},{smb,zpg},
+	{dey,imp},{bit,imm},{txa,imp},{sty,abx},
+	{sty,aba},{sta,aba},{stx,aba},{bbs,zpb},
+	{bcc,rel},{sta,idy},{sta,inz},{bcc,rw2},/* 90 */
+	{sty,zpx},{sta,zpx},{stx,zpy},{smb,zpg},
+	{tya,imp},{sta,aby},{txs,imp},{stx,aby},
+	{stz2,aba},{sta,abx},{stz2,abx},{bbs,zpb},
+	{ldy,imm},{lda,idx},{ldx,imm},{ldz,imm},/* a0 */
+	{ldy,zpg},{lda,zpg},{ldx,zpg},{smb,zpg},
+	{tay,imp},{lda,imm},{tax,imp},{ldz,aba},
+	{ldy,aba},{lda,aba},{ldx,aba},{bbs,zpb},
+	{bcs,rel},{lda,idy},{lda,inz},{bcs,rw2},/* b0 */
+	{ldy,zpx},{lda,zpx},{ldx,zpy},{smb,zpg},
+	{clv,imp},{lda,aby},{tsx,imp},{ldz,abx},
+	{ldy,abx},{lda,abx},{ldx,aby},{bbs,zpb},
+	{cpy,imm},{cmp,idx},{cpz,imm},{dew,zpg},/* c0 */
+	{cpy,zpg},{cmp,zpg},{dec,zpg},{smb,zpg},
+	{iny,imp},{cmp,imm},{dex,imp},{asw,aba},
+	{cpy,aba},{cmp,aba},{dec,aba},{bbs,zpb},
+	{bne,rel},{cmp,idy},{cmp,idz},{bne,rw2},/* d0 */
+	{cpz,zpg},{cmp,zpx},{dec,zpx},{smb,zpg},
+	{cld,imp},{cmp,aby},{phx,imp},{phz,imp},
+	{cpz,aba},{cmp,abx},{dec,abx},{bbs,zpb},
+	{cpx,imm},{sbc,idx},{lda,isy},{inw,zpg},/* e0 */
+	{cpx,zpg},{sbc,zpg},{inc,zpg},{smb,zpg},
+	{inx,imp},{sbc,imm},{nop,imp},{row,aba},
+	{cpx,aba},{sbc,aba},{inc,aba},{bbs,zpb},
+	{beq,rel},{sbc,idy},{sbc,idz},{beq,rw2},/* f0 */
+	{phw,iw2},{sbc,zpx},{inc,zpx},{smb,zpg},
+	{sed,imp},{sbc,aby},{plx,imp},{plz,imp},
+	{phw,aba},{sbc,abx},{inc,abx},{bbs,zpb}
 };
 #endif
 
 #if (HAS_DECO16)
 static const struct op6502_info opdeco16[256] =
 {
-	{m6502_brk,imp,0  },{ora,idx,MRD},{ill,non,0  },{ill,non,0	},/* 00 */
-	{ill,non,0  },{ora,zpg,ZRD},{asl,zpg,ZRW},{ill,non,0	},
-	{php,imp,0  },{ora,imm,VAL},{asl,acc,0  },{u0B,zpg,0	},
-	{ill,non,0  },{ora,aba,MRD},{asl,aba,MRW},{ill,non,0	},
-	{bpl,rel,BRA},{ora,idy,MRD},{ill,non,0  },{u13,zpg,0	},/* 10 */
-	{ill,non,0  },{ora,zpx,ZRD},{asl,zpx,ZRW},{ill,non,0	},
-	{clc,imp,0  },{ora,aby,MRD},{ill,non,0  },{ill,non,0	},
-	{ill,non,0  },{ora,abx,MRD},{asl,abx,MRW},{ill,non,0	},
-	{jsr,adr,JMP},{and,idx,MRD},{ill,non,0  },{u23,zpg,0	},/* 20 */
-	{bit,zpg,ZRD},{and,zpg,ZRD},{rol,zpg,ZRW},{ill,non,0	},
-	{plp,imp,0  },{and,imm,VAL},{rol,acc,0  },{ill,non,0	},
-	{bit,aba,MRD},{and,aba,MRD},{rol,aba,MRW},{ill,non,0	},
-	{bmi,rel,BRA},{and,idy,MRD},{ill,non,0  },{ill,non,0	},/* 30 */
-	{ill,non,0  },{and,zpx,ZRD},{rol,zpx,ZRW},{ill,non,0	},
-	{sec,imp,0  },{and,aby,MRD},{ill,non,0  },{ill,non,0	},
-	{ill,non,0  },{and,abx,MRD},{rol,abx,MRW},{u3F,zpg,0	},
-   {rti,imp,0  },{eor,idx,MRD},{ill,non,0  },{ill,non,0	},/* 40 */
-   {ill,non,0  },{eor,zpg,ZRD},{lsr,zpg,ZRW},{ill,non,0  },
-   {pha,imp,0  },{eor,imm,VAL},{lsr,acc,0  },{u4B,zpg,0	},
-   {jmp,adr,JMP},{eor,aba,MRD},{lsr,aba,MRW},{ill,non,0	},
-   {bvc,rel,BRA},{eor,idy,MRD},{ill,non,0  },{ill,non,0	},/* 50 */
-   {ill,non,0  },{eor,zpx,ZRD},{lsr,zpx,ZRW},{ill,non,0	},
-   {cli,imp,0  },{eor,aby,MRD},{ill,non,0  },{ill,non,0	},
-   {ill,non,0  },{eor,abx,MRD},{lsr,abx,MRW},{ill,non,0	},
-   {rts,imp,0  },{adc,idx,MRD},{ill,non,0  },{ill,non,0	},/* 60 */
-   {ill,non,0  },{adc,zpg,ZRD},{ror,zpg,ZRW},{vbl,zpg,0	},  		// MISH
-   {pla,imp,0  },{adc,imm,VAL},{ror,acc,0  },{ill,non,0	},
-   {jmp,ind,JMP},{adc,aba,MRD},{ror,aba,MRW},{ill,non,0	},
-   {bvs,rel,BRA},{adc,idy,MRD},{ill,non,0  },{ill,non,0	},/* 70 */
-   {ill,non,0  },{adc,zpx,ZRD},{ror,zpx,ZRW},{ill,non,0	},
-   {sei,imp,0  },{adc,aby,MRD},{ill,non,0  },{ill,non,0	},
-   {ill,non,0  },{adc,abx,MRD},{ror,abx,MRW},{ill,non,0	},
-   {ill,non,0  },{sta,idx,MWR},{ill,non,0  },{ill,non,0	},/* 80 */
-   {sty,zpg,ZWR},{sta,zpg,ZWR},{stx,zpg,ZWR},{u87,zpg,0	},
-   {dey,imp,0  },{ill,non,0	},{txa,imp,0  },{ill,non,0	},
-   {sty,aba,MWR},{sta,aba,MWR},{stx,aba,MWR},{u8F,zpg,0	},
-   {bcc,rel,BRA},{sta,idy,MWR},{ill,non,0  },{ill,non,0	},/* 90 */
-   {sty,zpx,ZWR},{sta,zpx,ZWR},{stx,zpy,ZWR},{ill,non,0	},
-   {tya,imp,0  },{sta,aby,MWR},{txs,imp,0  },{ill,non,0	},
-   {ill,non,0  },{sta,abx,MWR},{ill,non,0  },{ill,non,0	},
-   {ldy,imm,VAL},{lda,idx,MRD},{ldx,imm,VAL},{uA3,zpg,0	},/* a0 */
-   {ldy,zpg,ZRD},{lda,zpg,ZRD},{ldx,zpg,ZRD},{ill,non,0	},
-   {tay,imp,0  },{lda,imm,VAL},{tax,imp,0  },{uAB,zpg,0	},
-   {ldy,aba,MRD},{lda,aba,MRD},{ldx,aba,MRD},{ill,non,0	},
-   {bcs,rel,BRA},{lda,idy,MRD},{ill,non,0  },{ill,non,0	},/* b0 */
-   {ldy,zpx,ZRD},{lda,zpx,ZRD},{ldx,zpy,ZRD},{ill,non,0	},
-   {clv,imp,0  },{lda,aby,MRD},{tsx,imp,0  },{uBB,zpg,0	},
-   {ldy,abx,MRD},{lda,abx,MRD},{ldx,aby,MRD},{ill,non,0	},
-   {cpy,imm,VAL},{cmp,idx,MRD},{ill,non,0  },{ill,non,0	},/* c0 */
-   {cpy,zpg,ZRD},{cmp,zpg,ZRD},{dec,zpg,ZRW},{ill,non,0	},
-   {iny,imp,0  },{cmp,imm,VAL},{dex,imp,0  },{ill,non,0 },
-   {cpy,aba,MRD},{cmp,aba,MRD},{dec,aba,MRW},{ill,non,0	},
-   {bne,rel,BRA},{cmp,idy,MRD},{ill,non,0  },{ill,non,0	},/* d0 */
-   {ill,non,0  },{cmp,zpx,ZRD},{dec,zpx,ZRW},{ill,non,0	},
-   {cld,imp,0  },{cmp,aby,MRD},{ill,non,0  },{ill,non,0	},
-   {ill,non,0  },{cmp,abx,MRD},{dec,abx,MRW},{ill,non,0	},
-   {cpx,imm,VAL},{sbc,idx,MRD},{ill,non,0  },{ill,non,0	},/* e0 */
-   {cpx,zpg,ZRD},{sbc,zpg,ZRD},{inc,zpg,ZRW},{ill,non,0	},
-   {inx,imp,0  },{sbc,imm,VAL},{nop,imp,0  },{ill,non,0	},
-   {cpx,aba,MRD},{sbc,aba,MRD},{inc,aba,MRW},{ill,non,0	},
-   {beq,rel,BRA},{sbc,idy,MRD},{ill,non,0  },{ill,non,0	},/* f0 */
-   {ill,non,0  },{sbc,zpx,ZRD},{inc,zpx,ZRW},{ill,non,0	},
-   {sed,imp,0  },{sbc,aby,MRD},{ill,non,0  },{ill,non,0	},
-   {ill,non,0  },{sbc,abx,MRD},{inc,abx,MRW},{ill,non,0	}
- };
+	{m6502_brk,imp},{ora,idx},{ill,non},{ill,non},/* 00 */
+	{ill,non},{ora,zpg},{asl,zpg},{ill,non},
+	{php,imp},{ora,imm},{asl,acc},{u0B,zpg},
+	{ill,non},{ora,aba},{asl,aba},{ill,non},
+	{bpl,rel},{ora,idy},{ill,non},{u13,zpg},/* 10 */
+	{ill,non},{ora,zpx},{asl,zpx},{ill,non},
+	{clc,imp},{ora,aby},{ill,non},{ill,non},
+	{ill,non},{ora,abx},{asl,abx},{ill,non},
+	{jsr,adr},{and,idx},{ill,non},{u23,zpg},/* 20 */
+	{bit,zpg},{and,zpg},{rol,zpg},{ill,non},
+	{plp,imp},{and,imm},{rol,acc},{ill,non},
+	{bit,aba},{and,aba},{rol,aba},{ill,non},
+	{bmi,rel},{and,idy},{ill,non},{ill,non},/* 30 */
+	{ill,non},{and,zpx},{rol,zpx},{ill,non},
+	{sec,imp},{and,aby},{ill,non},{ill,non},
+	{ill,non},{and,abx},{rol,abx},{u3F,zpg},
+	{rti,imp},{eor,idx},{ill,non},{ill,non},/* 40 */
+	{ill,non},{eor,zpg},{lsr,zpg},{ill,non},
+	{pha,imp},{eor,imm},{lsr,acc},{u4B,zpg},
+	{jmp,adr},{eor,aba},{lsr,aba},{ill,non},
+	{bvc,rel},{eor,idy},{ill,non},{ill,non},/* 50 */
+	{ill,non},{eor,zpx},{lsr,zpx},{ill,non},
+	{cli,imp},{eor,aby},{ill,non},{ill,non},
+	{ill,non},{eor,abx},{lsr,abx},{ill,non},
+	{rts,imp},{adc,idx},{ill,non},{ill,non},/* 60 */
+	{ill,non},{adc,zpg},{ror,zpg},{vbl,zpg},  		// MISH
+	{pla,imp},{adc,imm},{ror,acc},{ill,non},
+	{jmp,ind},{adc,aba},{ror,aba},{ill,non},
+	{bvs,rel},{adc,idy},{ill,non},{ill,non},/* 70 */
+	{ill,non},{adc,zpx},{ror,zpx},{ill,non},
+	{sei,imp},{adc,aby},{ill,non},{ill,non},
+	{ill,non},{adc,abx},{ror,abx},{ill,non},
+	{ill,non},{sta,idx},{ill,non},{ill,non},/* 80 */
+	{sty,zpg},{sta,zpg},{stx,zpg},{u87,zpg},
+	{dey,imp},{ill,non},{txa,imp},{ill,non},
+	{sty,aba},{sta,aba},{stx,aba},{u8F,zpg},
+	{bcc,rel},{sta,idy},{ill,non},{ill,non},/* 90 */
+	{sty,zpx},{sta,zpx},{stx,zpy},{ill,non},
+	{tya,imp},{sta,aby},{txs,imp},{ill,non},
+	{ill,non},{sta,abx},{ill,non},{ill,non},
+	{ldy,imm},{lda,idx},{ldx,imm},{uA3,zpg},/* a0 */
+	{ldy,zpg},{lda,zpg},{ldx,zpg},{ill,non},
+	{tay,imp},{lda,imm},{tax,imp},{uAB,zpg},
+	{ldy,aba},{lda,aba},{ldx,aba},{ill,non},
+	{bcs,rel},{lda,idy},{ill,non},{ill,non},/* b0 */
+	{ldy,zpx},{lda,zpx},{ldx,zpy},{ill,non},
+	{clv,imp},{lda,aby},{tsx,imp},{uBB,zpg},
+	{ldy,abx},{lda,abx},{ldx,aby},{ill,non},
+	{cpy,imm},{cmp,idx},{ill,non},{ill,non},/* c0 */
+	{cpy,zpg},{cmp,zpg},{dec,zpg},{ill,non},
+	{iny,imp},{cmp,imm},{dex,imp},{ill,non},
+	{cpy,aba},{cmp,aba},{dec,aba},{ill,non},
+	{bne,rel},{cmp,idy},{ill,non},{ill,non},/* d0 */
+	{ill,non},{cmp,zpx},{dec,zpx},{ill,non},
+	{cld,imp},{cmp,aby},{ill,non},{ill,non},
+	{ill,non},{cmp,abx},{dec,abx},{ill,non},
+	{cpx,imm},{sbc,idx},{ill,non},{ill,non},/* e0 */
+	{cpx,zpg},{sbc,zpg},{inc,zpg},{ill,non},
+	{inx,imp},{sbc,imm},{nop,imp},{ill,non},
+	{cpx,aba},{sbc,aba},{inc,aba},{ill,non},
+	{beq,rel},{sbc,idy},{ill,non},{ill,non},/* f0 */
+	{ill,non},{sbc,zpx},{inc,zpx},{ill,non},
+	{sed,imp},{sbc,aby},{ill,non},{ill,non},
+	{ill,non},{sbc,abx},{inc,abx},{ill,non}
+};
 #endif
 
 /*****************************************************************************
@@ -640,12 +621,11 @@ static const struct op6502_info opdeco16[256] =
 static unsigned internal_m6502_dasm(const struct op6502_info *opinfo, char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	char *dst = buffer;
-	const char *symbol;
 	INT8 offset;
 	INT16 offset16;
 	unsigned PC = pc;
 	UINT16 addr;
-	UINT8 op, opc, arg, access, value;
+	UINT8 op, opc, arg, value;
 	UINT32 flags;
 	int pos = 0;
 
@@ -654,7 +634,6 @@ static unsigned internal_m6502_dasm(const struct op6502_info *opinfo, char *buff
 
 	opc = opinfo[op].opc;
 	arg = opinfo[op].arg;
-	access = opinfo[op].access;
 
 	/* determine dasmflags */
 	switch(opc)
@@ -704,14 +683,12 @@ static unsigned internal_m6502_dasm(const struct op6502_info *opinfo, char *buff
 	case imm:
 		value = opram[pos++];
 		pc++;
-		symbol = set_ea_info( 0, value, EA_UINT8, access );
-		dst += sprintf(dst,"#%s", symbol);
+		dst += sprintf(dst,"#$%02X", value);
 		break;
 
 	case zpg:
 		addr = opram[pos++];
 		pc++;
-		symbol = set_ea_info( 0, addr, EA_UINT8, access );
 		dst += sprintf(dst,"$%02X", addr);
 		break;
 
@@ -748,12 +725,10 @@ static unsigned internal_m6502_dasm(const struct op6502_info *opinfo, char *buff
 	case zpb:
 		addr = opram[pos++];
 		pc++;
-		symbol = set_ea_info( 0, addr, EA_UINT8, access );
 		dst += sprintf(dst,"$%02X", addr);
 		offset = (INT8) opram[pos++];
 		pc++;
-		symbol = set_ea_info( 1, pc, offset, BRA );
-		dst += sprintf(dst,",%s", symbol);
+		dst += sprintf(dst,",$%04X", pc + offset);
 		break;
 
 	case adr:

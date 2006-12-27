@@ -18,10 +18,6 @@ static void illegal( void )
 	logerror("M6805: illegal opcode\n");
 }
 
-#ifdef macintosh
-#pragma mark ____0x____
-#endif
-
 /* $00/$02/$04/$06/$08/$0A/$0C/$0E BRSET direct,relative ---- */
 INLINE void brset (UINT8 bit)
 {
@@ -66,11 +62,6 @@ INLINE void brclr (UINT8 bit)
 	}
 }
 
-
-#ifdef macintosh
-#pragma mark ____1x____
-#endif
-
 /* $10/$12/$14/$16/$18/$1A/$1C/$1E BSET direct ---- */
 INLINE void bset (UINT8 bit)
 {
@@ -86,11 +77,6 @@ INLINE void bclr (UINT8 bit)
 	DIRBYTE(t); r=t&(~bit);
 	WM(EAD,r);
 }
-
-
-#ifdef macintosh
-#pragma mark ____2x____
-#endif
 
 /* $20 BRA relative ---- */
 INLINE void bra( void )
@@ -209,11 +195,6 @@ INLINE void bih( void )
 		BRANCH( m6805.irq_state[0]==CLEAR_LINE );
 	}
 }
-
-
-#ifdef macintosh
-#pragma mark ____3x____
-#endif
 
 /* $30 NEG direct -*** */
 INLINE void neg_di( void )
@@ -340,11 +321,6 @@ INLINE void clr_di( void )
 	WM(EAD,0);
 }
 
-
-#ifdef macintosh
-#pragma mark ____4x____
-#endif
-
 /* $40 NEGA inherent ?*** */
 INLINE void nega( void )
 {
@@ -455,11 +431,6 @@ INLINE void clra( void )
 	CLR_NZ;
 	SEZ;
 }
-
-
-#ifdef macintosh
-#pragma mark ____5x____
-#endif
 
 /* $50 NEGX inherent ?*** */
 INLINE void negx( void )
@@ -572,11 +543,6 @@ INLINE void clrx( void )
 	CLR_NZC;
 	SEZ;
 }
-
-
-#ifdef macintosh
-#pragma mark ____6x____
-#endif
 
 /* $60 NEG indexed, 1 byte offset -*** */
 INLINE void neg_ix1( void )
@@ -703,11 +669,6 @@ INLINE void clr_ix1( void )
 	WM(EAD,0);
 }
 
-
-#ifdef macintosh
-#pragma mark ____7x____
-#endif
-
 /* $70 NEG indexed -*** */
 INLINE void neg_ix( void )
 {
@@ -832,11 +793,6 @@ INLINE void clr_ix( void )
 	WM(EAD,0);
 }
 
-
-#ifdef macintosh
-#pragma mark ____8x____
-#endif
-
 /* $80 RTI inherent #### */
 INLINE void rti( void )
 {
@@ -896,11 +852,6 @@ INLINE void swi( void )
 
 /* $8F ILLEGAL */
 
-
-#ifdef macintosh
-#pragma mark ____9x____
-#endif
-
 /* $90 ILLEGAL */
 
 /* $91 ILLEGAL */
@@ -947,11 +898,6 @@ INLINE void txa (void)
 {
 	A = X;
 }
-
-
-#ifdef macintosh
-#pragma mark ____Ax____
-#endif
 
 /* $a0 SUBA immediate ?*** */
 INLINE void suba_im( void )
@@ -1089,11 +1035,6 @@ INLINE void ldx_im( void )
 }
 
 /* $af ILLEGAL */
-
-
-#ifdef macintosh
-#pragma mark ____Bx____
-#endif
 
 /* $b0 SUBA direct ?*** */
 INLINE void suba_di( void )
@@ -1252,11 +1193,6 @@ INLINE void stx_di( void )
 	WM(EAD,X);
 }
 
-
-#ifdef macintosh
-#pragma mark ____Cx____
-#endif
-
 /* $c0 SUBA extended ?*** */
 INLINE void suba_ex( void )
 {
@@ -1413,11 +1349,6 @@ INLINE void stx_ex( void )
 	EXTENDED;
 	WM(EAD,X);
 }
-
-
-#ifdef macintosh
-#pragma mark ____Dx____
-#endif
 
 /* $d0 SUBA indexed, 2 byte offset ?*** */
 INLINE void suba_ix2( void )
@@ -1576,11 +1507,6 @@ INLINE void stx_ix2( void )
 	WM(EAD,X);
 }
 
-
-#ifdef macintosh
-#pragma mark ____Ex____
-#endif
-
 /* $e0 SUBA indexed, 1 byte offset ?*** */
 INLINE void suba_ix1( void )
 {
@@ -1737,11 +1663,6 @@ INLINE void stx_ix1( void )
 	INDEXED1;
 	WM(EAD,X);
 }
-
-
-#ifdef macintosh
-#pragma mark ____Fx____
-#endif
 
 /* $f0 SUBA indexed ?*** */
 INLINE void suba_ix( void )

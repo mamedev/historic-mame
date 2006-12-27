@@ -34,6 +34,7 @@ endif
 SOUNDDEFS += -DHAS_DAC=$(if $(filter DAC,$(SOUNDS)),1,0)
 SOUNDDEFS += -DHAS_DMADAC=$(if $(filter DMADAC,$(SOUNDS)),1,0)
 SOUNDDEFS += -DHAS_SPEAKER=$(if $(filter SPEAKER,$(SOUNDS)),1,0)
+SOUNDDEFS += -DHAS_BEEP=$(if $(filter BEEP,$(SOUNDS)),1,0)
 
 ifneq ($(filter DAC,$(SOUNDS)),)
 SOUNDOBJS += $(OBJ)/sound/dac.o
@@ -45,6 +46,10 @@ endif
 
 ifneq ($(filter SPEAKER,$(SOUNDS)),)
 SOUNDOBJS += $(OBJ)/sound/speaker.o
+endif
+
+ifneq ($(filter BEEP,$(SOUNDS)),)
+SOUNDOBJS += $(OBJ)/sound/beep.o
 endif
 
 
@@ -458,6 +463,23 @@ endif
 
 
 #-------------------------------------------------
+# SID custom sound chips
+#-------------------------------------------------
+
+SOUNDDEFS += -DHAS_SID6581=$(if $(filter SID6581,$(SOUNDS)),1,0)
+SOUNDDEFS += -DHAS_SID8580=$(if $(filter SID8580,$(SOUNDS)),1,0)
+
+ifneq ($(filter SID6581,$(SOUNDS)),)
+SOUNDOBJS += $(OBJ)/sound/sid6581.o $(OBJ)/sound/sid.o $(OBJ)/sound/sidenvel.o $(OBJ)/sound/sidvoice.o
+endif
+
+ifneq ($(filter SID8580,$(SOUNDS)),)
+SOUNDOBJS += $(OBJ)/sound/sid6581.o $(OBJ)/sound/sid.o $(OBJ)/sound/sidenvel.o $(OBJ)/sound/sidvoice.o
+endif
+
+
+
+#-------------------------------------------------
 # Sony custom sound chips
 #-------------------------------------------------
 
@@ -465,6 +487,18 @@ SOUNDDEFS += -DHAS_PSXSPU=$(if $(filter PSXSPU,$(SOUNDS)),1,0)
 
 ifneq ($(filter PSXSPU,$(SOUNDS)),)
 SOUNDOBJS += $(OBJ)/sound/psx.o
+endif
+
+
+
+#-------------------------------------------------
+# SP0256 speech synthesizer
+#-------------------------------------------------
+
+SOUNDDEFS += -DHAS_SP0256=$(if $(filter SP0256,$(SOUNDS)),1,0)
+
+ifneq ($(filter SP0256,$(SOUNDS)),)
+SOUNDOBJS += $(OBJ)/sound/sp0256.o
 endif
 
 
@@ -578,6 +612,18 @@ SOUNDDEFS += -DHAS_VRENDER0=$(if $(filter VRENDER0,$(SOUNDS)),1,0)
 
 ifneq ($(filter VRENDER0,$(SOUNDS)),)
 SOUNDOBJS += $(OBJ)/sound/vrender0.o
+endif
+
+
+
+#-------------------------------------------------
+# WAVE file (used for MESS cassette)
+#-------------------------------------------------
+
+SOUNDDEFS += -DHAS_WAVE=$(if $(filter WAVE,$(SOUNDS)),1,0)
+
+ifneq ($(filter WAVE,$(SOUNDS)),)
+SOUNDOBJS += $(OBJ)/sound/wave.o
 endif
 
 

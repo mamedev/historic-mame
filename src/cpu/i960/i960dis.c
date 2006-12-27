@@ -189,16 +189,16 @@ char *i960_disassemble(disassemble_t *diss)
 		switch(modeh)
 		{
 		case 0:
-			DIS "%s\t%s, 0x%lx",NEM,REG_DST, iCode&0xfff);
+			DIS "%-8s%s, 0x%lx",NEM,REG_DST, iCode&0xfff);
 			break;
 		case 1:
 			switch (model)
 			{
 			case 0:
-				DIS "%s\t%s,(%s)",NEM,REG_DST, REG_ABASE);
+				DIS "%-8s%s,(%s)",NEM,REG_DST, REG_ABASE);
 				break;
 			case 3:
-				DIS "%s\t%s,(%s)[%s*%ld]",NEM,REG_DST, REG_ABASE,REG_REG2,(iCode>>7)&0x7);
+				DIS "%-8s%s,(%s)[%s*%ld]",NEM,REG_DST, REG_ABASE,REG_REG2,(iCode>>7)&0x7);
 				break;
 			default:
 				DIS_NI;
@@ -206,25 +206,25 @@ char *i960_disassemble(disassemble_t *diss)
 			}
 			break;
 		case 2:
-			DIS "%s\t%s, 0x%lx(%s)",NEM,REG_DST, iCode&0xfff,REG_ABASE);
+			DIS "%-8s%s, 0x%lx(%s)",NEM,REG_DST, iCode&0xfff,REG_ABASE);
 			break;
 		case 3:
 			switch (model)
 			{
 			case 0:
-				DIS "%s\t%s,0x%x",NEM,REG_DST, READ32(diss,4));
+				DIS "%-8s%s,0x%x",NEM,REG_DST, READ32(diss,4));
 				diss->IPinc = 8;
 				break;
 			case 1:
-				DIS "%s\t%s,0x%x(%s)",NEM,REG_DST, READ32(diss,4),REG_ABASE);
+				DIS "%-8s%s,0x%x(%s)",NEM,REG_DST, READ32(diss,4),REG_ABASE);
 				diss->IPinc = 8;
 				break;
 			case 2:
-				DIS "%s\t%s,0x%x[%s*%ld]",NEM,REG_DST, READ32(diss,4),REG_REG2,(iCode>>7)&0x7);
+				DIS "%-8s%s,0x%x[%s*%ld]",NEM,REG_DST, READ32(diss,4),REG_REG2,(iCode>>7)&0x7);
 				diss->IPinc = 8;
 				break;
 			case 3:
-				DIS "%s\t%s,0x%x(%s)[%s*%ld]",NEM,REG_DST, READ32(diss,4),REG_ABASE,REG_REG2,(iCode>>7)&0x7);
+				DIS "%-8s%s,0x%x(%s)[%s*%ld]",NEM,REG_DST, READ32(diss,4),REG_ABASE,REG_REG2,(iCode>>7)&0x7);
 				diss->IPinc = 8;
 				break;
 			default:
@@ -247,7 +247,7 @@ char *i960_disassemble(disassemble_t *diss)
 			i++;
 		}
 
-		if (mnem_reg[i].type == opc) DIS "%s\t%s", mnem_reg[i].mnem,dis_decode_reg(iCode,tmpStr,1));
+		if (mnem_reg[i].type == opc) DIS "%-8s%s", mnem_reg[i].mnem,dis_decode_reg(iCode,tmpStr,1));
 		else DIS_NI;
 		break;
 	case 3:
@@ -260,18 +260,18 @@ char *i960_disassemble(disassemble_t *diss)
 			i++;
 		}
 
-		if (mnem_reg[i].type == opc) DIS "%s\t%s", mnem_reg[i].mnem,dis_decode_reg(iCode,tmpStr,0));
+		if (mnem_reg[i].type == opc) DIS "%-8s%s", mnem_reg[i].mnem,dis_decode_reg(iCode,tmpStr,0));
 		else DIS_NI;
 		break;
 
 	case 6: // bitpos and branch type
-		DIS "%s\t%ld,%s,0x%lx",NEM, COBRSRC1, REG_COBR_SRC2,((((long)iCode&0x00fffffc)<<19)>>19) + (diss->IP));
+		DIS "%-8s%ld,%s,0x%lx",NEM, COBRSRC1, REG_COBR_SRC2,((((long)iCode&0x00fffffc)<<19)>>19) + (diss->IP));
 		break;
 	case 7: // compare and branch type
-		DIS "%s\t%s,%s,0x%lx",NEM,REG_COBR_SRC1,REG_COBR_SRC2,((((long)iCode&0x00fffffc)<<19)>>19) + (diss->IP));
+		DIS "%-8s%s,%s,0x%lx",NEM,REG_COBR_SRC1,REG_COBR_SRC2,((((long)iCode&0x00fffffc)<<19)>>19) + (diss->IP));
 		break;
 	case 8: // target type
-		DIS "%s\t%08lx",NEM,((((long)iCode&0x00fffffc)<<8)>>8) + (diss->IP));
+		DIS "%-8s%08lx",NEM,((((long)iCode&0x00fffffc)<<8)>>8) + (diss->IP));
 		break;
 	case 9: // no operands
 		DIS "%s",NEM);

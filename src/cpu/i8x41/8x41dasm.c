@@ -1,12 +1,10 @@
 #include "debugger.h"
-#include "debug/eainfo.h"
 #include "i8x41.h"
 
 offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT32 flags = 0;
 	unsigned PC = pc;
-	const char *sym;
 	UINT8 op;
 	UINT8 arg;
 
@@ -23,8 +21,7 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 		sprintf(dst, "out   dbb,a");
 		break;
 	case 0x03: /* 2: 0000 0011 */
-		sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
-		sprintf(dst, "add   a,#%s", sym);
+		sprintf(dst, "add   a,#$%02X", opram[PC++ - pc]);
 		break;
 	case 0x04: /* 2: aaa0 0100 */
 	case 0x24: /* 2: aaa0 0100 */
@@ -34,8 +31,7 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 	case 0xa4: /* 2: aaa0 0100 */
 	case 0xc4: /* 2: aaa0 0100 */
 	case 0xe4: /* 2: aaa0 0100 */
-		sym = set_ea_info(EA_DST, ( (op<<3) & 0x700) | opram[PC++ - pc], EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "jmp   %s", sym);
+		sprintf(dst, "jmp   $%04X", ((op<<3) & 0x700) | opram[PC++ - pc]);
 		break;
 	case 0x05: /* 1: 0000 0101 */
 		sprintf(dst, "en    i");
@@ -71,12 +67,10 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 	case 0xd2: /* 2: bbb1 0010 */
 	case 0xf2: /* 2: bbb1 0010 */
 		arg = opram[PC++ - pc];
-		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "jb%d   %s", op >> 5, sym);
+		sprintf(dst, "jb%d   $%04X", op >> 5, (PC & 0x700) | arg);
 		break;
 	case 0x13: /* 2: 0001 0011 */
-		sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
-		sprintf(dst, "addc  %s", sym);
+		sprintf(dst, "addc  $%02X", opram[PC++ - pc]);
 		break;
 	case 0x14: /* 2: aaa1 0100 */
 	case 0x34: /* 2: aaa1 0100 */
@@ -86,8 +80,7 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 	case 0xb4: /* 2: aaa1 0100 */
 	case 0xd4: /* 2: aaa1 0100 */
 	case 0xf4: /* 2: aaa1 0100 */
-		sym = set_ea_info(EA_DST, ( (op<<3) & 0x700) | opram[PC++ - pc], EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "call  %s", sym);
+		sprintf(dst, "call  $%04X", ((op<<3) & 0x700) | opram[PC++ - pc]);
 		flags = DASMFLAG_STEP_OVER;
 		break;
 	case 0x15: /* 1: 0001 0101 */
@@ -95,8 +88,7 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 		break;
 	case 0x16: /* 2: 0001 0110 */
 		arg = opram[PC++ - pc];
-		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "jtf   %s", sym);
+		sprintf(dst, "jtf   $%04X", (PC & 0x700) | arg);
 		break;
 	case 0x17: /* 1: 0001 0111 */
 		sprintf(dst, "inc   a");
@@ -119,16 +111,14 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 		sprintf(dst, "in    a,ddb");
 		break;
 	case 0x23: /* 2: 0010 0011 */
-		sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
-		sprintf(dst, "mov   a,#%s", sym);
+		sprintf(dst, "mov   a,#$%02X", opram[PC++ - pc]);
 		break;
 	case 0x25: /* 1: 0010 0101 */
 		sprintf(dst, "en    tcnti");
 		break;
 	case 0x26: /* 2: 0010 0110 */
 		arg = opram[PC++ - pc];
-		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "jnt0  %s", sym);
+		sprintf(dst, "jnt0  $%04X", (PC & 0x700) | arg);
 		break;
 	case 0x27: /* 1: 0010 0111 */
 		sprintf(dst, "clr   a");
@@ -155,8 +145,7 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 		break;
 	case 0x36: /* 2: 0011 0110 */
 		arg = opram[PC++ - pc];
-		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "jt0   %s", sym);
+		sprintf(dst, "jt0   $%04X", (PC & 0x700) | arg);
 		break;
 	case 0x37: /* 1: 0011 0111 */
 		sprintf(dst, "cpl   a");
@@ -181,16 +170,14 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 		sprintf(dst, "mov   a,t");
 		break;
 	case 0x43: /* 2: 0100 0011 */
-		sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
-		sprintf(dst, "orl   a,#%s", sym);
+		sprintf(dst, "orl   a,#$%02X", opram[PC++ - pc]);
 		break;
 	case 0x45: /* 1: 0100 0101 */
 		sprintf(dst, "strt  cnt");
 		break;
 	case 0x46: /* 2: 0100 0110 */
 		arg = opram[PC++ - pc];
-		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "jnt1  %s", sym);
+		sprintf(dst, "jnt1  $%04X", (PC & 0x700) | arg);
 		break;
 	case 0x47: /* 1: 0100 0111 */
 		sprintf(dst, "swap  a");
@@ -210,16 +197,14 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 		sprintf(dst, "anl   a,@r%d", op&1);
 		break;
 	case 0x53: /* 2: 0101 0011 */
-		sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
-		sprintf(dst, "anl   a,#%s", sym);
+		sprintf(dst, "anl   a,#$%02X", opram[PC++ - pc]);
 		break;
 	case 0x55: /* 1: 0101 0101 */
 		sprintf(dst, "strt  t");
 		break;
 	case 0x56: /* 2: 0101 0110 */
 		arg = opram[PC++ - pc];
-		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "jt1   %s", sym);
+		sprintf(dst, "jt1   $%04X", (PC & 0x700) | arg);
 		break;
 	case 0x57: /* 1: 0101 0111 */
 		sprintf(dst, "da    a");
@@ -275,8 +260,7 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 		break;
 	case 0x76: /* 2: 0111 0110 */
 		arg = opram[PC++ - pc];
-		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "jf1   %s", sym);
+		sprintf(dst, "jf1   $%04X", (PC & 0x700) | arg);
 		break;
 	case 0x77: /* 1: 0111 0111 */
 		sprintf(dst, "rl    a");
@@ -309,8 +293,7 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 		break;
 	case 0x86: /* 2: 1000 0110 */
 		arg = opram[PC++ - pc];
-		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "jobf  %s", sym);
+		sprintf(dst, "jobf  $%04X", (PC & 0x700) | arg);
 		break;
 	case 0x87: /* 1: 1000 0111 */
 		sprintf(dst, "ill");
@@ -319,15 +302,12 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 	case 0x89: /* 2: 1000 10pp */
 	case 0x8a: /* 2: 1000 10pp */
 	case 0x8b: /* 2: 1000 10pp */
-		set_ea_info(EA_DST, op&3, EA_UINT8, EA_PORT_WR);
-		sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
-		sprintf(dst, "orl   p%d,#%s", op&3, sym);
+		sprintf(dst, "orl   p%d,#$%02X", op&3, opram[PC++ - pc]);
 		break;
 	case 0x8c: /* 2: 1000 11pp */
 	case 0x8d: /* 2: 1000 11pp */
 	case 0x8e: /* 2: 1000 11pp */
 	case 0x8f: /* 2: 1000 11pp */
-		set_ea_info(EA_DST, op&7, EA_UINT8, EA_PORT_WR);
 		sprintf(dst, "orld  p%d,a", op&7);
 		break;
 	case 0x90: /* 1: 1001 0000 */
@@ -345,8 +325,7 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 		break;
 	case 0x96: /* 2: 1001 0110 */
 		arg = opram[PC++ - pc];
-		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "jnz   %s", sym);
+		sprintf(dst, "jnz   $%04X", (PC & 0x700) | arg);
 		break;
 	case 0x97: /* 1: 1001 0111 */
 		sprintf(dst, "clr   c");
@@ -355,15 +334,12 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 	case 0x99: /* 2: 1001 10pp */
 	case 0x9a: /* 2: 1001 10pp */
 	case 0x9b: /* 2: 1001 10pp */
-		set_ea_info(EA_DST, op&7, EA_UINT8, EA_PORT_WR);
-		sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
-		sprintf(dst, "anl   p%d,#%s", op&3, sym);
+		sprintf(dst, "anl   p%d,#$%02X", op&3, opram[PC++ - pc]);
 		break;
 	case 0x9c: /* 2: 1001 11pp */
 	case 0x9d: /* 2: 1001 11pp */
 	case 0x9e: /* 2: 1001 11pp */
 	case 0x9f: /* 2: 1001 11pp */
-		set_ea_info(EA_DST, op&7, EA_UINT8, EA_PORT_WR);
 		sprintf(dst, "anld  p%d,a", op&7);
 		break;
 	case 0xa0: /* 1: 1010 000r */
@@ -397,8 +373,7 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 		break;
 	case 0xb0: /* 2: 1011 000r */
 	case 0xb1: /* 2: 1011 000r */
-		sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
-		sprintf(dst, "mov   @r%d,#%s", op&1, sym);
+		sprintf(dst, "mov   @r%d,#$%02X", op&1, opram[PC++ - pc]);
 		break;
 	case 0xb3: /* 2: 1011 0011 */
 		sprintf(dst, "jmpp  @a");
@@ -408,8 +383,7 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 		break;
 	case 0xb6: /* 2: 1011 0110 */
 		arg = opram[PC++ - pc];
-		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "jf0   %s", sym);
+		sprintf(dst, "jf0   $%04X", (PC & 0x700) | arg);
 		break;
 	case 0xb7: /* 1: 1011 0111 */
 		sprintf(dst, "ill");
@@ -422,8 +396,7 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 	case 0xbd: /* 1: 1011 1rrr */
 	case 0xbe: /* 1: 1011 1rrr */
 	case 0xbf: /* 1: 1011 1rrr */
-		sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
-		sprintf(dst, "mov   r%d,#%s", op&7, sym);
+		sprintf(dst, "mov   r%d,#$%02X", op&7, opram[PC++ - pc]);
 		break;
 	case 0xc0: /* 1: 1100 0000 */
 		sprintf(dst, "ill");
@@ -442,8 +415,7 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 		break;
 	case 0xc6: /* 2: 1100 0110 */
 		arg = opram[PC++ - pc];
-		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "jz    %s", sym);
+		sprintf(dst, "jz    $%04X", (PC & 0x700) | arg);
 		break;
 	case 0xc7: /* 1: 1100 0111 */
 		sprintf(dst, "mov   a,psw");
@@ -463,16 +435,14 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 		sprintf(dst, "xrl   a,@r%d", op&1);
 		break;
 	case 0xd3: /* 1: 1101 0011 */
-		sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
-		sprintf(dst, "xrl   a,#%s", sym);
+		sprintf(dst, "xrl   a,#$%02X", opram[PC++ - pc]);
 		break;
 	case 0xd5: /* 1: 1101 0101 */
 		sprintf(dst, "sel   rb1");
 		break;
 	case 0xd6: /* 2: 1101 0110 */
 		arg = opram[PC++ - pc];
-		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "jnibf %s", sym);
+		sprintf(dst, "jnibf $%04X", (PC & 0x700) | arg);
 		break;
 	case 0xd7: /* 1: 1101 0111 */
 		sprintf(dst, "mov   psw,a");
@@ -504,8 +474,7 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 		break;
 	case 0xe6: /* 2: 1110 0110 */
 		arg = opram[PC++ - pc];
-		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "jnc   %s", sym);
+		sprintf(dst, "jnc   $%04X", (PC & 0x700) | arg);
 		break;
 	case 0xe7: /* 1: 1110 0111 */
 		sprintf(dst, "rl    a");
@@ -518,9 +487,8 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 	case 0xed: /* 2: 1110 1rrr */
 	case 0xee: /* 2: 1110 1rrr */
 	case 0xef: /* 2: 1110 1rrr */
-	arg = opram[PC++ - pc];
-		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "djnz  r%d,%s", op&7, sym);
+		arg = opram[PC++ - pc];
+		sprintf(dst, "djnz  r%d,$%04X", op&7, (PC & 0x700) | arg);
 		flags = DASMFLAG_STEP_OVER;
 		break;
 	case 0xf0: /* 1: 1111 000r */
@@ -535,8 +503,7 @@ offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 		break;
 	case 0xf6: /* 2: 1111 0110 */
 		arg = opram[PC++ - pc];
-		sym = set_ea_info(EA_DST, (PC & 0x700) | arg, EA_UINT16, EA_ABS_PC);
-		sprintf(dst, "jc    %s", sym);
+		sprintf(dst, "jc    $%04X", (PC & 0x700) | arg);
 		break;
 	case 0xf7: /* 1: 1111 0111 */
 		sprintf(dst, "rlc   a");

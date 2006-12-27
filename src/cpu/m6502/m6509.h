@@ -36,7 +36,7 @@ enum {
    positiv edge sets overflow flag */
 #define M6509_SET_OVERFLOW 3
 
-void m6509_get_info(UINT32 state, union cpuinfo *info);
+void m6509_get_info(UINT32 state, cpuinfo *info);
 
 #endif /* _M6509_H */
 

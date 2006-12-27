@@ -4,7 +4,7 @@
 #include "i86intf.h"
 
 /* Public functions */
-void v30_get_info(UINT32 state, union cpuinfo *info);
+void v30_get_info(UINT32 state, cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned DasmV30(char* buffer, unsigned pc);

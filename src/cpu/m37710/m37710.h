@@ -114,7 +114,7 @@ void m37710_state_load(void *file);
 #define m37710_branching(A)
 
 
-void m37710_get_info(UINT32 state, union cpuinfo *info);
+void m37710_get_info(UINT32 state, cpuinfo *info);
 
 /* ======================================================================== */
 /* ============================== END OF FILE ============================= */

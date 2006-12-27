@@ -58,7 +58,7 @@ enum {
  *  Public Functions
  */
 
-void tms32010_get_info(UINT32 state, union cpuinfo *info);
+void tms32010_get_info(UINT32 state, cpuinfo *info);
 
 
 

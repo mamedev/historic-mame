@@ -1052,7 +1052,7 @@ static void registers_recompute(debug_view *view)
 		str = cpunum_reg_string(regdata->cpunum, regid);
 
 		/* did we get a string? */
-		if (str && str[0] != '~')
+		if (str && str[0] != '\0' && str[0] != '~')
 			add_register(view, regid, str);
 	}
 

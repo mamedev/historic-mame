@@ -397,7 +397,7 @@ void h6280io_set_buffer(UINT8 data)
  * Generic set_info
  **************************************************************************/
 
-static void h6280_set_info(UINT32 state, union cpuinfo *info)
+static void h6280_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -405,7 +405,7 @@ static void h6280_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + 0:			set_irq_line(0, info->i);					break;
 		case CPUINFO_INT_INPUT_STATE + 1:			set_irq_line(1, info->i);					break;
 		case CPUINFO_INT_INPUT_STATE + 2:			set_irq_line(2, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:set_irq_line(INPUT_LINE_NMI, info->i);		break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:set_irq_line(INPUT_LINE_NMI, info->i);	break;
 
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + H6280_PC:		PCW = info->i;								break;
@@ -440,7 +440,7 @@ static void h6280_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void h6280_get_info(UINT32 state, union cpuinfo *info)
+void h6280_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -514,14 +514,14 @@ void h6280_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_TRANSLATE:						info->translate = h6280_translate;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "HuC6280"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Hudsonsoft 6280"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.07"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 1999, 2000 Bryan McPhail, mish@tendril.co.uk"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "HuC6280");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Hudsonsoft 6280");		break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.07");				break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (c) 1999, 2000 Bryan McPhail, mish@tendril.co.uk"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				h6280.p & 0x80 ? 'N':'.',
 				h6280.p & 0x40 ? 'V':'.',
 				h6280.p & 0x20 ? 'R':'.',
@@ -532,27 +532,27 @@ void h6280_get_info(UINT32 state, union cpuinfo *info)
 				h6280.p & 0x01 ? 'C':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + H6280_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", h6280.pc.d); break;
-        case CPUINFO_STR_REGISTER + H6280_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%02X", h6280.sp.b.l); break;
-        case CPUINFO_STR_REGISTER + H6280_P:			sprintf(info->s = cpuintrf_temp_str(), "P:%02X", h6280.p); break;
-        case CPUINFO_STR_REGISTER + H6280_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", h6280.a); break;
-		case CPUINFO_STR_REGISTER + H6280_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%02X", h6280.x); break;
-		case CPUINFO_STR_REGISTER + H6280_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%02X", h6280.y); break;
-		case CPUINFO_STR_REGISTER + H6280_IRQ_MASK:		sprintf(info->s = cpuintrf_temp_str(), "IM:%02X", h6280.irq_mask); break;
-		case CPUINFO_STR_REGISTER + H6280_TIMER_STATE:	sprintf(info->s = cpuintrf_temp_str(), "TMR:%02X", h6280.timer_status); break;
-		case CPUINFO_STR_REGISTER + H6280_NMI_STATE:	sprintf(info->s = cpuintrf_temp_str(), "NMI:%X", h6280.nmi_state); break;
-		case CPUINFO_STR_REGISTER + H6280_IRQ1_STATE:	sprintf(info->s = cpuintrf_temp_str(), "IRQ1:%X", h6280.irq_state[0]); break;
-		case CPUINFO_STR_REGISTER + H6280_IRQ2_STATE:	sprintf(info->s = cpuintrf_temp_str(), "IRQ2:%X", h6280.irq_state[1]); break;
-		case CPUINFO_STR_REGISTER + H6280_IRQT_STATE:	sprintf(info->s = cpuintrf_temp_str(), "IRQT:%X", h6280.irq_state[2]); break;
+		case CPUINFO_STR_REGISTER + H6280_PC:			sprintf(info->s, "PC:%04X", h6280.pc.d); break;
+        case CPUINFO_STR_REGISTER + H6280_S:			sprintf(info->s, "S:%02X", h6280.sp.b.l); break;
+        case CPUINFO_STR_REGISTER + H6280_P:			sprintf(info->s, "P:%02X", h6280.p); break;
+        case CPUINFO_STR_REGISTER + H6280_A:			sprintf(info->s, "A:%02X", h6280.a); break;
+		case CPUINFO_STR_REGISTER + H6280_X:			sprintf(info->s, "X:%02X", h6280.x); break;
+		case CPUINFO_STR_REGISTER + H6280_Y:			sprintf(info->s, "Y:%02X", h6280.y); break;
+		case CPUINFO_STR_REGISTER + H6280_IRQ_MASK:		sprintf(info->s, "IM:%02X", h6280.irq_mask); break;
+		case CPUINFO_STR_REGISTER + H6280_TIMER_STATE:	sprintf(info->s, "TMR:%02X", h6280.timer_status); break;
+		case CPUINFO_STR_REGISTER + H6280_NMI_STATE:	sprintf(info->s, "NMI:%X", h6280.nmi_state); break;
+		case CPUINFO_STR_REGISTER + H6280_IRQ1_STATE:	sprintf(info->s, "IRQ1:%X", h6280.irq_state[0]); break;
+		case CPUINFO_STR_REGISTER + H6280_IRQ2_STATE:	sprintf(info->s, "IRQ2:%X", h6280.irq_state[1]); break;
+		case CPUINFO_STR_REGISTER + H6280_IRQT_STATE:	sprintf(info->s, "IRQT:%X", h6280.irq_state[2]); break;
 #ifdef MAME_DEBUG
-		case CPUINFO_STR_REGISTER + H6280_M1:			sprintf(info->s = cpuintrf_temp_str(), "M1:%02X", h6280.mmr[0]); break;
-		case CPUINFO_STR_REGISTER + H6280_M2:			sprintf(info->s = cpuintrf_temp_str(), "M2:%02X", h6280.mmr[1]); break;
-		case CPUINFO_STR_REGISTER + H6280_M3:			sprintf(info->s = cpuintrf_temp_str(), "M3:%02X", h6280.mmr[2]); break;
-		case CPUINFO_STR_REGISTER + H6280_M4:			sprintf(info->s = cpuintrf_temp_str(), "M4:%02X", h6280.mmr[3]); break;
-		case CPUINFO_STR_REGISTER + H6280_M5:			sprintf(info->s = cpuintrf_temp_str(), "M5:%02X", h6280.mmr[4]); break;
-		case CPUINFO_STR_REGISTER + H6280_M6:			sprintf(info->s = cpuintrf_temp_str(), "M6:%02X", h6280.mmr[5]); break;
-		case CPUINFO_STR_REGISTER + H6280_M7:			sprintf(info->s = cpuintrf_temp_str(), "M7:%02X", h6280.mmr[6]); break;
-		case CPUINFO_STR_REGISTER + H6280_M8:			sprintf(info->s = cpuintrf_temp_str(), "M8:%02X", h6280.mmr[7]); break;
+		case CPUINFO_STR_REGISTER + H6280_M1:			sprintf(info->s, "M1:%02X", h6280.mmr[0]); break;
+		case CPUINFO_STR_REGISTER + H6280_M2:			sprintf(info->s, "M2:%02X", h6280.mmr[1]); break;
+		case CPUINFO_STR_REGISTER + H6280_M3:			sprintf(info->s, "M3:%02X", h6280.mmr[2]); break;
+		case CPUINFO_STR_REGISTER + H6280_M4:			sprintf(info->s, "M4:%02X", h6280.mmr[3]); break;
+		case CPUINFO_STR_REGISTER + H6280_M5:			sprintf(info->s, "M5:%02X", h6280.mmr[4]); break;
+		case CPUINFO_STR_REGISTER + H6280_M6:			sprintf(info->s, "M6:%02X", h6280.mmr[5]); break;
+		case CPUINFO_STR_REGISTER + H6280_M7:			sprintf(info->s, "M7:%02X", h6280.mmr[6]); break;
+		case CPUINFO_STR_REGISTER + H6280_M8:			sprintf(info->s, "M8:%02X", h6280.mmr[7]); break;
 #endif
 	}
 }

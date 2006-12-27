@@ -50,10 +50,6 @@ static void DZError(void)
 	illegal();		// Vector to Trap handler
 }
 
-#ifdef macintosh
-#pragma mark ____0x____
-#endif
-
 /* $00 NEG direct ?**** */
 INLINE void neg_di( void )
 {
@@ -233,10 +229,6 @@ INLINE void clr_di( void )
 	CLR_NZVC;
 	SEZ;
 }
-
-#ifdef macintosh
-#pragma mark ____1x____
-#endif
 
 /* $10 FLAG */
 
@@ -483,10 +475,6 @@ INLINE void tfr( void )
 	}
 }
 
-#ifdef macintosh
-#pragma mark ____2x____
-#endif
-
 /* $20 BRA relative ----- */
 INLINE void bra( void )
 {
@@ -679,10 +667,6 @@ INLINE void lble( void )
 {
 	LBRANCH( (NXORV || (CC&CC_Z)) );
 }
-
-#ifdef macintosh
-#pragma mark ____3x____
-#endif
 
 #define REGREG_PREAMBLE														\
 	IMMBYTE(tb);															\
@@ -1645,10 +1629,6 @@ INLINE void swi3( void )
 	CHANGE_PC;
 }
 
-#ifdef macintosh
-#pragma mark ____4x____
-#endif
-
 /* $40 NEGA inherent ?**** */
 INLINE void nega( void )
 {
@@ -1757,10 +1737,6 @@ INLINE void clra( void )
 	A = 0;
 	CLR_NZVC; SEZ;
 }
-
-#ifdef macintosh
-#pragma mark ____5x____
-#endif
 
 /* $50 NEGB inherent ?**** */
 INLINE void negb( void )
@@ -2132,10 +2108,6 @@ INLINE void clrw( void )
 	CLR_NZVC; SEZ;
 }
 
-#ifdef macintosh
-#pragma mark ____6x____
-#endif
-
 /* $60 NEG indexed ?**** */
 INLINE void neg_ix( void )
 {
@@ -2319,10 +2291,6 @@ INLINE void clr_ix( void )
 	CLR_NZVC; SEZ;
 }
 
-#ifdef macintosh
-#pragma mark ____7x____
-#endif
-
 /* $70 NEG extended ?**** */
 INLINE void neg_ex( void )
 {
@@ -2478,11 +2446,6 @@ INLINE void clr_ex( void )
 	WM(EAD,0);
 	CLR_NZVC; SEZ;
 }
-
-
-#ifdef macintosh
-#pragma mark ____8x____
-#endif
 
 /* $80 SUBA immediate ?**** */
 INLINE void suba_im( void )
@@ -2825,10 +2788,6 @@ INLINE void divq_im( void )
 	else
 		DZError();
 }
-
-#ifdef macintosh
-#pragma mark ____9x____
-#endif
 
 /* $90 SUBA direct ?**** */
 INLINE void suba_di( void )
@@ -3211,11 +3170,6 @@ INLINE void sty_di( void )
 	DIRECT;
 	WM16(EAD,&pY);
 }
-
-#ifdef macintosh
-#pragma mark ____Ax____
-#endif
-
 
 /* $a0 SUBA indexed ?**** */
 INLINE void suba_ix( void )
@@ -3617,10 +3571,6 @@ INLINE void sty_ix( void )
 	WM16(EAD,&pY);
 }
 
-#ifdef macintosh
-#pragma mark ____Bx____
-#endif
-
 /* $b0 SUBA extended ?**** */
 INLINE void suba_ex( void )
 {
@@ -4003,11 +3953,6 @@ INLINE void sty_ex( void )
 	WM16(EAD,&pY);
 }
 
-
-#ifdef macintosh
-#pragma mark ____Cx____
-#endif
-
 /* $c0 SUBB immediate ?**** */
 INLINE void subb_im( void )
 {
@@ -4339,10 +4284,6 @@ INLINE void lds_im( void )
 	SET_NZ16(S);
 	hd6309.int_state |= HD6309_LDS;
 }
-
-#ifdef macintosh
-#pragma mark ____Dx____
-#endif
 
 /* $d0 SUBB direct ?**** */
 INLINE void subb_di( void )
@@ -4721,11 +4662,6 @@ INLINE void sts_di( void )
 	DIRECT;
 	WM16(EAD,&pS);
 }
-
-#ifdef macintosh
-#pragma mark ____Ex____
-#endif
-
 
 /* $e0 SUBB indexed ?**** */
 INLINE void subb_ix( void )
@@ -5111,10 +5047,6 @@ INLINE void sts_ix( void )
 	SET_NZ16(S);
 	WM16(EAD,&pS);
 }
-
-#ifdef macintosh
-#pragma mark ____Fx____
-#endif
 
 /* $f0 SUBB extended ?**** */
 INLINE void subb_ex( void )

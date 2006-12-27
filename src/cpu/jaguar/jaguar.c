@@ -1517,7 +1517,7 @@ void jaguardsp_ctrl_w(int cpunum, offs_t offset, UINT32 data, UINT32 mem_mask)
  * Generic set_info
  **************************************************************************/
 
-static void jaguargpu_set_info(UINT32 state, union cpuinfo *info)
+static void jaguargpu_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1574,7 +1574,7 @@ static void jaguargpu_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void jaguargpu_get_info(UINT32 state, union cpuinfo *info)
+void jaguargpu_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1660,13 +1660,13 @@ void jaguargpu_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &jaguar_icount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "Jaguar GPU"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Atari Jaguar"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) Aaron Giles 2000-2004"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "Jaguar GPU");			break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Atari Jaguar");		break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C) Aaron Giles 2000-2004"); break;
 
-		case CPUINFO_STR_FLAGS:							sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c",
+		case CPUINFO_STR_FLAGS:							sprintf(info->s, "%c%c%c%c%c%c%c%c%c%c%c",
 															jaguar.FLAGS & 0x8000 ? 'D':'.',
 															jaguar.FLAGS & 0x4000 ? 'A':'.',
 															jaguar.FLAGS & 0x0100 ? '4':'.',
@@ -1679,40 +1679,40 @@ void jaguargpu_get_info(UINT32 state, union cpuinfo *info)
 															jaguar.FLAGS & 0x0002 ? 'C':'.',
 															jaguar.FLAGS & 0x0001 ? 'Z':'.'); break;
 
-		case CPUINFO_STR_REGISTER + JAGUAR_PC:  		sprintf(info->s = cpuintrf_temp_str(), "PC: %08X", jaguar.PC); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_FLAGS:  		sprintf(info->s = cpuintrf_temp_str(), "FLAGS: %08X", jaguar.FLAGS); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0: %08X", jaguar.r[0]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1: %08X", jaguar.r[1]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R2:			sprintf(info->s = cpuintrf_temp_str(), "R2: %08X", jaguar.r[2]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R3:			sprintf(info->s = cpuintrf_temp_str(), "R3: %08X", jaguar.r[3]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R4:			sprintf(info->s = cpuintrf_temp_str(), "R4: %08X", jaguar.r[4]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R5:			sprintf(info->s = cpuintrf_temp_str(), "R5: %08X", jaguar.r[5]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R6:			sprintf(info->s = cpuintrf_temp_str(), "R6: %08X", jaguar.r[6]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R7:			sprintf(info->s = cpuintrf_temp_str(), "R7: %08X", jaguar.r[7]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R8:			sprintf(info->s = cpuintrf_temp_str(), "R8: %08X", jaguar.r[8]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R9:			sprintf(info->s = cpuintrf_temp_str(), "R9: %08X", jaguar.r[9]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R10:			sprintf(info->s = cpuintrf_temp_str(), "R10:%08X", jaguar.r[10]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R11:			sprintf(info->s = cpuintrf_temp_str(), "R11:%08X", jaguar.r[11]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R12:			sprintf(info->s = cpuintrf_temp_str(), "R12:%08X", jaguar.r[12]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R13:			sprintf(info->s = cpuintrf_temp_str(), "R13:%08X", jaguar.r[13]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R14:			sprintf(info->s = cpuintrf_temp_str(), "R14:%08X", jaguar.r[14]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R15:			sprintf(info->s = cpuintrf_temp_str(), "R15:%08X", jaguar.r[15]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R16:			sprintf(info->s = cpuintrf_temp_str(), "R16:%08X", jaguar.r[16]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R17:			sprintf(info->s = cpuintrf_temp_str(), "R17:%08X", jaguar.r[17]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R18:			sprintf(info->s = cpuintrf_temp_str(), "R18:%08X", jaguar.r[18]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R19:			sprintf(info->s = cpuintrf_temp_str(), "R19:%08X", jaguar.r[19]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R20:			sprintf(info->s = cpuintrf_temp_str(), "R20:%08X", jaguar.r[20]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R21:			sprintf(info->s = cpuintrf_temp_str(), "R21:%08X", jaguar.r[21]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R22:			sprintf(info->s = cpuintrf_temp_str(), "R22:%08X", jaguar.r[22]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R23:			sprintf(info->s = cpuintrf_temp_str(), "R23:%08X", jaguar.r[23]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R24:			sprintf(info->s = cpuintrf_temp_str(), "R24:%08X", jaguar.r[24]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R25:			sprintf(info->s = cpuintrf_temp_str(), "R25:%08X", jaguar.r[25]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R26:			sprintf(info->s = cpuintrf_temp_str(), "R26:%08X", jaguar.r[26]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R27:			sprintf(info->s = cpuintrf_temp_str(), "R27:%08X", jaguar.r[27]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R28:			sprintf(info->s = cpuintrf_temp_str(), "R28:%08X", jaguar.r[28]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R29:			sprintf(info->s = cpuintrf_temp_str(), "R29:%08X", jaguar.r[29]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R30:			sprintf(info->s = cpuintrf_temp_str(), "R30:%08X", jaguar.r[30]); break;
-		case CPUINFO_STR_REGISTER + JAGUAR_R31:			sprintf(info->s = cpuintrf_temp_str(), "R31:%08X", jaguar.r[31]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_PC:  		sprintf(info->s, "PC: %08X", jaguar.PC); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_FLAGS:  		sprintf(info->s, "FLAGS: %08X", jaguar.FLAGS); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R0:			sprintf(info->s, "R0: %08X", jaguar.r[0]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R1:			sprintf(info->s, "R1: %08X", jaguar.r[1]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R2:			sprintf(info->s, "R2: %08X", jaguar.r[2]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R3:			sprintf(info->s, "R3: %08X", jaguar.r[3]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R4:			sprintf(info->s, "R4: %08X", jaguar.r[4]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R5:			sprintf(info->s, "R5: %08X", jaguar.r[5]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R6:			sprintf(info->s, "R6: %08X", jaguar.r[6]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R7:			sprintf(info->s, "R7: %08X", jaguar.r[7]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R8:			sprintf(info->s, "R8: %08X", jaguar.r[8]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R9:			sprintf(info->s, "R9: %08X", jaguar.r[9]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R10:			sprintf(info->s, "R10:%08X", jaguar.r[10]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R11:			sprintf(info->s, "R11:%08X", jaguar.r[11]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R12:			sprintf(info->s, "R12:%08X", jaguar.r[12]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R13:			sprintf(info->s, "R13:%08X", jaguar.r[13]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R14:			sprintf(info->s, "R14:%08X", jaguar.r[14]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R15:			sprintf(info->s, "R15:%08X", jaguar.r[15]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R16:			sprintf(info->s, "R16:%08X", jaguar.r[16]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R17:			sprintf(info->s, "R17:%08X", jaguar.r[17]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R18:			sprintf(info->s, "R18:%08X", jaguar.r[18]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R19:			sprintf(info->s, "R19:%08X", jaguar.r[19]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R20:			sprintf(info->s, "R20:%08X", jaguar.r[20]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R21:			sprintf(info->s, "R21:%08X", jaguar.r[21]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R22:			sprintf(info->s, "R22:%08X", jaguar.r[22]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R23:			sprintf(info->s, "R23:%08X", jaguar.r[23]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R24:			sprintf(info->s, "R24:%08X", jaguar.r[24]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R25:			sprintf(info->s, "R25:%08X", jaguar.r[25]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R26:			sprintf(info->s, "R26:%08X", jaguar.r[26]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R27:			sprintf(info->s, "R27:%08X", jaguar.r[27]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R28:			sprintf(info->s, "R28:%08X", jaguar.r[28]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R29:			sprintf(info->s, "R29:%08X", jaguar.r[29]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R30:			sprintf(info->s, "R30:%08X", jaguar.r[30]); break;
+		case CPUINFO_STR_REGISTER + JAGUAR_R31:			sprintf(info->s, "R31:%08X", jaguar.r[31]); break;
 	}
 }
 
@@ -1721,7 +1721,7 @@ void jaguargpu_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-static void jaguardsp_set_info(UINT32 state, union cpuinfo *info)
+static void jaguardsp_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1736,7 +1736,7 @@ static void jaguardsp_set_info(UINT32 state, union cpuinfo *info)
 	}
 }
 
-void jaguardsp_get_info(UINT32 state, union cpuinfo *info)
+void jaguardsp_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1754,7 +1754,7 @@ void jaguardsp_get_info(UINT32 state, union cpuinfo *info)
 #endif /* MAME_DEBUG */
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "Jaguar DSP"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "Jaguar DSP");			break;
 
 		default:
 			jaguargpu_get_info(state, info);

@@ -76,7 +76,7 @@ struct dsp32_config
     PUBLIC FUNCTIONS
 ***************************************************************************/
 
-extern void dsp32c_get_info(UINT32 state, union cpuinfo *info);
+extern void dsp32c_get_info(UINT32 state, cpuinfo *info);
 
 extern void dsp32c_pio_w(int cpunum, int reg, int data);
 extern int dsp32c_pio_r(int cpunum, int reg);

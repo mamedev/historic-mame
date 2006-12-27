@@ -330,7 +330,7 @@ WRITE8_HANDLER( salamand_speech_start_w )
 WRITE8_HANDLER( gx400_speech_start_w )
 {
 	/* the voice data is not in a rom but in sound RAM at $8000 */
-	VLM5030_set_rom ((memory_region(REGION_CPU2))+ 0x8000);
+	VLM5030_set_rom (gx400_shared_ram + 0x4000);
 	VLM5030_ST (1);
 	VLM5030_ST (0);
 }

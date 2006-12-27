@@ -1708,7 +1708,7 @@ int spc700_execute(int clocks)
  * Generic set_info
  **************************************************************************/
 
-static void spc700_set_info(UINT32 state, union cpuinfo *info)
+static void spc700_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1733,13 +1733,13 @@ static void spc700_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void spc700_get_info(UINT32 state, union cpuinfo *info)
+void spc700_get_info(UINT32 state, cpuinfo *info)
 {
 	uint p = ((spc700i_cpu.flag_n & 0x80)			|
 				((spc700i_cpu.flag_v & 0x80) >> 1)	|
 				spc700i_cpu.flag_p>>3				|
 				spc700i_cpu.flag_b					|
-				(spc700i_cpu.flag_h & HFLAG_SET)		|
+				(spc700i_cpu.flag_h & HFLAG_SET)	|
 				spc700i_cpu.flag_i					|
 				((!spc700i_cpu.flag_z) << 1)		|
 				((spc700i_cpu.flag_c >> 8)&1));
@@ -1795,14 +1795,14 @@ void spc700_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &spc700_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "SPC700"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Sony SPC700"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) , all rights reserved."); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "SPC700");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Sony SPC700");			break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (c) , all rights reserved."); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				p & 0x80 ? 'N':'.',
 				p & 0x40 ? 'V':'.',
 				p & 0x20 ? 'P':'.',
@@ -1813,12 +1813,12 @@ void spc700_get_info(UINT32 state, union cpuinfo *info)
 				p & 0x01 ? 'C':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + SPC700_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", spc700i_cpu.pc); break;
-		case CPUINFO_STR_REGISTER + SPC700_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%02X", spc700i_cpu.s); break;
-		case CPUINFO_STR_REGISTER + SPC700_P:			sprintf(info->s = cpuintrf_temp_str(), "P:%02X", p); break;
-		case CPUINFO_STR_REGISTER + SPC700_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", spc700i_cpu.a); break;
-		case CPUINFO_STR_REGISTER + SPC700_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%02X", spc700i_cpu.x); break;
-		case CPUINFO_STR_REGISTER + SPC700_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%02X", spc700i_cpu.y); break;
+		case CPUINFO_STR_REGISTER + SPC700_PC:			sprintf(info->s, "PC:%04X", spc700i_cpu.pc); break;
+		case CPUINFO_STR_REGISTER + SPC700_S:			sprintf(info->s, "S:%02X", spc700i_cpu.s); break;
+		case CPUINFO_STR_REGISTER + SPC700_P:			sprintf(info->s, "P:%02X", p); break;
+		case CPUINFO_STR_REGISTER + SPC700_A:			sprintf(info->s, "A:%02X", spc700i_cpu.a); break;
+		case CPUINFO_STR_REGISTER + SPC700_X:			sprintf(info->s, "X:%02X", spc700i_cpu.x); break;
+		case CPUINFO_STR_REGISTER + SPC700_Y:			sprintf(info->s, "Y:%02X", spc700i_cpu.y); break;
 	}
 }
 

@@ -8,6 +8,7 @@ Additional tweaking by Jarek Burczynski
 
 ***************************************************************************/
 
+#include "state.h"
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
 #include "sound/ay8910.h"
@@ -16,14 +17,17 @@ PALETTE_INIT( magmax );
 VIDEO_UPDATE( magmax );
 VIDEO_START( magmax );
 
-extern unsigned short magmax_vreg;
+extern UINT16 magmax_vreg;
 extern UINT16 *magmax_scroll_x;
 extern UINT16 *magmax_scroll_y;
 
 
-static unsigned char sound_latch = 0;
-static unsigned char LS74_clr = 0;
-static unsigned char LS74_q   = 0;
+static UINT8 sound_latch = 0;
+static UINT8 LS74_clr = 0;
+static UINT8 LS74_q   = 0;
+static UINT8 gain_control = 0;
+
+static mame_timer *interrupt_timer;
 
 static WRITE16_HANDLER( magmax_sound_w )
 {
@@ -63,12 +67,27 @@ static void scanline_callback(int scanline)
 	scanline += 128;
 	scanline &= 255;
 
-	timer_set( cpu_getscanlinetime( scanline ), scanline, scanline_callback );
+	timer_adjust(interrupt_timer, cpu_getscanlinetime( scanline ), scanline, 0);
+}
+
+static MACHINE_START( magmax )
+{
+	/* Create interrupt timer */
+	interrupt_timer = timer_alloc(scanline_callback);
+
+	/* Set up save state */
+	state_save_register_global(sound_latch);
+	state_save_register_global(LS74_clr);
+	state_save_register_global(LS74_q);
+	state_save_register_global(gain_control);
+
+	return 0;
 }
 
 static MACHINE_RESET( magmax )
 {
-	timer_set(cpu_getscanlinetime( 64 ), 64, scanline_callback );
+	timer_adjust(interrupt_timer, cpu_getscanlinetime(64), 64, 0);
+
 #if 0
 	{
 		int i;
@@ -79,7 +98,6 @@ static MACHINE_RESET( magmax )
 }
 
 
-static int gain_control = 0;
 
 WRITE8_HANDLER( ay8910_portA_0_w )
 {
@@ -360,6 +378,7 @@ static MACHINE_DRIVER_START( magmax )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 
+	MDRV_MACHINE_START(magmax)
 	MDRV_MACHINE_RESET(magmax)
 
 	/* video hardware */
@@ -438,4 +457,4 @@ ROM_START( magmax )
 ROM_END
 
 
-GAME( 1985, magmax, 0, magmax, magmax, 0, ROT0, "Nichibutsu", "Mag Max", 0 )
+GAME( 1985, magmax, 0, magmax, magmax, 0, ROT0, "Nichibutsu", "Mag Max", GAME_SUPPORTS_SAVE )

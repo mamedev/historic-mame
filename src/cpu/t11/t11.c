@@ -420,7 +420,7 @@ getout:
  * Generic set_info
  **************************************************************************/
 
-static void t11_set_info(UINT32 state, union cpuinfo *info)
+static void t11_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -450,7 +450,7 @@ static void t11_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void t11_get_info(UINT32 state, union cpuinfo *info)
+void t11_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -509,14 +509,14 @@ void t11_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &t11_ICount;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "T11"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "DEC T-11"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) Aaron Giles 1998"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "T11");					break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "DEC T-11");			break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C) Aaron Giles 1998"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				t11.psw.b.l & 0x80 ? '?':'.',
 				t11.psw.b.l & 0x40 ? 'I':'.',
 				t11.psw.b.l & 0x20 ? 'I':'.',
@@ -527,14 +527,14 @@ void t11_get_info(UINT32 state, union cpuinfo *info)
 				t11.psw.b.l & 0x01 ? 'C':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + T11_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", t11.reg[7].w.l); break;
-		case CPUINFO_STR_REGISTER + T11_SP:				sprintf(info->s = cpuintrf_temp_str(), "SP:%04X", t11.reg[6].w.l); break;
-		case CPUINFO_STR_REGISTER + T11_PSW:			sprintf(info->s = cpuintrf_temp_str(), "PSW:%02X", t11.psw.b.l); break;
-		case CPUINFO_STR_REGISTER + T11_R0:				sprintf(info->s = cpuintrf_temp_str(), "R0:%04X", t11.reg[0].w.l); break;
-		case CPUINFO_STR_REGISTER + T11_R1:				sprintf(info->s = cpuintrf_temp_str(), "R1:%04X", t11.reg[1].w.l); break;
-		case CPUINFO_STR_REGISTER + T11_R2:				sprintf(info->s = cpuintrf_temp_str(), "R2:%04X", t11.reg[2].w.l); break;
-		case CPUINFO_STR_REGISTER + T11_R3:				sprintf(info->s = cpuintrf_temp_str(), "R3:%04X", t11.reg[3].w.l); break;
-		case CPUINFO_STR_REGISTER + T11_R4:				sprintf(info->s = cpuintrf_temp_str(), "R4:%04X", t11.reg[4].w.l); break;
-		case CPUINFO_STR_REGISTER + T11_R5:				sprintf(info->s = cpuintrf_temp_str(), "R5:%04X", t11.reg[5].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_PC:				sprintf(info->s, "PC:%04X", t11.reg[7].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_SP:				sprintf(info->s, "SP:%04X", t11.reg[6].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_PSW:			sprintf(info->s, "PSW:%02X", t11.psw.b.l);   break;
+		case CPUINFO_STR_REGISTER + T11_R0:				sprintf(info->s, "R0:%04X", t11.reg[0].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_R1:				sprintf(info->s, "R1:%04X", t11.reg[1].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_R2:				sprintf(info->s, "R2:%04X", t11.reg[2].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_R3:				sprintf(info->s, "R3:%04X", t11.reg[3].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_R4:				sprintf(info->s, "R4:%04X", t11.reg[4].w.l); break;
+		case CPUINFO_STR_REGISTER + T11_R5:				sprintf(info->s, "R5:%04X", t11.reg[5].w.l); break;
 	}
 }

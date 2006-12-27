@@ -65,7 +65,7 @@ enum
 
 
 
-extern void dsp56k_get_info(UINT32 state, union cpuinfo *info) ;
+extern void dsp56k_get_info(UINT32 state, cpuinfo *info) ;
 
 void  dsp56k_host_interface_write(UINT8 addr, UINT8 data);
 UINT8 dsp56k_host_interface_read(UINT8 addr);

@@ -1478,7 +1478,7 @@ static int s2650_execute(int cycles)
  * Generic set_info
  **************************************************************************/
 
-static void s2650_set_info(UINT32 state, union cpuinfo *info)
+static void s2650_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1491,6 +1491,7 @@ static void s2650_set_info(UINT32 state, union cpuinfo *info)
 			S.iar = info->i & PMSK;
 			change_pc(S.page + S.iar);
 			break;
+
 		case CPUINFO_INT_REGISTER + S2650_PC:			S.page = info->i & PAGE; S.iar = info->i & PMSK; break;
 		case CPUINFO_INT_SP: 							S.psu = (S.psu & ~SP) | (info->i & SP); break;
 		case CPUINFO_INT_REGISTER + S2650_PS:			S.psl = info->i & 0xff; S.psu = info->i >> 8; break;
@@ -1513,174 +1514,77 @@ static void s2650_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void s2650_get_info(UINT32 state, union cpuinfo *info)
+void s2650_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case CPUINFO_INT_CONTEXT_SIZE:
-				info->i = sizeof(S);
-				break;
-		case CPUINFO_INT_INPUT_LINES:
-				info->i = 2;
-				break;
-		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:
-				info->i = 0;
-				break;
-		case CPUINFO_INT_ENDIANNESS:
-				info->i = CPU_IS_LE;
-				break;
-		case CPUINFO_INT_CLOCK_DIVIDER:
-				info->i = 1;
-				break;
-		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:
-				info->i = 1;
-				break;
-		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:
-				info->i = 3;
-				break;
-		case CPUINFO_INT_MIN_CYCLES:
-				info->i = 5;
-				break;
-		case CPUINFO_INT_MAX_CYCLES:
-				info->i = 13;
-				break;
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(S);					break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 2;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 5;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 13;							break;
 
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:
-				info->i = 8;
-				break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM:
-				info->i = 15;
-				break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM:
-				info->i = 0;
-				break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 15;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM:	info->i = 0;					break;
 
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:
-				info->i = 0;
-				break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA:
-				info->i = 0;
-				break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA:
-				info->i = 0;
-				break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA:	info->i = 0;					break;
 
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:
-				info->i = 8;
-				break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO:
-				info->i = 9;
-				break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO:
-				info->i = 0;
-				break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 9;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO:		info->i = 0;					break;
 
-		case CPUINFO_INT_INPUT_STATE + 0:
-				info->i = S.irq_state;
-				break;
-		case CPUINFO_INT_INPUT_STATE + 1:
-				info->i = s2650_get_sense() ? ASSERT_LINE : CLEAR_LINE;
-				break;
+		case CPUINFO_INT_INPUT_STATE + 0:				info->i = S.irq_state;					break;
+		case CPUINFO_INT_INPUT_STATE + 1:				info->i = s2650_get_sense() ? ASSERT_LINE : CLEAR_LINE; break;
 
-		case CPUINFO_INT_PREVIOUSPC:
-				info->i = S.ppc;
-				break;
+		case CPUINFO_INT_PREVIOUSPC:					info->i = S.ppc;						break;
 
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + S2650_PC:
-				info->i = S.page + S.iar;
-				break;
-		case CPUINFO_INT_SP:
-				info->i = S.psu & SP;
-				break;
-		case CPUINFO_INT_REGISTER + S2650_PS:
-				info->i = (S.psu << 8) | S.psl;
-				break;
-		case CPUINFO_INT_REGISTER + S2650_R0:
-				info->i = S.reg[0];
-				break;
-		case CPUINFO_INT_REGISTER + S2650_R1:
-				info->i = S.reg[1];
-				break;
-		case CPUINFO_INT_REGISTER + S2650_R2:
-				info->i = S.reg[2];
-				break;
-		case CPUINFO_INT_REGISTER + S2650_R3:
-				info->i = S.reg[3];
-				break;
-		case CPUINFO_INT_REGISTER + S2650_R1A:
-				info->i = S.reg[4];
-				break;
-		case CPUINFO_INT_REGISTER + S2650_R2A:
-				info->i = S.reg[5];
-				break;
-		case CPUINFO_INT_REGISTER + S2650_R3A:
-				info->i = S.reg[6];
-				break;
-		case CPUINFO_INT_REGISTER + S2650_HALT:
-				info->i = S.halt;
-				break;
-		case CPUINFO_INT_REGISTER + S2650_SI:
-				info->i = s2650_get_sense();
-				break;
-		case CPUINFO_INT_REGISTER + S2650_FO:
-				info->i = s2650_get_flag();
-				break;
+		case CPUINFO_INT_REGISTER + S2650_PC:			info->i = S.page + S.iar;				break;
+
+		case CPUINFO_INT_SP:							info->i = S.psu & SP;					break;
+		case CPUINFO_INT_REGISTER + S2650_PS:			info->i = (S.psu << 8) | S.psl;			break;
+		case CPUINFO_INT_REGISTER + S2650_R0:			info->i = S.reg[0];						break;
+		case CPUINFO_INT_REGISTER + S2650_R1:			info->i = S.reg[1];						break;
+		case CPUINFO_INT_REGISTER + S2650_R2:			info->i = S.reg[2];						break;
+		case CPUINFO_INT_REGISTER + S2650_R3:			info->i = S.reg[3];						break;
+		case CPUINFO_INT_REGISTER + S2650_R1A:			info->i = S.reg[4];						break;
+		case CPUINFO_INT_REGISTER + S2650_R2A:			info->i = S.reg[5];						break;
+		case CPUINFO_INT_REGISTER + S2650_R3A:			info->i = S.reg[6];						break;
+		case CPUINFO_INT_REGISTER + S2650_HALT:			info->i = S.halt;						break;
+		case CPUINFO_INT_REGISTER + S2650_SI:			info->i = s2650_get_sense();			break;
+		case CPUINFO_INT_REGISTER + S2650_FO:			info->i = s2650_get_flag();				break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_SET_INFO:
-				info->setinfo = s2650_set_info;
-				break;
-		case CPUINFO_PTR_GET_CONTEXT:
-				info->getcontext = s2650_get_context;
-				break;
-		case CPUINFO_PTR_SET_CONTEXT:
-				info->setcontext = s2650_set_context;
-				break;
-		case CPUINFO_PTR_INIT:
-				info->init = s2650_init;
-				break;
-		case CPUINFO_PTR_RESET:
-				info->reset = s2650_reset;
-				break;
-		case CPUINFO_PTR_EXIT:
-				info->exit = s2650_exit;
-				break;
-		case CPUINFO_PTR_EXECUTE:
-				info->execute = s2650_execute;
-				break;
-		case CPUINFO_PTR_BURN:
-				info->burn = NULL;
-				break;
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = s2650_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = s2650_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = s2650_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = s2650_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = s2650_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = s2650_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = s2650_execute;			break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 #ifdef MAME_DEBUG
-		case CPUINFO_PTR_DISASSEMBLE:
-				info->disassemble = s2650_dasm;
-				break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = s2650_dasm;			break;
 #endif /* MAME_DEBUG */
-		case CPUINFO_PTR_INSTRUCTION_COUNTER:
-				info->icount = &s2650_ICount;
-				break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &s2650_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:
-				strcpy(info->s = cpuintrf_temp_str(), "S2650");
-				break;
-		case CPUINFO_STR_CORE_FAMILY:
-				strcpy(info->s = cpuintrf_temp_str(), "Signetics 2650");
-				break;
-		case CPUINFO_STR_CORE_VERSION:
-				strcpy(info->s = cpuintrf_temp_str(), "1.2");
-				break;
-		case CPUINFO_STR_CORE_FILE:
-				strcpy(info->s = cpuintrf_temp_str(), __FILE__);
-				break;
-		case CPUINFO_STR_CORE_CREDITS:
-				strcpy(info->s = cpuintrf_temp_str(), "Written by Juergen Buchmueller for use with MAME");
-				break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "S2650");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Signetics 2650");		break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.2");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Written by Juergen Buchmueller for use with MAME"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
 				S.psu & 0x80 ? 'S':'.',
 				S.psu & 0x40 ? 'O':'.',
 				S.psu & 0x20 ? 'I':'.',
@@ -1699,41 +1603,17 @@ void s2650_get_info(UINT32 state, union cpuinfo *info)
 				S.psl & 0x01 ? 'C':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + S2650_PC:
-				sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", S.page + S.iar);
-				break;
-		case CPUINFO_STR_REGISTER + S2650_PS:
-				sprintf(info->s = cpuintrf_temp_str(), "PS:%02X%02X", S.psu, S.psl);
-				break;
-		case CPUINFO_STR_REGISTER + S2650_R0:
-				sprintf(info->s = cpuintrf_temp_str(), "R0:%02X", S.reg[0]);
-				break;
-		case CPUINFO_STR_REGISTER + S2650_R1:
-				sprintf(info->s = cpuintrf_temp_str(), "R1:%02X", S.reg[1]);
-				break;
-		case CPUINFO_STR_REGISTER + S2650_R2:
-				sprintf(info->s = cpuintrf_temp_str(), "R2:%02X", S.reg[2]);
-				break;
-		case CPUINFO_STR_REGISTER + S2650_R3:
-				sprintf(info->s = cpuintrf_temp_str(), "R3:%02X", S.reg[3]);
-				break;
-		case CPUINFO_STR_REGISTER + S2650_R1A:
-				sprintf(info->s = cpuintrf_temp_str(), "R1'%02X", S.reg[4]);
-				break;
-		case CPUINFO_STR_REGISTER + S2650_R2A:
-				sprintf(info->s = cpuintrf_temp_str(), "R2'%02X", S.reg[5]);
-				break;
-		case CPUINFO_STR_REGISTER + S2650_R3A:
-				sprintf(info->s = cpuintrf_temp_str(), "R3'%02X", S.reg[6]);
-				break;
-		case CPUINFO_STR_REGISTER + S2650_HALT:
-				sprintf(info->s = cpuintrf_temp_str(), "HALT:%X", S.halt);
-				break;
-		case CPUINFO_STR_REGISTER + S2650_SI:
-				sprintf(info->s = cpuintrf_temp_str(), "SI:%X", (S.psu & SI) ? 1 : 0);
-				break;
-		case CPUINFO_STR_REGISTER + S2650_FO:
-				sprintf(info->s = cpuintrf_temp_str(), "FO:%X", (S.psu & FO) ? 1 : 0);
-				break;
+		case CPUINFO_STR_REGISTER + S2650_PC:			sprintf(info->s, "PC:%04X", S.page + S.iar); break;
+		case CPUINFO_STR_REGISTER + S2650_PS:			sprintf(info->s, "PS:%02X%02X", S.psu, S.psl); break;
+		case CPUINFO_STR_REGISTER + S2650_R0:			sprintf(info->s, "R0:%02X", S.reg[0]);	break;
+		case CPUINFO_STR_REGISTER + S2650_R1:			sprintf(info->s, "R1:%02X", S.reg[1]);	break;
+		case CPUINFO_STR_REGISTER + S2650_R2:			sprintf(info->s, "R2:%02X", S.reg[2]);	break;
+		case CPUINFO_STR_REGISTER + S2650_R3:			sprintf(info->s, "R3:%02X", S.reg[3]);	break;
+		case CPUINFO_STR_REGISTER + S2650_R1A:			sprintf(info->s, "R1'%02X", S.reg[4]);	break;
+		case CPUINFO_STR_REGISTER + S2650_R2A:			sprintf(info->s, "R2'%02X", S.reg[5]);	break;
+		case CPUINFO_STR_REGISTER + S2650_R3A:			sprintf(info->s, "R3'%02X", S.reg[6]);	break;
+		case CPUINFO_STR_REGISTER + S2650_HALT:			sprintf(info->s, "HALT:%X", S.halt);	break;
+		case CPUINFO_STR_REGISTER + S2650_SI:			sprintf(info->s, "SI:%X", (S.psu & SI) ? 1 : 0); break;
+		case CPUINFO_STR_REGISTER + S2650_FO:			sprintf(info->s, "FO:%X", (S.psu & FO) ? 1 : 0); break;
 	}
 }

@@ -1185,13 +1185,13 @@ INLINE void fetch_effective_address( void )
  * Generic set_info
  **************************************************************************/
 
-static void hd6309_set_info(UINT32 state, union cpuinfo *info)
+static void hd6309_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
 		case CPUINFO_INT_INPUT_STATE + HD6309_IRQ_LINE:	set_irq_line(HD6309_IRQ_LINE, info->i); break;
-		case CPUINFO_INT_INPUT_STATE + HD6309_FIRQ_LINE:set_irq_line(HD6309_FIRQ_LINE, info->i);break;
+		case CPUINFO_INT_INPUT_STATE + HD6309_FIRQ_LINE:set_irq_line(HD6309_FIRQ_LINE, info->i); break;
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	set_irq_line(INPUT_LINE_NMI, info->i);	break;
 
 		case CPUINFO_INT_PC:
@@ -1218,7 +1218,7 @@ static void hd6309_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void hd6309_get_info(UINT32 state, union cpuinfo *info)
+void hd6309_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1229,7 +1229,7 @@ void hd6309_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
 		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
-		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 5;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 20;							break;
 
@@ -1280,14 +1280,14 @@ void hd6309_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &hd6309_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "HD6309"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Hitachi 6309"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) John Butler 1997 and Tim Lindner 2000"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "HD6309");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Hitachi 6309");		break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C) John Butler 1997 and Tim Lindner 2000"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c (MD:%c%c%c%c)",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c (MD:%c%c%c%c)",
 				hd6309.cc & 0x80 ? 'E':'.',
 				hd6309.cc & 0x40 ? 'F':'.',
 				hd6309.cc & 0x20 ? 'H':'.',
@@ -1303,18 +1303,18 @@ void hd6309_get_info(UINT32 state, union cpuinfo *info)
 				hd6309.md & 0x01 ? 'Z':'z');
 			break;
 
-		case CPUINFO_STR_REGISTER + HD6309_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", hd6309.pc.w.l); break;
-		case CPUINFO_STR_REGISTER + HD6309_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%04X", hd6309.s.w.l); break;
-		case CPUINFO_STR_REGISTER + HD6309_CC:			sprintf(info->s = cpuintrf_temp_str(), "CC:%02X", hd6309.cc); break;
-		case CPUINFO_STR_REGISTER + HD6309_MD:			sprintf(info->s = cpuintrf_temp_str(), "MD:%02X", hd6309.md); break;
-		case CPUINFO_STR_REGISTER + HD6309_U:			sprintf(info->s = cpuintrf_temp_str(), "U:%04X", hd6309.u.w.l); break;
-		case CPUINFO_STR_REGISTER + HD6309_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", hd6309.d.b.h); break;
-		case CPUINFO_STR_REGISTER + HD6309_B:			sprintf(info->s = cpuintrf_temp_str(), "B:%02X", hd6309.d.b.l); break;
-		case CPUINFO_STR_REGISTER + HD6309_E:			sprintf(info->s = cpuintrf_temp_str(), "E:%02X", hd6309.w.b.h); break;
-		case CPUINFO_STR_REGISTER + HD6309_F:			sprintf(info->s = cpuintrf_temp_str(), "F:%02X", hd6309.w.b.l); break;
-		case CPUINFO_STR_REGISTER + HD6309_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%04X", hd6309.x.w.l); break;
-		case CPUINFO_STR_REGISTER + HD6309_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%04X", hd6309.y.w.l); break;
-		case CPUINFO_STR_REGISTER + HD6309_V:			sprintf(info->s = cpuintrf_temp_str(), "V:%04X", hd6309.v.w.l); break;
-		case CPUINFO_STR_REGISTER + HD6309_DP:			sprintf(info->s = cpuintrf_temp_str(), "DP:%02X", hd6309.dp.b.h); break;
+		case CPUINFO_STR_REGISTER + HD6309_PC:			sprintf(info->s, "PC:%04X", hd6309.pc.w.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_S:			sprintf(info->s, "S:%04X", hd6309.s.w.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_CC:			sprintf(info->s, "CC:%02X", hd6309.cc); break;
+		case CPUINFO_STR_REGISTER + HD6309_MD:			sprintf(info->s, "MD:%02X", hd6309.md); break;
+		case CPUINFO_STR_REGISTER + HD6309_U:			sprintf(info->s, "U:%04X", hd6309.u.w.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_A:			sprintf(info->s, "A:%02X", hd6309.d.b.h); break;
+		case CPUINFO_STR_REGISTER + HD6309_B:			sprintf(info->s, "B:%02X", hd6309.d.b.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_E:			sprintf(info->s, "E:%02X", hd6309.w.b.h); break;
+		case CPUINFO_STR_REGISTER + HD6309_F:			sprintf(info->s, "F:%02X", hd6309.w.b.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_X:			sprintf(info->s, "X:%04X", hd6309.x.w.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_Y:			sprintf(info->s, "Y:%04X", hd6309.y.w.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_V:			sprintf(info->s, "V:%04X", hd6309.v.w.l); break;
+		case CPUINFO_STR_REGISTER + HD6309_DP:			sprintf(info->s, "DP:%02X", hd6309.dp.b.h); break;
 	}
 }

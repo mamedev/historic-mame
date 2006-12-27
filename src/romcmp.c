@@ -11,6 +11,7 @@
 
 #include "unzip.h"
 #include "osdepend.h"	/* for CLIB_DECL */
+#include "osd_tool.h"
 #include "fileio.h"
 #include <stdarg.h>
 #ifdef macintosh
@@ -519,54 +520,29 @@ static int load_files(int i, int *found, const char *path)
 
 	if (S_ISDIR(st.st_mode))
 	{
-#ifdef _WIN32
-		HANDLE dir;
-		WIN32_FIND_DATA ent;
-		int more;
-		char *dirfilter;
-		int dirlen = strlen(path);
-
-		memset(&ent, 0, sizeof(WIN32_FIND_DATA));
-		dirfilter = malloc(dirlen+5);
-		if (dirfilter == NULL)
-			return 1;
-		memcpy(dirfilter, path, dirlen);
-		memcpy(dirfilter+dirlen, "/*.*", 5);
-
-        dir = FindFirstFile(dirfilter, &ent);
-        free(dirfilter);
-
-        if (dir != INVALID_HANDLE_VALUE)
-        {
-            do
-            {
-                char *d_name = ent.cFileName;
-#else
-        DIR *dir;
-        struct dirent *d;
+		osd_tool_dir *dir;
+		const osd_tool_dirent *d;
 
         /* load all files in directory */
-		dir = opendir(path);
+		dir = osd_tool_opendir(path);
 		if (dir)
 		{
-			while((d = readdir(dir)) != NULL)
+			while((d = osd_tool_readdir(dir)) != NULL)
 			{
-				char *d_name = d->d_name;
-#endif
+				char *d_name = d->name;
 				char buf[255+1];
-				struct stat st_file;
 
 				sprintf(buf, "%s%c%s", path, PATH_DELIM, d_name);
-				if(stat(buf, &st_file) == 0 && S_ISREG(st_file.st_mode))
+				if (d->type == ENTTYPE_FILE)
 				{
-					unsigned size = st_file.st_size;
+					UINT64 size = d->size;
 					while (size && (size & 1) == 0) size >>= 1;
 					if (size & ~1)
 						printf("%-23s %-23s ignored (not a ROM)\n",i ? "" : d_name,i ? d_name : "");
 					else
 					{
 						strcpy(files[i][found[i]].name,d_name);
-						files[i][found[i]].size = st_file.st_size;
+						files[i][found[i]].size = d->size;
 						readfile(path,&files[i][found[i]]);
 						files[i][found[i]].listed = 0;
 						if (found[i] >= MAX_FILES)
@@ -577,15 +553,8 @@ static int load_files(int i, int *found, const char *path)
 						found[i]++;
 					}
 				}
-#ifdef _WIN32
-				more = FindNextFileA(dir, &ent);
 			}
-			while (more);
-			FindClose(dir);
-#else
-			}
-			closedir(dir);
-#endif
+			osd_tool_closedir(dir);
 		}
 	}
 	else
@@ -684,7 +653,7 @@ int CLIB_DECL main(int argc,char **argv)
 			}
 		}
 
-        if (argc >= 3)
+		if (argc >= 3)
 			printf("%d and %d files\n",found[0],found[1]);
 		else
 			printf("%d files\n",found[0]);

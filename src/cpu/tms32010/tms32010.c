@@ -855,7 +855,7 @@ ADDRESS_MAP_END
  *  Generic set_info
  **************************************************************************/
 
-static void tms32010_set_info(UINT32 state, union cpuinfo *info)
+static void tms32010_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -883,7 +883,7 @@ static void tms32010_set_info(UINT32 state, union cpuinfo *info)
  *  Generic get_info
  **************************************************************************/
 
-void tms32010_get_info(UINT32 state, union cpuinfo *info)
+void tms32010_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -940,14 +940,14 @@ void tms32010_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:	info->internal_map = construct_map_tms32010_ram; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "TMS32010"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Texas Instruments TMS32010"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.22"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C)1999-2004+ by Tony La Porta"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "TMS32010");			break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Texas Instruments TMS32010"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.22");				break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C)1999-2004+ by Tony La Porta"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
 				R.STR & 0x8000 ? 'O':'.',
 				R.STR & 0x4000 ? 'M':'.',
 				R.STR & 0x2000 ? 'I':'.',
@@ -966,17 +966,17 @@ void tms32010_get_info(UINT32 state, union cpuinfo *info)
 				R.STR & 0x0001 ? '1':'0');
 			break;
 
-		case CPUINFO_STR_REGISTER + +TMS32010_PC:   	sprintf(info->s = cpuintrf_temp_str(), "PC:%04X",   R.PC); break;
-		case CPUINFO_STR_REGISTER + +TMS32010_SP:   	sprintf(info->s = cpuintrf_temp_str(), "SP:%X", 0); /* fake stack pointer */ break;
-		case CPUINFO_STR_REGISTER + +TMS32010_STR:  	sprintf(info->s = cpuintrf_temp_str(), "STR:%04X",  R.STR); break;
-		case CPUINFO_STR_REGISTER + +TMS32010_ACC:  	sprintf(info->s = cpuintrf_temp_str(), "ACC:%08X",  R.ACC.d); break;
-		case CPUINFO_STR_REGISTER + +TMS32010_PREG: 	sprintf(info->s = cpuintrf_temp_str(), "P:%08X",    R.Preg.d); break;
-		case CPUINFO_STR_REGISTER + +TMS32010_TREG: 	sprintf(info->s = cpuintrf_temp_str(), "T:%04X",    R.Treg); break;
-		case CPUINFO_STR_REGISTER + +TMS32010_AR0:  	sprintf(info->s = cpuintrf_temp_str(), "AR0:%04X",  R.AR[0]); break;
-		case CPUINFO_STR_REGISTER + +TMS32010_AR1:  	sprintf(info->s = cpuintrf_temp_str(), "AR1:%04X",  R.AR[1]); break;
-		case CPUINFO_STR_REGISTER + +TMS32010_STK0: 	sprintf(info->s = cpuintrf_temp_str(), "STK0:%04X", R.STACK[0]); break;
-		case CPUINFO_STR_REGISTER + +TMS32010_STK1: 	sprintf(info->s = cpuintrf_temp_str(), "STK1:%04X", R.STACK[1]); break;
-		case CPUINFO_STR_REGISTER + +TMS32010_STK2: 	sprintf(info->s = cpuintrf_temp_str(), "STK2:%04X", R.STACK[2]); break;
-		case CPUINFO_STR_REGISTER + +TMS32010_STK3: 	sprintf(info->s = cpuintrf_temp_str(), "STK3:%04X", R.STACK[3]); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_PC:   	sprintf(info->s, "PC:%04X",   R.PC); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_SP:   	sprintf(info->s, "SP:%X", 0); /* fake stack pointer */ break;
+		case CPUINFO_STR_REGISTER + +TMS32010_STR:  	sprintf(info->s, "STR:%04X",  R.STR); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_ACC:  	sprintf(info->s, "ACC:%08X",  R.ACC.d); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_PREG: 	sprintf(info->s, "P:%08X",    R.Preg.d); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_TREG: 	sprintf(info->s, "T:%04X",    R.Treg); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_AR0:  	sprintf(info->s, "AR0:%04X",  R.AR[0]); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_AR1:  	sprintf(info->s, "AR1:%04X",  R.AR[1]); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_STK0: 	sprintf(info->s, "STK0:%04X", R.STACK[0]); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_STK1: 	sprintf(info->s, "STK1:%04X", R.STACK[1]); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_STK2: 	sprintf(info->s, "STK2:%04X", R.STACK[2]); break;
+		case CPUINFO_STR_REGISTER + +TMS32010_STK3: 	sprintf(info->s, "STK3:%04X", R.STACK[3]); break;
 	}
 }

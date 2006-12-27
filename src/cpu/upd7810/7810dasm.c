@@ -8,14 +8,13 @@
  *****************************************************************************/
 
 #include "debugger.h"
-#include "debug/eainfo.h"
 #include "upd7810.h"
 
 struct dasm_s {
-	UINT8	token;
-	const void	*args;
-	UINT8	oplen;
-	UINT8	cycles;
+	UINT8 token;
+	const void *args;
+	UINT8 oplen;
+	UINT8 cycles;
 };
 
 enum
@@ -3960,15 +3959,14 @@ static const char *regname[32] =
 	"illegal", "TMM",     "PT",      "illegal"
 };
 
-static unsigned upd7810_get_reg(int reg) { union cpuinfo info; upd7810_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+static unsigned upd7810_get_reg(int reg) { cpuinfo info; upd7810_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
 
 static unsigned Dasm( char *buffer, unsigned pc, struct dasm_s *dasmXX, const UINT8 *oprom, const UINT8 *opram )
 {
 	unsigned opc = pc;
-	UINT8 op = oprom[pc++ - opc], op2, t;
+	UINT8 op = oprom[pc++ - opc], op2, t, l;
 	int offset;
-	unsigned l, ea;
-	const char *symbol;
+	UINT16 ea;
 	const char *a;
 	UINT32 flags = 0;
 
@@ -4004,42 +4002,34 @@ static unsigned Dasm( char *buffer, unsigned pc, struct dasm_s *dasmXX, const UI
 			case 'a':   /* address V * 256 + offset */
 				op2 = opram[pc++ - opc];
 				ea = upd7810_get_reg(UPD7810_V) * 256 + op2;
-				symbol = set_ea_info(0, ea, EA_UINT8, EA_MEM_RD);
-				buffer += sprintf(buffer, "%s", symbol);
+				buffer += sprintf(buffer, "$%04X", ea);
 				break;
 			case 'b':   /* immediate byte */
-				ea = opram[pc++ - opc];
-				symbol = set_ea_info(1, ea, EA_UINT8, EA_VALUE);
-				buffer += sprintf(buffer, "%s", symbol);
+				buffer += sprintf(buffer, "$%02X", opram[pc++ - opc]);
 				break;
 			case 'w':   /* immediate word */
 				ea = opram[pc++ - opc];
 				ea += opram[pc++ - opc] << 8;
-				symbol = set_ea_info(1, ea, EA_UINT16, EA_VALUE);
-				buffer += sprintf(buffer, "%s", symbol);
+				buffer += sprintf(buffer, "$%04X", ea);
 				break;
 			case 'd':   /* JRE address */
 				op2 = oprom[pc++ - opc];
 				offset = (op & 1) ? -(256 - op2): + op2;
-				symbol = set_ea_info(0, pc - 2, offset + 2, EA_REL_PC);
-				buffer += sprintf(buffer, "%s", symbol);
+				buffer += sprintf(buffer, "$%04X", pc + offset);
 				break;
 			case 't':   /* CALT address */
 				ea = 0x80 + 2 * (op & 0x1f);
-				symbol = set_ea_info(0, ea, EA_DEFAULT, EA_ABS_PC);
-				buffer += sprintf(buffer, "(%s)", symbol);
+				buffer += sprintf(buffer, "($%04X)", ea);
 				break;
 			case 'f':   /* CALF address */
 				op2 = oprom[pc++ - opc];
 				ea = 0x800 + 0x100 * (op & 0x07) + op2;
-				symbol = set_ea_info(0, ea, EA_DEFAULT, EA_ABS_PC);
-				buffer += sprintf(buffer, "%s", symbol);
+				buffer += sprintf(buffer, "$%04X", ea);
 				break;
 			case 'o':   /* JR offset */
 				op2 = oprom[pc++ - opc];
 				offset = (INT8)(op << 2) >> 2;
-				symbol = set_ea_info(0, pc - 2, offset + 1, EA_REL_PC);
-				buffer += sprintf(buffer, "%s", symbol);
+				buffer += sprintf(buffer, "$%04X", pc + offset - 1);
 				break;
 			case 'i':   /* bit manipulation */
 				op2 = oprom[pc++ - opc];

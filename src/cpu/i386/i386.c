@@ -681,7 +681,7 @@ static offs_t i386_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8
 }
 #endif /* MAME_DEBUG */
 
-static void i386_set_info(UINT32 state, union cpuinfo *info)
+static void i386_set_info(UINT32 state, cpuinfo *info)
 {
 	if (state == CPUINFO_INT_INPUT_STATE+INPUT_LINE_A20)
 	{
@@ -698,72 +698,72 @@ static void i386_set_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + I386_PC:			I.pc = info->i;break;
-		case CPUINFO_INT_REGISTER + I386_EIP:			I.eip = info->i; CHANGE_PC(I.eip); break;
-		case CPUINFO_INT_REGISTER + I386_AL:			REG8(AL) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_AH:			REG8(AH) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_BL:			REG8(BL) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_BH:			REG8(BH) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_CL:			REG8(CL) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_CH:			REG8(CH) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_DL:			REG8(DL) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_DH:			REG8(DH) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_AX:			REG16(AX) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_BX:			REG16(BX) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_CX:			REG16(CX) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_DX:			REG16(DX) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_SI:			REG16(SI) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_DI:			REG16(DI) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_BP:			REG16(BP) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_SP:			REG16(SP) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_PC:			I.pc = info->i;							break;
+		case CPUINFO_INT_REGISTER + I386_EIP:			I.eip = info->i; CHANGE_PC(I.eip);		break;
+		case CPUINFO_INT_REGISTER + I386_AL:			REG8(AL) = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_AH:			REG8(AH) = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_BL:			REG8(BL) = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_BH:			REG8(BH) = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_CL:			REG8(CL) = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_CH:			REG8(CH) = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_DL:			REG8(DL) = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_DH:			REG8(DH) = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_AX:			REG16(AX) = info->i;					break;
+		case CPUINFO_INT_REGISTER + I386_BX:			REG16(BX) = info->i;					break;
+		case CPUINFO_INT_REGISTER + I386_CX:			REG16(CX) = info->i;					break;
+		case CPUINFO_INT_REGISTER + I386_DX:			REG16(DX) = info->i;					break;
+		case CPUINFO_INT_REGISTER + I386_SI:			REG16(SI) = info->i;					break;
+		case CPUINFO_INT_REGISTER + I386_DI:			REG16(DI) = info->i;					break;
+		case CPUINFO_INT_REGISTER + I386_BP:			REG16(BP) = info->i;					break;
+		case CPUINFO_INT_REGISTER + I386_SP:			REG16(SP) = info->i;					break;
 		case CPUINFO_INT_REGISTER + I386_IP:			I.eip = (I.eip & ~0xFFFF) | (info->i & 0xFFFF); CHANGE_PC(I.eip); break;
-		case CPUINFO_INT_REGISTER + I386_EAX:			REG32(EAX) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_EBX:			REG32(EBX) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_ECX:			REG32(ECX) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_EDX:			REG32(EDX) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_EBP:			REG32(EBP) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_EAX:			REG32(EAX) = info->i;					break;
+		case CPUINFO_INT_REGISTER + I386_EBX:			REG32(EBX) = info->i;					break;
+		case CPUINFO_INT_REGISTER + I386_ECX:			REG32(ECX) = info->i;					break;
+		case CPUINFO_INT_REGISTER + I386_EDX:			REG32(EDX) = info->i;					break;
+		case CPUINFO_INT_REGISTER + I386_EBP:			REG32(EBP) = info->i;					break;
 		case CPUINFO_INT_SP:
-		case CPUINFO_INT_REGISTER + I386_ESP:			REG32(ESP) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_ESI:			REG32(ESI) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_EDI:			REG32(EDI) = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_EFLAGS:		I.eflags = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_ESP:			REG32(ESP) = info->i;					break;
+		case CPUINFO_INT_REGISTER + I386_ESI:			REG32(ESI) = info->i;					break;
+		case CPUINFO_INT_REGISTER + I386_EDI:			REG32(EDI) = info->i;					break;
+		case CPUINFO_INT_REGISTER + I386_EFLAGS:		I.eflags = info->i;						break;
 		case CPUINFO_INT_REGISTER + I386_CS:			I.sreg[CS].selector = info->i & 0xffff; break;
 		case CPUINFO_INT_REGISTER + I386_SS:			I.sreg[SS].selector = info->i & 0xffff; break;
 		case CPUINFO_INT_REGISTER + I386_DS:			I.sreg[DS].selector = info->i & 0xffff; break;
 		case CPUINFO_INT_REGISTER + I386_ES:			I.sreg[ES].selector = info->i & 0xffff; break;
 		case CPUINFO_INT_REGISTER + I386_FS:			I.sreg[FS].selector = info->i & 0xffff; break;
 		case CPUINFO_INT_REGISTER + I386_GS:			I.sreg[GS].selector = info->i & 0xffff; break;
-		case CPUINFO_INT_REGISTER + I386_CR0:			I.cr[0] = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_CR1:			I.cr[1] = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_CR2:			I.cr[2] = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_CR3:			I.cr[3] = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_DR0:			I.dr[0] = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_DR1:			I.dr[1] = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_DR2:			I.dr[2] = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_DR3:			I.dr[3] = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_DR4:			I.dr[4] = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_DR5:			I.dr[5] = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_DR6:			I.dr[6] = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_DR7:			I.dr[7] = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_TR6:			I.tr[6] = info->i; break;
-		case CPUINFO_INT_REGISTER + I386_TR7:			I.tr[7] = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_CR0:			I.cr[0] = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_CR1:			I.cr[1] = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_CR2:			I.cr[2] = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_CR3:			I.cr[3] = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_DR0:			I.dr[0] = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_DR1:			I.dr[1] = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_DR2:			I.dr[2] = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_DR3:			I.dr[3] = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_DR4:			I.dr[4] = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_DR5:			I.dr[5] = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_DR6:			I.dr[6] = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_DR7:			I.dr[7] = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_TR6:			I.tr[6] = info->i;						break;
+		case CPUINFO_INT_REGISTER + I386_TR7:			I.tr[7] = info->i;						break;
 	}
 }
 
-void i386_get_info(UINT32 state, union cpuinfo *info)
+void i386_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case CPUINFO_INT_CONTEXT_SIZE:				info->i = sizeof(I386_REGS);			break;
-		case CPUINFO_INT_INPUT_LINES:				info->i = 32;							break;
-		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:		info->i = 0;							break;
-		case CPUINFO_INT_ENDIANNESS:				info->i = CPU_IS_LE;					break;
-		case CPUINFO_INT_CLOCK_DIVIDER:				info->i = 1;							break;
-		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:		info->i = 1;							break;
-		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:		info->i = 8;							break;
-		case CPUINFO_INT_MIN_CYCLES:				info->i = 1;							break;
-		case CPUINFO_INT_MAX_CYCLES:				info->i = 40;							break;
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(I386_REGS);			break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 32;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 15;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 40;							break;
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
@@ -777,132 +777,132 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_INPUT_STATE:			info->i = CLEAR_LINE;	break;
+		case CPUINFO_INT_INPUT_STATE:					info->i = CLEAR_LINE;					break;
 
-		case CPUINFO_INT_PREVIOUSPC:				/* not implemented */					break;
+		case CPUINFO_INT_PREVIOUSPC:					/* not implemented */					break;
 
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + I386_PC:			info->i = I.pc; break;
-		case CPUINFO_INT_REGISTER + I386_EIP:			info->i = I.eip; break;
-		case CPUINFO_INT_REGISTER + I386_AL:			info->i = REG8(AL); break;
-		case CPUINFO_INT_REGISTER + I386_AH:			info->i = REG8(AH); break;
-		case CPUINFO_INT_REGISTER + I386_BL:			info->i = REG8(BL); break;
-		case CPUINFO_INT_REGISTER + I386_BH:			info->i = REG8(BH); break;
-		case CPUINFO_INT_REGISTER + I386_CL:			info->i = REG8(CL); break;
-		case CPUINFO_INT_REGISTER + I386_CH:			info->i = REG8(CH); break;
-		case CPUINFO_INT_REGISTER + I386_DL:			info->i = REG8(DL); break;
-		case CPUINFO_INT_REGISTER + I386_DH:			info->i = REG8(DH); break;
-		case CPUINFO_INT_REGISTER + I386_AX:			info->i = REG16(AX); break;
-		case CPUINFO_INT_REGISTER + I386_BX:			info->i = REG16(BX); break;
-		case CPUINFO_INT_REGISTER + I386_CX:			info->i = REG16(CX); break;
-		case CPUINFO_INT_REGISTER + I386_DX:			info->i = REG16(DX); break;
-		case CPUINFO_INT_REGISTER + I386_SI:			info->i = REG16(SI); break;
-		case CPUINFO_INT_REGISTER + I386_DI:			info->i = REG16(DI); break;
-		case CPUINFO_INT_REGISTER + I386_BP:			info->i = REG16(BP); break;
-		case CPUINFO_INT_REGISTER + I386_SP:			info->i = REG16(SP); break;
-		case CPUINFO_INT_REGISTER + I386_IP:			info->i = I.eip & 0xFFFF; break;
-		case CPUINFO_INT_REGISTER + I386_EAX:			info->i = REG32(EAX); break;
-		case CPUINFO_INT_REGISTER + I386_EBX:			info->i = REG32(EBX); break;
-		case CPUINFO_INT_REGISTER + I386_ECX:			info->i = REG32(ECX); break;
-		case CPUINFO_INT_REGISTER + I386_EDX:			info->i = REG32(EDX); break;
-		case CPUINFO_INT_REGISTER + I386_EBP:			info->i = REG32(EBP); break;
-		case CPUINFO_INT_REGISTER + I386_ESP:			info->i = REG32(ESP); break;
-		case CPUINFO_INT_REGISTER + I386_ESI:			info->i = REG32(ESI); break;
-		case CPUINFO_INT_REGISTER + I386_EDI:			info->i = REG32(EDI); break;
-		case CPUINFO_INT_REGISTER + I386_EFLAGS:		info->i = I.eflags; break;
-		case CPUINFO_INT_REGISTER + I386_CS:			info->i = I.sreg[CS].selector; break;
-		case CPUINFO_INT_REGISTER + I386_SS:			info->i = I.sreg[SS].selector; break;
-		case CPUINFO_INT_REGISTER + I386_DS:			info->i = I.sreg[DS].selector; break;
-		case CPUINFO_INT_REGISTER + I386_ES:			info->i = I.sreg[ES].selector; break;
-		case CPUINFO_INT_REGISTER + I386_FS:			info->i = I.sreg[FS].selector; break;
-		case CPUINFO_INT_REGISTER + I386_GS:			info->i = I.sreg[GS].selector; break;
-		case CPUINFO_INT_REGISTER + I386_CR0:			info->i = I.cr[0]; break;
-		case CPUINFO_INT_REGISTER + I386_CR1:			info->i = I.cr[1]; break;
-		case CPUINFO_INT_REGISTER + I386_CR2:			info->i = I.cr[2]; break;
-		case CPUINFO_INT_REGISTER + I386_CR3:			info->i = I.cr[3]; break;
-		case CPUINFO_INT_REGISTER + I386_DR0:			info->i = I.dr[0]; break;
-		case CPUINFO_INT_REGISTER + I386_DR1:			info->i = I.dr[1]; break;
-		case CPUINFO_INT_REGISTER + I386_DR2:			info->i = I.dr[2]; break;
-		case CPUINFO_INT_REGISTER + I386_DR3:			info->i = I.dr[3]; break;
-		case CPUINFO_INT_REGISTER + I386_DR4:			info->i = I.dr[4]; break;
-		case CPUINFO_INT_REGISTER + I386_DR5:			info->i = I.dr[5]; break;
-		case CPUINFO_INT_REGISTER + I386_DR6:			info->i = I.dr[6]; break;
-		case CPUINFO_INT_REGISTER + I386_DR7:			info->i = I.dr[7]; break;
-		case CPUINFO_INT_REGISTER + I386_TR6:			info->i = I.tr[6]; break;
-		case CPUINFO_INT_REGISTER + I386_TR7:			info->i = I.tr[7]; break;
+		case CPUINFO_INT_REGISTER + I386_PC:			info->i = I.pc;							break;
+		case CPUINFO_INT_REGISTER + I386_EIP:			info->i = I.eip;						break;
+		case CPUINFO_INT_REGISTER + I386_AL:			info->i = REG8(AL);						break;
+		case CPUINFO_INT_REGISTER + I386_AH:			info->i = REG8(AH);						break;
+		case CPUINFO_INT_REGISTER + I386_BL:			info->i = REG8(BL);						break;
+		case CPUINFO_INT_REGISTER + I386_BH:			info->i = REG8(BH);						break;
+		case CPUINFO_INT_REGISTER + I386_CL:			info->i = REG8(CL);						break;
+		case CPUINFO_INT_REGISTER + I386_CH:			info->i = REG8(CH);						break;
+		case CPUINFO_INT_REGISTER + I386_DL:			info->i = REG8(DL);						break;
+		case CPUINFO_INT_REGISTER + I386_DH:			info->i = REG8(DH);						break;
+		case CPUINFO_INT_REGISTER + I386_AX:			info->i = REG16(AX);					break;
+		case CPUINFO_INT_REGISTER + I386_BX:			info->i = REG16(BX);					break;
+		case CPUINFO_INT_REGISTER + I386_CX:			info->i = REG16(CX);					break;
+		case CPUINFO_INT_REGISTER + I386_DX:			info->i = REG16(DX);					break;
+		case CPUINFO_INT_REGISTER + I386_SI:			info->i = REG16(SI);					break;
+		case CPUINFO_INT_REGISTER + I386_DI:			info->i = REG16(DI);					break;
+		case CPUINFO_INT_REGISTER + I386_BP:			info->i = REG16(BP);					break;
+		case CPUINFO_INT_REGISTER + I386_SP:			info->i = REG16(SP);					break;
+		case CPUINFO_INT_REGISTER + I386_IP:			info->i = I.eip & 0xFFFF;				break;
+		case CPUINFO_INT_REGISTER + I386_EAX:			info->i = REG32(EAX);					break;
+		case CPUINFO_INT_REGISTER + I386_EBX:			info->i = REG32(EBX);					break;
+		case CPUINFO_INT_REGISTER + I386_ECX:			info->i = REG32(ECX);					break;
+		case CPUINFO_INT_REGISTER + I386_EDX:			info->i = REG32(EDX);					break;
+		case CPUINFO_INT_REGISTER + I386_EBP:			info->i = REG32(EBP);					break;
+		case CPUINFO_INT_REGISTER + I386_ESP:			info->i = REG32(ESP);					break;
+		case CPUINFO_INT_REGISTER + I386_ESI:			info->i = REG32(ESI);					break;
+		case CPUINFO_INT_REGISTER + I386_EDI:			info->i = REG32(EDI);					break;
+		case CPUINFO_INT_REGISTER + I386_EFLAGS:		info->i = I.eflags;						break;
+		case CPUINFO_INT_REGISTER + I386_CS:			info->i = I.sreg[CS].selector;			break;
+		case CPUINFO_INT_REGISTER + I386_SS:			info->i = I.sreg[SS].selector;			break;
+		case CPUINFO_INT_REGISTER + I386_DS:			info->i = I.sreg[DS].selector;			break;
+		case CPUINFO_INT_REGISTER + I386_ES:			info->i = I.sreg[ES].selector;			break;
+		case CPUINFO_INT_REGISTER + I386_FS:			info->i = I.sreg[FS].selector;			break;
+		case CPUINFO_INT_REGISTER + I386_GS:			info->i = I.sreg[GS].selector;			break;
+		case CPUINFO_INT_REGISTER + I386_CR0:			info->i = I.cr[0];						break;
+		case CPUINFO_INT_REGISTER + I386_CR1:			info->i = I.cr[1];						break;
+		case CPUINFO_INT_REGISTER + I386_CR2:			info->i = I.cr[2];						break;
+		case CPUINFO_INT_REGISTER + I386_CR3:			info->i = I.cr[3];						break;
+		case CPUINFO_INT_REGISTER + I386_DR0:			info->i = I.dr[0];						break;
+		case CPUINFO_INT_REGISTER + I386_DR1:			info->i = I.dr[1];						break;
+		case CPUINFO_INT_REGISTER + I386_DR2:			info->i = I.dr[2];						break;
+		case CPUINFO_INT_REGISTER + I386_DR3:			info->i = I.dr[3];						break;
+		case CPUINFO_INT_REGISTER + I386_DR4:			info->i = I.dr[4];						break;
+		case CPUINFO_INT_REGISTER + I386_DR5:			info->i = I.dr[5];						break;
+		case CPUINFO_INT_REGISTER + I386_DR6:			info->i = I.dr[6];						break;
+		case CPUINFO_INT_REGISTER + I386_DR7:			info->i = I.dr[7];						break;
+		case CPUINFO_INT_REGISTER + I386_TR6:			info->i = I.tr[6];						break;
+		case CPUINFO_INT_REGISTER + I386_TR7:			info->i = I.tr[7];						break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_SET_INFO:	      				info->setinfo = i386_set_info;		break;
+		case CPUINFO_PTR_SET_INFO:	      				info->setinfo = i386_set_info;			break;
 		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = i386_get_context;	break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = i386_set_context;	break;
-		case CPUINFO_PTR_INIT:		      				info->init = i386_init;			break;
-		case CPUINFO_PTR_RESET:		      				info->reset = i386_reset;		break;
-		case CPUINFO_PTR_EXECUTE:	      				info->execute = i386_execute;		break;
-		case CPUINFO_PTR_BURN:		      				info->burn = NULL;			break;
-		case CPUINFO_PTR_INSTRUCTION_COUNTER: 			info->icount = &I.cycles;		break;
+		case CPUINFO_PTR_INIT:		      				info->init = i386_init;					break;
+		case CPUINFO_PTR_RESET:		      				info->reset = i386_reset;				break;
+		case CPUINFO_PTR_EXECUTE:	      				info->execute = i386_execute;			break;
+		case CPUINFO_PTR_BURN:		      				info->burn = NULL;						break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER: 			info->icount = &I.cycles;				break;
 		case CPUINFO_PTR_TRANSLATE:						info->translate = translate_address_cb;	break;
 #ifdef MAME_DEBUG
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i386_dasm;		break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i386_dasm;			break;
 		case CPUINFO_PTR_DEBUG_SETUP_COMMANDS:			info->setup_commands = i386_debug_setup; break;
 #endif
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I386"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Intel 386"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2003-2004 Ville Linde"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "I386");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Intel 386");			break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C) 2003-2004 Ville Linde"); break;
 
-		case CPUINFO_STR_FLAGS:	   				sprintf(info->s = cpuintrf_temp_str(), "%08X", get_flags()); break;
+		case CPUINFO_STR_FLAGS:	   						sprintf(info->s, "%08X", get_flags());	break;
 
-		case CPUINFO_STR_REGISTER + I386_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC: %08X", I.pc); break;
-		case CPUINFO_STR_REGISTER + I386_EIP:			sprintf(info->s = cpuintrf_temp_str(), "EIP: %08X", I.eip); break;
-		case CPUINFO_STR_REGISTER + I386_AL:			sprintf(info->s = cpuintrf_temp_str(), "~AL: %02X", REG8(AL)); break;
-		case CPUINFO_STR_REGISTER + I386_AH:			sprintf(info->s = cpuintrf_temp_str(), "~AH: %02X", REG8(AH)); break;
-		case CPUINFO_STR_REGISTER + I386_BL:			sprintf(info->s = cpuintrf_temp_str(), "~BL: %02X", REG8(BL)); break;
-		case CPUINFO_STR_REGISTER + I386_BH:			sprintf(info->s = cpuintrf_temp_str(), "~BH: %02X", REG8(BH)); break;
-		case CPUINFO_STR_REGISTER + I386_CL:			sprintf(info->s = cpuintrf_temp_str(), "~CL: %02X", REG8(CL)); break;
-		case CPUINFO_STR_REGISTER + I386_CH:			sprintf(info->s = cpuintrf_temp_str(), "~CH: %02X", REG8(CH)); break;
-		case CPUINFO_STR_REGISTER + I386_DL:			sprintf(info->s = cpuintrf_temp_str(), "~DL: %02X", REG8(DL)); break;
-		case CPUINFO_STR_REGISTER + I386_DH:			sprintf(info->s = cpuintrf_temp_str(), "~DH: %02X", REG8(DH)); break;
-		case CPUINFO_STR_REGISTER + I386_AX:			sprintf(info->s = cpuintrf_temp_str(), "~AX: %04X", REG16(AX)); break;
-		case CPUINFO_STR_REGISTER + I386_BX:			sprintf(info->s = cpuintrf_temp_str(), "~BX: %04X", REG16(BX)); break;
-		case CPUINFO_STR_REGISTER + I386_CX:			sprintf(info->s = cpuintrf_temp_str(), "~CX: %04X", REG16(CX)); break;
-		case CPUINFO_STR_REGISTER + I386_DX:			sprintf(info->s = cpuintrf_temp_str(), "~DX: %04X", REG16(DX)); break;
-		case CPUINFO_STR_REGISTER + I386_SI:			sprintf(info->s = cpuintrf_temp_str(), "~SI: %04X", REG16(SI)); break;
-		case CPUINFO_STR_REGISTER + I386_DI:			sprintf(info->s = cpuintrf_temp_str(), "~DI: %04X", REG16(DI)); break;
-		case CPUINFO_STR_REGISTER + I386_BP:			sprintf(info->s = cpuintrf_temp_str(), "~BP: %04X", REG16(BP)); break;
-		case CPUINFO_STR_REGISTER + I386_SP:			sprintf(info->s = cpuintrf_temp_str(), "~SP: %04X", REG16(SP)); break;
-		case CPUINFO_STR_REGISTER + I386_IP:			sprintf(info->s = cpuintrf_temp_str(), "~IP: %04X", I.eip & 0xFFFF); break;
-		case CPUINFO_STR_REGISTER + I386_EAX:			sprintf(info->s = cpuintrf_temp_str(), "EAX: %08X", I.reg.d[EAX]); break;
-		case CPUINFO_STR_REGISTER + I386_EBX:			sprintf(info->s = cpuintrf_temp_str(), "EBX: %08X", I.reg.d[EBX]); break;
-		case CPUINFO_STR_REGISTER + I386_ECX:			sprintf(info->s = cpuintrf_temp_str(), "ECX: %08X", I.reg.d[ECX]); break;
-		case CPUINFO_STR_REGISTER + I386_EDX:			sprintf(info->s = cpuintrf_temp_str(), "EDX: %08X", I.reg.d[EDX]); break;
-		case CPUINFO_STR_REGISTER + I386_EBP:			sprintf(info->s = cpuintrf_temp_str(), "EBP: %08X", I.reg.d[EBP]); break;
-		case CPUINFO_STR_REGISTER + I386_ESP:			sprintf(info->s = cpuintrf_temp_str(), "ESP: %08X", I.reg.d[ESP]); break;
-		case CPUINFO_STR_REGISTER + I386_ESI:			sprintf(info->s = cpuintrf_temp_str(), "ESI: %08X", I.reg.d[ESI]); break;
-		case CPUINFO_STR_REGISTER + I386_EDI:			sprintf(info->s = cpuintrf_temp_str(), "EDI: %08X", I.reg.d[EDI]); break;
-		case CPUINFO_STR_REGISTER + I386_EFLAGS:		sprintf(info->s = cpuintrf_temp_str(), "EFLAGS: %08X", I.eflags); break;
-		case CPUINFO_STR_REGISTER + I386_CS:			sprintf(info->s = cpuintrf_temp_str(), "CS: %04X:%08X", I.sreg[CS].selector, I.sreg[CS].base); break;
-		case CPUINFO_STR_REGISTER + I386_SS:			sprintf(info->s = cpuintrf_temp_str(), "SS: %04X:%08X", I.sreg[SS].selector, I.sreg[SS].base); break;
-		case CPUINFO_STR_REGISTER + I386_DS:			sprintf(info->s = cpuintrf_temp_str(), "DS: %04X:%08X", I.sreg[DS].selector, I.sreg[DS].base); break;
-		case CPUINFO_STR_REGISTER + I386_ES:			sprintf(info->s = cpuintrf_temp_str(), "ES: %04X:%08X", I.sreg[ES].selector, I.sreg[ES].base); break;
-		case CPUINFO_STR_REGISTER + I386_FS:			sprintf(info->s = cpuintrf_temp_str(), "FS: %04X:%08X", I.sreg[FS].selector, I.sreg[FS].base); break;
-		case CPUINFO_STR_REGISTER + I386_GS:			sprintf(info->s = cpuintrf_temp_str(), "GS: %04X:%08X", I.sreg[GS].selector, I.sreg[GS].base); break;
-		case CPUINFO_STR_REGISTER + I386_CR0:			sprintf(info->s = cpuintrf_temp_str(), "CR0: %08X", I.cr[0]); break;
-		case CPUINFO_STR_REGISTER + I386_CR1:			sprintf(info->s = cpuintrf_temp_str(), "CR1: %08X", I.cr[1]); break;
-		case CPUINFO_STR_REGISTER + I386_CR2:			sprintf(info->s = cpuintrf_temp_str(), "CR2: %08X", I.cr[2]); break;
-		case CPUINFO_STR_REGISTER + I386_CR3:			sprintf(info->s = cpuintrf_temp_str(), "CR3: %08X", I.cr[3]); break;
-		case CPUINFO_STR_REGISTER + I386_DR0:			sprintf(info->s = cpuintrf_temp_str(), "DR0: %08X", I.dr[0]); break;
-		case CPUINFO_STR_REGISTER + I386_DR1:			sprintf(info->s = cpuintrf_temp_str(), "DR1: %08X", I.dr[1]); break;
-		case CPUINFO_STR_REGISTER + I386_DR2:			sprintf(info->s = cpuintrf_temp_str(), "DR2: %08X", I.dr[2]); break;
-		case CPUINFO_STR_REGISTER + I386_DR3:			sprintf(info->s = cpuintrf_temp_str(), "DR3: %08X", I.dr[3]); break;
-		case CPUINFO_STR_REGISTER + I386_DR4:			sprintf(info->s = cpuintrf_temp_str(), "DR4: %08X", I.dr[4]); break;
-		case CPUINFO_STR_REGISTER + I386_DR5:			sprintf(info->s = cpuintrf_temp_str(), "DR5: %08X", I.dr[5]); break;
-		case CPUINFO_STR_REGISTER + I386_DR6:			sprintf(info->s = cpuintrf_temp_str(), "DR6: %08X", I.dr[6]); break;
-		case CPUINFO_STR_REGISTER + I386_DR7:			sprintf(info->s = cpuintrf_temp_str(), "DR7: %08X", I.dr[7]); break;
-		case CPUINFO_STR_REGISTER + I386_TR6:			sprintf(info->s = cpuintrf_temp_str(), "TR6: %08X", I.tr[6]); break;
-		case CPUINFO_STR_REGISTER + I386_TR7:			sprintf(info->s = cpuintrf_temp_str(), "TR7: %08X", I.tr[7]); break;
+		case CPUINFO_STR_REGISTER + I386_PC:			sprintf(info->s, "PC: %08X", I.pc);		break;
+		case CPUINFO_STR_REGISTER + I386_EIP:			sprintf(info->s, "EIP: %08X", I.eip);	break;
+		case CPUINFO_STR_REGISTER + I386_AL:			sprintf(info->s, "~AL: %02X", REG8(AL)); break;
+		case CPUINFO_STR_REGISTER + I386_AH:			sprintf(info->s, "~AH: %02X", REG8(AH)); break;
+		case CPUINFO_STR_REGISTER + I386_BL:			sprintf(info->s, "~BL: %02X", REG8(BL)); break;
+		case CPUINFO_STR_REGISTER + I386_BH:			sprintf(info->s, "~BH: %02X", REG8(BH)); break;
+		case CPUINFO_STR_REGISTER + I386_CL:			sprintf(info->s, "~CL: %02X", REG8(CL)); break;
+		case CPUINFO_STR_REGISTER + I386_CH:			sprintf(info->s, "~CH: %02X", REG8(CH)); break;
+		case CPUINFO_STR_REGISTER + I386_DL:			sprintf(info->s, "~DL: %02X", REG8(DL)); break;
+		case CPUINFO_STR_REGISTER + I386_DH:			sprintf(info->s, "~DH: %02X", REG8(DH)); break;
+		case CPUINFO_STR_REGISTER + I386_AX:			sprintf(info->s, "~AX: %04X", REG16(AX)); break;
+		case CPUINFO_STR_REGISTER + I386_BX:			sprintf(info->s, "~BX: %04X", REG16(BX)); break;
+		case CPUINFO_STR_REGISTER + I386_CX:			sprintf(info->s, "~CX: %04X", REG16(CX)); break;
+		case CPUINFO_STR_REGISTER + I386_DX:			sprintf(info->s, "~DX: %04X", REG16(DX)); break;
+		case CPUINFO_STR_REGISTER + I386_SI:			sprintf(info->s, "~SI: %04X", REG16(SI)); break;
+		case CPUINFO_STR_REGISTER + I386_DI:			sprintf(info->s, "~DI: %04X", REG16(DI)); break;
+		case CPUINFO_STR_REGISTER + I386_BP:			sprintf(info->s, "~BP: %04X", REG16(BP)); break;
+		case CPUINFO_STR_REGISTER + I386_SP:			sprintf(info->s, "~SP: %04X", REG16(SP)); break;
+		case CPUINFO_STR_REGISTER + I386_IP:			sprintf(info->s, "~IP: %04X", I.eip & 0xFFFF); break;
+		case CPUINFO_STR_REGISTER + I386_EAX:			sprintf(info->s, "EAX: %08X", I.reg.d[EAX]); break;
+		case CPUINFO_STR_REGISTER + I386_EBX:			sprintf(info->s, "EBX: %08X", I.reg.d[EBX]); break;
+		case CPUINFO_STR_REGISTER + I386_ECX:			sprintf(info->s, "ECX: %08X", I.reg.d[ECX]); break;
+		case CPUINFO_STR_REGISTER + I386_EDX:			sprintf(info->s, "EDX: %08X", I.reg.d[EDX]); break;
+		case CPUINFO_STR_REGISTER + I386_EBP:			sprintf(info->s, "EBP: %08X", I.reg.d[EBP]); break;
+		case CPUINFO_STR_REGISTER + I386_ESP:			sprintf(info->s, "ESP: %08X", I.reg.d[ESP]); break;
+		case CPUINFO_STR_REGISTER + I386_ESI:			sprintf(info->s, "ESI: %08X", I.reg.d[ESI]); break;
+		case CPUINFO_STR_REGISTER + I386_EDI:			sprintf(info->s, "EDI: %08X", I.reg.d[EDI]); break;
+		case CPUINFO_STR_REGISTER + I386_EFLAGS:		sprintf(info->s, "EFLAGS: %08X", I.eflags); break;
+		case CPUINFO_STR_REGISTER + I386_CS:			sprintf(info->s, "CS: %04X:%08X", I.sreg[CS].selector, I.sreg[CS].base); break;
+		case CPUINFO_STR_REGISTER + I386_SS:			sprintf(info->s, "SS: %04X:%08X", I.sreg[SS].selector, I.sreg[SS].base); break;
+		case CPUINFO_STR_REGISTER + I386_DS:			sprintf(info->s, "DS: %04X:%08X", I.sreg[DS].selector, I.sreg[DS].base); break;
+		case CPUINFO_STR_REGISTER + I386_ES:			sprintf(info->s, "ES: %04X:%08X", I.sreg[ES].selector, I.sreg[ES].base); break;
+		case CPUINFO_STR_REGISTER + I386_FS:			sprintf(info->s, "FS: %04X:%08X", I.sreg[FS].selector, I.sreg[FS].base); break;
+		case CPUINFO_STR_REGISTER + I386_GS:			sprintf(info->s, "GS: %04X:%08X", I.sreg[GS].selector, I.sreg[GS].base); break;
+		case CPUINFO_STR_REGISTER + I386_CR0:			sprintf(info->s, "CR0: %08X", I.cr[0]); break;
+		case CPUINFO_STR_REGISTER + I386_CR1:			sprintf(info->s, "CR1: %08X", I.cr[1]); break;
+		case CPUINFO_STR_REGISTER + I386_CR2:			sprintf(info->s, "CR2: %08X", I.cr[2]); break;
+		case CPUINFO_STR_REGISTER + I386_CR3:			sprintf(info->s, "CR3: %08X", I.cr[3]); break;
+		case CPUINFO_STR_REGISTER + I386_DR0:			sprintf(info->s, "DR0: %08X", I.dr[0]); break;
+		case CPUINFO_STR_REGISTER + I386_DR1:			sprintf(info->s, "DR1: %08X", I.dr[1]); break;
+		case CPUINFO_STR_REGISTER + I386_DR2:			sprintf(info->s, "DR2: %08X", I.dr[2]); break;
+		case CPUINFO_STR_REGISTER + I386_DR3:			sprintf(info->s, "DR3: %08X", I.dr[3]); break;
+		case CPUINFO_STR_REGISTER + I386_DR4:			sprintf(info->s, "DR4: %08X", I.dr[4]); break;
+		case CPUINFO_STR_REGISTER + I386_DR5:			sprintf(info->s, "DR5: %08X", I.dr[5]); break;
+		case CPUINFO_STR_REGISTER + I386_DR6:			sprintf(info->s, "DR6: %08X", I.dr[6]); break;
+		case CPUINFO_STR_REGISTER + I386_DR7:			sprintf(info->s, "DR7: %08X", I.dr[7]); break;
+		case CPUINFO_STR_REGISTER + I386_TR6:			sprintf(info->s, "TR6: %08X", I.tr[6]); break;
+		case CPUINFO_STR_REGISTER + I386_TR7:			sprintf(info->s, "TR7: %08X", I.tr[7]); break;
 	}
 }
 
@@ -948,62 +948,61 @@ static void i486_reset(void)
 
 static void i486_exit(void)
 {
-
 }
 
-static void i486_set_info(UINT32 state, union cpuinfo *info)
+static void i486_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
-		case CPUINFO_INT_REGISTER + X87_CTRL:			I.fpu_control_word = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_STATUS:			I.fpu_status_word = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST0:			ST(0).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST1:			ST(1).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST2:			ST(2).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST3:			ST(3).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST4:			ST(4).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST5:			ST(5).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST6:			ST(6).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST7:			ST(7).f = info->i; break;
+		case CPUINFO_INT_REGISTER + X87_CTRL:			I.fpu_control_word = info->i;			break;
+		case CPUINFO_INT_REGISTER + X87_STATUS:			I.fpu_status_word = info->i;			break;
+		case CPUINFO_INT_REGISTER + X87_ST0:			ST(0).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST1:			ST(1).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST2:			ST(2).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST3:			ST(3).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST4:			ST(4).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST5:			ST(5).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST6:			ST(6).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST7:			ST(7).f = info->i;						break;
 
 		default: i386_set_info(state, info); break;
 	}
 }
 
-void i486_get_info(UINT32 state, union cpuinfo *info)
+void i486_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
-		case CPUINFO_PTR_SET_INFO:	      				info->setinfo = i486_set_info;		break;
-		case CPUINFO_PTR_INIT:		      				info->init = i486_init;				break;
-		case CPUINFO_PTR_RESET:		      				info->reset = i486_reset;			break;
-		case CPUINFO_PTR_EXIT:		      				info->exit = i486_exit;				break;
+		case CPUINFO_PTR_SET_INFO:	      				info->setinfo = i486_set_info;			break;
+		case CPUINFO_PTR_INIT:		      				info->init = i486_init;					break;
+		case CPUINFO_PTR_RESET:		      				info->reset = i486_reset;				break;
+		case CPUINFO_PTR_EXIT:		      				info->exit = i486_exit;					break;
 
-		case CPUINFO_INT_REGISTER + X87_CTRL:			info->i = I.fpu_control_word; break;
-		case CPUINFO_INT_REGISTER + X87_STATUS:			info->i = I.fpu_status_word; break;
-		case CPUINFO_INT_REGISTER + X87_ST0:			info->i = ST(0).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST1:			info->i = ST(1).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST2:			info->i = ST(2).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST3:			info->i = ST(3).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST4:			info->i = ST(4).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST5:			info->i = ST(5).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST6:			info->i = ST(6).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST7:			info->i = ST(7).f; break;
+		case CPUINFO_INT_REGISTER + X87_CTRL:			info->i = I.fpu_control_word;			break;
+		case CPUINFO_INT_REGISTER + X87_STATUS:			info->i = I.fpu_status_word;			break;
+		case CPUINFO_INT_REGISTER + X87_ST0:			info->i = ST(0).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST1:			info->i = ST(1).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST2:			info->i = ST(2).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST3:			info->i = ST(3).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST4:			info->i = ST(4).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST5:			info->i = ST(5).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST6:			info->i = ST(6).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST7:			info->i = ST(7).f;						break;
 
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I486"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Intel 486"); break;
-		case CPUINFO_STR_REGISTER + X87_CTRL:			sprintf(info->s = cpuintrf_temp_str(), "FPU_CW: %04X", I.fpu_control_word); break;
-		case CPUINFO_STR_REGISTER + X87_STATUS:			sprintf(info->s = cpuintrf_temp_str(), "FPU_SW: %04X", I.fpu_status_word); break;
-		case CPUINFO_STR_REGISTER + X87_ST0:			sprintf(info->s = cpuintrf_temp_str(), "ST0: %f", ST(0).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST1:			sprintf(info->s = cpuintrf_temp_str(), "ST1: %f", ST(1).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST2:			sprintf(info->s = cpuintrf_temp_str(), "ST2: %f", ST(2).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST3:			sprintf(info->s = cpuintrf_temp_str(), "ST3: %f", ST(3).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST4:			sprintf(info->s = cpuintrf_temp_str(), "ST4: %f", ST(4).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST5:			sprintf(info->s = cpuintrf_temp_str(), "ST5: %f", ST(5).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST6:			sprintf(info->s = cpuintrf_temp_str(), "ST6: %f", ST(6).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST7:			sprintf(info->s = cpuintrf_temp_str(), "ST7: %f", ST(7).f); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "I486");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Intel 486");			break;
+		case CPUINFO_STR_REGISTER + X87_CTRL:			sprintf(info->s, "FPU_CW: %04X", I.fpu_control_word); break;
+		case CPUINFO_STR_REGISTER + X87_STATUS:			sprintf(info->s, "FPU_SW: %04X", I.fpu_status_word); break;
+		case CPUINFO_STR_REGISTER + X87_ST0:			sprintf(info->s, "ST0: %f", ST(0).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST1:			sprintf(info->s, "ST1: %f", ST(1).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST2:			sprintf(info->s, "ST2: %f", ST(2).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST3:			sprintf(info->s, "ST3: %f", ST(3).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST4:			sprintf(info->s, "ST4: %f", ST(4).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST5:			sprintf(info->s, "ST5: %f", ST(5).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST6:			sprintf(info->s, "ST6: %f", ST(6).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST7:			sprintf(info->s, "ST7: %f", ST(7).f);	break;
 
-		default:	i386_get_info(state, info); break;
+		default:										i386_get_info(state, info);				break;
 	}
 }
 #endif
@@ -1070,29 +1069,28 @@ static void pentium_reset(void)
 
 static void pentium_exit(void)
 {
-
 }
 
-static void pentium_set_info(UINT32 state, union cpuinfo *info)
+static void pentium_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
-		case CPUINFO_INT_REGISTER + X87_CTRL:			I.fpu_control_word = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_STATUS:			I.fpu_status_word = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST0:			ST(0).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST1:			ST(1).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST2:			ST(2).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST3:			ST(3).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST4:			ST(4).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST5:			ST(5).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST6:			ST(6).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST7:			ST(7).f = info->i; break;
+		case CPUINFO_INT_REGISTER + X87_CTRL:			I.fpu_control_word = info->i;			break;
+		case CPUINFO_INT_REGISTER + X87_STATUS:			I.fpu_status_word = info->i;			break;
+		case CPUINFO_INT_REGISTER + X87_ST0:			ST(0).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST1:			ST(1).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST2:			ST(2).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST3:			ST(3).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST4:			ST(4).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST5:			ST(5).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST6:			ST(6).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST7:			ST(7).f = info->i;						break;
 
-		default: i386_set_info(state, info); break;
+		default:										i386_set_info(state, info);				break;
 	}
 }
 
-void pentium_get_info(UINT32 state, union cpuinfo *info)
+void pentium_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1101,31 +1099,31 @@ void pentium_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:		      				info->reset = pentium_reset;			break;
 		case CPUINFO_PTR_EXIT:		      				info->exit = pentium_exit;				break;
 
-		case CPUINFO_INT_REGISTER + X87_CTRL:			info->i = I.fpu_control_word; break;
-		case CPUINFO_INT_REGISTER + X87_STATUS:			info->i = I.fpu_status_word; break;
-		case CPUINFO_INT_REGISTER + X87_ST0:			info->i = ST(0).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST1:			info->i = ST(1).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST2:			info->i = ST(2).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST3:			info->i = ST(3).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST4:			info->i = ST(4).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST5:			info->i = ST(5).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST6:			info->i = ST(6).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST7:			info->i = ST(7).f; break;
+		case CPUINFO_INT_REGISTER + X87_CTRL:			info->i = I.fpu_control_word;			break;
+		case CPUINFO_INT_REGISTER + X87_STATUS:			info->i = I.fpu_status_word;			break;
+		case CPUINFO_INT_REGISTER + X87_ST0:			info->i = ST(0).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST1:			info->i = ST(1).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST2:			info->i = ST(2).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST3:			info->i = ST(3).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST4:			info->i = ST(4).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST5:			info->i = ST(5).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST6:			info->i = ST(6).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST7:			info->i = ST(7).f;						break;
 
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PENTIUM"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Intel Pentium"); break;
-		case CPUINFO_STR_REGISTER + X87_CTRL:			sprintf(info->s = cpuintrf_temp_str(), "FPU_CW: %04X", I.fpu_control_word); break;
-		case CPUINFO_STR_REGISTER + X87_STATUS:			sprintf(info->s = cpuintrf_temp_str(), "FPU_SW: %04X", I.fpu_status_word); break;
-		case CPUINFO_STR_REGISTER + X87_ST0:			sprintf(info->s = cpuintrf_temp_str(), "ST0: %f", ST(0).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST1:			sprintf(info->s = cpuintrf_temp_str(), "ST1: %f", ST(1).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST2:			sprintf(info->s = cpuintrf_temp_str(), "ST2: %f", ST(2).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST3:			sprintf(info->s = cpuintrf_temp_str(), "ST3: %f", ST(3).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST4:			sprintf(info->s = cpuintrf_temp_str(), "ST4: %f", ST(4).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST5:			sprintf(info->s = cpuintrf_temp_str(), "ST5: %f", ST(5).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST6:			sprintf(info->s = cpuintrf_temp_str(), "ST6: %f", ST(6).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST7:			sprintf(info->s = cpuintrf_temp_str(), "ST7: %f", ST(7).f); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "PENTIUM");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Intel Pentium");		break;
+		case CPUINFO_STR_REGISTER + X87_CTRL:			sprintf(info->s, "FPU_CW: %04X", I.fpu_control_word); break;
+		case CPUINFO_STR_REGISTER + X87_STATUS:			sprintf(info->s, "FPU_SW: %04X", I.fpu_status_word); break;
+		case CPUINFO_STR_REGISTER + X87_ST0:			sprintf(info->s, "ST0: %f", ST(0).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST1:			sprintf(info->s, "ST1: %f", ST(1).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST2:			sprintf(info->s, "ST2: %f", ST(2).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST3:			sprintf(info->s, "ST3: %f", ST(3).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST4:			sprintf(info->s, "ST4: %f", ST(4).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST5:			sprintf(info->s, "ST5: %f", ST(5).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST6:			sprintf(info->s, "ST6: %f", ST(6).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST7:			sprintf(info->s, "ST7: %f", ST(7).f);	break;
 
-		default:	i386_get_info(state, info); break;
+		default:										i386_get_info(state, info);				break;
 	}
 }
 #endif
@@ -1192,29 +1190,28 @@ static void mediagx_reset(void)
 
 static void mediagx_exit(void)
 {
-
 }
 
-static void mediagx_set_info(UINT32 state, union cpuinfo *info)
+static void mediagx_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
-		case CPUINFO_INT_REGISTER + X87_CTRL:			I.fpu_control_word = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_STATUS:			I.fpu_status_word = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST0:			ST(0).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST1:			ST(1).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST2:			ST(2).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST3:			ST(3).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST4:			ST(4).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST5:			ST(5).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST6:			ST(6).f = info->i; break;
-		case CPUINFO_INT_REGISTER + X87_ST7:			ST(7).f = info->i; break;
+		case CPUINFO_INT_REGISTER + X87_CTRL:			I.fpu_control_word = info->i;			break;
+		case CPUINFO_INT_REGISTER + X87_STATUS:			I.fpu_status_word = info->i;			break;
+		case CPUINFO_INT_REGISTER + X87_ST0:			ST(0).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST1:			ST(1).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST2:			ST(2).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST3:			ST(3).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST4:			ST(4).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST5:			ST(5).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST6:			ST(6).f = info->i;						break;
+		case CPUINFO_INT_REGISTER + X87_ST7:			ST(7).f = info->i;						break;
 
-		default: i386_set_info(state, info); break;
+		default:										i386_set_info(state, info);				break;
 	}
 }
 
-void mediagx_get_info(UINT32 state, union cpuinfo *info)
+void mediagx_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1223,31 +1220,31 @@ void mediagx_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:		      				info->reset = mediagx_reset;			break;
 		case CPUINFO_PTR_EXIT:		      				info->exit = mediagx_exit;				break;
 
-		case CPUINFO_INT_REGISTER + X87_CTRL:			info->i = I.fpu_control_word; break;
-		case CPUINFO_INT_REGISTER + X87_STATUS:			info->i = I.fpu_status_word; break;
-		case CPUINFO_INT_REGISTER + X87_ST0:			info->i = ST(0).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST1:			info->i = ST(1).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST2:			info->i = ST(2).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST3:			info->i = ST(3).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST4:			info->i = ST(4).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST5:			info->i = ST(5).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST6:			info->i = ST(6).f; break;
-		case CPUINFO_INT_REGISTER + X87_ST7:			info->i = ST(7).f; break;
+		case CPUINFO_INT_REGISTER + X87_CTRL:			info->i = I.fpu_control_word;			break;
+		case CPUINFO_INT_REGISTER + X87_STATUS:			info->i = I.fpu_status_word;			break;
+		case CPUINFO_INT_REGISTER + X87_ST0:			info->i = ST(0).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST1:			info->i = ST(1).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST2:			info->i = ST(2).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST3:			info->i = ST(3).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST4:			info->i = ST(4).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST5:			info->i = ST(5).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST6:			info->i = ST(6).f;						break;
+		case CPUINFO_INT_REGISTER + X87_ST7:			info->i = ST(7).f;						break;
 
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "MEDIAGX"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Cyrix MediaGX"); break;
-		case CPUINFO_STR_REGISTER + X87_CTRL:			sprintf(info->s = cpuintrf_temp_str(), "FPU_CW: %04X", I.fpu_control_word); break;
-		case CPUINFO_STR_REGISTER + X87_STATUS:			sprintf(info->s = cpuintrf_temp_str(), "FPU_SW: %04X", I.fpu_status_word); break;
-		case CPUINFO_STR_REGISTER + X87_ST0:			sprintf(info->s = cpuintrf_temp_str(), "ST0: %f", ST(0).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST1:			sprintf(info->s = cpuintrf_temp_str(), "ST1: %f", ST(1).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST2:			sprintf(info->s = cpuintrf_temp_str(), "ST2: %f", ST(2).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST3:			sprintf(info->s = cpuintrf_temp_str(), "ST3: %f", ST(3).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST4:			sprintf(info->s = cpuintrf_temp_str(), "ST4: %f", ST(4).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST5:			sprintf(info->s = cpuintrf_temp_str(), "ST5: %f", ST(5).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST6:			sprintf(info->s = cpuintrf_temp_str(), "ST6: %f", ST(6).f); break;
-		case CPUINFO_STR_REGISTER + X87_ST7:			sprintf(info->s = cpuintrf_temp_str(), "ST7: %f", ST(7).f); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "MEDIAGX");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Cyrix MediaGX");		break;
+		case CPUINFO_STR_REGISTER + X87_CTRL:			sprintf(info->s, "FPU_CW: %04X", I.fpu_control_word); break;
+		case CPUINFO_STR_REGISTER + X87_STATUS:			sprintf(info->s, "FPU_SW: %04X", I.fpu_status_word); break;
+		case CPUINFO_STR_REGISTER + X87_ST0:			sprintf(info->s, "ST0: %f", ST(0).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST1:			sprintf(info->s, "ST1: %f", ST(1).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST2:			sprintf(info->s, "ST2: %f", ST(2).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST3:			sprintf(info->s, "ST3: %f", ST(3).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST4:			sprintf(info->s, "ST4: %f", ST(4).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST5:			sprintf(info->s, "ST5: %f", ST(5).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST6:			sprintf(info->s, "ST6: %f", ST(6).f);	break;
+		case CPUINFO_STR_REGISTER + X87_ST7:			sprintf(info->s, "ST7: %f", ST(7).f);	break;
 
-		default:	i386_get_info(state, info); break;
+		default:										i386_get_info(state, info);				break;
 	}
 }
 #endif

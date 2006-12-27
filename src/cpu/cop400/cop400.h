@@ -35,8 +35,8 @@ enum {
     COP400_SKL
 };
 
-extern void cop410_get_info(UINT32 state, union cpuinfo *info);
-extern void cop420_get_info(UINT32 state, union cpuinfo *info);
+extern void cop410_get_info(UINT32 state, cpuinfo *info);
+extern void cop420_get_info(UINT32 state, cpuinfo *info);
 
 #ifdef MAME_DEBUG
 offs_t cop410_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);

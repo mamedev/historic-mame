@@ -300,7 +300,7 @@ static void i286_init(int index, int clock, const void *config, int (*irqcallbac
  * Generic set_info
  **************************************************************************/
 
-static void i286_set_info(UINT32 state, union cpuinfo *info)
+static void i286_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -371,7 +371,7 @@ static void i286_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  ****************************************************************************/
 
-void i286_get_info(UINT32 state, union cpuinfo *info)
+void i286_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -406,7 +406,7 @@ void i286_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I286_IP:			info->i = I.pc - I.base[CS];			break;
 		case CPUINFO_INT_SP:							info->i = I.base[SS] + I.regs.w[SP];	break;
 		case CPUINFO_INT_REGISTER + I286_SP:			info->i = I.regs.w[SP];					break;
-		case CPUINFO_INT_REGISTER + I286_FLAGS: 		I.flags = CompressFlags(); info->i = I.flags;		break;
+		case CPUINFO_INT_REGISTER + I286_FLAGS: 		I.flags = CompressFlags(); info->i = I.flags; break;
 		case CPUINFO_INT_REGISTER + I286_AX:			info->i = I.regs.w[AX];					break;
 		case CPUINFO_INT_REGISTER + I286_CX:			info->i = I.regs.w[CX];					break;
 		case CPUINFO_INT_REGISTER + I286_DX:			info->i = I.regs.w[DX];					break;
@@ -444,15 +444,15 @@ void i286_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i286_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I80286"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Intel 80286"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.4"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Real mode i286 emulator v1.4 by Fabrice Frances\n(initial work I.based on David Hedley's pcemu)"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "I80286");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Intel 80286");			break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.4");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Real mode i286 emulator v1.4 by Fabrice Frances\n(initial work I.based on David Hedley's pcemu)"); break;
 
 		case CPUINFO_STR_FLAGS:
 			I.flags = CompressFlags();
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
 					I.flags & 0x8000 ? '?' : '.',
 					I.flags & 0x4000 ? '?' : '.',
 					I.flags & 0x2000 ? '?' : '.',
@@ -471,35 +471,35 @@ void i286_get_info(UINT32 state, union cpuinfo *info)
 					I.flags & 0x0001 ? 'C' : '.');
 			break;
 
-		case CPUINFO_STR_REGISTER + I286_PC: 			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", I.pc); break;
-		case CPUINFO_STR_REGISTER + I286_IP: 			sprintf(info->s = cpuintrf_temp_str(), "IP: %04X", I.pc - I.base[CS]); break;
-		case CPUINFO_STR_REGISTER + I286_SP: 			sprintf(info->s = cpuintrf_temp_str(), "SP: %04X", I.regs.w[SP]);  break;
-		case CPUINFO_STR_REGISTER + I286_FLAGS:			sprintf(info->s = cpuintrf_temp_str(), "F:%04X", I.flags);         break;
-		case CPUINFO_STR_REGISTER + I286_AX: 			sprintf(info->s = cpuintrf_temp_str(), "AX:%04X", I.regs.w[AX]);   break;
-		case CPUINFO_STR_REGISTER + I286_CX: 			sprintf(info->s = cpuintrf_temp_str(), "CX:%04X", I.regs.w[CX]);   break;
-		case CPUINFO_STR_REGISTER + I286_DX: 			sprintf(info->s = cpuintrf_temp_str(), "DX:%04X", I.regs.w[DX]);   break;
-		case CPUINFO_STR_REGISTER + I286_BX: 			sprintf(info->s = cpuintrf_temp_str(), "BX:%04X", I.regs.w[BX]);   break;
-		case CPUINFO_STR_REGISTER + I286_BP: 			sprintf(info->s = cpuintrf_temp_str(), "BP:%04X", I.regs.w[BP]);   break;
-		case CPUINFO_STR_REGISTER + I286_SI: 			sprintf(info->s = cpuintrf_temp_str(), "SI: %04X", I.regs.w[SI]);  break;
-		case CPUINFO_STR_REGISTER + I286_DI: 			sprintf(info->s = cpuintrf_temp_str(), "DI: %04X", I.regs.w[DI]);  break;
-		case CPUINFO_STR_REGISTER + I286_CS: 			sprintf(info->s = cpuintrf_temp_str(), "CS:  %04X %02X", I.sregs[CS], I.rights[CS]);    break;
-		case CPUINFO_STR_REGISTER + I286_CS_2: 			sprintf(info->s = cpuintrf_temp_str(), "%06X %04X", I.base[CS], I.limit[CS]);			break;
-		case CPUINFO_STR_REGISTER + I286_SS: 			sprintf(info->s = cpuintrf_temp_str(), "SS:  %04X %02X", I.sregs[SS], I.rights[SS]);    break;
-		case CPUINFO_STR_REGISTER + I286_SS_2: 			sprintf(info->s = cpuintrf_temp_str(), "%06X %04X", I.base[SS], I.limit[SS]);			break;
-		case CPUINFO_STR_REGISTER + I286_DS: 			sprintf(info->s = cpuintrf_temp_str(), "DS:  %04X %02X", I.sregs[DS], I.rights[DS]);    break;
-		case CPUINFO_STR_REGISTER + I286_DS_2: 			sprintf(info->s = cpuintrf_temp_str(), "%06X %04X", I.base[DS], I.limit[DS]);			break;
-		case CPUINFO_STR_REGISTER + I286_ES: 			sprintf(info->s = cpuintrf_temp_str(), "ES:  %04X %02X", I.sregs[ES], I.rights[ES]);    break;
-		case CPUINFO_STR_REGISTER + I286_ES_2: 			sprintf(info->s = cpuintrf_temp_str(), "%06X %04X", I.base[ES], I.limit[ES]);			break;
-		case CPUINFO_STR_REGISTER + I286_VECTOR:		sprintf(info->s = cpuintrf_temp_str(), "V:%02X", I.int_vector);    break;
-		case CPUINFO_STR_REGISTER + I286_MSW:			sprintf(info->s = cpuintrf_temp_str(), "MSW:%04X", I.msw);					break;
-		case CPUINFO_STR_REGISTER + I286_TR:			sprintf(info->s = cpuintrf_temp_str(), "GDTR: %06X", I.gdtr.base);			break;
-		case CPUINFO_STR_REGISTER + I286_TR_2:			sprintf(info->s = cpuintrf_temp_str(), "%04X", I.gdtr.limit);				break;
-		case CPUINFO_STR_REGISTER + I286_GDTR:			sprintf(info->s = cpuintrf_temp_str(), "IDTR: %06X", I.idtr.base);			break;
-		case CPUINFO_STR_REGISTER + I286_GDTR_2:		sprintf(info->s = cpuintrf_temp_str(), "%04X", I.idtr.limit);				break;
-		case CPUINFO_STR_REGISTER + I286_LDTR:			sprintf(info->s = cpuintrf_temp_str(), "LDTR:%04X %02X", I.ldtr.sel, I.ldtr.rights);    break;
-		case CPUINFO_STR_REGISTER + I286_LDTR_2:		sprintf(info->s = cpuintrf_temp_str(), "%06X %04X", I.ldtr.base, I.ldtr.limit);			break;
-		case CPUINFO_STR_REGISTER + I286_IDTR:			sprintf(info->s = cpuintrf_temp_str(), "IDTR: %06X", (unsigned) I.base);				break;
-		case CPUINFO_STR_REGISTER + I286_IDTR_2:		sprintf(info->s = cpuintrf_temp_str(), "%04X", (unsigned) I.limit);						break;
-		case CPUINFO_STR_REGISTER + I286_EMPTY:			sprintf(info->s = cpuintrf_temp_str(), " ");											break;
+		case CPUINFO_STR_REGISTER + I286_PC: 			sprintf(info->s, "PC:%04X", I.pc); break;
+		case CPUINFO_STR_REGISTER + I286_IP: 			sprintf(info->s, "IP: %04X", I.pc - I.base[CS]); break;
+		case CPUINFO_STR_REGISTER + I286_SP: 			sprintf(info->s, "SP: %04X", I.regs.w[SP]); break;
+		case CPUINFO_STR_REGISTER + I286_FLAGS:			sprintf(info->s, "F:%04X", I.flags); break;
+		case CPUINFO_STR_REGISTER + I286_AX: 			sprintf(info->s, "AX:%04X", I.regs.w[AX]); break;
+		case CPUINFO_STR_REGISTER + I286_CX: 			sprintf(info->s, "CX:%04X", I.regs.w[CX]); break;
+		case CPUINFO_STR_REGISTER + I286_DX: 			sprintf(info->s, "DX:%04X", I.regs.w[DX]); break;
+		case CPUINFO_STR_REGISTER + I286_BX: 			sprintf(info->s, "BX:%04X", I.regs.w[BX]); break;
+		case CPUINFO_STR_REGISTER + I286_BP: 			sprintf(info->s, "BP:%04X", I.regs.w[BP]); break;
+		case CPUINFO_STR_REGISTER + I286_SI: 			sprintf(info->s, "SI: %04X", I.regs.w[SI]); break;
+		case CPUINFO_STR_REGISTER + I286_DI: 			sprintf(info->s, "DI: %04X", I.regs.w[DI]); break;
+		case CPUINFO_STR_REGISTER + I286_CS: 			sprintf(info->s, "CS:  %04X %02X", I.sregs[CS], I.rights[CS]); break;
+		case CPUINFO_STR_REGISTER + I286_CS_2: 			sprintf(info->s, "%06X %04X", I.base[CS], I.limit[CS]); break;
+		case CPUINFO_STR_REGISTER + I286_SS: 			sprintf(info->s, "SS:  %04X %02X", I.sregs[SS], I.rights[SS]); break;
+		case CPUINFO_STR_REGISTER + I286_SS_2: 			sprintf(info->s, "%06X %04X", I.base[SS], I.limit[SS]); break;
+		case CPUINFO_STR_REGISTER + I286_DS: 			sprintf(info->s, "DS:  %04X %02X", I.sregs[DS], I.rights[DS]); break;
+		case CPUINFO_STR_REGISTER + I286_DS_2: 			sprintf(info->s, "%06X %04X", I.base[DS], I.limit[DS]); break;
+		case CPUINFO_STR_REGISTER + I286_ES: 			sprintf(info->s, "ES:  %04X %02X", I.sregs[ES], I.rights[ES]); break;
+		case CPUINFO_STR_REGISTER + I286_ES_2: 			sprintf(info->s, "%06X %04X", I.base[ES], I.limit[ES]); break;
+		case CPUINFO_STR_REGISTER + I286_VECTOR:		sprintf(info->s, "V:%02X", I.int_vector); break;
+		case CPUINFO_STR_REGISTER + I286_MSW:			sprintf(info->s, "MSW:%04X", I.msw); break;
+		case CPUINFO_STR_REGISTER + I286_TR:			sprintf(info->s, "GDTR: %06X", I.gdtr.base); break;
+		case CPUINFO_STR_REGISTER + I286_TR_2:			sprintf(info->s, "%04X", I.gdtr.limit); break;
+		case CPUINFO_STR_REGISTER + I286_GDTR:			sprintf(info->s, "IDTR: %06X", I.idtr.base); break;
+		case CPUINFO_STR_REGISTER + I286_GDTR_2:		sprintf(info->s, "%04X", I.idtr.limit); break;
+		case CPUINFO_STR_REGISTER + I286_LDTR:			sprintf(info->s, "LDTR:%04X %02X", I.ldtr.sel, I.ldtr.rights); break;
+		case CPUINFO_STR_REGISTER + I286_LDTR_2:		sprintf(info->s, "%06X %04X", I.ldtr.base, I.ldtr.limit); break;
+		case CPUINFO_STR_REGISTER + I286_IDTR:			sprintf(info->s, "IDTR: %06X", (unsigned) I.base); break;
+		case CPUINFO_STR_REGISTER + I286_IDTR_2:		sprintf(info->s, "%04X", (unsigned) I.limit); break;
+		case CPUINFO_STR_REGISTER + I286_EMPTY:			sprintf(info->s, " "); break;
 	}
 }

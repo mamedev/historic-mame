@@ -36,6 +36,6 @@
 /****************************************************************************************************
  *  PUBLIC FUNCTIONS
  ***************************************************************************************************/
-extern void arm7_get_info(UINT32 state, union cpuinfo *info);
+extern void arm7_get_info(UINT32 state, cpuinfo *info);
 
 #endif /* ARM7_H */

@@ -1,398 +1,13 @@
-/*****************************************************************************
+/*********************************************************************
 
     cheat.c
-    by Ian Patterson [ianpatt at pacbell dot net]
+
+    MAME cheat system.
 
     Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
-    The cheat engine for MAME. Allows you to search for locations in memory
-    where gameplay-related values are stored, and change them. In other words,
-    it lets you cheat.
-
-    TODO:
-        - conflict checking
-        - look in to adding auto-fire
-        - bounds checks for relative address cheats
-
-    Known Issues:
-        - signed fields displayed in hex don't accept negative values from
-            direct keyboard input
-
-*****************************************************************************/
-
-/****** Cheat File Specification **********************************************
-
-Type Field:
-
-MSB                             LSB
-33222222 22221111 11111100 00000000
-10987654 32109876 54321098 76543210
-
-                                    [ type ]
--------- -------- -------- -------x     one-shot cheat
--------- -------- -------- -----xx-     type
-                                            00 =    normal/delay
-                                            01 =    wait for modification
-                                            10 =    ignore if decrementing
-                                            11 =    watch
--------- -------- -------- ---xx---     operation (combined with operation
-                                        extend bit)
-                                            [extend = 0]
-                                                00 =    write with mask
-                                                01 =    add/subtract
-                                                10 =    force range
-                                                11 =    set/clear bits (for
-                                                        relative address mode)
-                                            [extend = 1]
-                                                00 =    unused
-                                                01 =    unused
-                                                10 =    unused
-                                                11 =    nothing
--------- -------- -------- xxx-----     parameter
-                                            type == 00  delay in seconds
-                                                        between operations
-                                            type == 01  delay after
-                                                        modification before
-                                                        operation in seconds
-                                            type == 10  decrement ignore value
-                                            type == 11  watch options
-                                                            display format
-                                                -00 =   hex
-                                                -01 =   decimal
-                                                -10 =   binary
-                                                -11 =   ascii
-                                                            show label
-                                                0-- =   no
-                                                1-- =   yes, copy from comment
-                                    [ user-selected value ]
--------- -------- -------x --------     enable
--------- -------- ------x- --------     displayed value
-                                            0 = value
-                                            1 = value + 1
--------- -------- -----x-- --------     minimum value
-                                            0 = 0
-                                            1 = 1
--------- -------- ----x--- --------     BCD
-                                    [ prefill ]
--------- -------- --xx---- --------     value/enable
-                                            00 =    disable
-                                            01 =    prefill with 0xFF
-                                            10 =    prefill with 0x00
-                                            11 =    prefill with 0x01
-                                    [ link / options ]
--------- -------- -x------ --------     don't add to list (used for commands)
--------- -------- x------- --------     add as extend for previous cheat
--------- -------x -------- --------     enable
--------- ------x- -------- --------     copy previous value
--------- -----x-- -------- --------     operation parameter
-                                            operation == 001    add/subtract
-                                                0 = add
-                                                1 = subtract
-                                            operation == 011    set/clear
-                                                0 = set
-                                                1 = clear
--------- ----x--- -------- --------     operation extend bit
--------- --xx---- -------- --------     bytes used
-                                            00 =    1
-                                            01 =    2
-                                            10 =    3
-                                            11 =    4
--------- -x------ -------- --------     endianness
-                                            locations associated with a
-                                            processor
-                                                0 =     same endianness as
-                                                        target processor
-                                                1 =     different endianness
-                                            generic locations
-                                                0 =     big endian
-                                                1 =     little endian
--------- x------- -------- --------     restore previous value on disable
-                                    [ location / effective address ]
----xxxxx -------- -------- --------     parameter
-                                            type == 000 CPU index
-                                            type == 001 region offset
-                                                        (REGION_xxx)
-                                            type == 010 CPU index
-                                            type == 011 custom cheat type
-                                                00000       comment
-                                                00001       EEPROM
-                                                00010       select
-                                                00011       assign activation key
-                                                00100       enable
-                                                00101       overclock
-                                                00110       refresh rate
-                                                ...         others?
-                                            type == 100 address size, CPU
-                                                ---00       8 bit
-                                                ---01       16 bit
-                                                ---10       24 bit
-                                                ---11       32 bit
-                                                xxx--       cpu
-xxx----- -------- -------- --------     type
-                                            000 =   standard memory write
-                                            001 =   memory region
-                                            010 =   write handler mapped memory
-                                            011 =   custom
-                                            100 =   relative address (CPU)
-                                            101 =   cheatscript
-                                            110 =   unused
-                                            111 =   unused
-
-Conversion Table:
-
-MSB                             LSB
-33222222 22221111 11111100 0000 0000
-10987654 32109876 54321098 7654 3210
-000xxxxx 00000000 00000000 0000 0000    000
-000xxxxx 00000000 00000000 0000 0001    001
-000xxxxx 00000000 00000000 0010 0000    002
-000xxxxx 00000000 00000000 0100 0000    003
-000xxxxx 00000000 00000000 1010 0000    004
-000xxxxx 00000000 00000000 0010 0010    005
-000xxxxx 00000000 00000000 0100 0010    006
-000xxxxx 00000000 00000000 1010 0010    007
-000xxxxx 00000000 00000000 0010 0100    008
-000xxxxx 00000000 00000000 0100 0100    009
-000xxxxx 00000000 00000000 0110 0100    010
-000xxxxx 00000000 00000000 1000 0100    011
-000xxxxx 00000000 00000000 0010 0011    015
-000xxxxx 00000000 00000000 0100 0011    016
-000xxxxx 00000000 00000000 1010 0011    017
-000xxxxx 00000000 00000000 0000 0000    020 (mask used)
-000xxxxx 00000000 00000000 0000 0001    021 (mask used)
-000xxxxx 00000000 00000000 0010 0000    022 (mask used)
-000xxxxx 00000000 00000000 0100 0000    023 (mask used)
-000xxxxx 00000000 00000000 1010 0000    024 (mask used)
-000xxxxx 00000000 00000000 0000 0000    040 (mask used)
-000xxxxx 00000000 00000000 0000 0001    041 (mask used)
-000xxxxx 00000000 00000000 0010 0000    042 (mask used)
-000xxxxx 00000000 00000000 0100 0000    043 (mask used)
-000xxxxx 00000000 00000000 1010 0000    044 (mask used)
-000xxxxx 00000000 00000001 0000 0011    060
-000xxxxx 00000000 00000011 0000 0011    061
-000xxxxx 00000000 00000101 0000 0011    062
-000xxxxx 00000000 00001001 0000 0011    063
-000xxxxx 00000000 00001011 0000 0011    064
-000xxxxx 00000000 00001101 0000 0011    065
-000xxxxx 00000000 00000001 0000 0001    070
-000xxxxx 00000000 00000011 0000 0001    071
-000xxxxx 00000000 00000101 0000 0001    072
-000xxxxx 00000000 00001001 0000 0001    073
-000xxxxx 00000000 00001011 0000 0001    074
-000xxxxx 00000000 00001101 0000 0001    075
-000xxxxx 00000000 00000000 0000 0011    080
-000xxxxx 00000000 00000010 0000 0011    081
-000xxxxx 00000000 00000100 0000 0011    082
-000xxxxx 00000000 00001000 0000 0011    083
-000xxxxx 00000000 00001010 0000 0011    084
-000xxxxx 00000000 00001100 0000 0011    085
-000xxxxx 00000000 00000000 0000 0001    090
-000xxxxx 00000000 00000010 0000 0001    091
-000xxxxx 00000000 00000100 0000 0001    092
-000xxxxx 00000000 00001000 0000 0001    093
-000xxxxx 00000000 00001010 0000 0001    094
-000xxxxx 00000000 00001100 0000 0001    095
-001xxxxx 10000000 00000000 0000 0000    100
-001xxxxx 00000000 00000000 0000 0001    101
-001xxxxx 10000000 00000000 0000 0000    102
-001xxxxx 00000000 00000000 0000 0001    103
-010xxxxx 10000000 00000000 0000 0000    110
-010xxxxx 00000000 00000000 0000 0001    111
-010xxxxx 10000000 00000000 0000 0000    112
-010xxxxx 00000000 00000000 0000 0001    113
-01100011 00000000 00000000 0000 0001    120
-01100011 00000000 00000000 0000 0001    121 (mask used)
-01100011 00000000 00000000 0000 0001    122 (mask used)
-00000000 00000001 00000000 0000 0000    5xx
-000xxxxx 00000000 00000000 0000 0110    998
-01100000 00000000 00000000 0000 0000    999
-
-Cheat Format:
-
-:[ drivername ]:[ type ]:[ address ]:[ data ]:[ extended data ]:[ name ]:[ description ]
-
-(for MESS)
-
-:[ drivername ]:[ CRC ]:[ type ]:[ address ]:[ data ]:[ extended data ]:[ name ]:[ description ]
-
-drivername      string  maximum 8 chars
-type            hex     32 bits
-CRC             hex     32 bits
-address         hex     32 bits
-data            hex     32 bits
-extended data   hex     32 bits
-name            string  maximum 255 chars
-description     string  maximum 255 chars
-
-Extended Data Field:
-
-[ force range ]
-
-0xAABB
-
-AA = minimum value accepted
-BB = maximum value accepted
-
-[ add/subtract ]
-
-The field will store either the minimum or maximum boundary for modification,
-depending on the operation parameter.
-
-[ write with mask ]
-
-The field will store a mask containing which bits are modified by the
-operation. For normal operation, set the mask to 0xFFFFFFFF.
-Example code: data = (data & ~mask) | (input & mask);
-
-Copy Previous Value:
-
-If this field is true, the value for this cheat is determined by taking the
-value read from the previous cheat and adding the value stored in the data
-field.
-
-Relative Address:
-
-The extend data field will store the the signed offset to be applied to the
-address read. Because of this, any operation using the extend data field may
-have interesting results. Use the special set/clear bits operations instead of
-a masked write.
-
-Select Cheat Type: (01100010 -------0 -------- --------) 0x62000000
-
-May be used only as the first cheat of a linked cheat. In the "Enable/Disable
-Cheat" menu, instead of simple listing On/Off or Set as the menu option, the
-engine will list the name fields of each of the subcheats. If the current
-selected subcheat is a one-shot cheat, pressing Enter will activate the
-currently subcheat. If the subcheat is an on/off cheat, the currently selected
-subcheat (and only that subcheat) will be activated.
-
-Assign Activation Key: (01100011 -------- -1------ --------) 0x63004000
-
-Assigns an activation key to a cheat. Put the index of the cheat you want to
-modify in the address field, then put the key index in the data field.
-
-Example: to set the second cheat in the cheat list to activate when "Q" is
-pressed, add this cheat to the file.
-
-:gamename:63004000:00000001:00000010:00000000:
-
-Key Index List:
-
-    A       00  Q       10  6       20  F3      30  [       40  PGDN    50  RCTRL   60
-    B       01  R       11  7       21  F4      31  ]       41  LEFT    51  LALT    61
-    C       02  S       12  8       22  F5      32  ENTER   42  RIGHT   52  RALT    62
-    D       03  T       13  9       23  F6      33  :       43  UP      53  SCRLOCK 63
-    E       04  U       14  [0]     24  F7      34  '       44  DOWN    54  NUMLOCK 64
-    F       05  V       15  [1]     25  F8      35  \       45  [/]     55  CAPSLCK 65
-    G       06  W       16  [2]     26  F9      36  \       46  [*]     56  LWIN    66
-    H       07  X       17  [3]     27  F10     37  ,       47  [-]     57  RWIN    67
-    I       08  Y       18  [4]     28  F11     38  .       48  [+]     58  MENU    68
-    J       09  Z       19  [5]     29  F12     39  /       49  [DEL]   59
-    K       0A  0       1A  [6]     2A  ESC     3A  SPACE   4A  [ENTER] 5A
-    L       0B  1       1B  [7]     2B  ~       3B  INS     4B  PRTSCR  5B
-    M       0C  2       1C  [8]     2C  -       3C  DEL     4C  PAUSE   5C
-    N       0D  3       1D  [9]     2D  =       3D  HOME    4D  LSHIFT  5D
-    O       0E  4       1E  F1      2E  BACKSP  3E  END     4E  RSHIFT  5E
-    P       0F  5       1F  F2      2F  TAB     3F  PGUP    4F  LCTRL   5F
-
-There are similar codes for joystick buttons; look at the table in input.h for those.
-
-Pre-Enable: (01100100 -------- -1------ --------) 0x64004000
-
-Enables a cheat on startup. Put the index of the cheat you want to enable in
-the address field.
-
-Example: to activate the eleventh cheat in the cheat list, add this cheat to
-the file:
-
-:gamename:64004000:0000000A:00000000:00000000:
-
-Overclock: (01100101 -------- -1------ --------) 0x65004000
-
-Overclocks a CPU. Put the CPU index you want in the address field, and the
-overclocking amount in the data field. Use 16.16 fixed point notation for
-the overclocking amount.
-
-Example 1: overclocking CPU #0 by 200%
-
-:gamename:65004000:00000000:00020000:00000000:
-
-Example 2: overclocking CPU #3 by 125%
-
-:gamename:65004000:00000003:00014000:00000000:
-
-To convert a percent to 16.16 fixed point notation, take the percentage as a
-decimal value (eg. 65% = .65) and multiply it by 65536. Then, convert the value
-to hex.
-
-Refresh rate: (01100110 -------- -1------ --------) 0x66004000
-
-Sets the refresh rate. Put the new refresh rate in the data field. Use 16.16 fixed
-point notation for the refresh rate.
-
-Example 1: set the refresh rate to 56.3333333
-
-:gamename:66004000:00000000:00385555:00000000:
-
-To convert a refresh rate to 16.16 fixed point notation, take the refresh rate as a
-decimal value (eg. 60.606060) and multiply it by 65536. Then, convert the value
-to hex.
-
-Cheat Engine Commands:
-
-These special cheat lines are used to set global preferences for the cheat engine. They follow
-this format:
-
-:_command:[ data ]
-
-The lower byte of the data field stores the command, and the remaining bytes store data
-for the command. Here is a list of the commands:
-
-0x00    disable help boxes (once I add them)
-0x01    use old-style cheat search box (now redundant)
-0x02    use new-style cheat search box
-0x03    don't print labels in new-style search menu
-0x04    auto-save cheats on exit
-
-So, if you wanted to use the old-style cheat box, you would add this line to your cheat.dat:
-
-:_command:00000001
-
-Watches:
-
-You can specify options for watches using the data field. Specify fields like this:
-
-MSB                             LSB
-33222222 22221111 11111100 00000000
-10987654 32109876 54321098 76543210
--------- -------- -------- xxxxxxxx     number of elements - 1
--------- -------- xxxxxxxx --------     bytes to skip after each element
--------- xxxxxxxx -------- --------     elements per line
-                                            0 = all on one line
-xxxxxxxx -------- -------- --------     signed value to add
-
-So, to make a watch on CPU1 address 0064407F with six elements, skipping three bytes after each element,
-showing two elements per line, you would do this:
-
-:gamename:00000006:0064407F:00020305:00000000:
-
-The extend data field is used to position the watch display.
-
-MSB                           LSB
-3322222222221111 1111110000000000
-1098765432109876 5432109876543210
-xxxxxxxxxxxxxxxx ----------------   x pixel offset
----------------- xxxxxxxxxxxxxxxx   y pixel offset
-
-Notes:
-
-- if you want to have a list of many on/off subcheats, include a "None" option,
-or there will be no way to disable the cheat
-- the engine will display "Press Enter to Activate Cheat" if a one-shot cheat
-is selected
-
-*******************************************************************************/
+*********************************************************************/
 
 #include "driver.h"
 #include "ui.h"
@@ -406,13 +21,13 @@ is selected
 #include "cheatms.h"
 #endif
 
-
 #define OSD_READKEY_KLUDGE	1
 
-/**** Macros *****************************************************************/
+/***************************************************************************
+    MACROS
+***************************************************************************/
 
-//  easy bitfield extraction and setting
-//  uses *_Shift, *_ShiftedMask, and *_Mask enums
+/* easy bitfield extraction and setting, uses *_Shift, *_ShiftedMask, and *_Mask enums */
 #define EXTRACT_FIELD(data, name)				(((data) >> k##name##_Shift) & k##name##_ShiftedMask)
 #define SET_FIELD(data, name, in)				(data = (data & ~(k##name##_ShiftedMask << k##name##_Shift)) | (((in) & k##name##_ShiftedMask) << k##name##_Shift))
 #define TEST_FIELD(data, name)					((data) & k##name##_Mask)
@@ -424,19 +39,23 @@ is selected
 												k##name##_ShiftedMask = (int)(0xFFFFFFFF >> (32 - (start - end + 1))),	\
 												k##name##_Mask = (int)(k##name##_ShiftedMask << k##name##_Shift)
 
+#define kRegionListLength						(REGION_MAX - REGION_INVALID)
+
+/***************************************************************************
+    CONSTANTS
+***************************************************************************/
+
 #define CHEAT_FILENAME_MAX_LEN					255
 
 #ifndef LSB_FIRST
 #define LSB_FIRST 0
 #endif
 
-#define kRegionListLength						(REGION_MAX - REGION_INVALID)
-
-/**** Enums ******************************************************************/
+/********** BIT FIELD **********/
 
 enum
 {
-	/* bit field for cheat code */
+	/* cheat code */
 	DEFINE_BITFIELD_ENUM(OneShot,					0,	0),
 	DEFINE_BITFIELD_ENUM(Type,						1,	2),
 	DEFINE_BITFIELD_ENUM(Operation,					3,	4),
@@ -458,21 +77,23 @@ enum
 	DEFINE_BITFIELD_ENUM(LocationParameter,			24,	28),
 	DEFINE_BITFIELD_ENUM(LocationType,				29,	31),
 
-	/* bit field for watch (unused ?) */
-	DEFINE_BITFIELD_ENUM(Watch_AddValue,			0,	15),
-	DEFINE_BITFIELD_ENUM(Watch_Label,				16,	17),
-	DEFINE_BITFIELD_ENUM(Watch_DisplayType,			18,	19),
+	/* watch (unused ?) */
+//  DEFINE_BITFIELD_ENUM(Watch_AddValue,            0,  15),
+//  DEFINE_BITFIELD_ENUM(Watch_Label,               16, 17),
+//  DEFINE_BITFIELD_ENUM(Watch_DisplayType,         18, 19),
 
-	/* bit field for command */
+	/* command */
 	DEFINE_BITFIELD_ENUM(AutoSaveEnabled,			0,	0),
-	DEFINE_BITFIELD_ENUM(UseClassicSearchBox,		1,	1),		// 0 = Advanced, 1 = Classic
-	DEFINE_BITFIELD_ENUM(DontPrintNewLabels,		2,	2),		// in options menu, it is reverted.
-	DEFINE_BITFIELD_ENUM(ActivationKeyMessage,		3,	3)
-//  DEFINE_BITFIELD_ENUM(ForceOneShotMode,          4,  4),
-//  DEFINE_BITFIELD_ENUM(ShowInternalFlags,         5,  5)      // for debug
+	DEFINE_BITFIELD_ENUM(SearchBox,					1,	2),		// 0 = Minimum, 1 = Classic, 2 = Advanced
+	DEFINE_BITFIELD_ENUM(DontPrintNewLabels,		3,	3),		// in options menu, it is reverted.
+	DEFINE_BITFIELD_ENUM(ActivationKeyMessage,		4,	4),
+	DEFINE_BITFIELD_ENUM(LoadOldFormat,				5,	5),
+	DEFINE_BITFIELD_ENUM(Debug,						6,	6)
 };
 
-enum
+/********** OPERATION **********/
+
+enum		// types
 {
 	kType_NormalOrDelay = 0,
 	kType_WaitForModification,
@@ -480,36 +101,37 @@ enum
 	kType_Watch
 };
 
-enum
+enum		// operations
 {
 	kOperation_WriteMask = 0,
 	kOperation_AddSubtract,
 	kOperation_ForceRange,
 	kOperation_SetOrClearBits,
-	// kOperation_Unused4,
+	kOperation_WriteMatch,
 	// kOperation_Unused5,
 	// kOperation_Unused6,
 	kOperation_None = 7
 };
 
-enum
-{
-	kPrefill_Disable = 0,
-	kPrefill_UseFF,
-	kPrefill_Use00,
-	kPrefill_Use01
-};
+//enum      // prefills (unused?)
+//{
+//  kPrefill_Disable = 0,
+//  kPrefill_UseFF,
+//  kPrefill_Use00,
+//  kPrefill_Use01
+//};
 
-enum
+enum		// location types
 {
 	kLocation_Standard = 0,
 	kLocation_MemoryRegion,
 	kLocation_HandlerMemory,
 	kLocation_Custom,
-	kLocation_IndirectIndexed
+	kLocation_IndirectIndexed,
+	kLocation_ProgramSpace
 };
 
-enum
+enum		// location parameters
 {
 	kCustomLocation_Comment = 0,
 	kCustomLocation_EEPROM,
@@ -520,30 +142,29 @@ enum
 	kCustomLocation_RefreshRate
 };
 
-/* flags for action */
-enum
+enum		// flags for action
 {
-	// set for wait for modification or ignore if decrementing cheats when
-	// the targeted value has changed
-	// cleared after the operation is performed
+	/* set for wait for modification or ignore if decrementing cheats when
+       the targeted value has changed
+       cleared after the operation is performed */
 	kActionFlag_WasModified =		1 << 0,
 
-	// set for one shot cheats after the operation is performed
+	/* set for one shot cheats after the operation is performed */
 	kActionFlag_OperationDone =		1 << 1,
 
-	// set if the extendData field is being used by something other than a mask value
+	/* set if the extendData field is being used by something other than a mask value */
 	kActionFlag_IgnoreMask =		1 << 2,
 
-	// set if the lastValue field contains valid data and can be restored if needed
+	/* set if the lastValue field contains valid data and can be restored if needed */
 	kActionFlag_LastValueGood =		1 << 3,
 
-	// set after value changes from prefill value
+	/* set after value changes from prefill value */
 	kActionFlag_PrefillDone =		1 << 4,
 
-	// set after prefill value written
+	/* set after prefill value written */
 	kActionFlag_PrefillWritten =	1 << 5,
 
-	// masks
+	/* masks */
 	kActionFlag_StateMask =			kActionFlag_OperationDone |
 									kActionFlag_LastValueGood |
 									kActionFlag_PrefillDone |
@@ -553,40 +174,39 @@ enum
 	kActionFlag_PersistentMask =	kActionFlag_LastValueGood
 };
 
-/* flags for entry */
-enum
+enum		// flags for entry
 {
-	// true when the cheat is active
+	/* true when the cheat is active */
 	kCheatFlag_Active =					1 << 0,
 
-	// true if the cheat is entirely one shot
+	/* true if the cheat is entirely one shot */
 	kCheatFlag_OneShot =				1 << 1,
 
-	// true if the cheat will work with one shot in special case
+	/* true if the cheat will work with one shot in special case */
 	kCheatFlag_DoOneShot =				1 << 2,
 
-	// true if the cheat is entirely null (ex. a comment)
+	/* true if the cheat is entirely null (ex. a comment) */
 	kCheatFlag_Null =					1 << 3,
 
-	// true if the cheat contains a user-select element
+	/* true if the cheat contains a user-select element */
 	kCheatFlag_UserSelect =				1 << 4,
 
-	// true if the cheat is a select cheat
+	/* true if the cheat is a select cheat */
 	kCheatFlag_Select =					1 << 5,
 
-	// true if the cheat has been assigned an 1st activation key
+	/* true if the cheat has been assigned an 1st activation key */
 	kCheatFlag_HasActivationKey1 =		1 << 6,
 
-	// true if the cheat has been assigned an 2nd activation key
+	/* true if the cheat has been assigned an 2nd activation key */
 	kCheatFlag_HasActivationKey2 =		1 << 7,
 
-	// true if the activation key is being pressed
+	/* true if the activation key is being pressed */
 	kCheatFlag_ActivationKeyPressed =	1 << 8,
 
-	// true if the cheat has been edited or is a new cheat
+	/* true if the cheat has been edited or is a new cheat */
 	kCheatFlag_Dirty =					1 << 9,
 
-	// masks
+	/* masks */
 	kCheatFlag_StateMask =			kCheatFlag_Active |
 									kCheatFlag_DoOneShot,
 	kCheatFlag_InfoMask =			kCheatFlag_OneShot |
@@ -605,7 +225,9 @@ enum
 									kCheatFlag_Dirty
 };
 
-enum
+/********** WATCH **********/
+
+enum		// types
 {
 	kWatchLabel_None = 0,
 	kWatchLabel_Address,
@@ -614,7 +236,7 @@ enum
 	kWatchLabel_MaxPlusOne
 };
 
-enum
+enum		// display types
 {
 	kWatchDisplayType_Hex = 0,
 	kWatchDisplayType_Decimal,
@@ -624,31 +246,24 @@ enum
 	kWatchDisplayType_MaxPlusOne
 };
 
-enum
+/********** REGION **********/
+
+enum		// flags
 {
-	kVerticalKeyRepeatRate =		8,
-	kHorizontalFastKeyRepeatRate =	5,
-	kHorizontalSlowKeyRepeatRate =	8
+	/* true if enabled for search */
+	kRegionFlag_Enabled =		1 << 0
+
+	/* true if the memory region has no mapped memory and uses a memory handler (unused?) */
+//  kRegionFlag_UsesHandler =   1 << 1
 };
 
-/* flags for region */
-enum
-{
-	// true if enabled for search
-	kRegionFlag_Enabled =		1 << 0,
-
-	// true if the memory region has no mapped memory
-	// and uses a memory handler
-	kRegionFlag_UsesHandler =	1 << 1
-};
-
-enum
+enum		// types
 {
 	kRegionType_CPU = 0,
 	kRegionType_Memory
 };
 
-enum
+enum		// default search regions
 {
 	kSearchSpeed_Fast = 0,		// RAM + some banks
 	kSearchSpeed_Medium,		// RAM + BANKx
@@ -659,7 +274,9 @@ enum
 	kSearchSpeed_Max = kSearchSpeed_AllMemory
 };
 
-enum
+/********** SEARCH **********/
+
+enum		// operands
 {
 	kSearchOperand_Current = 0,
 	kSearchOperand_Previous,
@@ -669,7 +286,7 @@ enum
 	kSearchOperand_Max = kSearchOperand_Value
 };
 
-enum
+enum		// bits
 {
 	kSearchSize_8Bit = 0,
 	kSearchSize_16Bit,
@@ -680,7 +297,7 @@ enum
 	kSearchSize_Max = kSearchSize_1Bit
 };
 
-enum
+enum		// comparisons
 {
 	kSearchComparison_LessThan = 0,
 	kSearchComparison_GreaterThan,
@@ -694,7 +311,27 @@ enum
 	kSearchComparison_Max = kSearchComparison_NearTo
 };
 
-/**** Structs ****************************************************************/
+/********** OTHERS **********/
+
+enum
+{
+	kVerticalKeyRepeatRate =		8,
+	kHorizontalFastKeyRepeatRate =	5,
+	kHorizontalSlowKeyRepeatRate =	8
+};
+
+enum
+{
+	kSearchBox_Minimum = 0,
+	kSearchBox_Classic,
+	kSearchBox_Advanced
+};
+
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
+
+/********** ACTION **********/
 
 struct CheatAction
 {
@@ -717,6 +354,8 @@ struct CheatAction
 
 typedef struct CheatAction	CheatAction;
 
+/********** ENTRY **********/
+
 struct CheatEntry
 {
 	char			* name;
@@ -733,6 +372,8 @@ struct CheatEntry
 };
 
 typedef struct CheatEntry	CheatEntry;
+
+/********** WATCH **********/
 
 struct WatchInfo
 {
@@ -760,6 +401,8 @@ struct WatchInfo
 
 typedef struct WatchInfo	WatchInfo;
 
+/********** REGION **********/
+
 struct SearchRegion
 {
 	UINT32	address;
@@ -782,14 +425,15 @@ struct SearchRegion
 	UINT8	* backupLast;
 	UINT8	* backupStatus;
 
-	// 12345678 - 12345678 BANK31
-	char	name[32];
+	char	name[32];		// 12345678 - 12345678 BANK31
 
 	UINT32	numResults;
 	UINT32	oldNumResults;
 };
 
 typedef struct SearchRegion	SearchRegion;
+
+/********** SEARCH **********/
 
 struct OldSearchOptions
 {
@@ -809,15 +453,15 @@ struct SearchInfo
 
 	char				* name;
 
-	INT8				bytes;	// 0 = 1, 1 = 2, 2 = 3, 3 = 4, 4 = bit
+	INT8				bytes;			// 0 = 1, 1 = 2, 2 = 3, 3 = 4, 4 = bit
 	UINT8				swap;
 	UINT8				sign;
 	INT8				lhs;
 	INT8				rhs;
 	INT8				comparison;
 
-	UINT8				targetType;	// cpu/region
-	UINT8				targetIdx;	// cpu or region index
+	UINT8				targetType;		// cpu/region
+	UINT8				targetIdx;		// cpu or region index
 
 	UINT32				value;
 
@@ -836,6 +480,8 @@ struct SearchInfo
 
 typedef struct SearchInfo	SearchInfo;
 
+/********** CPU **********/
+
 struct CPUInfo
 {
 	UINT8	type;
@@ -849,13 +495,15 @@ struct CPUInfo
 
 typedef struct CPUInfo	CPUInfo;
 
+/********** MENU **********/
+
 struct MenuStringList
 {
-	const char	** mainList;		// editable menu item lists
+	const char	** mainList;	// editable menu item lists
 	const char	** subList;
 	char		* flagList;
 
-	char	** mainStrings;		// lists of usable strings
+	char	** mainStrings;		// lists of useable strings
 	char	** subStrings;
 
 	char	* buf;				// string storage
@@ -877,11 +525,15 @@ struct MenuItemInfoStruct
 
 typedef struct MenuItemInfoStruct	MenuItemInfoStruct;
 
-/**** Exported Globals *******************************************************/
+/***************************************************************************
+    EXPORTED VARIABLES
+***************************************************************************/
 
 static const char			* cheatfile = NULL;
 
-/**** Local Globals **********************************************************/
+/***************************************************************************
+    GLOBAL VARIABLES
+***************************************************************************/
 
 static mame_timer			* periodic_timer;
 
@@ -898,7 +550,7 @@ static INT32				currentSearchIdx = 0;
 static CPUInfo				cpuInfoList[MAX_CPU];
 static CPUInfo				regionInfoList[kRegionListLength];
 
-static int					cheatEngineWasActive = 0;
+//static int                    cheatEngineWasActive = 0;
 static int					foundCheatDatabase = 0;
 static int					cheatsDisabled = 0;
 static int					watchesDisabled = 0;
@@ -912,46 +564,7 @@ static MenuStringList		menuStrings;
 static MenuItemInfoStruct	* menuItemInfo;
 static INT32				menuItemInfoLength = 0;
 
-static UINT32				cheatOptions = 0;
-
-static const char *	kCheatNameTemplates[] =
-{
-	"Infinite Lives",
-	"Infinite Lives PL1",
-	"Infinite Lives PL2",
-	"Infinite Time",
-	"Infinite Time PL1",
-	"Infinite Time PL2",
-	"Invincibility",
-	"Invincibility PL1",
-	"Invincibility PL2",
-	"Infinite Energy",
-	"Infinite Energy PL1",
-	"Infinite Energy PL2",
-	"Select next level",
-	"Select current level",
-	"Infinite Ammo",
-	"Infinite Ammo PL1",
-	"Infinite Ammo PL2",
-	"Infinite Bombs",
-	"Infinite Bombs PL1",
-	"Infinite Bombs PL2",
-	"Infinite Smart Bombs",
-	"Infinite Smart Bombs PL1",
-	"Infinite Smart Bombs PL2",
-	"Select Score PL1",
-	"Select Score PL2",
-	"Drain all Energy Now! PL1",
-	"Drain all Energy Now! PL2",
-	"Watch me for good answer",
-	"Infinite",
-	"Always have",
-	"Get",
-	"Lose",
-	"Finish this",
-	"---> <ENTER> To Edit <---",
-	"\0"
-};
+static UINT32				cheatOptions = 2;
 
 static CPUInfo rawCPUInfo =
 {
@@ -978,15 +591,6 @@ static const int kSearchByteStep[] =
 	1,
 	4,
 	1
-};
-
-static const char * kSearchByteNameTable[] =
-{
-	"1",
-	"2",
-	"3",
-	"4",
-	"Bit"
 };
 
 static const int	kSearchByteDigitsTable[] =
@@ -1050,26 +654,6 @@ static const UINT32	kCheatSizeDigitsTable[] =
 	8
 };
 
-static const char * kOperandNameTable[] =
-{
-	"Current Data",
-	"Previous Data",
-	"First Data",
-	"Value"
-};
-
-static const char * kComparisonNameTable[] =
-{
-	"Less",
-	"Greater",
-	"Equal",
-	"Less Or Equal",
-	"Greater Or Equal",
-	"Not Equal",
-	"Increased By Value",
-	"Near To"
-};
-
 static const int	kByteConversionTable[] =
 {
 	kSearchSize_8Bit,
@@ -1119,16 +703,22 @@ static const char * kWatchDisplayTypeStringList[] =
 	"ASCII"
 };
 
-/**** Function Prototypes ****************************************************/
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
 
+/********** MAIN **********/
 static void 	cheat_periodic(int param);
 static void 	cheat_exit(running_machine *machine);
 
+/********** SPECIAL KEY HANDLING **********/
 static int		ShiftKeyPressed(void);
 static int		ControlKeyPressed(void);
 static int		AltKeyPressed(void);
 
 static int		UIPressedRepeatThrottle(int code, int baseSpeed);
+
+/********** DIRECT KEY INPUT **********/
 static int		ReadHexInput(void);
 
 static char *	DoDynamicEditTextField(char * buf);
@@ -1137,64 +727,87 @@ static UINT32	DoEditHexField(UINT32 data);
 static UINT32	DoEditHexFieldSigned(UINT32 data, UINT32 mask);
 static INT32	DoEditDecField(INT32 data, INT32 min, INT32 max);
 
+/********** VALUE SHIFT OR CONVERTION **********/
 static UINT32	DoShift(UINT32 input, INT8 shift);
+
 static UINT32	BCDToDecimal(UINT32 value);
 static UINT32	DecimalToBCD(UINT32 value);
 
+/********** STRINGS **********/
 static void		RebuildStringTables(void);
 static void		RequestStrings(UINT32 length, UINT32 numStrings, UINT32 mainStringLength, UINT32 subStringLength);
 static void		InitStringTable(void);
 static void		FreeStringTable(void);
 
-static INT32	UserSelectValueMenu(int selection, CheatEntry * entry);
-static int		EnableDisableCheatMenu(int selection, int firstTime);
-static int		EditCheatMenu(CheatEntry * entry, int index, int selection);
-static int		DoSearchMenuClassic(int selection);
-static int		DoSearchMenu(int selection);
-static int		AddEditCheatMenu(int selection);
-static int		ViewSearchResults(int selection, int firstTime);
-static int		ChooseWatch(int selection);
-static int		EditWatch(WatchInfo * entry, int selection);
-static int		SelectOptions(int selection);
-static int		SelectSearchRegions(int selection, SearchInfo * search);
-static int		SelectSearch(int selection);
-
 static char *	CreateStringCopy(char * buf);
 
+/********** ADDITIONAL MENU FOR CHEAT **********/
+static INT32	UserSelectValueMenu(int selection, CheatEntry * entry);
+
+/********** CHEAT MENU **********/
+static int		EnableDisableCheatMenu(int selection, int firstTime);
+static int		AddEditCheatMenu(int selection);
+static int		EditCheatMenu(CheatEntry * entry, int index, int selection);
+
+static int		DoSearchMenuMinimum(int selection);			// minimum mode
+static int		DoSearchMenuClassic(int selection);			// classic mode
+static int		DoSearchMenu(int selection);				// advanced mode
+static int		SelectSearchRegions(int selection, SearchInfo * search);
+static int		ViewSearchResults(int selection, int firstTime);
+
+static int		ChooseWatch(int selection);
+static int		EditWatch(WatchInfo * entry, int selection);
+
+static int		SelectOptions(int selection);
+static int		SelectSearch(int selection);
+
+/********** ENTRY LIST **********/
 static void		ResizeCheatList(UINT32 newLength);
 static void		ResizeCheatListNoDispose(UINT32 newLength);
+
 static void		AddCheatBefore(UINT32 idx);
 static void		DeleteCheatAt(UINT32 idx);
+
 static void		DisposeCheat(CheatEntry * entry);
 static CheatEntry *	GetNewCheat(void);
 
+/********** ACTION LIST **********/
 static void		ResizeCheatActionList(CheatEntry * entry, UINT32 newLength);
 static void		ResizeCheatActionListNoDispose(CheatEntry * entry, UINT32 newLength);
+
 static void		AddActionBefore(CheatEntry * entry, UINT32 idx);
 static void		DeleteActionAt(CheatEntry * entry, UINT32 idx);
 static void		DisposeAction(CheatAction * action);
 
+/********** WATCH LIST **********/
 static void		InitWatch(WatchInfo * info, UINT32 idx);
 static void		ResizeWatchList(UINT32 newLength);
 static void		ResizeWatchListNoDispose(UINT32 newLength);
+
 static void		AddWatchBefore(UINT32 idx);
 static void		DeleteWatchAt(UINT32 idx);
 static void		DisposeWatch(WatchInfo * watch);
 static WatchInfo *	GetUnusedWatch(void);
+
 static void		AddCheatFromWatch(WatchInfo * watch);
 static void		SetupCheatFromWatchAsWatch(CheatEntry * entry, WatchInfo * watch);
 
+/********** SEARCH LIST **********/
 static void		ResizeSearchList(UINT32 newLength);
 static void		ResizeSearchListNoDispose(UINT32 newLength);
+
 static void		AddSearchBefore(UINT32 idx);
 static void		DeleteSearchAt(UINT32 idx);
+
 static void		InitSearch(SearchInfo * info);
+
 static void		DisposeSearchRegions(SearchInfo * info);
 static void		DisposeSearch(UINT32 idx);
 static SearchInfo *	GetCurrentSearch(void);
 
 static void		FillBufferFromRegion(SearchRegion * region, UINT8 * buf);
 static UINT32	ReadRegionData(SearchRegion * region, UINT32 offset, UINT8 size, UINT8 swap);
+
 static void		BackupSearch(SearchInfo * info);
 static void		RestoreSearchBackup(SearchInfo * info);
 static void		BackupRegion(SearchRegion * region);
@@ -1203,20 +816,25 @@ static void		SetSearchRegionDefaultName(SearchRegion * region);
 static void		AllocateSearchRegions(SearchInfo * info);
 static void		BuildSearchRegions(SearchInfo * info);
 
+/********** CODE LOADER **********/
 static int		ConvertOldCode(int code, int cpu, int * data, int * extendData);
 static void		HandleLocalCommandCheat(UINT32 type, UINT32 address, UINT32 data, UINT32 extendData, char * name, char * description);
 
 static void		LoadCheatFile(char * fileName);
 static void		LoadCheatDatabase(void);
+
 static void		DisposeCheatDatabase(void);
 static void		ReloadCheatDatabase(void);
 
 static void		SaveCheat(CheatEntry * entry, int selection, int saveCode);
 static void		DoAutoSaveCheats(void);
+
+/********** CODE ADDITION **********/
 static void		AddCheatFromResult(SearchInfo * search, SearchRegion * region, UINT32 address);
 static void		AddCheatFromFirstResult(SearchInfo * search);
 static void		AddWatchFromResult(SearchInfo * search, SearchRegion * region, UINT32 address);
 
+/********** SEARCH **********/
 static UINT32	SearchSignExtend(SearchInfo * search, UINT32 value);
 static UINT32	ReadSearchOperand(UINT8 type, SearchInfo * search, SearchRegion * region, UINT32 address);
 static UINT32	ReadSearchOperandBit(UINT8 type, SearchInfo * search, SearchRegion * region, UINT32 address);
@@ -1236,6 +854,7 @@ static void		UpdateSearch(SearchInfo * search);
 
 static void		DoSearch(SearchInfo * search);
 
+/********** MEMORY ACCESSORS  **********/
 static UINT8 **	LookupHandlerMemory(UINT8 cpu, UINT32 address, UINT32 * outRelativeAddress);
 
 static UINT32	DoCPURead(UINT8 cpu, UINT32 address, UINT8 bytes, UINT8 swap);
@@ -1243,6 +862,7 @@ static UINT32	DoMemoryRead(UINT8 * buf, UINT32 address, UINT8 bytes, UINT8 swap,
 static void		DoCPUWrite(UINT32 data, UINT8 cpu, UINT32 address, UINT8 bytes, UINT8 swap);
 static void		DoMemoryWrite(UINT32 data, UINT8 * buf, UINT32 address, UINT8 bytes, UINT8 swap, CPUInfo * info);
 
+/********** CPU **********/
 static UINT8	CPUNeedsSwap(UINT8 cpu);
 static UINT8	RegionNeedsSwap(UINT8 region);
 
@@ -1254,6 +874,7 @@ static UINT32	SwapAddress(UINT32 address, UINT8 dataSize, CPUInfo * info);
 static UINT32	ReadData(CheatAction * action);
 static void		WriteData(CheatAction * action, UINT32 data);
 
+/********** WATCH **********/
 static void		WatchCheatEntry(CheatEntry * entry, UINT8 associate);
 static void		AddActionWatch(CheatAction * action, CheatEntry * entry);
 static void		RemoveAssociatedWatches(CheatEntry * entry);
@@ -1274,9 +895,9 @@ static int		IsAddressInRange(CheatAction * action, UINT32 length);
 
 static void		BuildCPUInfoList(void);
 
-/**** Imports ****************************************************************/
-
-/**** Code *******************************************************************/
+/*--------------------------------------------------------------
+  special key handler - check pressing shift, ctrl or alt key
+--------------------------------------------------------------*/
 
 static int ShiftKeyPressed(void)
 {
@@ -1293,24 +914,26 @@ static int AltKeyPressed(void)
 	return (code_pressed(KEYCODE_LALT) || code_pressed(KEYCODE_RALT));
 }
 
+/*---------------------------------------------------------------------------------------------------------------------
+  ReadKeyAsync - dirty hack until osd_readkey_unicode is supported in MAMEW re-implementation of osd_readkey_unicode
+---------------------------------------------------------------------------------------------------------------------*/
+
 #if 1
 
 #if OSD_READKEY_KLUDGE
 
-/*  dirty hack until osd_readkey_unicode is supported in MAMEW
-    re-implementation of osd_readkey_unicode */
 static int ReadKeyAsync(int flush)
 {
 	int	code;
 
-	if(flush)
+	if(flush)		// check key input
 	{
 		while(code_read_async() != CODE_NONE) ;
 
 		return 0;
 	}
 
-	while(1)
+	while(1)		// check pressed key
 	{
 		code = code_read_async();
 
@@ -1498,6 +1121,9 @@ static int ReadKeyAsync(int flush)
 
 #endif
 
+/*-------------------------------------
+  old_style_menu - export menu items
+-------------------------------------*/
 
 static void old_style_menu(const char **items, const char **subitems, char *flag, int selected, int arrowize_subitem)
 {
@@ -1522,6 +1148,9 @@ static void old_style_menu(const char **items, const char **subitems, char *flag
 	ui_menu_draw(item_list, menu_items, selected);
 }
 
+/*-------------------------------------------------
+  UIPressedRepoeatThrottle - key repeat handling
+-------------------------------------------------*/
 
 static int UIPressedRepeatThrottle(int code, int baseSpeed)
 {
@@ -1532,15 +1161,15 @@ static int UIPressedRepeatThrottle(int code, int baseSpeed)
 
 	const int	kDelayRampTimer = 10;
 
-	if(input_port_type_pressed(code,0))
+	if(input_port_type_pressed(code, 0))
 	{
-		if(lastCode != code)
+		if(lastCode != code)			// different key pressed
 		{
 			lastCode = code;
 			lastSpeed = baseSpeed;
 			incrementTimer = kDelayRampTimer * lastSpeed;
 		}
-		else
+		else							// same key pressed
 		{
 			incrementTimer--;
 
@@ -1549,6 +1178,7 @@ static int UIPressedRepeatThrottle(int code, int baseSpeed)
 				incrementTimer = kDelayRampTimer * lastSpeed;
 
 				lastSpeed /= 2;
+
 				if(lastSpeed < 1)
 					lastSpeed = 1;
 
@@ -1559,13 +1189,15 @@ static int UIPressedRepeatThrottle(int code, int baseSpeed)
 	else
 	{
 		if(lastCode == code)
-		{
 			lastCode = -1;
-		}
 	}
 
 	return input_ui_pressed_repeat(code, lastSpeed);
 }
+
+/*---------------------------------
+  ReadHexInput - check hex input
+---------------------------------*/
 
 static int ReadHexInput(void)
 {
@@ -1574,29 +1206,27 @@ static int ReadHexInput(void)
 	for(i = 0; i < 10; i++)
 	{
 		if(code_pressed_memory(KEYCODE_0 + i))
-		{
 			return i;
-		}
 	}
 
 	for(i = 0; i < 10; i++)
 	{
 		if(code_pressed_memory(KEYCODE_0_PAD + i))
-		{
 			return i;
-		}
 	}
 
 	for(i = 0; i < 6; i++)
 	{
 		if(code_pressed_memory(KEYCODE_A + i))
-		{
 			return i + 10;
-		}
 	}
 
 	return -1;
 }
+
+/*-----------------------------------------------------------------
+  DoDynamicEditTextField - edit text field with direct key input
+-----------------------------------------------------------------*/
 
 static char * DoDynamicEditTextField(char * buf)
 {
@@ -1604,6 +1234,7 @@ static char * DoDynamicEditTextField(char * buf)
 
 	if(code == 0x08)
 	{
+		/* ----- backspace ----- */
 		if(buf)
 		{
 			UINT32	length = strlen(buf);
@@ -1613,9 +1244,7 @@ static char * DoDynamicEditTextField(char * buf)
 				buf[length - 1] = 0;
 
 				if(length > 1)
-				{
 					buf = realloc(buf, length);
-				}
 				else
 				{
 					free(buf);
@@ -1625,28 +1254,35 @@ static char * DoDynamicEditTextField(char * buf)
 			}
 		}
 	}
-	else if(isprint(code))
+	else
 	{
-		if(buf)
+		if(isprint(code))
 		{
-			UINT32	length = strlen(buf);
+			if(buf)
+			{
+				UINT32	length = strlen(buf);
 
-			buf = realloc(buf, length + 2);
+				buf = realloc(buf, length + 2);
 
-			buf[length] = code;
-			buf[length + 1] = 0;
-		}
-		else
-		{
-			buf = malloc(2);
+				buf[length] = code;
+				buf[length + 1] = 0;
+			}
+			else
+			{
+				buf = malloc(2);
 
-			buf[0] = code;
-			buf[1] = 0;
+				buf[0] = code;
+				buf[1] = 0;
+			}
 		}
 	}
 
 	return buf;
 }
+
+/*------------------------
+  DoStaticEditTextField
+------------------------*/
 
 static void DoStaticEditTextField(char * buf, int size)
 {
@@ -1675,14 +1311,29 @@ static void DoStaticEditTextField(char * buf, int size)
 	}
 }
 
+/*------------------------------------------------------------------
+  DoEditHexField - edit hex field with direct key input (unsigned)
+------------------------------------------------------------------*/
+
 static UINT32 DoEditHexField(UINT32 data)
 {
 	INT8	key;
 
 	if(code_pressed_memory(KEYCODE_BACKSPACE))
 	{
+		/* ----- backspace ----- */
 		data >>= 4;
+
 		return data;
+	}
+	else
+	{
+		if(input_ui_pressed(IPT_UI_CLEAR))
+		{
+			data = 0;
+
+			return data;
+		}
 	}
 
 	key = ReadHexInput();
@@ -1695,6 +1346,10 @@ static UINT32 DoEditHexField(UINT32 data)
 
 	return data;
 }
+
+/*-----------------------------------------------------------------------
+  DoEditHexFieldSigned - edit hex field with direct key input (signed)
+-----------------------------------------------------------------------*/
 
 static UINT32 DoEditHexFieldSigned(UINT32 data, UINT32 mask)
 {
@@ -1717,13 +1372,18 @@ static UINT32 DoEditHexFieldSigned(UINT32 data, UINT32 mask)
 		if(isNegative)
 			data = (~data) + 1;
 	}
-	else if(code_pressed_memory(KEYCODE_MINUS))
+	else
 	{
-		data = (~data) + 1;
+		if(code_pressed_memory(KEYCODE_MINUS))
+			data = (~data) + 1;
 	}
 
 	return data;
 }
+
+/*--------------------------------------------------------
+  DoEditDecField - edit dec field with direct key input
+--------------------------------------------------------*/
 
 static INT32 DoEditDecField(INT32 data, INT32 min, INT32 max)
 {
@@ -1734,15 +1394,19 @@ static INT32 DoEditDecField(INT32 data, INT32 min, INT32 max)
 		data *= 10;
 		data += (code - '0');
 	}
-	else if(code == '-')
+	else
 	{
-		data = -data;
-	}
-	else if(code == 0x08)
-	{
-		data /= 10;
+		if(code == '-')
+			data = -data;
+		else
+		{
+			/* ----- backspace ----- */
+			if(code == 0x08)
+				data /= 10;
+		}
 	}
 
+	/* ----- adjust value ----- */
 	if(data < min)
 		data = min;
 	if(data > max)
@@ -1751,8 +1415,17 @@ static INT32 DoEditDecField(INT32 data, INT32 min, INT32 max)
 	return data;
 }
 
+/***************************************************************************
+    INITIALIZATION
+***************************************************************************/
+
+/*---------------------------------------
+  cheat_init - initialize cheat system
+---------------------------------------*/
+
 void cheat_init(running_machine *machine)
 {
+	/* ----- initialize lists ----- */
 	cheatList =				NULL;
 	cheatListLength =		0;
 
@@ -1766,25 +1439,29 @@ void cheat_init(running_machine *machine)
 	InitMessCheats();
 #endif
 
+	/* ----- initialize flags ----- */
 	currentSearchIdx =			0;
 	foundCheatDatabase =		0;
 	cheatsDisabled =			0;
 	watchesDisabled =			0;
-
-	cheatOptions =					0;
+	cheatOptions =				2;
 
 	fullMenuPageHeight =	floor(1.0f / ui_get_line_height()) - 1;
 
+	/* ----- initialize CPU info for cheat system ----- */
 	BuildCPUInfoList();
 
+	/* ----- load cheat database ----- */
 	LoadCheatDatabase();
 
 	ResizeSearchList(1);
 	ResizeWatchList(20);
 
+	/* ----- initialize search regions ----- */
 	BuildSearchRegions(GetCurrentSearch());
 	AllocateSearchRegions(GetCurrentSearch());
 
+	/* ----- initialize string table ----- */
 	InitStringTable();
 
 	periodic_timer = timer_alloc(cheat_periodic);
@@ -1793,41 +1470,44 @@ void cheat_init(running_machine *machine)
 	add_exit_callback(machine, cheat_exit);
 }
 
+/*---------------------------------
+  cheat_exit - free cheat system
+---------------------------------*/
+
 static void cheat_exit(running_machine *machine)
 {
 	int	i;
 
+	/* ----- save all cheats automatically if needed ----- */
 	if(TEST_FIELD(cheatOptions, AutoSaveEnabled))
-	{
 		DoAutoSaveCheats();
-	}
 
+	/* ----- free database ----- */
 	DisposeCheatDatabase();
 
+	/* ----- free watch lists ----- */
 	if(watchList)
 	{
 		for(i = 0; i < watchListLength; i++)
-		{
 			DisposeWatch(&watchList[i]);
-		}
 
 		free(watchList);
 
 		watchList = NULL;
 	}
 
+	/* ----- free search lists ----- */
 	if(searchList)
 	{
 		for(i = 0; i < searchListLength; i++)
-		{
 			DisposeSearch(i);
-		}
 
 		free(searchList);
 
 		searchList = NULL;
 	}
 
+	/* ----- free string table ----- */
 	FreeStringTable();
 
 	free(menuItemInfo);
@@ -1837,18 +1517,23 @@ static void cheat_exit(running_machine *machine)
 	StopMessCheats();
 #endif
 
+	/* ----- free flags ----- */
 	cheatListLength =			0;
 	watchListLength =			0;
 	searchListLength =			0;
 	currentSearchIdx =			0;
-	cheatEngineWasActive =		0;
+//  cheatEngineWasActive =      0;
 	foundCheatDatabase =		0;
 	cheatsDisabled =			0;
 	watchesDisabled =			0;
 	mainDatabaseName[0] =		0;
 	menuItemInfoLength =		0;
-	cheatOptions =					0;
+	cheatOptions =				0;
 }
+
+/*-----------------------------------------------------
+  cheat_menu - management for the cheat general menu
+-----------------------------------------------------*/
 
 int cheat_menu(int selection)
 {
@@ -1857,33 +1542,34 @@ int cheat_menu(int selection)
 		kMenu_EnableDisable = 0,
 		kMenu_AddEdit,
 		kMenu_Search,
-		kMenu_ViewResults,
-		kMenu_RestoreSearch,
 		kMenu_ChooseWatch,
+		kMenu_ReloadDatabase,
 		kMenu_Options,
 		kMenu_Return,
 
 		kMenu_Max
 	};
 
-	ui_menu_item	menu_item[kMenu_Max + 1];
+	ui_menu_item	menu_item[kMenu_Max];
+
 	INT32			sel;
-	UINT8			total;
-	static INT8		menu_fieldType[kMenu_Max + 1] = { 0 };
+	UINT8			total = 0;
+
 	static INT32	submenu_choice = 0;
 	static int		firstEntry = 0;
 	static int		lastPstn = 0;
 
+	/* ----- allocate memory for item list ----- */
 	memset(menu_item, 0, sizeof(menu_item));
 
-	cheatEngineWasActive = 1;
+//  cheatEngineWasActive = 1;
 
-	total = 0;
 	sel = lastPstn;
 
+	/********** SUB MENU **********/
 	if(submenu_choice)
 	{
-		switch(menu_fieldType[sel])
+		switch(sel)
 		{
 			case kMenu_EnableDisable:
 				submenu_choice = EnableDisableCheatMenu(submenu_choice, firstEntry);
@@ -1894,14 +1580,20 @@ int cheat_menu(int selection)
 				break;
 
 			case kMenu_Search:
-				if(TEST_FIELD(cheatOptions, UseClassicSearchBox))
-					submenu_choice = DoSearchMenuClassic(submenu_choice);
-				else
-					submenu_choice = DoSearchMenu(submenu_choice);
-				break;
+				switch(EXTRACT_FIELD(cheatOptions, SearchBox))
+				{
+					case kSearchBox_Minimum:
+						submenu_choice = DoSearchMenuMinimum(submenu_choice);
+						break;
 
-			case kMenu_ViewResults:
-				submenu_choice = ViewSearchResults(submenu_choice, firstEntry);
+					case kSearchBox_Classic:
+						submenu_choice = DoSearchMenuClassic(submenu_choice);
+						break;
+
+					case kSearchBox_Advanced:
+						submenu_choice = DoSearchMenu(submenu_choice);
+						break;
+				}
 				break;
 
 			case kMenu_ChooseWatch:
@@ -1915,51 +1607,77 @@ int cheat_menu(int selection)
 
 		firstEntry = 0;
 
-		if(submenu_choice == -1)
-			submenu_choice = 0;
+		/* ----- quick menu switching ------ */
+		if(submenu_choice < 0)
+		{
+			switch(submenu_choice)
+			{
+				case -1:
+					lastPstn = kMenu_EnableDisable;
+					break;
+
+				case -2:
+					lastPstn = kMenu_AddEdit;
+					break;
+
+				case -3:
+					lastPstn = kMenu_Search;
+					break;
+
+				case -4:
+					lastPstn = kMenu_ChooseWatch;
+					break;
+
+				default:
+					ui_popup_time(1, "undefined menu switching : %x", submenu_choice);
+			}
+
+			submenu_choice = 1;
+		}
 
 		return sel + 1;
 	}
 
-	menu_item[total].text = ui_getstring(UI_enablecheat);
-	menu_fieldType[total++] = kMenu_EnableDisable;
+	/********** MENU CONSTRUCION **********/
+	menu_item[total++].text = ui_getstring(UI_enablecheat);				// Enable/Disable a Cheat
 
-	menu_item[total].text = ui_getstring(UI_addeditcheat);
-	menu_fieldType[total++] = kMenu_AddEdit;
+	menu_item[total++].text = ui_getstring(UI_addeditcheat);			// Add/Edit a Cheat
 
-	if(TEST_FIELD(cheatOptions, UseClassicSearchBox))
-		menu_item[total].text = "Search a Cheat (Classic Mode)";
-	else
-		menu_item[total].text = "Search a Cheat (Advanced Mode)";
-	menu_fieldType[total++] = kMenu_Search;
-
-	if(!TEST_FIELD(cheatOptions, UseClassicSearchBox))
+	switch(EXTRACT_FIELD(cheatOptions, SearchBox))						// Search a Cheat
 	{
-		menu_item[total].text = ui_getstring(UI_viewresults);
-		menu_fieldType[total++] = kMenu_ViewResults;
+		case kSearchBox_Minimum:
+			menu_item[total++].text = "Search a Cheat (Minimum Mode)";
+			break;
 
-		menu_item[total].text = ui_getstring(UI_restoreresults);
-		menu_fieldType[total++] = kMenu_RestoreSearch;
+		case kSearchBox_Classic:
+			menu_item[total++].text = "Search a Cheat (Classic Mode)";
+			break;
+
+		case kSearchBox_Advanced:
+			menu_item[total++].text = "Search a Cheat (Advanced Mode)";
+			break;
 	}
 
-	menu_item[total].text = ui_getstring(UI_memorywatch);
-	menu_fieldType[total++] = kMenu_ChooseWatch;
+	menu_item[total++].text = ui_getstring(UI_memorywatch);				// Configure Watchpoints
 
-	menu_item[total].text = ui_getstring(UI_options);
-	menu_fieldType[total++] = kMenu_Options;
+	menu_item[total++].text = ui_getstring(UI_reloaddatabase);			// Reload Cheat Database
 
-	menu_item[total].text = ui_getstring(UI_returntomain);
-	menu_fieldType[total++] = kMenu_Return;
+	menu_item[total++].text = ui_getstring(UI_options);					// Options
 
+	menu_item[total++].text = ui_getstring(UI_returntomain);			// return to the MAME general menu
+
+	menu_item[total].text = NULL;										// terminate array
+
+	/* ----- adjust cursor postion ----- */
 	if(sel < 0)
 		sel = 0;
-
 	if(sel > (total - 1))
 		sel = total - 1;
 
-	/* ----- draw it ----- */
+	/* ----- print it ----- */
 	ui_menu_draw(menu_item, total, sel);
 
+	/********** KEY HANDLING **********/
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
 		if(sel < (total - 1))
@@ -1978,20 +1696,16 @@ int cheat_menu(int selection)
 
 	if(input_ui_pressed(IPT_UI_SELECT))
 	{
-		switch(menu_fieldType[sel])
+		switch(sel)
 		{
 			case kMenu_Return:
 				submenu_choice = 0;
 				sel = -1;
-				lastPstn = 0;
+				lastPstn = 0;		// if cursor is now on the return item, adjust cursor keeper
 				break;
 
-			case kMenu_RestoreSearch:
-				{
-					SearchInfo * search = GetCurrentSearch();
-
-					RestoreSearchBackup(search);
-				}
+			case kMenu_ReloadDatabase:
+				ReloadCheatDatabase();
 				break;
 
 			default:
@@ -2006,9 +1720,8 @@ int cheat_menu(int selection)
 
 	if(input_ui_pressed(IPT_UI_CANCEL))
 	{
-		/* ----- if cursor is now on the return item, adjust cursor keeper ----- */
-		if(menu_fieldType[sel] == kMenu_Return)
-			lastPstn = 0;
+		if(sel == kMenu_Return)
+			lastPstn = 0;			// if cursor is now on the return item, adjust cursor keeper
 
 		sel = -1;
 	}
@@ -2020,6 +1733,10 @@ int cheat_menu(int selection)
 	return sel + 1;
 }
 
+/*----------
+  DoShift
+----------*/
+
 static UINT32 DoShift(UINT32 input, INT8 shift)
 {
 	if(shift > 0)
@@ -2027,6 +1744,10 @@ static UINT32 DoShift(UINT32 input, INT8 shift)
 	else
 		return input << -shift;
 }
+
+/*----------------------------------------
+  BCDToDecimal - convert a value to hex
+----------------------------------------*/
 
 static UINT32 BCDToDecimal(UINT32 value)
 {
@@ -2044,6 +1765,10 @@ static UINT32 BCDToDecimal(UINT32 value)
 
 	return accumulator;
 }
+
+/*----------------------------------------
+  DecimalToBCD - convert a value to dec
+----------------------------------------*/
 
 static UINT32 DecimalToBCD(UINT32 value)
 {
@@ -2066,6 +1791,10 @@ static UINT32 DecimalToBCD(UINT32 value)
 
 	return accumulator;
 }
+
+/*----------------------
+  RebuildStringTables
+----------------------*/
 
 static void RebuildStringTables(void)
 {
@@ -2119,6 +1848,10 @@ static void RebuildStringTables(void)
 	}
 }
 
+/*-----------------------------------------------------------
+  RequestStrings - check list length and rebuild if needed
+-----------------------------------------------------------*/
+
 static void RequestStrings(UINT32 length, UINT32 numStrings, UINT32 mainStringLength, UINT32 subStringLength)
 {
 	UINT8	changed = 0;
@@ -2152,15 +1885,21 @@ static void RequestStrings(UINT32 length, UINT32 numStrings, UINT32 mainStringLe
 	}
 
 	if(changed)
-	{
 		RebuildStringTables();
-	}
 }
+
+/*------------------
+  InitStringTable
+------------------*/
 
 static void InitStringTable(void)
 {
 	memset(&menuStrings, 0, sizeof(MenuStringList));
 }
+
+/*------------------
+  FreeStringTable
+------------------*/
 
 static void FreeStringTable(void)
 {
@@ -2173,6 +1912,31 @@ static void FreeStringTable(void)
 
 	memset(&menuStrings, 0, sizeof(MenuStringList));
 }
+
+/*---------------------------------------------------------------------------
+  CreateStringCopy - copy stirng. It is only called on LoadCheatFile() now
+---------------------------------------------------------------------------*/
+
+static char * CreateStringCopy(char * buf)
+{
+	char	* temp = NULL;
+
+	if(buf)
+	{
+		UINT32	length = strlen(buf) + 1;
+
+		temp = malloc(length);
+
+		if(temp)
+			memcpy(temp, buf, length);
+	}
+
+	return temp;
+}
+
+/*------------------------------------------------------------
+  UserSelectValueMenu - management for value-selection menu
+------------------------------------------------------------*/
 
 static INT32 UserSelectValueMenu(int selection, CheatEntry * entry)
 {
@@ -2190,7 +1954,7 @@ static INT32 UserSelectValueMenu(int selection, CheatEntry * entry)
 
 	action = &entry->actionList[0];
 
-	// if we're just entering, save the value
+	/* ----- if we're just entering, save the value ----- */
 	if(firstTime)
 	{
 		UINT32	min = EXTRACT_FIELD(action->type, UserSelectMinimum);
@@ -2198,7 +1962,7 @@ static INT32 UserSelectValueMenu(int selection, CheatEntry * entry)
 
 		value = ReadData(action);
 
-		// and check for valid BCD values
+		/* ----- and check for valid BCD values ----- */
 		if(TEST_FIELD(action->type, UserSelectBCD))
 		{
 			value = BCDToDecimal(value);
@@ -2216,35 +1980,25 @@ static INT32 UserSelectValueMenu(int selection, CheatEntry * entry)
 
 	displayValue = value;
 
-	// if the minimum display value is one, add one to the display value
+	/* ----- if the minimum display value is one, add one to the display value ----- */
 	if(TEST_FIELD(action->type, UserSelectMinimumDisplay))
 	{
-		// bcd -> dec
 		if(TEST_FIELD(action->type, UserSelectBCD))
-		{
-			displayValue = BCDToDecimal(displayValue);
-		}
+			displayValue = BCDToDecimal(displayValue);			// bcd -> dec
 
 		displayValue++;
 
-		// dec -> bcd
 		if(TEST_FIELD(action->type, UserSelectBCD))
-		{
-			displayValue = DecimalToBCD(displayValue);
-		}
+			displayValue = DecimalToBCD(displayValue);			// dec -> bcd
 	}
 
-	// print it
+	/* ----- print it ----- */
 	if(TEST_FIELD(action->type, UserSelectBCD))
-	{
 		sprintf(buf, "\t%s\n\t%.2X\n", ui_getstring(UI_search_select_value), displayValue);
-	}
 	else
-	{
 		sprintf(buf, "\t%s\n\t%.2X (%d)\n", ui_getstring(UI_search_select_value), displayValue, displayValue);
-	}
 
-	// create fake menu strings
+	/* ----- create fake menu strings ----- */
 	strcat(buf, "\t");
 	strcat(buf, ui_getstring(UI_lefthilight));
 	strcat(buf, " ");
@@ -2252,28 +2006,24 @@ static INT32 UserSelectValueMenu(int selection, CheatEntry * entry)
 	strcat(buf, " ");
 	strcat(buf, ui_getstring(UI_righthilight));
 
-	// print fake menu
+	/* ----- print it ----- */
 	ui_draw_message_window(buf);
 
-	// get user input
+	/********** KEY HANDLING **********/
 	if(UIPressedRepeatThrottle(IPT_UI_LEFT, kHorizontalFastKeyRepeatRate))
-	{
 		delta = -1;
-	}
-	if(UIPressedRepeatThrottle(IPT_UI_RIGHT, kHorizontalFastKeyRepeatRate))
-	{
-		delta = 1;
-	}
 
-	// done?
+	if(UIPressedRepeatThrottle(IPT_UI_RIGHT, kHorizontalFastKeyRepeatRate))
+		delta = 1;
+
 	if(input_ui_pressed(IPT_UI_SELECT))
 	{
-		// ### redundant?? probably can be removed
+		/* ### redundant?? probably can be removed ### */
 		if(!firstTime)
 		{
 			int	i;
 
-			// copy data field if copy previous value
+			/* ----- copy data field if copy previous value ----- */
 			for(i = 0; i < entry->actionListLength; i++)
 			{
 				CheatAction	* traverse = &entry->actionList[i];
@@ -2306,11 +2056,9 @@ static INT32 UserSelectValueMenu(int selection, CheatEntry * entry)
 					traverse->data = copyValue;
 			}
 
-			// and activate the cheat
 			ActivateCheat(entry);
 		}
 
-		// reset and return
 		firstTime = 1;
 		sel = -1;
 	}
@@ -2321,22 +2069,17 @@ static INT32 UserSelectValueMenu(int selection, CheatEntry * entry)
 		sel = -1;
 	}
 
-//  if(input_ui_pressed(IPT_UI_CONFIGURE))
-//  {
-//      firstTime = 1;
-//      sel = -2;
-//  }
-
-	// get a key
+	/* ----- get other key inputs ----- */
 	keyValue = ReadHexInput();
 
+	/* ----- BCD check for input key ----- */
 	if((keyValue != -1) && TEST_FIELD(action->type, UserSelectBCD) && ((keyValue < 0 ) || (keyValue > 9)))
 		keyValue = -1;
 
-	// if we got a key
+	/* ----- if we got a key ----- */
 	if(keyValue != -1)
 	{
-		// add it
+		/* ----- add it ----- */
 		value <<= 4;
 
 		switch(EXTRACT_FIELD(action->type, BytesUsed))
@@ -2361,24 +2104,19 @@ static INT32 UserSelectValueMenu(int selection, CheatEntry * entry)
 		forceUpdate = 1;
 	}
 
-	// wrap-around with BCD stuff
-	// ### this is a really bad way to do this
+	/* ----- wrap-around with BCD stuff. ### this is a really bad way to do this ----- */
 	if(delta || forceUpdate)
 	{
 		INT32	min = EXTRACT_FIELD(action->type, UserSelectMinimum);
 		INT32	max = action->originalDataField + min;
 
 		if(TEST_FIELD(action->type, UserSelectBCD))
-		{
 			value = BCDToDecimal(value);
-		}
 
 		value += delta;
 
 		if(TEST_FIELD(action->type, UserSelectBCD))
-		{
 			value = DecimalToBCD(value);
-		}
 
 		if(value < min)
 			value = max;
@@ -2388,6 +2126,10 @@ static INT32 UserSelectValueMenu(int selection, CheatEntry * entry)
 
 	return sel + 1;
 }
+
+/*-------------------------------------------------
+  CommentMenu - management comment for code menu
+-------------------------------------------------*/
 
 static INT32 CommentMenu(int selection, CheatEntry * entry)
 {
@@ -2400,7 +2142,7 @@ static INT32 CommentMenu(int selection, CheatEntry * entry)
 
 	sel = selection - 1;
 
-	// create fake menu strings
+	/********** MENU CONSTRUCTION **********/
 	if(entry->comment && entry->comment[0])
 		comment = entry->comment;
 	else
@@ -2408,33 +2150,25 @@ static INT32 CommentMenu(int selection, CheatEntry * entry)
 
 	sprintf(buf, "%s\n\t%s %s %s", comment, ui_getstring(UI_lefthilight), ui_getstring(UI_OK), ui_getstring(UI_righthilight));
 
-	// print fake menu
+	/* ----- print it ----- */
 	ui_draw_message_window(buf);
 
-	// done?
-	if(input_ui_pressed(IPT_UI_SELECT))
-	{
+	/********** KEY HANDLING **********/
+	if(input_ui_pressed(IPT_UI_SELECT) || input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
-	}
-
-	if(input_ui_pressed(IPT_UI_CANCEL))
-	{
-		sel = -1;
-	}
-
-//  if(input_ui_pressed(IPT_UI_CONFIGURE))
-//  {
-//      sel = -2;
-//  }
 
 	return sel + 1;
 }
+
+/*--------------------------------------------------------------
+  EnableDisableCheatMenu - management for Enable/Disable menu
+--------------------------------------------------------------*/
 
 static int EnableDisableCheatMenu(int selection, int firstTime)
 {
 	INT32			sel;
 	static INT32	submenu_choice = 0;
-	static INT32	submenu_id = 0;		// 0 = none, 1 = comment, 2 = value-selection, 3 = editcheat
+	static INT32	submenu_id = 0;		// 0 = none, 1 = comment, 2 = value-selection, 3 = editCheat
 	const char		** menu_item;
 	const char		** menu_subitem;
 	char			* flagBuf;
@@ -2451,7 +2185,7 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 
 	sel = selection - 1;
 
-	/* ----- if a submenu has been selected, go there ----- */
+	/********** SUB MENU **********/
 	if(submenu_choice)
 	{
 		switch(submenu_id)
@@ -2482,11 +2216,12 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 		return sel + 1;
 	}
 
-	/* ----- no submenu active, construct the cheat list ----- */
+	/********** MENU CONSTRUCTION **********/
 	for(i = 0; i < cheatListLength; i++)
 	{
 		CheatEntry	* traverse = &cheatList[i];
 
+		/* ----- get code title ----- */
 		if(traverse->name)
 			menu_item[total] = traverse->name;
 		else
@@ -2494,21 +2229,22 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 
 		menu_subitem[total] = NULL;
 
-		/* ----- special construction if label-selection ----- */
-		if(traverse->flags & kCheatFlag_Select)
+		/* ----- get subitem ----- */
+		if(traverse->flags & kCheatFlag_Select)			// label-selection gets sub-lebel name or "OFF"
 		{
-			/* ----- adjust selection if one shot type ----- */
+			/* ----- no "OFF" item if one shot ----- */
 			if((traverse->flags & kCheatFlag_OneShot) && !traverse->selection)
-				traverse->selection = 1;
+				traverse->selection = 1;					// adjust to 1st linked-code
 
+			/* ----- set sub-label name or "OFF" to subitem ----- */
 			if(traverse->selection && (traverse->selection < traverse->actionListLength))
 				menu_subitem[total] = traverse->actionList[traverse->selection].optionalName;
 			else
 				menu_subitem[total] = ui_getstring(UI_off);
 		}
-		else
+		else							// others get "ON" or "OFF"
 		{
-			/* ----- add submenu options for all cheats that are not comments ----- */
+			/* ----- add subitems for all cheats that are not comments ----- */
 			if(!(traverse->flags & kCheatFlag_Null))
 			{
 				if(traverse->flags & kCheatFlag_OneShot)
@@ -2523,7 +2259,7 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 			}
 		}
 
-		/* ----- set comment flag ----- */
+		/* ----- get comment flag ----- */
 		if(traverse->comment && traverse->comment[0])
 			flagBuf[total++] = 1;
 		else
@@ -2533,13 +2269,13 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 	/* ----- if no code, set special message ----- */
 	if(cheatListLength == 0)
 	{
-		if(foundCheatDatabase)
+		if(foundCheatDatabase)			// the database found but no code
 		{
 			menu_item[total] = "there are no cheats for this game";
 			menu_subitem[total] = NULL;
 			flagBuf[total++] = 0;
 		}
-		else
+		else					// the database itself not found
 		{
 			menu_item[total] = "cheat database not found";
 			menu_subitem[total] = NULL;
@@ -2551,7 +2287,8 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 		}
 	}
 
-	menu_item[total] = ui_getstring(UI_returntoprior);	// return item
+	/* ----- set return item ----- */
+	menu_item[total] = ui_getstring(UI_returntoprior);
 	menu_subitem[total] = NULL;
 	flagBuf[total++] = 0;
 
@@ -2559,23 +2296,23 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 	menu_subitem[total] = 0;
 	flagBuf[total] = 0;
 
-	/* ----- adjust current selection ----- */
+	/* ----- adjust cursor position ----- */
 	if(sel < 0)
 		sel = 0;
 	if(sel > (total - 1))
 		sel = total - 1;
 
-	/* ----- ? ----- */
+	/* ----- if cursor is on comment code, skip it ----- */
 	if(cheatListLength && firstTime)
 	{
-		while(	(sel < total - 1) &&
-				(cheatList[sel].flags & kCheatFlag_Null))
-				sel++;
+		while((sel < total - 1) && (cheatList[sel].flags & kCheatFlag_Null))
+			sel++;
 	}
 
 	/* ----- draw it ----- */
 	old_style_menu(menu_item, menu_subitem, flagBuf, sel, 0);
 
+	/********** KEY HANDLING **********/
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
 		sel++;
@@ -2585,7 +2322,7 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 
 		if(cheatListLength)
 		{
-			/* ----- if current is comment code, skip it ----- */
+			/* ----- if cursor is on comment code, skip it ----- */
 			for(i = 0; (i < fullMenuPageHeight / 2) && (sel < total - 1) && (cheatList[sel].flags & kCheatFlag_Null); i++)
 				sel++;
 		}
@@ -2601,7 +2338,7 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 		{
 			if(cheatListLength)
 			{
-				/* ----- if current is comment code, skip it ----- */
+				/* ----- if cursor is on comment code, skip it ----- */
 				for(i = 0; (i < fullMenuPageHeight / 2) && (sel != total - 1) && (cheatList[sel].flags & kCheatFlag_Null); i++)
 				{
 					sel--;
@@ -2638,9 +2375,9 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 	{
 		if((sel < (total - 1)) && entry)
 		{
-			if(entry->flags & kCheatFlag_Select)
+			if(entry->flags & kCheatFlag_Select)		// label-selection
 			{
-				/* ----- special handling if label-selection ----- */
+				/* ----- move selection to unLinkExtension code or last linked-code ----- */
 				do{
 					entry->selection--;
 
@@ -2665,17 +2402,15 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 								ActivateCheat(entry);	// ON
 						}
 					}
-				/* ----- if next code is not 1st and has link extension, continue ----- */
 				}while(entry->selection && TEST_FIELD(entry->actionList[entry->selection].type, LinkExtension));
 			}
-			else
+			else						// others
 			{
-				/* ----- toggle selected cheat if it is not comment or one shot code ----- */
 				if(!(entry->flags & kCheatFlag_Null) && !(entry->flags & kCheatFlag_OneShot))
 				{
 					int active = entry->flags & kCheatFlag_Active;
 
-					active ^= 0x01;		// toggle On and OFF
+					active ^= 0x01;
 
 					/* ----- get the user's selected value if needed ----- */
 					if((entry->flags & kCheatFlag_UserSelect) && active)
@@ -2699,9 +2434,9 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 	{
 		if((sel < (total - 1)) && entry)
 		{
-			if(entry->flags & kCheatFlag_Select)
+			if(entry->flags & kCheatFlag_Select)		// label-selection
 			{
-				/* ----- special handling if label-selection ----- */
+				/* ----- move selection to unLinkExtension code or 1st code ----- */
 				do{
 					entry->selection++;
 
@@ -2717,7 +2452,7 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 						/* ----- no action when press arrow key ----- */
 						entry->flags &= ~kCheatFlag_DoOneShot;
 					}
-					else
+					else				// others
 					{
 						if(entry->selection >= entry->actionListLength)
 						{
@@ -2731,7 +2466,6 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 								ActivateCheat(entry);	// ON
 						}
 					}
-				/* ----- if next code is not 1st and has link extension, continue ----- */
 				}while(entry->selection && TEST_FIELD(entry->actionList[entry->selection].type, LinkExtension));
 			}
 			else
@@ -2789,18 +2523,19 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 
 					if(entry->flags & kCheatFlag_UserSelect)
 					{
+						/* ----- value-selection menu ----- */
 						submenu_id = 2;
 						submenu_choice = 1;
 					}
 					else
 					{
-						ActivateCheat(&cheatList[sel]);		// ON
+						ActivateCheat(entry);		// ON
 
-						/* ----- do one shot for selected cheat ----- */
+						/* ----- set do one shot flag if label-selection ----- */
 						if((entry->flags & kCheatFlag_Select) && (entry->flags & kCheatFlag_OneShot))
 							entry->flags |= kCheatFlag_DoOneShot;
 
-						/* ----- display one shot message if entry is one shot ----- */
+						/* ----- display one shot message if one shot ----- */
 						if(entry->flags & kCheatFlag_OneShot)
 							ui_popup_time(1, "%s activated", entry->name);
 					}
@@ -2814,7 +2549,7 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 
 	if(ShiftKeyPressed())
 	{
-		if(input_ui_pressed(IPT_UI_SAVE_CHEAT))			// save all codes
+		if(input_ui_pressed(IPT_UI_SAVE_CHEAT))			// shift + save = save all codes
 		{
 			for(i = 0; i < cheatListLength; i++)
 				SaveCheat(&cheatList[i], 0, 0);
@@ -2822,47 +2557,237 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 			ui_popup_time(1, "%d cheats saved", cheatListLength);
 		}
 
-		if(input_ui_pressed(IPT_UI_ADD_CHEAT))
+		if(input_ui_pressed(IPT_UI_ADD_CHEAT))			// shift + add = add new emypty code
 			AddCheatBefore(sel);
 
-		if(input_ui_pressed(IPT_UI_DELETE_CHEAT))
+		if(input_ui_pressed(IPT_UI_DELETE_CHEAT))		// shift + delete = delete selected code
 			DeleteCheatAt(sel);
 	}
 	else
 	{
 		if(ControlKeyPressed())
 		{
-			if((entry->flags & kCheatFlag_HasActivationKey1) || (entry->flags & kCheatFlag_HasActivationKey2))
+			if(input_ui_pressed(IPT_UI_SAVE_CHEAT))		// ctrl + save = save activation key
 			{
-				SaveCheat(entry, sel, 1);			// save activation key
+				if((entry->flags & kCheatFlag_HasActivationKey1) || (entry->flags & kCheatFlag_HasActivationKey2))
+				{
+					SaveCheat(entry, sel, 1);
 
-				ui_popup_time(1, "activation key saved");
+					ui_popup_time(1, "activation key saved");
+				}
+				else
+					ui_popup_time(1, "no activation key");
 			}
-			else
-				ui_popup_time(1, "no activation key");
 		}
 		else
 		{
 			if(input_ui_pressed(IPT_UI_SAVE_CHEAT))
-				SaveCheat(entry, 0, 0);				// save current entry
+				SaveCheat(entry, 0, 0);						// save current entry
 		}
 	}
 
-	if(input_ui_pressed(IPT_UI_EDIT_CHEAT) && entry)
+	if(input_ui_pressed(IPT_UI_EDIT_CHEAT) && entry)		// edit selected code
 	{
-			submenu_id = 3;
-			submenu_choice = 1;
+		submenu_id = 3;
+		submenu_choice = 1;
 	}
 
 	if(input_ui_pressed(IPT_UI_RELOAD_CHEAT))
 		ReloadCheatDatabase();
 
-	/* ----- cancel pops us up a menu level ----- */
+	if(UIPressedRepeatThrottle(IPT_UI_ZOOM_IN, kVerticalKeyRepeatRate))
+		/* ----- quick menu switch : enable/disable -> add/edit ----- */
+		sel = -3;
+
+	if(UIPressedRepeatThrottle(IPT_UI_ZOOM_OUT, kVerticalKeyRepeatRate))
+		/* ----- quick menu switch : enable/disable -> watchpoint list ----- */
+		sel = -5;
+
 	if(input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
 
 	return sel + 1;
 }
+
+/*--------------------------------------------------------
+  AddEditCheatMenu - management for Add/Edit cheat menu
+--------------------------------------------------------*/
+
+static int AddEditCheatMenu(int selection)
+{
+	INT32			sel;
+	static INT32	submenuChoice = 0;
+	static INT32	submenuCheat = 0;
+	const char		** menu_item;
+	INT32			i;
+	INT32			total = 0;
+	CheatEntry		* entry;
+
+	sel = selection - 1;
+
+	RequestStrings(cheatListLength + 2, 0, 0, 0);
+
+	menu_item = menuStrings.mainList;
+
+	/********** SUB MENU **********/
+	if(submenuChoice)
+	{
+		submenuChoice = EditCheatMenu(&cheatList[submenuCheat], submenuCheat, submenuChoice);
+
+		/* ----- meaningless ? because no longer return with sel = -1 (pressed UI_CONFIG in submenu) ----- */
+//      if(submenuChoice == -1)
+//      {
+//          submenuChoice = 0;
+//          sel = -2;
+//      }
+
+		return sel + 1;
+	}
+
+	/********** MENU CONSTRUCTION **********/
+	for(i = 0; i < cheatListLength; i++)
+	{
+		CheatEntry	* traverse = &cheatList[i];
+
+		if(traverse->name)
+			menu_item[total++] = traverse->name;		// code title
+		else
+			menu_item[total++] = "(none)";
+	}
+
+	menu_item[total++] = ui_getstring(UI_returntoprior);		// return
+
+	menu_item[total] = NULL;					// terminate array
+
+	/* ----- adjust current cursor position ----- */
+	if(sel < 0)
+		sel = 0;
+	if(sel >= total)
+		sel = total - 1;
+
+	/* ----- draw it ----- */
+	old_style_menu(menu_item, NULL, NULL, sel, 0);
+
+	/********** KEY HANDLING **********/
+	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
+	{
+		sel++;
+
+		if(sel >= total)
+			sel = 0;
+	}
+
+	if(UIPressedRepeatThrottle(IPT_UI_UP, kVerticalKeyRepeatRate))
+	{
+		sel--;
+
+		if(sel < 0)
+			sel = total - 1;
+	}
+
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_UP, kVerticalKeyRepeatRate))
+	{
+		sel -= fullMenuPageHeight;
+
+		if(sel < 0)
+			sel = 0;
+	}
+
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_DOWN, kVerticalKeyRepeatRate))
+	{
+		sel += fullMenuPageHeight;
+
+		if(sel >= total)
+			sel = total - 1;
+	}
+
+	if(sel < (total - 1))
+		entry = &cheatList[sel];
+	else
+		entry = NULL;
+
+	if(input_ui_pressed(IPT_UI_SAVE_CHEAT))
+	{
+		if(ShiftKeyPressed())
+		{
+			for(i = 0; i < cheatListLength; i++)		// shift + save = save all codes
+				SaveCheat(&cheatList[i], 0, 0);
+
+			ui_popup_time(1, "%d cheats saved", cheatListLength);
+		}
+		else
+		{
+			if(ControlKeyPressed())
+			{
+				if((entry->flags & kCheatFlag_HasActivationKey1) || (entry->flags & kCheatFlag_HasActivationKey2))
+				{
+					SaveCheat(entry, sel, 1);		// ctrl + save = save activation key
+
+					ui_popup_time(1, "activation key saved");
+				}
+				else
+					ui_popup_time(1, "no activation key");
+			}
+			else
+				SaveCheat(entry, 0, 0);		// save current entry
+		}
+	}
+
+	if(input_ui_pressed(IPT_UI_ADD_CHEAT))
+		AddCheatBefore(sel);			// insert empty code
+
+	if(input_ui_pressed(IPT_UI_DELETE_CHEAT))
+		DeleteCheatAt(sel);			// delete selected code
+
+	if(input_ui_pressed(IPT_UI_WATCH_VALUE))
+		WatchCheatEntry(entry, 0);				// watch selected code
+
+	if(input_ui_pressed(IPT_UI_EDIT_CHEAT))		// edit selected code
+	{
+		/* ----- if selected item is not return, go to edit menu ----- */
+		if(sel < (total - 1))
+		{
+			submenuCheat = sel;
+			submenuChoice = 1;
+		}
+	}
+
+	if(input_ui_pressed(IPT_UI_SELECT))
+	{
+		/* ----- if selected item is return, return previous menu ----- */
+		if(sel >= (total - 1))
+		{
+			submenuChoice = 0;
+			sel = -1;
+		}
+		/* ----- otherwise, go to edit menu (same as pressing edit key) ----- */
+		else
+		{
+			submenuCheat = sel;
+			submenuChoice = 1;
+		}
+	}
+
+	if(input_ui_pressed(IPT_UI_RELOAD_CHEAT))
+		ReloadCheatDatabase();
+
+	if(UIPressedRepeatThrottle(IPT_UI_ZOOM_IN, kVerticalKeyRepeatRate))
+		/* ----- quick menu switch : add/edit -> search ----- */
+		sel = -4;
+
+	if(UIPressedRepeatThrottle(IPT_UI_ZOOM_OUT, kVerticalKeyRepeatRate))
+		/* ----- quick menu switch : add/edit -> enable/disable ----- */
+		sel = -2;
+
+	if(input_ui_pressed(IPT_UI_CANCEL))
+		sel = -1;
+
+	return sel + 1;
+}
+
+/*------------------------------------------------
+  EditCheatMenu - management for edit code menu
+------------------------------------------------*/
 
 static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 {
@@ -2890,7 +2815,7 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 		"Add/Subtract",
 		"Force Range",
 		"Set/Clear Bits",
-		"Unused (4)",
+		"Write If Match",
 		"Unused (5)",
 		"Unused (6)",
 		"Null"
@@ -2938,7 +2863,7 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 		"Mapped Memory",
 		"Custom",
 		"Relative Address",
-		"Unused (5)",
+		"Program Space",
 		"Unused (6)",
 		"Unused (7)"
 	};
@@ -3006,7 +2931,7 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 										//  NOTE: value is packed in to 0x04
 				// and set operation to null
 			// else
-				kType_Operation,		//  select      Operation           Write - Add/Subtract - Force Range - Set/Clear Bits -
+				kType_Operation,		//  select      Operation           Write - Add/Subtract - Force Range - Set/Clear Bits - Match to Write -
 										//                                  Null
 			// if((Operation == Write) && (LocationType != Relative Address))
 				kType_WriteMask,		//  value       extendData          0x00000000 - 0xFFFFFFFF
@@ -3020,12 +2945,14 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 						kType_SubtractMinimum,
 										//  value       extendData          0x00000000 - 0xFFFFFFFF
 			// if((Operation == Force Range) && (LocationType != Relative Address))
-				kType_RangeMinimum,		//  value       extendData          0x00 - 0xFF
+				kType_RangeMinimum,		//  value       extendData          0x00 - 0xFF / 0xFFFF
 										//  NOTE: value is packed in to upper byte of extendData (as a word)
-				kType_RangeMaximum,		//  value       extendData          0x00 - 0xFF
+				kType_RangeMaximum,		//  value       extendData          0x00 - 0xFF / 0xFFFF
 										//  NOTE: value is packed in to lower byte of extendData (as a word)
 			// if(Operation == Set/Clear)
 				kType_SetClear,			//  select      OperationParameter  Set - Clear
+			// if(Operation == Match to Write)
+				kType_WriteMatch,		//  value       extendData          0x00000000 - 0xFFFFFFFF
 			// if((Operation != Null) || (Type == Watch))
 				// if(Type != Watch)
 					kType_Data,
@@ -3045,9 +2972,9 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 				// if(bytesUsed > 0)
 					kType_Endianness,	//  select      Endianness          Normal - Swap
 				kType_LocationType,		//  select      LocationType        Normal - Region - Mapped Memory - EEPROM -
-										//                                  Relative Address
+										//                                  Relative Address - Program Space
 										//  NOTE: also uses LocationParameter for EEPROM type
-				// if((LocationType == Normal) || (LocationType == HandlerMemory))
+				// if((LocationType == Normal) || (LocationType == HandlerMemory) || (LocationType == ProgramSpace)
 					kType_CPU,			//  value       LocationParameter   0 - 31
 				// if(LocationType == Region)
 					kType_Region,		//  select      LocationParameter   CPU1 - CPU2 - CPU3 - CPU4 - CPU5 - CPU6 - CPU7 -
@@ -3089,11 +3016,11 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 	static UINT8		editActive = 0;
 	UINT32				increment = 1;
 	UINT8				dirty = 0;
-	static INT32		currentNameTemplate = 0;
 
 	if(!entry)
 		return 0;
 
+	/********** MENU CONSTRUCTION **********/
 	if(menuItemInfoLength < (kType_Max * entry->actionListLength) + 2)
 	{
 		menuItemInfoLength = (kType_Max * entry->actionListLength) + 2;
@@ -3118,128 +3045,102 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 
 	memset(flagBuf, 0, (kType_Max * entry->actionListLength) + 2);
 
+	/* ----- create menu items ----- */
 	for(i = 0; i < entry->actionListLength; i++)
 	{
 		CheatAction	* traverse = &entry->actionList[i];
 
-		UINT32		type =					EXTRACT_FIELD(traverse->type, Type);
-		UINT32		typeParameter =			EXTRACT_FIELD(traverse->type, TypeParameter);
-		UINT32		operation =				EXTRACT_FIELD(traverse->type, Operation) |
-											EXTRACT_FIELD(traverse->type, OperationExtend) << 2;
-		UINT32		operationParameter =	EXTRACT_FIELD(traverse->type, OperationParameter);
-		UINT32		locationType =			EXTRACT_FIELD(traverse->type, LocationType);
-		UINT32		locationParameter =		EXTRACT_FIELD(traverse->type, LocationParameter);
+		UINT32	type =					EXTRACT_FIELD(traverse->type, Type);
+		UINT32	typeParameter =			EXTRACT_FIELD(traverse->type, TypeParameter);
+		UINT32	operation =				EXTRACT_FIELD(traverse->type, Operation) |
+										EXTRACT_FIELD(traverse->type, OperationExtend) << 2;
+		UINT32	operationParameter =	EXTRACT_FIELD(traverse->type, OperationParameter);
+		UINT32	locationType =			EXTRACT_FIELD(traverse->type, LocationType);
+		UINT32	locationParameter =		EXTRACT_FIELD(traverse->type, LocationParameter);
 
 		UINT8		wasCommentOrSelect =	0;
 
 		if(isSelect)
 		{
-			// do extend name field
-
+			/* ----- do extend name field ----- */
 			menuItemInfo[total].subcheat = i;
 			menuItemInfo[total].fieldType = kType_ExtendName;
 			menuItem[total] = "Name";
 
 			if(traverse->optionalName)
-				menuSubItem[total] = traverse->optionalName;
+				menuSubItem[total++] = traverse->optionalName;
 			else
-				menuSubItem[total] = "(none)";
-
-			total++;
+				menuSubItem[total++] = "(none)";
 		}
 
+		/* ----- create items if 1st code ----- */
 		if(i == 0)
 		{
 			{
-				// do name field
-
+				/* ----- do name field ----- */
 				menuItemInfo[total].subcheat = i;
 				menuItemInfo[total].fieldType = kType_Name;
 				menuItem[total] = "Name";
 
 				if(entry->name)
-					menuSubItem[total] = entry->name;
+					menuSubItem[total++] = entry->name;
 				else
-					menuSubItem[total] = "(none)";
-
-				total++;
+					menuSubItem[total++] = "(none)";
 			}
 
 			{
-				// do comment field
-
+				/* ----- do comment field ----- */
 				menuItemInfo[total].subcheat = i;
 				menuItemInfo[total].fieldType = kType_Comment;
 				menuItem[total] = "Comment";
 
 				if(entry->comment)
-					menuSubItem[total] = entry->comment;
+					menuSubItem[total++] = entry->comment;
 				else
-					menuSubItem[total] = "(none)";
-
-				total++;
+					menuSubItem[total++] = "(none)";
 			}
 
 			{
-				// do 1st activation key field
-
+				/* ----- do 1st activation key field ----- */
 				menuItemInfo[total].subcheat = i;
 				menuItemInfo[total].fieldType = kType_ActivationKey1;
 				menuItem[total] = "Activation Key (1st)";
 
 				if((entry->flags & kCheatFlag_HasActivationKey1))
-				{
-					menuSubItem[total] = code_name(entry->activationKey1);
-				}
+					menuSubItem[total++] = code_name(entry->activationKey1);
 				else
-				{
-					menuSubItem[total] = "(none)";
-				}
-
-				total++;
+					menuSubItem[total++] = "(none)";
 			}
 
 			{
-				// do 2nd activation key field
-
+				/* ----- do 2nd activation key field ----- */
 				menuItemInfo[total].subcheat = i;
 				menuItemInfo[total].fieldType = kType_ActivationKey2;
 				menuItem[total] = "Activation Key (2nd)";
 
 				if((entry->flags & kCheatFlag_HasActivationKey2))
-				{
-					menuSubItem[total] = code_name(entry->activationKey2);
-				}
+					menuSubItem[total++] = code_name(entry->activationKey2);
 				else
-				{
-					menuSubItem[total] = "(none)";
-				}
-
-				total++;
+					menuSubItem[total++] = "(none)";
 			}
 
-			// check for select cheat
-
-			if(	(locationType == kLocation_Custom) &&
-				(locationParameter == kCustomLocation_Select))
+			/* ----- is this label-selection cheat ? ----- */
+			if((locationType == kLocation_Custom) && (locationParameter == kCustomLocation_Select))
 				isSelect = 1;
 		}
 
+		/* ----- create item if linked code on label-selection ----- */
 		if(i && isSelect)
 		{
-			// do link extension field
-
+			/* ----- do link extension field ----- */
 			menuItemInfo[total].subcheat = i;
 			menuItemInfo[total].fieldType = kType_LinkExtension;
 			menuItem[total] = "Link Extension";
-			menuSubItem[total] = ui_getstring(TEST_FIELD(traverse->type, LinkExtension) ? UI_on : UI_off);
-
-			total++;
+			menuSubItem[total++] = ui_getstring(TEST_FIELD(traverse->type, LinkExtension) ? UI_on : UI_off);
 		}
 
 		{
-			// do type field
-
+			/* ----- do type field ----- */
 			menuItemInfo[total].subcheat = i;
 			menuItemInfo[total].fieldType = kType_Type;
 			menuItem[total] = "Type";
@@ -3248,124 +3149,108 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 			{
 				if(locationParameter == kCustomLocation_Comment)
 				{
+					/* ----- comment ----- */
 					wasCommentOrSelect = 1;
 
-					menuSubItem[total] = kTypeNames[4];
-				}
-				else if(locationParameter == kCustomLocation_Select)
-				{
-					wasCommentOrSelect = 1;
-
-					menuSubItem[total] = kTypeNames[5];
+					menuSubItem[total++] = kTypeNames[4];
 				}
 				else
 				{
-					menuSubItem[total] = kTypeNames[type & 3];
+					if(locationParameter == kCustomLocation_Select)
+					{
+						/* ----- label-selection ----- */
+						wasCommentOrSelect = 1;
+
+						menuSubItem[total++] = kTypeNames[5];
+					}
+					else
+						menuSubItem[total++] = kTypeNames[type & 3];
 				}
 			}
 			else
-			{
-				menuSubItem[total] = kTypeNames[type & 3];
-			}
-
-			total++;
+				menuSubItem[total++] = kTypeNames[type & 3];
 		}
 
+		/* ----- create items if not comment or label-selection ----- */
 		if(!wasCommentOrSelect)
 		{
 			if(type != kType_Watch)
 			{
 				{
-					// do one shot field
-
+					/* ----- do one shot field ----- */
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_OneShot;
 					menuItem[total] = "One Shot";
-					menuSubItem[total] = ui_getstring(TEST_FIELD(traverse->type, OneShot) ? UI_on : UI_off);
-
-					total++;
+					menuSubItem[total++] = ui_getstring(TEST_FIELD(traverse->type, OneShot) ? UI_on : UI_off);
 				}
 
 				{
-					// do restore previous value field
-
+					/* ----- do restore previous value field ----- */
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_RestorePreviousValue;
 					menuItem[total] = "Restore Previous Value";
-					menuSubItem[total] = ui_getstring(TEST_FIELD(traverse->type, RestorePreviousValue) ? UI_on : UI_off);
-
-					total++;
+					menuSubItem[total++] = ui_getstring(TEST_FIELD(traverse->type, RestorePreviousValue) ? UI_on : UI_off);
 				}
 			}
 
 			if((type == kType_NormalOrDelay) || (type == kType_WaitForModification))
 			{
-				// do delay field
-
+				/* ----- do delay field ----- */
 				menuItemInfo[total].subcheat = i;
 				menuItemInfo[total].fieldType = kType_Delay;
-				menuItem[total] = "Delay";
-				menuSubItem[total] = kNumbersTable[typeParameter];
 
-				total++;
+				if(	TEST_FIELD(traverse->type, OneShot) && TEST_FIELD(traverse->type, RestorePreviousValue) &&
+					EXTRACT_FIELD(traverse->type, TypeParameter))
+					menuItem[total] = "Keep";
+				else
+					menuItem[total] = "Delay";
+
+				menuSubItem[total++] = kNumbersTable[typeParameter];
 			}
 
 			if(type == kType_IgnoreIfDecrementing)
 			{
-				// do ignore decrement by field
-
+				/* ----- do ignore decrement by field ----- */
 				menuItemInfo[total].subcheat = i;
 				menuItemInfo[total].fieldType = kType_IgnoreDecrementBy;
 				menuItem[total] = "Ignore Decrement By";
-				menuSubItem[total] = kNumbersTable[typeParameter];
-
-				total++;
+				menuSubItem[total++] = kNumbersTable[typeParameter];
 			}
 
 			if(type == kType_Watch)
 			{
 				{
-					// do watch size field
-
+					/* ----- do watch size field ----- */
 					sprintf(watchSizeBuf[i], "%d", (traverse->originalDataField & 0xFF) + 1);
 
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_WatchSize;
 					menuItem[total] = "Watch Size";
-					menuSubItem[total] = watchSizeBuf[i];
-
-					total++;
+					menuSubItem[total++] = watchSizeBuf[i];
 				}
 
 				{
-					// do watch skip field
-
+					/* ----- do watch skip field ----- */
 					sprintf(watchSkipBuf[i], "%d", (traverse->data >> 8) & 0xFF);
 
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_WatchSkip;
 					menuItem[total] = "Watch Skip";
-					menuSubItem[total] = watchSkipBuf[i];
-
-					total++;
+					menuSubItem[total++] = watchSkipBuf[i];
 				}
 
 				{
-					// do watch per line field
-
+					/* ----- do watch per line field ----- */
 					sprintf(watchPerLineBuf[i], "%d", (traverse->data >> 16) & 0xFF);
 
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_WatchPerLine;
 					menuItem[total] = "Watch Per Line";
-					menuSubItem[total] = watchPerLineBuf[i];
-
-					total++;
+					menuSubItem[total++] = watchPerLineBuf[i];
 				}
 
 				{
-					// do watch add value field
-
+					/* ----- do watch add value field ----- */
 					{
 						INT8	temp = (traverse->data >> 24) & 0xFF;
 
@@ -3378,58 +3263,47 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_WatchAddValue;
 					menuItem[total] = "Watch Add Value";
-					menuSubItem[total] = watchAddValueBuf[i];
-
-					total++;
+					menuSubItem[total++] = watchAddValueBuf[i];
 				}
 
 				{
-					// do watch format field
-
+					/* ----- do watch format field ----- */
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_WatchFormat;
 					menuItem[total] = "Watch Format";
-					menuSubItem[total] = kWatchDisplayTypeStringList[(typeParameter >> 0) & 0x03];
-
-					total++;
+					menuSubItem[total++] = kWatchDisplayTypeStringList[(typeParameter >> 0) & 0x03];
 				}
 
 				{
-					// do watch label field
-
+					/* ----- do watch label field ----- */
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_WatchLabel;
 					menuItem[total] = "Watch Label";
-					menuSubItem[total] = ui_getstring(((typeParameter >> 2) & 0x01) ? UI_on : UI_off);
-
-					total++;
+					menuSubItem[total++] = ui_getstring(((typeParameter >> 2) & 0x01) ? UI_on : UI_off);
 				}
 			}
 			else
 			{
-				// do operation field
-
+				/* ----- do operation field ----- */
 				menuItemInfo[total].subcheat = i;
 				menuItemInfo[total].fieldType = kType_Operation;
 				menuItem[total] = "Operation";
 
 				if((locationType != kLocation_IndirectIndexed) && (operation == kOperation_SetOrClearBits))
 				{
+					/* ----- ignore Set/Clear Bit item if not relative address ----- */
 					operation = kOperation_WriteMask;
 
 					CLEAR_MASK_FIELD(traverse->type, OperationExtend);
 					SET_FIELD(traverse->type, Operation, operation);
 				}
 
-				menuSubItem[total] = kOperationNames[operation];
-
-				total++;
+				menuSubItem[total++] = kOperationNames[operation];
 			}
 
 			if((operation == kOperation_WriteMask) && (locationType != kLocation_IndirectIndexed))
 			{
-				// do mask field
-
+				/* ----- do mask field ----- */
 				int	numChars;
 
 				if(traverse->flags & kActionFlag_IgnoreMask)
@@ -3448,105 +3322,108 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 				menuItemInfo[total].subcheat = i;
 				menuItemInfo[total].fieldType = kType_WriteMask;
 				menuItem[total] = "Mask";
-				menuSubItem[total] = extendDataBuf[i];
-
-				total++;
+				menuSubItem[total++] = extendDataBuf[i];
 			}
 
 			if(operation == kOperation_AddSubtract)
 			{
 				{
-					// do add/subtract field
-
+					/* ----- do add/subtract field ----- */
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_AddSubtract;
 					menuItem[total] = "Add/Subtract";
-					menuSubItem[total] = kAddSubtractNames[operationParameter];
-
-					total++;
+					menuSubItem[total++] = kAddSubtractNames[operationParameter];
 				}
 
 				if(locationType != kLocation_IndirectIndexed)
 				{
 					if(operationParameter)
 					{
-						// do subtract minimum field
-
+						/* ----- do subtract minimum field ----- */
 						sprintf(extendDataBuf[i], "%.8X", traverse->extendData);
 
 						menuItemInfo[total].subcheat = i;
 						menuItemInfo[total].fieldType = kType_SubtractMinimum;
 						menuItem[total] = "Minimum Boundary";
-						menuSubItem[total] = extendDataBuf[i];
-
-						total++;
+						menuSubItem[total++] = extendDataBuf[i];
 					}
 					else
 					{
-						// do add maximum field
-
+						/* ----- do add maximum field ----- */
 						sprintf(extendDataBuf[i], "%.8X", traverse->extendData);
 
 						menuItemInfo[total].subcheat = i;
 						menuItemInfo[total].fieldType = kType_AddMaximum;
 						menuItem[total] = "Maximum Boundary";
-						menuSubItem[total] = extendDataBuf[i];
-
-						total++;
+						menuSubItem[total++] = extendDataBuf[i];
 					}
 				}
 			}
 
 			if((operation == kOperation_ForceRange) && (locationType != kLocation_IndirectIndexed))
 			{
+				/* ----- do range minimum field ----- */
+				if(!EXTRACT_FIELD(traverse->type, BytesUsed))
+					sprintf(extendDataBuf[i], "%.2X", (traverse->extendData >> 8) & 0xFF);
+				else
+					sprintf(extendDataBuf[i], "%.4X", (traverse->extendData >> 16) & 0xFFFF);
+
+				menuItemInfo[total].subcheat = i;
+				menuItemInfo[total].fieldType = kType_RangeMinimum;
+				menuItem[total] = "Range Minimum";
+				menuSubItem[total++] = extendDataBuf[i];
+
+				/* ----- do range maximum field ----- */
+				if(!EXTRACT_FIELD(traverse->type, BytesUsed))
 				{
-					// do range minimum field
-
-					if(!EXTRACT_FIELD(traverse->type, BytesUsed))
-						sprintf(extendDataBuf[i], "%.2X", (traverse->extendData >> 8) & 0xFF);
-					else
-						sprintf(extendDataBuf[i], "%.4X", (traverse->extendData >> 16) & 0xFFFF);
-
-					menuItemInfo[total].subcheat = i;
-					menuItemInfo[total].fieldType = kType_RangeMinimum;
-					menuItem[total] = "Range Minimum";
-					menuSubItem[total] = extendDataBuf[i];
-
-					total++;
+					sprintf(extendDataBuf[i] + 3, "%.2X", (traverse->extendData >> 0) & 0xFF);
+					menuSubItem[total] = extendDataBuf[i] + 3;
+				}
+				else
+				{
+					sprintf(extendDataBuf[i] + 7, "%.4X", (traverse->extendData >> 0) & 0xFFFF);
+					menuSubItem[total] = extendDataBuf[i] + 7;
 				}
 
-				{
-					// do range maximum field
-
-					if(!EXTRACT_FIELD(traverse->type, BytesUsed))
-					{
-						sprintf(extendDataBuf[i] + 3, "%.2X", (traverse->extendData >> 0) & 0xFF);
-						menuSubItem[total] = extendDataBuf[i] + 3;
-					}
-					else
-					{
-						sprintf(extendDataBuf[i] + 7, "%.4X", (traverse->extendData >> 0) & 0xFFFF);
-						menuSubItem[total] = extendDataBuf[i] + 7;
-					}
-
-					menuItemInfo[total].subcheat = i;
-					menuItemInfo[total].fieldType = kType_RangeMaximum;
-					menuItem[total] = "Range Maximum";
-
-					total++;
-				}
+				menuItemInfo[total].subcheat = i;
+				menuItemInfo[total].fieldType = kType_RangeMaximum;
+				menuItem[total++] = "Range Maximum";
 			}
 
 			if(operation == kOperation_SetOrClearBits)
 			{
-				// do set/clear field
-
+				/* ----- do set/clear field ----- */
 				menuItemInfo[total].subcheat = i;
 				menuItemInfo[total].fieldType = kType_SetClear;
 				menuItem[total] = "Set/Clear";
-				menuSubItem[total] = kSetClearNames[operationParameter];
+				menuSubItem[total++] = kSetClearNames[operationParameter];
+			}
 
-				total++;
+			if(operation == kOperation_WriteMatch)
+			{
+				/* ----- do match value field ----- */
+				menuItemInfo[total].subcheat = i;
+				menuItemInfo[total].fieldType = kType_WriteMatch;
+				menuItem[total] = "Match to Write";
+
+				{
+					int	numChars;
+
+					if(traverse->flags & kActionFlag_IgnoreMask)
+					{
+						menuItemInfo[total].extraData = 0xFFFFFFFF;
+						numChars = 8;
+					}
+					else
+					{
+						menuItemInfo[total].extraData = kCheatSizeMaskTable[EXTRACT_FIELD(traverse->type, BytesUsed)];
+						numChars = kCheatSizeDigitsTable[EXTRACT_FIELD(traverse->type, BytesUsed)];
+					}
+
+					sprintf(extendDataBuf[i], "%.*X", numChars, traverse->extendData);
+				}
+
+				menuSubItem[total++] = extendDataBuf[i];
 			}
 
 			if((operation != kOperation_None) || (type == kType_Watch))
@@ -3557,7 +3434,7 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 				if(type != kType_Watch)
 				{
 					{
-						// do data field
+						/* ----- do data field ----- */
 
 						sprintf(dataBuf[i], "%.*X (%d)", (int)kCheatSizeDigitsTable[bytesUsed], traverse->originalDataField, traverse->originalDataField);
 
@@ -3565,175 +3442,135 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 						menuItemInfo[total].fieldType = kType_Data;
 						menuItemInfo[total].extraData = kCheatSizeMaskTable[bytesUsed];
 						menuItem[total] = "Data";
-						menuSubItem[total] = dataBuf[i];
-
-						total++;
+						menuSubItem[total++] = dataBuf[i];
 					}
 
 					if(!i)
 					{
-						// do user select field
-
+						/* ----- do user select field ----- */
 						menuItemInfo[total].subcheat = i;
 						menuItemInfo[total].fieldType = kType_UserSelect;
 						menuItem[total] = "User Select";
-						menuSubItem[total] = ui_getstring(userSelect ? UI_on : UI_off);
-
-						total++;
+						menuSubItem[total++] = ui_getstring(userSelect ? UI_on : UI_off);
 					}
 
 					if(!i && userSelect)
 					{
 						{
-							// do user select minimum displayed value field
-
+							/* ----- do user select minimum displayed value field ----- */
 							menuItemInfo[total].subcheat = i;
 							menuItemInfo[total].fieldType = kType_UserSelectMinimumDisp;
 							menuItem[total] = "Minimum Displayed Value";
-							menuSubItem[total] = kNumbersTable[EXTRACT_FIELD(traverse->type, UserSelectMinimumDisplay)];
-
-							total++;
+							menuSubItem[total++] = kNumbersTable[EXTRACT_FIELD(traverse->type, UserSelectMinimumDisplay)];
 						}
 
 						{
-							// do user select minimum value field
-
+							/* ----- do user select minimum value field ----- */
 							menuItemInfo[total].subcheat = i;
 							menuItemInfo[total].fieldType = kType_UserSelectMinimum;
 							menuItem[total] = "Minimum Value";
-							menuSubItem[total] = kNumbersTable[EXTRACT_FIELD(traverse->type, UserSelectMinimum)];
-
-							total++;
+							menuSubItem[total++] = kNumbersTable[EXTRACT_FIELD(traverse->type, UserSelectMinimum)];
 						}
 					}
 
 					if(userSelect)
 					{
-						// do user select BCD field
-
+						/* ----- do user select BCD field ----- */
 						menuItemInfo[total].subcheat = i;
 						menuItemInfo[total].fieldType = kType_UserSelectBCD;
 						menuItem[total] = "BCD";
-						menuSubItem[total] = ui_getstring(TEST_FIELD(traverse->type, UserSelectBCD) ? UI_on : UI_off);
-
-						total++;
+						menuSubItem[total++] = ui_getstring(TEST_FIELD(traverse->type, UserSelectBCD) ? UI_on : UI_off);
 					}
 
 					if(userSelect || isSelect)
 					{
-						// do prefill field
-
+						/* ----- do prefill field ----- */
 						menuItemInfo[total].subcheat = i;
 						menuItemInfo[total].fieldType = kType_Prefill;
 						menuItem[total] = "Prefill";
-						menuSubItem[total] = kPrefillNames[EXTRACT_FIELD(traverse->type, Prefill)];
-
-						total++;
+						menuSubItem[total++] = kPrefillNames[EXTRACT_FIELD(traverse->type, Prefill)];
 					}
 
 					if(i && userSelect)
 					{
-						// do copy previous value field
-
+						/* ----- do copy previous value field ----- */
 						menuItemInfo[total].subcheat = i;
 						menuItemInfo[total].fieldType = kType_CopyPrevious;
 						menuItem[total] = "Copy Previous Value";
-						menuSubItem[total] = ui_getstring(TEST_FIELD(traverse->type, LinkCopyPreviousValue) ? UI_on : UI_off);
-
-						total++;
+						menuSubItem[total++] = ui_getstring(TEST_FIELD(traverse->type, LinkCopyPreviousValue) ? UI_on : UI_off);
 					}
 				}
 
 				{
-					// do byte length field
-
+					/* ----- do byte length field ----- */
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_ByteLength;
 					menuItem[total] = "Byte Length";
-					menuSubItem[total] = kSizeNames[bytesUsed];
-
-					total++;
+					menuSubItem[total++] = kSizeNames[bytesUsed];
 				}
 
 				if(bytesUsed > 0)
 				{
-					// do endianness field
-
+					/* ----- do endianness field ----- */
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_Endianness;
 					menuItem[total] = "Endianness";
-					menuSubItem[total] = kEndiannessNames[EXTRACT_FIELD(traverse->type, Endianness)];
-
-					total++;
+					menuSubItem[total++] = kEndiannessNames[EXTRACT_FIELD(traverse->type, Endianness)];
 				}
 
 				{
-					// do location type field
-
+					/* ----- do location type field ----- */
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_LocationType;
 					menuItem[total] = "Location";
 
 					if(locationType == kLocation_Custom)
-						menuSubItem[total] = kCustomLocationNames[locationParameter];
+						menuSubItem[total++] = kCustomLocationNames[locationParameter];
 					else
-						menuSubItem[total] = kLocationNames[locationType];
-
-					total++;
+						menuSubItem[total++] = kLocationNames[locationType];
 				}
 
-				if((locationType == kLocation_Standard) || (locationType == kLocation_HandlerMemory))
+				if(	(locationType == kLocation_Standard) || (locationType == kLocation_HandlerMemory) ||
+					(locationType == kLocation_ProgramSpace))
 				{
-					// do cpu field
-
+					/* ----- do cpu field ----- */
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_CPU;
 					menuItem[total] = "CPU";
-					menuSubItem[total] = kNumbersTable[locationParameter];
-
-					total++;
+					menuSubItem[total++] = kNumbersTable[locationParameter];
 				}
 
 				if(locationType == kLocation_MemoryRegion)
 				{
-					// do region field
-
+					/* ----- do region field ----- */
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_Region;
 					menuItem[total] = "Region";
-					menuSubItem[total] = kRegionNames[locationParameter];
-
-					total++;
+					menuSubItem[total++] = kRegionNames[locationParameter];
 				}
 
 				if(locationType == kLocation_IndirectIndexed)
 				{
 					{
-						// do packed CPU field
-
+						/* ----- do packed CPU field ----- */
 						menuItemInfo[total].subcheat = i;
 						menuItemInfo[total].fieldType = kType_PackedCPU;
 						menuItem[total] = "CPU";
-						menuSubItem[total] = kNumbersTable[(locationParameter >> 2) & 7];
-
-						total++;
+						menuSubItem[total++] = kNumbersTable[(locationParameter >> 2) & 7];
 					}
 
 					{
-						// do packed size field
-
+						/* ----- do packed size field ----- */
 						menuItemInfo[total].subcheat = i;
 						menuItemInfo[total].fieldType = kType_PackedSize;
 						menuItem[total] = "Address Size";
-						menuSubItem[total] = kNumbersTable[(locationParameter & 3) + 1];
-
-						total++;
+						menuSubItem[total++] = kNumbersTable[(locationParameter & 3) + 1];
 					}
 
 					{
-						// do address index field
+						/* ----- do address index field ----- */
 
-						// swap if negative
+						/* ---- swap if negative ----- */
 						if(traverse->extendData & 0x80000000)
 						{
 							int	temp = traverse->extendData;
@@ -3743,28 +3580,24 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 							sprintf(extendDataBuf[i], "-%.8X", temp);
 						}
 						else
-						{
 							sprintf(extendDataBuf[i], "%.8X", traverse->extendData);
-						}
 
 						menuItemInfo[total].subcheat = i;
 						menuItemInfo[total].fieldType = kType_AddressIndex;
 						menuItem[total] = "Address Index";
-						menuSubItem[total] = extendDataBuf[i];
-
-						total++;
+						menuSubItem[total++] = extendDataBuf[i];
 					}
 				}
 
 				{
-					// do address field
-
+					/* ----- do address field ----- */
 					int	charsToPrint = 8;
 
 					switch(EXTRACT_FIELD(traverse->type, LocationType))
 					{
 						case kLocation_Standard:
 						case kLocation_HandlerMemory:
+						case kLocation_ProgramSpace:
 						{
 							CPUInfo	* cpuInfo = &cpuInfoList[EXTRACT_FIELD(traverse->type, LocationParameter)];
 
@@ -3791,9 +3624,7 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 					menuItemInfo[total].subcheat = i;
 					menuItemInfo[total].fieldType = kType_Address;
 					menuItem[total] = "Address";
-					menuSubItem[total] = addressBuf[i];
-
-					total++;
+					menuSubItem[total++] = addressBuf[i];
 				}
 			}
 		}
@@ -3802,24 +3633,22 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 		{
 			menuItemInfo[total].subcheat = i;
 			menuItemInfo[total].fieldType = kType_Divider;
-			menuItem[total] = "===";
-			menuSubItem[total] = NULL;
-
-			total++;
+			menuItem[total] = "==========";
+			menuSubItem[total++] = NULL;
 		}
 	}
 
-	menuItemInfo[total].subcheat =	0;
+	menuItemInfo[total].subcheat =	0;				// return
 	menuItemInfo[total].fieldType =	kType_Return;
 	menuItem[total] =				ui_getstring(UI_returntoprior);
-	menuSubItem[total] =			NULL;
-	total++;
+	menuSubItem[total++] =			NULL;
 
-	menuItemInfo[total].subcheat =	0;
+	menuItemInfo[total].subcheat =	0;				// terminate arrey
 	menuItemInfo[total].fieldType =	kType_Return;
 	menuItem[total] =				NULL;
 	menuSubItem[total] =			NULL;
 
+	/* ----- adjuste cursor position ----- */
 	if(sel < 0)
 		sel = 0;
 	if(sel >= total)
@@ -3828,11 +3657,14 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 	info = &menuItemInfo[sel];
 	action = &entry->actionList[info->subcheat];
 
+	/* ----- higlighted sub-item if edit mode ----- */
 	if(editActive)
 		flagBuf[sel] = 1;
 
+	/* ---- draw it ----- */
 	old_style_menu(menuItem, menuSubItem, flagBuf, sel, 0);
 
+	/********** KEY HANDLING **********/
 	if(AltKeyPressed())
 		increment <<= 4;
 	if(ControlKeyPressed())
@@ -3847,23 +3679,6 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 
 		switch(info->fieldType)
 		{
-			case kType_Name:
-				currentNameTemplate--;
-
-				if(currentNameTemplate < 0)
-				{
-					currentNameTemplate = 0;
-
-					while(kCheatNameTemplates[currentNameTemplate + 1][0])
-					{
-						currentNameTemplate++;
-					}
-				}
-
-				entry->name = realloc(entry->name, strlen(kCheatNameTemplates[currentNameTemplate]) + 1);
-				strcpy(entry->name, kCheatNameTemplates[currentNameTemplate]);
-				break;
-
 			case kType_ActivationKey1:
 			case kType_ActivationKey2:
 				if(info->fieldType == kType_ActivationKey1)
@@ -3994,17 +3809,26 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 
 			case kType_Operation:
 			{
-				UINT32	operation = (EXTRACT_FIELD(action->type, Operation) - 1) & 7;
+				UINT32	operation = ((EXTRACT_FIELD(action->type, Operation) | EXTRACT_FIELD(action->type, OperationExtend) << 2) - 1) & 7;
 
-				if(!(EXTRACT_FIELD(action->type, LocationType) == kLocation_IndirectIndexed) && (operation == kOperation_None))
-					operation = (operation - 1) & 7;
+				if(operation == kOperation_None)
+					operation = kOperation_WriteMatch;
 
-				CLEAR_MASK_FIELD(action->type, OperationExtend);
+				if(	(operation == kOperation_SetOrClearBits) &&
+					!(EXTRACT_FIELD(action->type, LocationType) == kLocation_IndirectIndexed))
+						operation = (operation - 1) & 7;
+
+				if(operation >> 2)
+					SET_MASK_FIELD(action->type, OperationExtend);
+				else
+					CLEAR_MASK_FIELD(action->type, OperationExtend);
+
 				SET_FIELD(action->type, Operation, operation);
 			}
 			break;
 
 			case kType_WriteMask:
+			case kType_WriteMatch:
 				action->extendData -= increment;
 				action->extendData &= info->extraData;
 				break;
@@ -4087,7 +3911,7 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 
 				if(locationType == kLocation_Standard)
 				{
-					SET_FIELD(action->type, LocationType, kLocation_IndirectIndexed);
+					SET_FIELD(action->type, LocationType, kLocation_ProgramSpace);
 					SET_FIELD(action->type, LocationParameter, (locationParameter << 2) & 0x1C);
 				}
 				else if(locationType == kLocation_Custom)
@@ -4158,18 +3982,6 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 
 		switch(info->fieldType)
 		{
-			case kType_Name:
-				currentNameTemplate++;
-
-				if((currentNameTemplate < 0) || !kCheatNameTemplates[currentNameTemplate][0])
-				{
-					currentNameTemplate = 0;
-				}
-
-				entry->name = realloc(entry->name, strlen(kCheatNameTemplates[currentNameTemplate]) + 1);
-				strcpy(entry->name, kCheatNameTemplates[currentNameTemplate]);
-				break;
-
 			case kType_ActivationKey1:
 			case kType_ActivationKey2:
 				if(info->fieldType == kType_ActivationKey1)
@@ -4304,17 +4116,26 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 
 			case kType_Operation:
 			{
-				UINT32	operation = (EXTRACT_FIELD(action->type, Operation) + 1) & 7;
+				UINT32	operation = ((EXTRACT_FIELD(action->type, Operation) | EXTRACT_FIELD(action->type, OperationExtend) << 2) + 1) & 7;
 
-				if(!(EXTRACT_FIELD(action->type, LocationType) == kLocation_IndirectIndexed) && (operation == kOperation_SetOrClearBits))
-					operation = (operation + 1) & 7;
+				if(operation > kOperation_WriteMatch)
+					operation = kOperation_WriteMask;
 
-				CLEAR_MASK_FIELD(action->type, OperationExtend);
+				if(	(operation == kOperation_SetOrClearBits) &&
+					!(EXTRACT_FIELD(action->type, LocationType) == kLocation_IndirectIndexed))
+						operation = (operation + 1) & 7;
+
+				if(operation >> 2)
+					SET_MASK_FIELD(action->type, OperationExtend);
+				else
+					CLEAR_MASK_FIELD(action->type, OperationExtend);
+
 				SET_FIELD(action->type, Operation, operation);
 			}
 			break;
 
 			case kType_WriteMask:
+			case kType_WriteMatch:
 				action->extendData += increment;
 				action->extendData &= info->extraData;
 				break;
@@ -4395,7 +4216,7 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 				UINT32	locationType = EXTRACT_FIELD(action->type, LocationType);
 				UINT32	locationParameter = EXTRACT_FIELD(action->type, LocationParameter);
 
-				if(locationType == kLocation_IndirectIndexed)
+				if(locationType == kLocation_ProgramSpace)
 				{
 					SET_FIELD(action->type, LocationType, kLocation_Standard);
 					SET_FIELD(action->type, LocationParameter, (locationParameter >> 2) & 7);
@@ -4525,6 +4346,7 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 				case kType_SubtractMinimum:
 				case kType_RangeMinimum:
 				case kType_RangeMaximum:
+				case kType_WriteMatch:
 				case kType_Data:
 				case kType_Address:
 					osd_readkey_unicode(1);
@@ -4539,10 +4361,10 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 		}
 	}
 
+	/********** EDIT MODE **********/
 	if(editActive)
 	{
-		// do edit text
-
+		/* ----- do edit text ----- */
 		dirty = 1;
 
 		switch(info->fieldType)
@@ -4671,6 +4493,7 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 
 			case kType_AddMaximum:
 			case kType_SubtractMinimum:
+			case kType_WriteMatch:
 				action->extendData = DoEditHexField(action->extendData);
 				break;
 
@@ -4729,9 +4552,7 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 		}
 
 		if(input_ui_pressed(IPT_UI_CANCEL))
-		{
 			editActive = 0;
-		}
 	}
 	else
 	{
@@ -4776,14 +4597,7 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 		editActive = 0;
 	}
 
-//  if(input_ui_pressed(IPT_UI_CONFIGURE))
-//  {
-//      sel = -2;
-//      editActive = 0;
-//  }
-
-	if(	(sel == -1) ||
-		(sel == -2))
+	if(sel == -1)
 	{
 		editActive = 0;
 		dirty = 1;
@@ -4799,9 +4613,591 @@ static int EditCheatMenu(CheatEntry * entry, int index, int selection)
 	return sel + 1;
 }
 
+/*-----------------------------------------------------------
+  DoSearchMenuMinimum - management for minimum search menu
+-----------------------------------------------------------*/
+
+static int DoSearchMenuMinimum(int selection)
+{
+	/* main */
+	enum
+	{
+		kMenu_CPU = 0,
+		kMenu_SearchItem,
+
+		kMenu_Divider,
+
+		kMenu_Memory,
+		kMenu_ViewResult,
+		kMenu_RestoreSearch,
+
+		kMenu_Return,
+	};
+
+	/* search item */
+	enum
+	{
+		kItem_Value,
+		kItem_Timer,
+		kItem_Equal,
+		kItem_NotEqual,
+		kItem_Less,
+		kItem_Greater,
+
+		kItem_Max = kItem_Greater,
+	};
+
+	const char		* menuItem[kMenu_Return + 2] = { 0 };
+	const char		* menuSubItem[kMenu_Return + 2] = { 0 };
+
+	char			valueBuffer[60];
+	char			valueSignedBuffer[60];
+	char			cpuBuffer[20];
+	char			flagBuf[kMenu_Return + 2] = { 0 };
+
+	SearchInfo		* search = GetCurrentSearch();
+
+	INT32			sel = selection - 1;
+	INT32			total =		 0;
+	UINT8			doSearch =	 0;
+
+	static INT8		searchItem = 0;
+	static INT8		submenuChoice = 0;
+	static UINT8	doneSaveMemory = 0;
+	static UINT8	firstEntry = 0;
+	static UINT8	editActive = 0;
+	static UINT8	posnKeep = kMenu_SearchItem;
+	static UINT32	increment = 1;
+
+	/********** SUB MENU **********/
+	if(submenuChoice)
+	{
+		switch(sel)
+		{
+			case kMenu_CPU:
+				submenuChoice = SelectSearchRegions(submenuChoice, GetCurrentSearch());
+				break;
+
+			case kMenu_ViewResult:
+				submenuChoice = ViewSearchResults(submenuChoice, firstEntry);
+				break;
+		}
+
+		firstEntry = 0;
+
+		posnKeep = sel;
+
+		/* ----- meaningless ? because no longer return with sel = -1 (pressed UI_CONFIG in submenu) ----- */
+//      if(submenuChoice == -1)
+//          submenuChoice = 0;
+
+		return sel + 1;
+	}
+
+	sel = posnKeep;
+
+	/* ----- unselectable comparison search item if no save ----- */
+	if(!doneSaveMemory)
+		searchItem = kItem_Value;
+
+	/********** MENU CONSTRUCTION **********/
+	sprintf(cpuBuffer, "%d", search->targetIdx);		// CPU
+	menuItem[total] = ui_getstring(UI_cpu);
+	menuSubItem[total++] = cpuBuffer;
+
+	if(search->sign && (search->oldOptions.value & kSearchByteSignBitTable[search->bytes]))
+	{
+		UINT32	tempValue;
+
+		tempValue = ~search->oldOptions.value + 1;
+		tempValue &= kSearchByteUnsignedMaskTable[search->bytes];
+
+		sprintf(valueBuffer, "-%.*X (-%d)", kSearchByteDigitsTable[search->bytes], tempValue, tempValue);
+	}
+	else
+		sprintf(valueBuffer, "%.*X (%d)", kSearchByteDigitsTable[search->bytes],
+				search->oldOptions.value & kSearchByteMaskTable[search->bytes],
+				search->oldOptions.value & kSearchByteMaskTable[search->bytes]);
+
+	switch(searchItem)
+	{
+		case kItem_Value:										// value
+			menuItem[total] = "Value";
+			menuSubItem[total++] = valueBuffer;
+			break;
+
+		case kItem_Timer:
+			menuItem[total] = "Timer (+ or -)";					// timer
+
+			/* ----- if memory has been saved, set sub-item for timer ----- */
+			if(doneSaveMemory)
+			{
+				if(search->oldOptions.delta & kSearchByteSignBitTable[search->bytes])
+				{
+					UINT32	tempValue;
+
+					tempValue = ~search->oldOptions.delta + 1;
+					tempValue &= kSearchByteUnsignedMaskTable[search->bytes];
+
+					sprintf(valueSignedBuffer, "-%.*X (-%d)", kSearchByteDigitsTable[search->bytes], tempValue, tempValue);
+				}
+				else
+					sprintf(valueSignedBuffer, "%.*X (%d)", kSearchByteDigitsTable[search->bytes],
+							search->oldOptions.delta & kSearchByteMaskTable[search->bytes],
+							 search->oldOptions.delta & kSearchByteMaskTable[search->bytes]);
+
+				menuSubItem[total++] = valueSignedBuffer;
+			}
+			break;
+
+		case kItem_Equal:
+			menuItem[total] = "Comparison";						// equal
+			menuSubItem[total++] = "Equal";
+			break;
+
+		case kItem_NotEqual:
+			menuItem[total] = "Comparison";						// not equal
+			menuSubItem[total++] = "Not Equal";
+			break;
+
+		case kItem_Less:
+			menuItem[total] = "Comparison";						// less
+			menuSubItem[total++] = "Less";
+			break;
+
+		case kItem_Greater:
+			menuItem[total] = "Comparison";						// greater
+			menuSubItem[total++] = "Greater";
+			break;
+	}
+
+	menuItem[total] = "--------------------";			// divider
+	menuSubItem[total++] = NULL;
+
+	if(doneSaveMemory)									// memory
+		menuItem[total] = "Initialize Memory";
+	else
+		menuItem[total] = "Save Memory";
+	menuSubItem[total++] = NULL;
+
+	menuItem[total] = ui_getstring(UI_viewresults);		// view result
+	menuSubItem[total++] = NULL;
+
+	menuItem[total] = ui_getstring(UI_restoreresults);	// restore result
+	menuSubItem[total++] = NULL;
+
+	menuItem[total] = ui_getstring(UI_returntoprior);	// return
+	menuSubItem[total++] = NULL;
+
+	menuItem[total] = NULL;								// terminate array
+	menuSubItem[total] = NULL;
+
+	/* ----- adjust current cursor position ----- */
+	if((sel < 0) || (sel >= total))
+		sel = kMenu_SearchItem;
+
+	/* ----- higlighted sub-item if edit mode ----- */
+	if(editActive)
+		flagBuf[sel] = 1;
+
+	/* ----- draw it ----- */
+	old_style_menu(menuItem, menuSubItem, flagBuf, sel, 0);
+
+	/********** KEY HANDLING **********/
+	if(UIPressedRepeatThrottle(IPT_UI_UP, kVerticalKeyRepeatRate))
+	{
+		if(editActive)
+		{
+			increment <<= 4;
+
+			switch(searchItem)
+			{
+				case kItem_Value:
+					search->oldOptions.value += increment;
+					search->oldOptions.value &= kSearchByteMaskTable[search->bytes];
+					break;
+
+				case kItem_Timer:
+					search->oldOptions.delta += increment;
+					search->oldOptions.delta &= kSearchByteMaskTable[search->bytes];
+					break;
+			}
+
+			increment >>= 4;
+		}
+		else
+		{
+			sel--;
+
+			/* ----- if divider, skip it ----- */
+			if(sel == kMenu_Divider)
+				sel--;
+
+			if(sel < 0)
+				sel = total - 1;
+		}
+	}
+
+	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
+	{
+		if(editActive)
+		{
+			increment <<= 4;
+
+			switch(searchItem)
+			{
+				case kItem_Value:
+					search->oldOptions.value -= increment;
+					search->oldOptions.value &= kSearchByteMaskTable[search->bytes];
+					break;
+
+				case kItem_Timer:
+					search->oldOptions.delta -= increment;
+					search->oldOptions.delta &= kSearchByteMaskTable[search->bytes];
+					break;
+			}
+
+			increment >>= 4;
+		}
+		else
+		{
+			sel++;
+
+			/* ----- if divider, skip it ----- */
+			if(sel == kMenu_Divider)
+				sel++;
+
+			if(sel >= total)
+				sel = 0;
+		}
+	}
+
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_UP, kVerticalKeyRepeatRate))
+	{
+		sel -= fullMenuPageHeight;
+
+		if(sel < 0)
+			sel = 0;
+	}
+
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_DOWN, kVerticalKeyRepeatRate))
+	{
+		sel += fullMenuPageHeight;
+
+		if(sel >= total)
+			sel = total - 1;
+	}
+
+	if(UIPressedRepeatThrottle(IPT_UI_LEFT, kHorizontalFastKeyRepeatRate))
+	{
+		if(editActive)
+		{
+			switch(searchItem)
+			{
+				case kItem_Value:
+					search->oldOptions.value -= increment;
+					search->oldOptions.value &= kSearchByteMaskTable[search->bytes];
+					break;
+
+				case kItem_Timer:
+					search->oldOptions.delta -= increment;
+					search->oldOptions.delta &= kSearchByteMaskTable[search->bytes];
+					break;
+			}
+		}
+		else
+		{
+			switch(sel)
+			{
+				case kMenu_CPU:
+					if(search->targetIdx > 0)
+					{
+						search->targetIdx--;
+
+						BuildSearchRegions(search);
+						AllocateSearchRegions(search);
+
+						doneSaveMemory = 0;
+					}
+					break;
+
+				case kMenu_SearchItem:
+					if(doneSaveMemory)
+						searchItem--;
+
+					if(searchItem < 0)
+						searchItem = kItem_Max;
+					break;
+			}
+		}
+	}
+
+	if(UIPressedRepeatThrottle(IPT_UI_RIGHT, kHorizontalFastKeyRepeatRate))
+	{
+		if(editActive)
+		{
+			switch(searchItem)
+			{
+				case kItem_Value:
+					search->oldOptions.value += increment;
+					search->oldOptions.value &= kSearchByteMaskTable[search->bytes];
+					break;
+
+				case kItem_Timer:
+					search->oldOptions.delta += increment;
+					search->oldOptions.delta &= kSearchByteMaskTable[search->bytes];
+					break;
+			}
+		}
+		else
+		{
+			switch(sel)
+			{
+				case kMenu_CPU:
+					if(search->targetIdx < cpu_gettotalcpu() - 1)
+					{
+						search->targetIdx++;
+
+						BuildSearchRegions(search);
+						AllocateSearchRegions(search);
+
+						doneSaveMemory = 0;
+					}
+					break;
+
+				case kMenu_SearchItem:
+					if(doneSaveMemory)
+						searchItem++;
+
+					if(searchItem > kItem_Max)
+						searchItem = kItem_Value;
+
+					break;
+			}
+		}
+	}
+
+	if(input_ui_pressed(IPT_UI_SELECT))
+	{
+		if(editActive)
+		{
+			switch(searchItem)
+			{
+				case kItem_Value:
+					search->bytes =			kSearchSize_8Bit;
+					search->lhs =			kSearchOperand_Current;
+					search->rhs =			kSearchOperand_Value;
+					search->comparison =	kSearchComparison_EqualTo;
+					search->value =			search->oldOptions.value;
+
+					doSearch = 1;
+					break;
+
+				case kItem_Timer:
+					search->bytes =			kSearchSize_8Bit;
+					search->lhs =			kSearchOperand_Current;
+					search->rhs =			kSearchOperand_Previous;
+					search->comparison =	kSearchComparison_IncreasedBy;
+					search->value =			search->oldOptions.delta;
+
+					doSearch = 1;
+					break;
+			}
+
+			/* ----- finish edit mode then do search ----- */
+			editActive = 0;
+		}
+		else
+		{
+			switch(sel)
+			{
+				case kMenu_CPU:
+					submenuChoice = 1;			// go to region selection menu
+					break;
+
+				case kMenu_SearchItem:
+				{
+
+					switch(searchItem)
+					{
+						case kItem_Value:
+						case kItem_Timer:
+							editActive = 1;
+							break;
+
+						case kItem_Equal:
+							search->bytes =			kSearchSize_8Bit;
+							search->lhs =			kSearchOperand_Current;
+							search->rhs =			kSearchOperand_Previous;
+							search->comparison =	kSearchComparison_EqualTo;
+
+							doSearch = 1;
+							break;
+
+						case kItem_NotEqual:
+							search->bytes =			kSearchSize_8Bit;
+							search->lhs =			kSearchOperand_Current;
+							search->rhs =			kSearchOperand_Previous;
+							search->comparison =	kSearchComparison_NotEqual;
+
+							doSearch = 1;
+							break;
+
+						case kItem_Less:
+							search->bytes =			kSearchSize_8Bit;
+							search->lhs =			kSearchOperand_Current;
+							search->rhs =			kSearchOperand_Previous;
+							search->comparison =	kSearchComparison_LessThan;
+
+							doSearch = 1;
+							break;
+
+						case kItem_Greater:
+							search->bytes =			kSearchSize_8Bit;
+							search->lhs =			kSearchOperand_Current;
+							search->rhs =			kSearchOperand_Previous;
+							search->comparison =	kSearchComparison_GreaterThan;
+
+							doSearch = 1;
+							break;
+					}
+				}
+				break;
+
+				case kMenu_Memory:				// save memory to search newly
+					doneSaveMemory = 0;
+
+					doSearch = 1;
+					break;
+
+				case kMenu_ViewResult:
+					if(search->regionListLength)
+					{
+						/* ----- go to result viewer ----- */
+						firstEntry = 1;
+						submenuChoice = 1;
+					}
+					else
+						/* ----- if no search region (eg, sms.c in HazeMD), don't open result viewer to avoid the crash ----- */
+						ui_popup_time(1, "no search regions");
+					break;
+
+				case kMenu_RestoreSearch:
+					RestoreSearchBackup(search);
+					break;
+
+				case kMenu_Return:
+					posnKeep = kMenu_SearchItem;
+					sel = -1;
+					break;
+			}
+		}
+	}
+
+	if(UIPressedRepeatThrottle(IPT_UI_ZOOM_IN, kVerticalKeyRepeatRate))
+		/* ----- quick menu switch : search -> watchpoint list ----- */
+		sel = -5;
+
+	if(UIPressedRepeatThrottle(IPT_UI_ZOOM_OUT, kVerticalKeyRepeatRate))
+		/* ----- quick menu switch : search -> add/edit ----- */
+		sel = -3;
+
+	/* ----- edit mode ON/OFF ----- */
+	if(input_ui_pressed(IPT_UI_EDIT_CHEAT))
+	{
+		if(editActive)
+			editActive = 0;
+		else
+		{
+			if((searchItem == kItem_Value) || (kItem_Timer))
+				editActive = 1;
+		}
+	}
+
+	/* ----- memory save ----- */
+	if(input_ui_pressed(IPT_UI_CLEAR))
+	{
+		doneSaveMemory = 0;
+
+		doSearch = 1;
+	}
+
+	if(input_ui_pressed(IPT_UI_CANCEL))
+	{
+		if(editActive)
+			editActive = 0;
+		else
+		{
+			posnKeep = kMenu_Memory;
+			sel = -1;
+		}
+	}
+
+	/********** SEARCH **********/
+	if(doSearch)
+	{
+		if(!doneSaveMemory)
+			/* ----- initialize search ----- */
+			InitializeNewSearch(search);
+
+		if(((sel == kMenu_SearchItem) && (searchItem == kItem_Value)) || doneSaveMemory)
+		{
+			/* ----- do search ----- */
+			BackupSearch(search);
+
+			DoSearch(search);
+		}
+
+		UpdateSearch(search);
+
+		/* ----- display message ----- */
+		if(((sel == kMenu_SearchItem) && (searchItem == kItem_Value)) || doneSaveMemory)
+			popmessage("%d results found", search->numResults);
+		else
+			popmessage("saved all memory regions");
+
+		doneSaveMemory = 1;
+
+		if(search->numResults == 1)
+		{
+			AddCheatFromFirstResult(search);
+
+			popmessage("1 result found, added to list");
+		}
+	}
+
+	/********** EDIT **********/
+	if((sel == kMenu_SearchItem) && editActive)
+	{
+		if(searchItem == kItem_Value)
+		{
+			search->oldOptions.value = DoEditHexField(search->oldOptions.value);
+
+			search->oldOptions.value &= kSearchByteMaskTable[search->bytes];
+		}
+		else
+		{
+			if(searchItem == kItem_Timer)
+			{
+				search->oldOptions.delta = DoEditHexField(search->oldOptions.delta);
+
+				search->oldOptions.delta &= kSearchByteMaskTable[search->bytes];
+			}
+		}
+	}
+
+	if(sel >= 0)
+		posnKeep = sel;
+
+	return sel + 1;
+}
+
+/*-----------------------------------------------------------
+  DoSearchMenuClassic - management for classic search menu
+-----------------------------------------------------------*/
+
 static int DoSearchMenuClassic(int selection)
 {
-	/* menu strings */
 	static const char * energyStrings[] =
 	{
 		"Less",
@@ -4873,8 +5269,6 @@ static int DoSearchMenuClassic(int selection)
 		kEnergy_GreaterOrEqual,
 	};
 
-	INT32			sel = selection - 1;
-
 	const char		* menuItem[kMenu_Return + 2] = { 0 };
 	const char		* menuSubItem[kMenu_Return + 2] = { 0 };
 
@@ -4882,21 +5276,21 @@ static int DoSearchMenuClassic(int selection)
 	char			valueSignedBuffer[60];
 	char			cpuBuffer[20];
 
-	INT8			total = 0;
-	static int		lastPos = 0;
-
 	SearchInfo		* search = GetCurrentSearch();
 
+	INT32			sel = selection - 1;
+	INT32			total = 0;
 	UINT32			increment = 1;
 	UINT8			doSearch = 0;
 
 	static INT8		submenuChoice = 0;
 	static UINT8	doneSaveMemory = 0;
 	static UINT8	firstEntry = 0;
+	static int		lastPos = 0;
 
 	sel = lastPos;
 
-	/* ----- open sub-menu if selected ----- */
+	/********** SUB MENU **********/
 	if(submenuChoice)
 	{
 		switch(sel)
@@ -4912,13 +5306,14 @@ static int DoSearchMenuClassic(int selection)
 
 		firstEntry = 0;
 
-		if(submenuChoice == -1)
-			submenuChoice = 0;
+		/* ----- meaningless ? because no longer return with sel = -1 (pressed UI_CONFIG in submenu) ----- */
+//      if(submenuChoice == -1)
+//          submenuChoice = 0;
 
 		return sel + 1;
 	}
 
-	/* ----- construct menu and sub-menu items ----- */
+	/********** MENU CONSTRUCTION **********/
 	if(!doneSaveMemory)
 		menuItem[total] = "Save Memory";
 	else
@@ -4943,9 +5338,7 @@ static int DoSearchMenuClassic(int selection)
 		sprintf(valueBuffer, "-%.*X (-%d)", kSearchByteDigitsTable[search->bytes], tempValue, tempValue);
 	}
 	else
-	{
 		sprintf(valueBuffer, "%.*X (%d)", kSearchByteDigitsTable[search->bytes], search->oldOptions.value & kSearchByteMaskTable[search->bytes], search->oldOptions.value & kSearchByteMaskTable[search->bytes]);
-	}
 
 	menuItem[total] = "Value (Equal)";
 
@@ -4976,19 +5369,19 @@ static int DoSearchMenuClassic(int selection)
 	menuItem[total] = "--------------------";
 	menuSubItem[total++] = NULL;
 
-	menuItem[total] = ui_getstring(UI_viewresults);
+	menuItem[total] = ui_getstring(UI_viewresults);		// view result
 	menuSubItem[total++] = NULL;
 
-	menuItem[total] = ui_getstring(UI_restoreresults);
+	menuItem[total] = ui_getstring(UI_restoreresults);	// restore result
 	menuSubItem[total++] = NULL;
 
-	menuItem[total] = ui_getstring(UI_returntoprior);
+	menuItem[total] = ui_getstring(UI_returntoprior);	// return
 	menuSubItem[total++] = NULL;
 
-	menuItem[total] = NULL;
+	menuItem[total] = NULL;								// terminate array
 	menuSubItem[total] = NULL;
 
-	/* ----- if memory is saved, set sub-menu items ----- */
+	/* ----- if memory has been saved, set sub-menu items ----- */
 	if(doneSaveMemory)
 	{
 		if(search->oldOptions.delta & kSearchByteSignBitTable[search->bytes])
@@ -5001,9 +5394,7 @@ static int DoSearchMenuClassic(int selection)
 			sprintf(valueSignedBuffer, "-%.*X (-%d)", kSearchByteDigitsTable[search->bytes], tempValue, tempValue);
 		}
 		else
-		{
 			sprintf(valueSignedBuffer, "%.*X (%d)", kSearchByteDigitsTable[search->bytes], search->oldOptions.delta & kSearchByteMaskTable[search->bytes], search->oldOptions.delta & kSearchByteMaskTable[search->bytes]);
-		}
 
 		menuSubItem[kMenu_Time] = valueSignedBuffer;
 		menuSubItem[kMenu_Energy] = energyStrings[search->oldOptions.energy];
@@ -5011,9 +5402,16 @@ static int DoSearchMenuClassic(int selection)
 		menuSubItem[kMenu_Operand] = operandStrings[search->oldOptions.operand];
 	}
 
-	/* ----- draw items ----- */
+	/* ----- adjust current cursor position ----- */
+	if(sel < 0)
+		sel = 0;
+	if(sel >= total)
+		sel = total - 1;
+
+	/* ----- draw it ----- */
 	old_style_menu(menuItem, menuSubItem, 0, sel, 0);
 
+	/********** KEY HANDLING **********/
 	if(AltKeyPressed())
 		increment <<= 4;
 
@@ -5021,7 +5419,7 @@ static int DoSearchMenuClassic(int selection)
 	{
 		sel++;
 
-		// if divider, skip it
+		/* ----- if divider, skip it ----- */
 		if((sel == kMenu_Divider) || (sel == kMenu_Divider2))
 			sel++;
 
@@ -5033,7 +5431,7 @@ static int DoSearchMenuClassic(int selection)
 	{
 		sel--;
 
-		// if divider, skip it
+		/* ----- if divider, skip it ----- */
 		if((sel == kMenu_Divider) || (sel == kMenu_Divider2))
 			sel--;
 
@@ -5169,14 +5567,14 @@ static int DoSearchMenuClassic(int selection)
 	{
 		switch(sel)
 		{
-			case kMenu_DoMemorySave:	/* save memory to search newly */
+			case kMenu_DoMemorySave:		// save memory to search newly
 				doneSaveMemory = 0;
 
 				doSearch = 1;
 				break;
 
 			case kMenu_CPU:
-				submenuChoice = 1;		/* open regions selection menu */
+				submenuChoice = 1;			// go to region selection menu
 				break;
 
 			case kMenu_ValueEqual:
@@ -5186,9 +5584,9 @@ static int DoSearchMenuClassic(int selection)
 				search->rhs =			kSearchOperand_Value;
 
 				if(sel == kMenu_ValueEqual)
-					search->comparison = kSearchComparison_EqualTo;		/* search requested value */
+					search->comparison = kSearchComparison_EqualTo;		// search requested value
 				else
-					search->comparison = kSearchComparison_NearTo;		/* search requested and requested-1 value */
+					search->comparison = kSearchComparison_NearTo;		// search requested and requested -1 value
 
 				search->value =			search->oldOptions.value;
 
@@ -5224,11 +5622,19 @@ static int DoSearchMenuClassic(int selection)
 				break;
 
 			case kMenu_ViewResult:
-				firstEntry = 1;
-				submenuChoice = 1;
+				if(search->regionListLength)
+				{
+					/* ----- go to result viewer ----- */
+					firstEntry = 1;
+					submenuChoice = 1;
+				}
+				else
+					/* ----- if no search region (eg, sms.c in HazeMD), don't open result viewer to avoid the crash ----- */
+					ui_popup_time(1, "no search regions");
 				break;
 
 			case kMenu_RestoreSearch:
+				/* ----- restore previous results ----- */
 				RestoreSearchBackup(search);
 				break;
 
@@ -5242,14 +5648,32 @@ static int DoSearchMenuClassic(int selection)
 		}
 	}
 
-	/* ----- do search or save memory ----- */
+	if(UIPressedRepeatThrottle(IPT_UI_ZOOM_IN, kVerticalKeyRepeatRate))
+		/* ----- quick menu switch : search -> watchpoint list ----- */
+		sel = -5;
+
+	if(UIPressedRepeatThrottle(IPT_UI_ZOOM_OUT, kVerticalKeyRepeatRate))
+		/* ----- quick menu switch : search -> add/edit ----- */
+		sel = -3;
+
+
+	if(input_ui_pressed(IPT_UI_CANCEL))
+	{
+		/* ----- if cursor is now on the return item, adjust cursor keeper ----- */
+		if(sel == kMenu_Return)
+			lastPos = 0;
+
+		sel = -1;
+	}
+
 	if(doSearch)
 	{
-		if(!doneSaveMemory)
-			InitializeNewSearch(search);
+		/* ----- initialize search ----- */
+		InitializeNewSearch(search);
 
 		if( (sel == kMenu_ValueEqual) || (sel == kMenu_ValueNearTo) || doneSaveMemory)
 		{
+			/* ----- do search ----- */
 			BackupSearch(search);
 
 			DoSearch(search);
@@ -5270,15 +5694,6 @@ static int DoSearchMenuClassic(int selection)
 
 			popmessage("1 result found, added to list");
 		}
-	}
-
-	if(input_ui_pressed(IPT_UI_CANCEL))
-	{
-		/* ----- if cursor is now on the return item, adjust cursor keeper ----- */
-		if(sel == kMenu_Return)
-			lastPos = 0;
-
-		sel = -1;
 	}
 
 	/* ----- edit a value if direct key input ----- */
@@ -5305,8 +5720,42 @@ static int DoSearchMenuClassic(int selection)
 	return sel + 1;
 }
 
+/*-----------------------------------------------------
+  DoSearchMenu - management for advanced search menu
+-----------------------------------------------------*/
+
 static int DoSearchMenu(int selection)
 {
+	/* menu stirngs */
+	static const char * kOperandNameTable[] =
+	{
+		"Current Data",
+		"Previous Data",
+		"First Data",
+		"Value"
+	};
+
+	static const char * kComparisonNameTable[] =
+	{
+		"Less",
+		"Greater",
+		"Equal",
+		"Less Or Equal",
+		"Greater Or Equal",
+		"Not Equal",
+		"Increased By Value",
+		"Near To"
+	};
+
+	static const char * kSearchByteNameTable[] =
+	{
+		"1",
+		"2",
+		"3",
+		"4",
+		"Bit"
+	};
+
 	enum
 	{
 		kMenu_LHS,
@@ -5326,30 +5775,63 @@ static int DoSearchMenu(int selection)
 
 		kMenu_DoSearch,
 		kMenu_SaveMemory,
+
+		kMenu_Divider3,
+
+		kMenu_ViewResult,
+		kMenu_RestoreSearch,
+
 		kMenu_Return,
 
 		kMenu_Max
 	};
 
-	INT32			sel = selection - 1;
-	static INT32	submenuChoice = 0;
 	const char		* menu_item[kMenu_Max + 2] =	{ 0 };
 	const char		* menu_subitem[kMenu_Max + 2] =	{ 0 };
-	char			flagBuf[kMenu_Max + 2] = { 0 };
+
 	char			valueBuffer[20];
 	char			cpuBuffer[20];
+	char			flagBuf[kMenu_Max + 2] = { 0 };
+
 	SearchInfo		* search = GetCurrentSearch();
+
+	INT32			sel = selection - 1;
 	INT32			total = 0;
 	UINT32			increment = 1;
 
+	static INT8	submenuChoice = 0;
 	static UINT8	doneMemorySave = 0;
 	static UINT8	editActive = 0;
+	static UINT8	firstEntry = 0;
 	static int		lastSel = 0;
 
 	sel = lastSel;
 
-	if(	(search->sign || search->comparison == kSearchComparison_IncreasedBy) &&
-		(search->value & kSearchByteSignBitTable[search->bytes]))
+	/********** SUB MENU **********/
+	if(submenuChoice)
+	{
+		switch(sel)
+		{
+			case kMenu_CPU:
+				submenuChoice = SelectSearchRegions(submenuChoice, GetCurrentSearch());
+				break;
+
+			case kMenu_ViewResult:
+				submenuChoice = ViewSearchResults(submenuChoice, firstEntry);
+				break;
+		}
+
+		firstEntry = 0;
+
+		/* ----- meaningless ? because no longer return with sel = -1 (pressed UI_CONFIG in submenu) ----- */
+//      if(submenuChoice == -1)
+//          submenuChoice = 0;
+
+		return sel + 1;
+	}
+
+	/********** MENU CONSTRUCION **********/
+	if((search->sign || search->comparison == kSearchComparison_IncreasedBy) && (search->value & kSearchByteSignBitTable[search->bytes]))
 	{
 		UINT32	tempValue;
 
@@ -5359,104 +5841,97 @@ static int DoSearchMenu(int selection)
 		sprintf(valueBuffer, "-%.*X", kSearchByteDigitsTable[search->bytes], tempValue);
 	}
 	else
-	{
 		sprintf(valueBuffer, "%.*X", kSearchByteDigitsTable[search->bytes], search->value & kSearchByteMaskTable[search->bytes]);
-	}
 
 	if(TEST_FIELD(cheatOptions, DontPrintNewLabels))
 	{
 		menu_item[total] = kOperandNameTable[search->lhs];
-		menu_subitem[total] = NULL;
-		total++;
+		menu_subitem[total++] = NULL;
 
 		menu_item[total] = kComparisonNameTable[search->comparison];
-		menu_subitem[total] = NULL;
-		total++;
+		menu_subitem[total++] = NULL;
 
 		menu_item[total] = kOperandNameTable[search->rhs];
-		menu_subitem[total] = NULL;
-		total++;
+		menu_subitem[total++] = NULL;
 
 		menu_item[total] = valueBuffer;
-		menu_subitem[total] = NULL;
-		total++;
+		menu_subitem[total++] = NULL;
 	}
 	else
 	{
 		menu_item[total] = "LHS";
-		menu_subitem[total] = kOperandNameTable[search->lhs];
-		total++;
+		menu_subitem[total++] = kOperandNameTable[search->lhs];
 
 		menu_item[total] = "Comparison";
-		menu_subitem[total] = kComparisonNameTable[search->comparison];
-		total++;
+		menu_subitem[total++] = kComparisonNameTable[search->comparison];
 
 		menu_item[total] = "RHS";
-		menu_subitem[total] = kOperandNameTable[search->rhs];
-		total++;
+		menu_subitem[total++] = kOperandNameTable[search->rhs];
 
 		menu_item[total] = "Value";
-		menu_subitem[total] = valueBuffer;
-		total++;
+		menu_subitem[total++] = valueBuffer;
 	}
 
 	menu_item[total] = "---";
-	menu_subitem[total] = NULL;
-	total++;
+	menu_subitem[total++] = NULL;
 
 	menu_item[total] = "Size";
-	menu_subitem[total] = kSearchByteNameTable[search->bytes];
-	total++;
+	menu_subitem[total++] = kSearchByteNameTable[search->bytes];
 
 	menu_item[total] = "Swap";
-	menu_subitem[total] = ui_getstring(search->swap ? UI_on : UI_off);
-	total++;
+	menu_subitem[total++] = ui_getstring(search->swap ? UI_on : UI_off);
 
 	menu_item[total] = "Signed";
-	menu_subitem[total] = ui_getstring(search->sign ? UI_on : UI_off);
-	total++;
+	menu_subitem[total++] = ui_getstring(search->sign ? UI_on : UI_off);
 
 	sprintf(cpuBuffer, "%d", search->targetIdx);
 	menu_item[total] = "CPU";
-	menu_subitem[total] = cpuBuffer;
-	total++;
+	menu_subitem[total++] = cpuBuffer;
 
 	menu_item[total] = "Name";
 	if(search->name)
-		menu_subitem[total] = search->name;
+		menu_subitem[total++] = search->name;
 	else
-		menu_subitem[total] = "(none)";
-	total++;
+		menu_subitem[total++] = "(none)";
 
 	menu_item[total] = "---";
-	menu_subitem[total] = NULL;
-	total++;
+	menu_subitem[total++] = NULL;
 
 	menu_item[total] = "Do Search";
-	menu_subitem[total] = NULL;
-	total++;
+	menu_subitem[total++] = NULL;
 
 	menu_item[total] = "Save Memory";
-	menu_subitem[total] = NULL;
-	total++;
+	menu_subitem[total++] = NULL;
 
-	menu_item[total] = ui_getstring(UI_returntoprior);
-	menu_subitem[total] = NULL;
-	total++;
+	menu_item[total] = "---";
+	menu_subitem[total++] = NULL;
 
-	menu_item[total] = NULL;
+	menu_item[total] = ui_getstring(UI_viewresults);		// view result
+	menu_subitem[total++] = NULL;
+
+	menu_item[total] = ui_getstring(UI_restoreresults);		// restore result
+	menu_subitem[total++] = NULL;
+
+	menu_item[total] = ui_getstring(UI_returntoprior);		// return
+	menu_subitem[total++] = NULL;
+
+	menu_item[total] = NULL;								// terminate array
 	menu_subitem[total] = NULL;
 
+	/* ----- adjust current cursor position ----- */
 	if(sel < 0)
 		sel = 0;
 	if(sel >= total)
 		sel = total - 1;
 
+	/* ----- higlighted sub-item if edit mode ----- */
 	if(editActive)
 		flagBuf[sel] = 1;
 
+	/* ----- draw it ----- */
 	old_style_menu(menu_item, menu_subitem, flagBuf, sel, 0);
 
+	/********** KEY HANDLING **********/
 	if(AltKeyPressed())
 		increment <<= 4;
 	if(ControlKeyPressed())
@@ -5468,6 +5943,10 @@ static int DoSearchMenu(int selection)
 	{
 		sel++;
 
+		/* ----- if divider, skip it ----- */
+		if((sel == kMenu_Divider) || (sel == kMenu_Divider2) || (sel == kMenu_Divider3))
+			sel++;
+
 		if(sel >= total)
 			sel = 0;
 	}
@@ -5475,6 +5954,10 @@ static int DoSearchMenu(int selection)
 	if(UIPressedRepeatThrottle(IPT_UI_UP, kVerticalKeyRepeatRate))
 	{
 		sel--;
+
+		/* ----- if divider, skip it ----- */
+		if((sel == kMenu_Divider) || (sel == kMenu_Divider2) || (sel == kMenu_Divider3))
+			sel--;
 
 		if(sel < 0)
 			sel = total - 1;
@@ -5619,26 +6102,23 @@ static int DoSearchMenu(int selection)
 	if(input_ui_pressed(IPT_UI_SELECT))
 	{
 		if(editActive)
-		{
 			editActive = 0;
-		}
 		else
 		{
 			switch(sel)
 			{
-				case kMenu_Value:
+				case kMenu_Value:		// edit selected field
 				case kMenu_Name:
 					editActive = 1;
 					break;
 
-				case kMenu_Return:
-					submenuChoice = 0;
-					sel = -1;
+				case kMenu_CPU:			// go to region selection menu
+					submenuChoice = 1;
 					break;
 
 				case kMenu_DoSearch:
-					if(!doneMemorySave)
-						InitializeNewSearch(search);
+					/* ----- initialize search ----- */
+					InitializeNewSearch(search);
 
 					if((!kSearchOperandNeedsInit[search->lhs] && !kSearchOperandNeedsInit[search->rhs]) || doneMemorySave)
 					{
@@ -5673,10 +6153,36 @@ static int DoSearchMenu(int selection)
 
 					doneMemorySave = 1;
 					break;
+
+				case kMenu_ViewResult:
+					if(search->regionListLength)
+					{
+						/* ----- go to result viewer ----- */
+						firstEntry = 1;
+						submenuChoice = 1;
+					}
+					else
+						/* ----- if no search region (eg, sms.c in HazeMD), don't open result viewer to avoid the crash ----- */
+						ui_popup_time(1, "no search regions");
+					break;
+
+				case kMenu_RestoreSearch:
+					/* ----- restore previous results ----- */
+					RestoreSearchBackup(search);
+					break;
+
+				case kMenu_Return:
+					submenuChoice = 0;
+					sel = -1;
+					break;
+
+				default:
+					break;
 			}
 		}
 	}
 
+	/* ----- edit selected field  ----- */
 	if(editActive)
 	{
 		switch(sel)
@@ -5695,71 +6201,79 @@ static int DoSearchMenu(int selection)
 
 	if(input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
-//  if(input_ui_pressed(IPT_UI_CONFIGURE))
-//      sel = -2;
 
-	if(	(sel == -1) ||
-		(sel == -2))
-		;
-	else
+	/* ----- keep current cursor position ----- */
+	if(!(sel == -1))
 		lastSel = sel;
 
 	return sel + 1;
 }
 
-static int AddEditCheatMenu(int selection)
+/*---------------------------------------------------------------------
+  SelectSearchRegions - management for search regions selection menu
+---------------------------------------------------------------------*/
+
+static int SelectSearchRegions(int selection, SearchInfo * search)
 {
+	static const char	* kSearchSpeedList[] =
+	{
+		"Fast",
+		"Medium",
+		"Slow",
+		"Very Slow",
+		"All Memory"
+	};
+
 	INT32			sel;
-	static INT32	submenuChoice = 0;
-	static INT32	submenuCheat = 0;
-	const char		** menu_item;
+	const char		** menuItem;
+	const char		** menuSubItem;
 	INT32			i;
 	INT32			total = 0;
-	CheatEntry		* entry;
+	SearchRegion	* region;
+
+	if(!search)
+		return 0;
 
 	sel = selection - 1;
 
-	RequestStrings(cheatListLength + 2, 0, 0, 0);
+	RequestStrings(search->regionListLength + 3, 0, 0, 0);
 
-	menu_item = menuStrings.mainList;
+	/********** MENU CONSTRUCTION **********/
+	menuItem =		menuStrings.mainList;
+	menuSubItem =	menuStrings.subList;
 
-	if(submenuChoice)
+	for(i = 0; i < search->regionListLength; i++)
 	{
-		submenuChoice = EditCheatMenu(&cheatList[submenuCheat], submenuCheat, submenuChoice);
+		SearchRegion	* traverse = &search->regionList[i];
 
-		if(submenuChoice == -1)
-		{
-			submenuChoice = 0;
-			sel = -2;
-		}
-
-		return sel + 1;
+		menuItem[total] = traverse->name;
+		menuSubItem[total++] = ui_getstring((traverse->flags & kRegionFlag_Enabled) ? UI_on : UI_off);
 	}
 
-	for(i = 0; i < cheatListLength; i++)
-	{
-		CheatEntry	* traverse = &cheatList[i];
+	menuItem[total] = "Search Speed";
+	menuSubItem[total++] = kSearchSpeedList[search->searchSpeed];
 
-		if(traverse->name)
-			menu_item[total] = traverse->name;
-		else
-			menu_item[total] = "(none)";
+	menuItem[total] = ui_getstring(UI_returntoprior);		// return item
+	menuSubItem[total++] = NULL;
 
-		total++;
-	}
+	menuItem[total] = NULL;			// terminate array
+	menuSubItem[total] = NULL;
 
-	menu_item[total] = ui_getstring(UI_returntoprior);
-	total++;
-
-	menu_item[total] = NULL;
-
+	/* ----- adjust current cursor positon ----- */
 	if(sel < 0)
 		sel = 0;
-	if(sel >= total)
+	if(sel > (total - 1))
 		sel = total - 1;
 
-	old_style_menu(menu_item, NULL, NULL, sel, 0);
+	if(sel < search->regionListLength)
+		region = &search->regionList[sel];
+	else
+		region = NULL;
 
+	/* ----- draw it ----- */
+	old_style_menu(menuItem, menuSubItem, NULL, sel, 0);
+
+	/********** KEY HANDLING **********/
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
 		sel++;
@@ -5792,86 +6306,76 @@ static int AddEditCheatMenu(int selection)
 			sel = total - 1;
 	}
 
-	if(sel < (total - 1))
-		entry = &cheatList[sel];
-	else
-		entry = NULL;
-
-	if(input_ui_pressed(IPT_UI_SAVE_CHEAT))
+	if(UIPressedRepeatThrottle(IPT_UI_LEFT, kHorizontalSlowKeyRepeatRate))
 	{
-		if(ShiftKeyPressed())
+		if(sel < search->regionListLength)
 		{
-			for(i = 0; i < cheatListLength; i++)		// save all codes
-				SaveCheat(&cheatList[i], 0, 0);
+			search->regionList[sel].flags ^= kRegionFlag_Enabled;
 
-			ui_popup_time(1, "%d cheats saved", cheatListLength);
+			AllocateSearchRegions(search);
 		}
-		else
-		{
-			if(ControlKeyPressed())
-			{
-				if((entry->flags & kCheatFlag_HasActivationKey1) || (entry->flags & kCheatFlag_HasActivationKey2))
-				{
-					SaveCheat(entry, sel, 1);		// save activation key
 
-					ui_popup_time(1, "activation key saved");
-				}
-				else
-					ui_popup_time(1, "no activation key");
-			}
+		if(sel == search->regionListLength)	// set search speed
+		{
+			if(search->searchSpeed > kSearchSpeed_Fast)
+				search->searchSpeed--;
 			else
-				SaveCheat(entry, 0, 0);		// save current entry
+				search->searchSpeed = kSearchSpeed_Max;
+
+			BuildSearchRegions(search);
+			AllocateSearchRegions(search);
 		}
 	}
 
-	if(input_ui_pressed(IPT_UI_ADD_CHEAT))
+	if(UIPressedRepeatThrottle(IPT_UI_RIGHT, kHorizontalSlowKeyRepeatRate))
 	{
-		AddCheatBefore(sel);
+		if(sel < search->regionListLength)
+		{
+			search->regionList[sel].flags ^= kRegionFlag_Enabled;
+
+			AllocateSearchRegions(search);
+		}
+
+		if(sel == search->regionListLength)	// set search speed
+		{
+			if(search->searchSpeed < kSearchSpeed_Max)
+				search->searchSpeed++;
+			else
+				search->searchSpeed = kSearchSpeed_Fast;
+
+			BuildSearchRegions(search);
+			AllocateSearchRegions(search);
+		}
 	}
 
 	if(input_ui_pressed(IPT_UI_DELETE_CHEAT))
 	{
-		DeleteCheatAt(sel);
-	}
-
-	if(input_ui_pressed(IPT_UI_WATCH_VALUE))
-	{
-		WatchCheatEntry(entry, 0);
-	}
-
-	if(input_ui_pressed(IPT_UI_EDIT_CHEAT))
-	{
-		if(sel < (total - 1))
+		if(ShiftKeyPressed())			// shift + delete = invalid region
 		{
-			submenuCheat = sel;
-			submenuChoice = 1;
+			if(region && search)
+			{
+				InvalidateEntireRegion(search, region);
+
+				ui_popup_time(1, "region invalidated - %d results remain", search->numResults);
+			}
 		}
 	}
 
 	if(input_ui_pressed(IPT_UI_SELECT))
 	{
-		if(sel == (total - 1))
-		{
-			submenuChoice = 0;
+		if(sel >= total - 1)
 			sel = -1;
-		}
-		else if(sel < (total - 1))
-		{
-			submenuCheat = sel;
-			submenuChoice = 1;
-		}
 	}
-
-	if(input_ui_pressed(IPT_UI_RELOAD_CHEAT))
-		ReloadCheatDatabase();
 
 	if(input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
-//  if(input_ui_pressed(IPT_UI_CONFIGURE))
-//      sel = -2;
 
 	return sel + 1;
 }
+
+/*--------------------------------------------------------
+  ViewSearchResults - management for search result menu
+--------------------------------------------------------*/
 
 static int ViewSearchResults(int selection, int firstTime)
 {
@@ -5883,13 +6387,15 @@ static int ViewSearchResults(int selection, int firstTime)
 		kMaxResultsPerPage = 100
 	};
 
-	INT32			sel;
 	const char		** menu_item;
 	char			** buf;
 	char			* header;
-	INT32			total = 0;
+
 	SearchInfo		* search = GetCurrentSearch();
 	SearchRegion	* region;
+
+	INT32			sel;
+	INT32			total = 0;
 	INT32			numPages;
 	INT32			resultsPerPage;
 	INT32			i;
@@ -5911,11 +6417,13 @@ static int ViewSearchResults(int selection, int firstTime)
 
 	sel = selection - 1;
 
+	/********** FIRST SETTING **********/
 	if(firstTime)
 	{
 		search->currentRegionIdx = 0;
 		search->currentResultsPage = 0;
 
+		/* ----- set current REGION for first display ----- */
 		for(traverse = 0; traverse < search->regionListLength; traverse++)
 		{
 			region = &search->regionList[traverse];
@@ -5928,6 +6436,7 @@ static int ViewSearchResults(int selection, int firstTime)
 		}
 	}
 
+	/* ----- adjust current REGION ----- */
 	if(search->currentRegionIdx >= search->regionListLength)
 		search->currentRegionIdx = search->regionListLength - 1;
 	if(search->currentRegionIdx < 0)
@@ -5935,6 +6444,7 @@ static int ViewSearchResults(int selection, int firstTime)
 
 	region = &search->regionList[search->currentRegionIdx];
 
+	/* ----- set and adjust maximum displayable result in the PAGE ----- */
 	resultsPerPage = fullMenuPageHeight - 3;
 
 	if(resultsPerPage <= 0)
@@ -5942,46 +6452,43 @@ static int ViewSearchResults(int selection, int firstTime)
 	else if(resultsPerPage > kMaxResultsPerPage)
 		resultsPerPage = kMaxResultsPerPage;
 
+	/* ----- get the number of total page ----- */
 	if(region->flags & kRegionFlag_Enabled)
 		numPages = (region->numResults / kSearchByteStep[search->bytes] + resultsPerPage - 1) / resultsPerPage;
 	else
 		numPages = 0;
 
+	/* ----- adjust current PAGE ----- */
 	if(search->currentResultsPage >= numPages)
 		search->currentResultsPage = numPages - 1;
 	if(search->currentResultsPage < 0)
 		search->currentResultsPage = 0;
 
+	/* ----- set the number of undisplay result ----- */
 	numToSkip = resultsPerPage * search->currentResultsPage;
 
+	/********** MENU CONSTRUCTION **********/
+	/* ----- construct header item ----- */
 	sprintf(header, "%s %d/%d", region->name, search->currentResultsPage + 1, numPages);
 
-	menu_item[total] = header;
-	total++;
+	menu_item[total++] = header;
 
 	traverse = 0;
 
-	if(	(region->length < kSearchByteIncrementTable[search->bytes]) ||
-		!(region->flags & kRegionFlag_Enabled))
-	{
-		// no results...
-	}
+	if((region->length < kSearchByteIncrementTable[search->bytes]) || !(region->flags & kRegionFlag_Enabled))
+		; // no results...
 	else
 	{
+		/* ----- construct result item ----- */
 		for(i = 0; (i < resultsPerPage) && (traverse < region->length) && (resultsFound < region->numResults);)
 		{
-			while(	!IsRegionOffsetValid(search, region, traverse) &&
-					(traverse < region->length))
-			{
+			while(!IsRegionOffsetValid(search, region, traverse) && (traverse < region->length))
 				traverse += kSearchByteStep[search->bytes];
-			}
 
 			if(traverse < region->length)
 			{
 				if(numToSkip > 0)
-				{
 					numToSkip--;
-				}
 				else
 				{
 					if(total == sel)
@@ -6014,121 +6521,182 @@ static int ViewSearchResults(int selection, int firstTime)
 		}
 	}
 
+	/* ----- set special message if empty REGION ----- */
 	if(!hadResults)
 	{
 		if(search->numResults)
-			menu_item[total] = "no results for this region";
+			menu_item[total++] = "no results for this region";
 		else
-			menu_item[total] = "no results found";
-
-		total++;
+			menu_item[total++] = "no results found";
 	}
 
-	menu_item[total] = ui_getstring(UI_returntoprior);
-	total++;
+	menu_item[total++] = ui_getstring(UI_returntoprior);		// return
 
-	menu_item[total] = NULL;
+	menu_item[total] = NULL;									// terminate array
 
-	if(sel < 0)
-		sel = 0;
-	if(sel > (total - 1))
+	/* ----- adjust current cursor position ----- */
+	if(sel <= kMenu_Header)
+		sel = kMenu_FirstResult;
+	if(sel > (total - 1) || !hadResults)
 		sel = total - 1;
 
+	/* ----- draw it ----- */
 	old_style_menu(menu_item, NULL, NULL, sel, 0);
 
-	if(code_pressed_memory(KEYCODE_END))
-	{
-		search->currentResultsPage = numPages - 1;
-	}
-
-	if(code_pressed_memory(KEYCODE_HOME))
-	{
-		search->currentResultsPage = 0;
-	}
-
+	/********** KEY HANDLING **********/
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
 		sel++;
 
 		if(sel >= total)
-		{
-			goToNextPage = 1;
-
-			sel = 0;
-		}
+			sel = kMenu_FirstResult;
 	}
 
 	if(UIPressedRepeatThrottle(IPT_UI_UP, kVerticalKeyRepeatRate))
 	{
 		sel--;
 
-		if(sel < 0)
-		{
-			goToPrevPage = 1;
-
+		if(sel < 1)
 			sel = total - 1;
+	}
+
+	if(UIPressedRepeatThrottle(IPT_UI_RIGHT, kHorizontalFastKeyRepeatRate))
+	{
+		if(ShiftKeyPressed())
+			search->currentResultsPage = numPages - 1;				// shift + right = go to last PAGE
+		else
+		{
+			if(ControlKeyPressed())
+			{
+				search->currentRegionIdx++;							// ctrl + right = go to next REGION
+
+				if(search->currentRegionIdx >= search->regionListLength)
+					search->currentRegionIdx = 0;
+			}
+			else
+				goToNextPage = 1;									// right = go to next PAGE
 		}
+
+		sel = kMenu_FirstResult;
+	}
+
+	if(UIPressedRepeatThrottle(IPT_UI_LEFT, kHorizontalFastKeyRepeatRate))
+	{
+		if(ShiftKeyPressed())
+			search->currentResultsPage = 0;							// shift + left = go to first PAGE
+		else
+		{
+			if(ControlKeyPressed())
+			{
+				search->currentRegionIdx--;							// ctrl + left = go to previous REGION
+
+				if(search->currentRegionIdx < 0)
+					search->currentRegionIdx = search->regionListLength - 1;
+			}
+			else
+				goToPrevPage = 1;									// left = go to previous PAGE
+		}
+
+		sel = kMenu_FirstResult;
 	}
 
 	if(UIPressedRepeatThrottle(IPT_UI_PAGE_UP, kHorizontalFastKeyRepeatRate))
 	{
-		goToPrevPage = 1;
+		sel -=fullMenuPageHeight;
+
+		if(sel <= kMenu_Header)
+			sel = kMenu_FirstResult;
 	}
 
 	if(UIPressedRepeatThrottle(IPT_UI_PAGE_DOWN, kHorizontalFastKeyRepeatRate))
 	{
-		goToNextPage = 1;
+		sel +=fullMenuPageHeight;
+
+		if(sel >= total)
+			sel = total - 1;
+	}
+
+	if(code_pressed_memory(KEYCODE_END))
+		search->currentResultsPage = numPages - 1;				// go to last PAGE
+
+	if(code_pressed_memory(KEYCODE_HOME))
+		search->currentResultsPage = 0;							// go to first PAGE
+
+	if(UIPressedRepeatThrottle(IPT_UI_PREV_GROUP, kVerticalKeyRepeatRate))
+	{
+		search->currentRegionIdx--;								// go to previous REGION
+
+		if(search->currentRegionIdx < 0)
+			search->currentRegionIdx = search->regionListLength - 1;
+
+		sel = kMenu_FirstResult;
+	}
+
+	if(UIPressedRepeatThrottle(IPT_UI_NEXT_GROUP, kVerticalKeyRepeatRate))
+	{
+		search->currentRegionIdx++;								// go to next REGION
+
+		if(search->currentRegionIdx >= search->regionListLength)
+			search->currentRegionIdx = 0;
+
+		sel = kMenu_FirstResult;
 	}
 
 	if(goToNextPage)
 	{
 		search->currentResultsPage++;
 
+		/* ----- if current PAGE is the last, go to first PAGE in next REGION ----- */
 		if(search->currentResultsPage >= numPages)
 		{
 			search->currentResultsPage = 0;
 			search->currentRegionIdx++;
 
+			/* ----- if current REGION is the last, go to first REGION ----- */
 			if(search->currentRegionIdx >= search->regionListLength)
-			{
 				search->currentRegionIdx = 0;
-			}
 
+			/* ----- if next REGION is empty, search next "non-empty" REGION.
+                     but incomplete because last REGION is displayed even if empty ----- */
 			for(traverse = search->currentRegionIdx; traverse < search->regionListLength; traverse++)
 			{
+				search->currentRegionIdx = traverse;
+
 				if(search->regionList[traverse].numResults)
-				{
-					search->currentRegionIdx = traverse;
 					break;
-				}
 			}
 		}
+
+		sel = kMenu_FirstResult;
 	}
 
 	if(goToPrevPage)
 	{
 		search->currentResultsPage--;
 
+		/* ----- if current PAGE is first, go to previous REGION ----- */
 		if(search->currentResultsPage < 0)
 		{
 			search->currentResultsPage = 0;
 			search->currentRegionIdx--;
 
+			/* ----- if current REGION is first, go to last REGION ----- */
 			if(search->currentRegionIdx < 0)
-			{
 				search->currentRegionIdx = search->regionListLength - 1;
-			}
 
+			/* ----- if previous REGION is empty, search previous "non-empty" REGION.
+                     but incomplete because first REGION is displayed even if empty ----- */
 			for(i = search->currentRegionIdx; i >= 0; i--)
 			{
+				search->currentRegionIdx = i;
+
 				if(search->regionList[i].numResults)
-				{
-					search->currentRegionIdx = i;
 					break;
-				}
 			}
 
+			/* ----- go to last PAGE in previous REGION ----- */
 			{
+				/* ----- get the number of total page for previous REGION ----- */
 				SearchRegion	* newRegion = &search->regionList[search->currentRegionIdx];
 				UINT32			nextNumPages = (newRegion->numResults / kSearchByteStep[search->bytes] + resultsPerPage - 1) / resultsPerPage;
 
@@ -6138,44 +6706,21 @@ static int ViewSearchResults(int selection, int firstTime)
 				search->currentResultsPage = nextNumPages - 1;
 			}
 		}
-	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PREV_GROUP, kVerticalKeyRepeatRate))
-	{
-		search->currentRegionIdx--;
-
-		if(search->currentRegionIdx < 0)
-			search->currentRegionIdx = search->regionListLength - 1;
-	}
-
-	if(UIPressedRepeatThrottle(IPT_UI_NEXT_GROUP, kVerticalKeyRepeatRate))
-	{
-		search->currentRegionIdx++;
-
-		if(search->currentRegionIdx >= search->regionListLength)
-			search->currentRegionIdx = 0;
+		sel = kMenu_FirstResult;
 	}
 
 	if(selectedAddressGood)
 	{
-		if(input_ui_pressed(IPT_UI_SAVE_CHEAT))
-		{
-			//
-		}
-
 		if(input_ui_pressed(IPT_UI_WATCH_VALUE))
-		{
-			AddWatchFromResult(search, region, selectedAddress);
-		}
+			AddWatchFromResult(search, region, selectedAddress);		// watch selected result
 
 		if(input_ui_pressed(IPT_UI_ADD_CHEAT))
-		{
-			AddCheatFromResult(search, region, selectedAddress);
-		}
+			AddCheatFromResult(search, region, selectedAddress);		// add selected result as new code to cheat list
 
 		if(input_ui_pressed(IPT_UI_DELETE_CHEAT))
 		{
-			InvalidateRegionOffset(search, region, selectedOffset);
+			InvalidateRegionOffset(search, region, selectedOffset);		// delete selected result
 			search->numResults--;
 			region->numResults--;
 		}
@@ -6187,37 +6732,33 @@ static int ViewSearchResults(int selection, int firstTime)
 		{
 			if(region && search)
 			{
-				InvalidateEntireRegion(search, region);
+				InvalidateEntireRegion(search, region);					// invalidate all results in current REGION
 
 				ui_popup_time(1, "region invalidated - %d results remain", search->numResults);
 			}
 		}
 	}
 
-	if(input_ui_pressed(IPT_UI_SELECT))
-	{
-		if(sel == total - 1)
-		{
-			sel = -1;
-		}
-	}
-
-	if(input_ui_pressed(IPT_UI_CANCEL))
+	if((input_ui_pressed(IPT_UI_SELECT) && (sel == total - 1)) || input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
-//  if(input_ui_pressed(IPT_UI_CONFIGURE))
-//      sel = -2;
 
 	return sel + 1;
 }
 
+/*----------------------------------------------------
+  ChooseWatch - management for watchpoint list menu
+----------------------------------------------------*/
+
 static int ChooseWatch(int selection)
 {
-	INT32			sel;
-	static INT32	submenuChoice = 0;
-	static INT32	submenuWatch = 0;
-	WatchInfo		* watch;
 	const char		** menuItem;
 	char			** buf;
+
+	WatchInfo		* watch;
+
+	static INT32	submenuChoice = 0;
+	static INT32	submenuWatch = 0;
+	INT32			sel;
 	INT32			total = 0;
 	int				i;
 
@@ -6228,19 +6769,22 @@ static int ChooseWatch(int selection)
 
 	sel = selection - 1;
 
+	/********** SUB MENU **********/
 	if(submenuChoice)
 	{
 		submenuChoice = EditWatch(&watchList[submenuWatch], submenuChoice);
 
-		if(submenuChoice == -1)
-		{
-			submenuChoice = 0;
-			sel = -2;
-		}
+		/* ----- meaningless ? because no longer return with sel = -1 (pressed UI_CONFIG in submenu) ----- */
+//      if(submenuChoice == -1)
+//      {
+//          submenuChoice = 0;
+//          sel = -2;
+//      }
 
 		return sel + 1;
 	}
 
+	/********** MENU CONSTRUCTION **********/
 	for(i = 0; i < watchListLength; i++)
 	{
 		WatchInfo	* traverse = &watchList[i];
@@ -6251,23 +6795,25 @@ static int ChooseWatch(int selection)
 		total++;
 	}
 
-	menuItem[total] = ui_getstring(UI_returntoprior);
-	total++;
+	menuItem[total++] = ui_getstring(UI_returntoprior);		// return
 
-	menuItem[total] = NULL;
+	menuItem[total] = NULL;									// terminate array
 
+	/* ----- adjust current cursor position ----- */
 	if(sel < 0)
 		sel = 0;
 	if(sel >= total)
 		sel = total - 1;
+
+	/* ----- draw it ----- */
+	old_style_menu(menuItem, NULL, NULL, sel, 0);
 
 	if(sel < watchListLength)
 		watch = &watchList[sel];
 	else
 		watch = NULL;
 
-	old_style_menu(menuItem, NULL, NULL, sel, 0);
-
+	/********** KEY HANDLING **********/
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
 		sel++;
@@ -6302,19 +6848,15 @@ static int ChooseWatch(int selection)
 
 	if(ShiftKeyPressed())
 	{
-		if(input_ui_pressed(IPT_UI_ADD_CHEAT))
-		{
+		if(input_ui_pressed(IPT_UI_ADD_CHEAT))				// shift + add = add new watchpoint
 			AddWatchBefore(sel);
-		}
 
-		if(input_ui_pressed(IPT_UI_DELETE_CHEAT))
-		{
+		if(input_ui_pressed(IPT_UI_DELETE_CHEAT))			// shift + delete = delete selected watchpoint
 			DeleteWatchAt(sel);
-		}
 	}
 	else
 	{
-		if(input_ui_pressed(IPT_UI_SAVE_CHEAT))
+		if(input_ui_pressed(IPT_UI_SAVE_CHEAT))				// save = save selected watchpoint as watchpoint code
 		{
 			if(watch)
 			{
@@ -6332,7 +6874,7 @@ static int ChooseWatch(int selection)
 		{
 			if(watch)
 			{
-				if(ShiftKeyPressed())
+				if(ControlKeyPressed())							// ctrl + add = add selected watchpoing as watchpoint code to cheat list
 				{
 					CheatEntry	* entry = GetNewCheat();
 
@@ -6340,9 +6882,7 @@ static int ChooseWatch(int selection)
 					SetupCheatFromWatchAsWatch(entry, watch);
 				}
 				else
-				{
-					AddCheatFromWatch(watch);
-				}
+					AddCheatFromWatch(watch);					// add = add selected watchpoint as cheat code to cheat list
 			}
 		}
 
@@ -6350,22 +6890,18 @@ static int ChooseWatch(int selection)
 		{
 			if(ControlKeyPressed())
 			{
-				for(i = 0; i < watchListLength; i++)
-				{
+				for(i = 0; i < watchListLength; i++)		// ctrl + delete = disable all watchpoints
 					watchList[i].numElements = 0;
-				}
 			}
 			else
 			{
-				if(watch)
-				{
+				if(watch)									// delete = disable selected watchpoint
 					watch->numElements = 0;
-				}
 			}
 		}
 	}
 
-	if(input_ui_pressed(IPT_UI_EDIT_CHEAT))
+	if(input_ui_pressed(IPT_UI_EDIT_CHEAT))					// edit = edit selected watchpoint
 	{
 		if(sel < (total - 1))
 		{
@@ -6376,25 +6912,62 @@ static int ChooseWatch(int selection)
 
 	if(input_ui_pressed(IPT_UI_SELECT))
 	{
-		if(sel == (total - 1))
+		if(sel == (total - 1))						// return previous menu
 		{
 			submenuChoice = 0;
 			sel = -1;
 		}
-		else if(sel < (total - 1))
+		else
 		{
-			submenuWatch = sel;
-			submenuChoice = 1;
+			if(sel < (total - 1))					// edit selected watchpoint (same as edit key)
+			{
+				submenuWatch = sel;
+				submenuChoice = 1;
+			}
 		}
 	}
 
+	if(input_ui_pressed(IPT_UI_CLEAR))
+	{
+		/* ----- reset all watchpoints ----- */
+		for(i = 0; i < watchListLength; i++)
+		{
+			if(watch)
+			{
+				watchList[i].address = 0;
+				watchList[i].cpu = 0;
+				watchList[i].numElements = 0;
+				watchList[i].elementBytes = kWatchSizeConversionTable[0];
+				watchList[i].labelType = kWatchLabel_None;
+				watchList[i].displayType = kWatchDisplayType_Hex;
+				watchList[i].skip = 0;
+				watchList[i].elementsPerLine = 0;
+				watchList[i].addValue = 0;
+
+				watchList[i].linkedCheat = NULL;
+
+				watchList[i].label[0] = 0;
+			}
+		}
+	}
+
+	if(UIPressedRepeatThrottle(IPT_UI_ZOOM_IN, kVerticalKeyRepeatRate))
+		/* ----- quick menu switch : watchpoint list -> enable/disable ----- */
+		sel = -2;
+
+	if(UIPressedRepeatThrottle(IPT_UI_ZOOM_OUT, kVerticalKeyRepeatRate))
+		/* ----- quick menu switch : watchpoint list -> search ----- */
+		sel = -4;
+
 	if(input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
-//  if(input_ui_pressed(IPT_UI_CONFIGURE))
-//      sel = -2;
 
 	return sel + 1;
 }
+
+/*--------------------------------------------------
+  EditWatch - management for watchpoint edit menu
+--------------------------------------------------*/
 
 static int EditWatch(WatchInfo * entry, int selection)
 {
@@ -6427,15 +7000,17 @@ static int EditWatch(WatchInfo * entry, int selection)
 		"32 Bit"
 	};
 
-	INT32			sel;
 	const char		** menuItem;
 	const char		** menuSubItem;
 	char			** buf;
 	char			* flagBuf;
+
+	INT32			sel;
 	INT32			total = 0;
 	UINT32			increment = 1;
 	static UINT8	editActive = 0;
 
+	/* ----- if no watch entry, direct return ----- */
 	if(!entry)
 		return 0;
 
@@ -6450,6 +7025,7 @@ static int EditWatch(WatchInfo * entry, int selection)
 
 	sel = selection - 1;
 
+	/********** MENU CONSTRUCTION **********/
 	sprintf(buf[total], "%.*X", cpuInfoList[entry->cpu].addressCharsNeeded, entry->address >> entry->addressShift);
 	menuItem[total] = "Address";
 	menuSubItem[total] = buf[total];
@@ -6466,27 +7042,19 @@ static int EditWatch(WatchInfo * entry, int selection)
 	total++;
 
 	menuItem[total] = "Element Size";
-	menuSubItem[total] = kWatchSizeStringList[entry->elementBytes];
-	total++;
+	menuSubItem[total++] = kWatchSizeStringList[entry->elementBytes];
 
 	menuItem[total] = "Label Type";
-	menuSubItem[total] = kWatchLabelStringList[entry->labelType];
-	total++;
+	menuSubItem[total++] = kWatchLabelStringList[entry->labelType];
 
 	menuItem[total] = "Text Label";
 	if(entry->label[0])
-	{
-		menuSubItem[total] = entry->label;
-	}
+		menuSubItem[total++] = entry->label;
 	else
-	{
-		menuSubItem[total] = "(none)";
-	}
-	total++;
+		menuSubItem[total++] = "(none)";
 
 	menuItem[total] = "Display Type";
-	menuSubItem[total] = kWatchDisplayTypeStringList[entry->displayType];
-	total++;
+	menuSubItem[total++] = kWatchDisplayTypeStringList[entry->displayType];
 
 	sprintf(buf[total], "%f", entry->x);
 	menuItem[total] = "X";
@@ -6508,16 +7076,14 @@ static int EditWatch(WatchInfo * entry, int selection)
 	menuSubItem[total] = buf[total];
 	total++;
 
-	{
-		if(entry->addValue < 0)
-			sprintf(buf[total], "-%.2X", -entry->addValue);
-		else
-			sprintf(buf[total], "%.2X", entry->addValue);
+	if(entry->addValue < 0)
+		sprintf(buf[total], "-%.2X", -entry->addValue);
+	else
+		sprintf(buf[total], "%.2X", entry->addValue);
 
-		menuItem[total] = "Add Value";
-		menuSubItem[total] = buf[total];
-		total++;
-	}
+	menuItem[total] = "Add Value";
+	menuSubItem[total] = buf[total];
+	total++;
 
 	sprintf(buf[total], "%d", entry->addressShift);
 	menuItem[total] = "Address Shift";
@@ -6534,23 +7100,26 @@ static int EditWatch(WatchInfo * entry, int selection)
 	menuSubItem[total] = buf[total];
 	total++;
 
-	menuItem[total] = ui_getstring(UI_returntoprior);
-	menuSubItem[total] = NULL;
-	total++;
+	menuItem[total] = ui_getstring(UI_returntoprior);		// return
+	menuSubItem[total++] = NULL;
 
-	menuItem[total] = NULL;
+	menuItem[total] = NULL;									// terminate array
 	menuSubItem[total] = NULL;
 
+	/* ----- adjust current cursor position ----- */
 	if(sel < 0)
 		sel = 0;
 	if(sel >= total)
 		sel = total - 1;
 
+	/* ----- higlighted sub-item if edit mode ----- */
 	if(editActive)
 		flagBuf[sel] = 1;
 
+	/* ----- draw it ----- */
 	old_style_menu(menuItem, menuSubItem, flagBuf, sel, 0);
 
+	/********** KEY HANDLING **********/
 	if(AltKeyPressed())
 		increment <<= 4;
 	if(ControlKeyPressed())
@@ -6568,7 +7137,10 @@ static int EditWatch(WatchInfo * entry, int selection)
 				entry->address = DoShift(entry->address, entry->addressShift);
 				entry->address -= increment;
 				entry->address = DoShift(entry->address, -entry->addressShift);
-				entry->address &= cpuInfoList[entry->cpu].addressMask;
+
+				if(entry->locationType != kLocation_MemoryRegion)
+					entry->address &= cpuInfoList[entry->cpu].addressMask;
+
 				break;
 
 			case kMenu_CPU:
@@ -6792,9 +7364,7 @@ static int EditWatch(WatchInfo * entry, int selection)
 	if(input_ui_pressed(IPT_UI_SELECT))
 	{
 		if(editActive)
-		{
 			editActive = 0;
-		}
 		else
 		{
 			switch(sel)
@@ -6875,14 +7445,10 @@ static int EditWatch(WatchInfo * entry, int selection)
 	else
 	{
 		if(input_ui_pressed(IPT_UI_ADD_CHEAT))
-		{
 			AddCheatFromWatch(entry);
-		}
 
 		if(input_ui_pressed(IPT_UI_DELETE_CHEAT))
-		{
 			entry->numElements = 0;
-		}
 
 		if(input_ui_pressed(IPT_UI_SAVE_CHEAT))
 		{
@@ -6898,174 +7464,228 @@ static int EditWatch(WatchInfo * entry, int selection)
 
 	if(input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
-//  if(input_ui_pressed(IPT_UI_CONFIGURE))
-//      sel = -2;
 
 	return sel + 1;
 }
 
-static int SelectSearchRegions(int selection, SearchInfo * search)
+/*----------------------------------------------
+  SelectOptions - management for options menu
+----------------------------------------------*/
+
+static int SelectOptions(int selection)
 {
-	static const char	* kSearchSpeedList[] =
+	enum
 	{
-		"Fast",
-		"Medium",
-		"Slow",
-		"Very Slow",
-		"All Memory"
+		kMenu_SelectSearch = 0,
+		kMenu_SearchDialogStyle,
+		kMenu_ShowSearchLabels,
+		kMenu_AutoSaveCheats,
+		kMenu_ShowActivationKeyMessage,
+		kMenu_LoadOldFormat,
+		kMenu_Debug,
+		kMenu_Return,
+
+		kMenu_Max
 	};
 
 	INT32			sel;
-	const char		** menuItem;
-	const char		** menuSubItem;
-	INT32			i;
-	INT32			total = 0;
-	SearchRegion	* region;
-
-	if(!search)
-		return 0;
+	static INT32	submenuChoice = 0;
+	const char		* menuItem[kMenu_Max + 1];
+	const char		* menuSubItem[kMenu_Max + 1];
+	int				total = 0;
 
 	sel = selection - 1;
 
-	RequestStrings(search->regionListLength + 3, 0, 0, 0);
-
-	menuItem =		menuStrings.mainList;
-	menuSubItem =	menuStrings.subList;
-
-	for(i = 0; i < search->regionListLength; i++)
+	/********** SUB MENU **********/
+	if(submenuChoice)
 	{
-		SearchRegion	* traverse = &search->regionList[i];
+		switch(sel)
+		{
+			case kMenu_SelectSearch:
+				submenuChoice = SelectSearch(submenuChoice);
+				break;
 
-		menuItem[total] = traverse->name;
-		menuSubItem[total] = ui_getstring((traverse->flags & kRegionFlag_Enabled) ? UI_on : UI_off);
-		total++;
+			default:
+				submenuChoice = 0;
+				sel = -1;
+				break;
+		}
+
+		if(submenuChoice == -1)
+			submenuChoice = 0;
+
+		return sel + 1;
 	}
 
-	menuItem[total] = "Search Speed";
-	menuSubItem[total] = kSearchSpeedList[search->searchSpeed];
-	total++;
+	/********** MENU CONSTRUCTION **********/
+	menuItem[total] =		"Select Search";
+	menuSubItem[total++] =	NULL;
 
-	menuItem[total] = ui_getstring(UI_returntoprior);
-	menuSubItem[total] = NULL;
-	total++;
+	menuItem[total] =		"Search Dialog Style";
+	switch(EXTRACT_FIELD(cheatOptions, SearchBox))
+	{
+		case kSearchBox_Minimum:
+			menuSubItem[total++] = "Minimum";
+			break;
 
-	menuItem[total] = NULL;
-	menuSubItem[total] = NULL;
+		case kSearchBox_Classic:
+			menuSubItem[total++] = "Classic";
+			break;
 
-	if(sel < 0)
-		sel = 0;
-	if(sel > (total - 1))
-		sel = total - 1;
+		case kSearchBox_Advanced:
+			menuSubItem[total++] = "Advanced";
+			break;
+	}
 
-	if(sel < search->regionListLength)
-		region = &search->regionList[sel];
-	else
-		region = NULL;
+	menuItem[total] =		"Show Search Labels";
+	menuSubItem[total++] =	ui_getstring(TEST_FIELD(cheatOptions, DontPrintNewLabels) ? UI_off : UI_on);
 
+	menuItem[total] =		"Auto Save Cheats";
+	menuSubItem[total++] =	ui_getstring(TEST_FIELD(cheatOptions, AutoSaveEnabled) ? UI_on : UI_off);
+
+	menuItem[total] =		"Show Activation Key Message";
+	menuSubItem[total++] =	ui_getstring(TEST_FIELD(cheatOptions, ActivationKeyMessage) ? UI_on : UI_off);
+
+	menuItem[total] =		"Load Old Format Code";
+	menuSubItem[total++] =	ui_getstring(TEST_FIELD(cheatOptions, LoadOldFormat) ? UI_on : UI_off);
+
+	menuItem[total] =		"Debug";
+	menuSubItem[total++] =	ui_getstring(TEST_FIELD(cheatOptions, Debug) ? UI_on : UI_off);
+
+	menuItem[total] =		ui_getstring(UI_returntoprior);		// return
+	menuSubItem[total++] =	NULL;
+
+	menuItem[total] =		NULL;								// terminate array
+	menuSubItem[total] =	NULL;
+
+	/* ----- draw it ----- */
 	old_style_menu(menuItem, menuSubItem, NULL, sel, 0);
+
+	/********** KEY HANDLING **********/
+	if(UIPressedRepeatThrottle(IPT_UI_RIGHT, kHorizontalSlowKeyRepeatRate))
+	{
+		switch(sel)
+		{
+			case kMenu_SearchDialogStyle:
+				{
+					UINT8	length = (EXTRACT_FIELD(cheatOptions, SearchBox) + 1) & 3;
+
+					if(length > kSearchBox_Advanced)
+						length = kSearchBox_Minimum;
+
+					SET_FIELD(cheatOptions, SearchBox, length);
+				}
+				break;
+
+			case kMenu_ShowSearchLabels:
+				TOGGLE_MASK_FIELD(cheatOptions, DontPrintNewLabels);
+				break;
+
+			case kMenu_AutoSaveCheats:
+				TOGGLE_MASK_FIELD(cheatOptions, AutoSaveEnabled);
+				break;
+
+			case kMenu_ShowActivationKeyMessage:
+				TOGGLE_MASK_FIELD(cheatOptions, ActivationKeyMessage);
+				break;
+
+			case kMenu_LoadOldFormat:
+				TOGGLE_MASK_FIELD(cheatOptions, LoadOldFormat);
+				break;
+
+			case kMenu_Debug:
+				TOGGLE_MASK_FIELD(cheatOptions, Debug);
+				break;
+		}
+	}
+
+	 if(UIPressedRepeatThrottle(IPT_UI_LEFT, kHorizontalSlowKeyRepeatRate))
+	{
+		switch(sel)
+		{
+			case kMenu_SearchDialogStyle:
+				{
+					UINT8	length = (EXTRACT_FIELD(cheatOptions, SearchBox) - 1) & 3;
+
+					if(length > kSearchBox_Advanced)
+						length = kSearchBox_Advanced;
+
+					SET_FIELD(cheatOptions, SearchBox, length);
+				}
+				break;
+
+			case kMenu_ShowSearchLabels:
+				TOGGLE_MASK_FIELD(cheatOptions, DontPrintNewLabels);
+				break;
+
+			case kMenu_AutoSaveCheats:
+				TOGGLE_MASK_FIELD(cheatOptions, AutoSaveEnabled);
+				break;
+
+			case kMenu_ShowActivationKeyMessage:
+				TOGGLE_MASK_FIELD(cheatOptions, ActivationKeyMessage);
+				break;
+
+			case kMenu_LoadOldFormat:
+				TOGGLE_MASK_FIELD(cheatOptions, LoadOldFormat);
+				break;
+
+			case kMenu_Debug:
+				TOGGLE_MASK_FIELD(cheatOptions, Debug);
+				break;
+		}
+	}
 
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
-		sel++;
-
-		if(sel >= total)
+		if(sel < (kMenu_Max - 1))
+			sel++;
+		else
 			sel = 0;
 	}
 
 	if(UIPressedRepeatThrottle(IPT_UI_UP, kVerticalKeyRepeatRate))
 	{
-		sel--;
-
-		if(sel < 0)
-			sel = total - 1;
-	}
-
-	if(UIPressedRepeatThrottle(IPT_UI_PAGE_UP, kVerticalKeyRepeatRate))
-	{
-		sel -= fullMenuPageHeight;
-
-		if(sel < 0)
-			sel = 0;
-	}
-
-	if(UIPressedRepeatThrottle(IPT_UI_PAGE_DOWN, kVerticalKeyRepeatRate))
-	{
-		sel += fullMenuPageHeight;
-
-		if(sel >= total)
-			sel = total - 1;
-	}
-
-	if(UIPressedRepeatThrottle(IPT_UI_LEFT, kHorizontalSlowKeyRepeatRate))
-	{
-		if(sel < search->regionListLength)
-		{
-			search->regionList[sel].flags ^= kRegionFlag_Enabled;
-
-			AllocateSearchRegions(search);
-		}
-
-		if(sel == search->regionListLength)	// set search speed
-		{
-			if(search->searchSpeed > kSearchSpeed_Fast)
-				search->searchSpeed--;
-			else
-				search->searchSpeed = kSearchSpeed_Max;
-
-			BuildSearchRegions(search);
-			AllocateSearchRegions(search);
-		}
-	}
-
-	if(UIPressedRepeatThrottle(IPT_UI_RIGHT, kHorizontalSlowKeyRepeatRate))
-	{
-		if(sel < search->regionListLength)
-		{
-			search->regionList[sel].flags ^= kRegionFlag_Enabled;
-
-			AllocateSearchRegions(search);
-		}
-
-		if(sel == search->regionListLength)	// set search speed
-		{
-			if(search->searchSpeed < kSearchSpeed_Max)
-				search->searchSpeed++;
-			else
-				search->searchSpeed = kSearchSpeed_Fast;
-
-			BuildSearchRegions(search);
-			AllocateSearchRegions(search);
-		}
-	}
-
-	if(input_ui_pressed(IPT_UI_DELETE_CHEAT))
-	{
-		if(ShiftKeyPressed())
-		{
-			if(region && search)
-			{
-				InvalidateEntireRegion(search, region);
-
-				ui_popup_time(1, "region invalidated - %d results remain", search->numResults);
-			}
-		}
+		if(sel > 0)
+			sel--;
+		else
+			sel = kMenu_Max - 1;
 	}
 
 	if(input_ui_pressed(IPT_UI_SELECT))
 	{
-		if(sel >= total - 1)
+		switch(sel)
 		{
-			sel = -1;
+			case kMenu_Return:
+				submenuChoice = 0;
+				sel = -1;
+				break;
+
+			case kMenu_SelectSearch:
+				submenuChoice = 1;
+				break;
 		}
 	}
 
+	if(input_ui_pressed(IPT_UI_SAVE_CHEAT))
+	{
+		SaveCheat(NULL, 0, 2);
+
+		ui_popup_time(1, "command code saved");
+	}
+
+	if(input_ui_pressed(IPT_UI_RELOAD_CHEAT))
+		ReloadCheatDatabase();
+
 	if(input_ui_pressed(IPT_UI_CANCEL))
 		sel = -1;
-//  if(input_ui_pressed(IPT_UI_CONFIGURE))
-//      sel = -2;
 
 	return sel + 1;
 }
+
+/*------------------------------------------------------
+  SelectSearch - management for search selection menu
+------------------------------------------------------*/
 
 static int SelectSearch(int selection)
 {
@@ -7082,6 +7702,7 @@ static int SelectSearch(int selection)
 	menuItem =	menuStrings.mainList;
 	buf =		menuStrings.mainStrings;
 
+	/********** MENU CONSTRUCTION **********/
 	for(i = 0; i < searchListLength; i++)
 	{
 		SearchInfo	* info = &searchList[i];
@@ -7089,42 +7710,36 @@ static int SelectSearch(int selection)
 		if(i == currentSearchIdx)
 		{
 			if(info->name)
-			{
 				sprintf(buf[total], "[#%d: %s]", i, info->name);
-			}
 			else
-			{
 				sprintf(buf[total], "[#%d]", i);
-			}
 		}
 		else
 		{
 			if(info->name)
-			{
 				sprintf(buf[total], "#%d: %s", i, info->name);
-			}
 			else
-			{
 				sprintf(buf[total], "#%d", i);
-			}
 		}
 
 		menuItem[total] = buf[total];
 		total++;
 	}
 
-	menuItem[total] = ui_getstring(UI_returntoprior);
-	total++;
+	menuItem[total++] = ui_getstring(UI_returntoprior);		// return
 
-	menuItem[total] = NULL;
+	menuItem[total] = NULL;									// terminate array
 
+	/* ----- adjust current cursor position ----- */
 	if(sel < 0)
 		sel = 0;
 	if(sel > (total - 1))
 		sel = total - 1;
 
+	/* ----- draw it ----- */
 	old_style_menu(menuItem, NULL, NULL, sel, 0);
 
+	/********** KEY HANDLING **********/
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
 		sel++;
@@ -7168,9 +7783,7 @@ static int SelectSearch(int selection)
 	if(input_ui_pressed(IPT_UI_DELETE_CHEAT))
 	{
 		if(searchListLength > 1)
-		{
 			DeleteSearchAt(sel);
-		}
 	}
 
 	if(input_ui_pressed(IPT_UI_EDIT_CHEAT))
@@ -7182,179 +7795,9 @@ static int SelectSearch(int selection)
 	if(input_ui_pressed(IPT_UI_SELECT))
 	{
 		if(sel >= total - 1)
-		{
 			sel = -1;
-		}
 		else
-		{
 			currentSearchIdx = sel;
-		}
-	}
-
-	if(input_ui_pressed(IPT_UI_CANCEL))
-		sel = -1;
-//  if(input_ui_pressed(IPT_UI_CONFIGURE))
-//      sel = -2;
-
-	return sel + 1;
-}
-
-static int SelectOptions(int selection)
-{
-	enum
-	{
-		kMenu_SelectSearchRegions = 0,
-		kMenu_SelectSearch,
-		kMenu_ReloadCheatDatabase,
-		kMenu_SearchDialogStyle,
-		kMenu_ShowSearchLabels,
-		kMenu_AutoSaveCheats,
-		kMenu_ShowActivationKeyMessage,
-		kMenu_Return,
-
-		kMenu_Max
-	};
-
-	INT32			sel;
-	static INT32	submenuChoice = 0;
-	const char		* menuItem[kMenu_Max + 1];
-	const char		* menuSubItem[kMenu_Max + 1];
-	int				total = 0;
-
-	sel = selection - 1;
-
-	if(submenuChoice)
-	{
-		switch(sel)
-		{
-			case kMenu_SelectSearchRegions:
-				submenuChoice = SelectSearchRegions(submenuChoice, GetCurrentSearch());
-				break;
-
-			case kMenu_SelectSearch:
-				submenuChoice = SelectSearch(submenuChoice);
-				break;
-
-			default:
-				submenuChoice = 0;
-				sel = -1;
-				break;
-		}
-
-		if(submenuChoice == -1)
-			submenuChoice = 0;
-
-		return sel + 1;
-	}
-
-	menuItem[total] =		ui_getstring(UI_search_select_memory_areas);
-	menuSubItem[total++] =	NULL;
-
-	menuItem[total] =		"Select Search";
-	menuSubItem[total++] =	NULL;
-
-	menuItem[total] =		ui_getstring(UI_reloaddatabase);
-	menuSubItem[total++] =	NULL;
-
-	menuItem[total] =		"Search Dialog Style";
-	menuSubItem[total++] =	TEST_FIELD(cheatOptions, UseClassicSearchBox) ? "Classic" : "Advanced";
-
-	menuItem[total] =		"Show Search Labels";
-	menuSubItem[total++] =	ui_getstring(TEST_FIELD(cheatOptions, DontPrintNewLabels) ? UI_off : UI_on);
-
-	menuItem[total] =		"Auto Save Cheats";
-	menuSubItem[total++] =	ui_getstring(TEST_FIELD(cheatOptions, AutoSaveEnabled) ? UI_on : UI_off);
-
-	menuItem[total] =		"Show Activation Key Message";
-	menuSubItem[total++] =	ui_getstring(TEST_FIELD(cheatOptions, ActivationKeyMessage) ? UI_on : UI_off);
-
-	menuItem[total] =		ui_getstring(UI_returntoprior);
-	menuSubItem[total++] =	NULL;
-
-	menuItem[total] =		NULL;
-	menuSubItem[total] =	NULL;
-
-	/* ----- draw it ----- */
-	old_style_menu(menuItem, menuSubItem, NULL, sel, 0);
-
-	if(UIPressedRepeatThrottle(IPT_UI_RIGHT, kHorizontalSlowKeyRepeatRate))
-	{
-		switch(sel)
-		{
-			case kMenu_SearchDialogStyle:
-				TOGGLE_MASK_FIELD(cheatOptions, UseClassicSearchBox);
-				break;
-
-			case kMenu_ShowSearchLabels:
-				TOGGLE_MASK_FIELD(cheatOptions, DontPrintNewLabels);
-				break;
-
-			case kMenu_AutoSaveCheats:
-				TOGGLE_MASK_FIELD(cheatOptions, AutoSaveEnabled);
-				break;
-
-			case kMenu_ShowActivationKeyMessage:
-				TOGGLE_MASK_FIELD(cheatOptions, ActivationKeyMessage);
-				break;
-		}
-	}
-
-	if(UIPressedRepeatThrottle(IPT_UI_LEFT, kHorizontalSlowKeyRepeatRate))
-	{
-		switch(sel)
-		{
-			case kMenu_SearchDialogStyle:
-				TOGGLE_MASK_FIELD(cheatOptions, UseClassicSearchBox);
-				break;
-
-			case kMenu_ShowSearchLabels:
-				TOGGLE_MASK_FIELD(cheatOptions, DontPrintNewLabels);
-				break;
-
-			case kMenu_AutoSaveCheats:
-				TOGGLE_MASK_FIELD(cheatOptions, AutoSaveEnabled);
-				break;
-
-			case kMenu_ShowActivationKeyMessage:
-				TOGGLE_MASK_FIELD(cheatOptions, ActivationKeyMessage);
-				break;
-		}
-	}
-
-	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
-	{
-		if(sel < (kMenu_Max - 1))
-			sel++;
-		else
-			sel = 0;
-	}
-
-	if(UIPressedRepeatThrottle(IPT_UI_UP, kVerticalKeyRepeatRate))
-	{
-		if(sel > 0)
-			sel--;
-		else
-			sel = kMenu_Max - 1;
-	}
-
-	if(input_ui_pressed(IPT_UI_SELECT))
-	{
-		switch(sel)
-		{
-			case kMenu_Return:
-				submenuChoice = 0;
-				sel = -1;
-				break;
-
-			case kMenu_ReloadCheatDatabase:
-				ReloadCheatDatabase();
-				break;
-
-			case kMenu_SelectSearchRegions:
-			case kMenu_SelectSearch:
-				submenuChoice = 1;
-				break;
-		}
 	}
 
 	if(input_ui_pressed(IPT_UI_CANCEL))
@@ -7362,6 +7805,10 @@ static int SelectOptions(int selection)
 
 	return sel + 1;
 }
+
+/*------------------
+  cheate_periodic
+------------------*/
 
 void cheat_periodic(int param)
 {
@@ -7371,7 +7818,7 @@ void cheat_periodic(int param)
 	{
 		if(ShiftKeyPressed())
 		{
-			/* ------ toggle watchpoint display if shift + toggle cheat key ----- */
+			/* ------ toggle watchpoint display if shift + toggle cheat ----- */
 			watchesDisabled ^= 1;
 
 			ui_popup_time(1, "%s %s", ui_getstring(UI_watchpoints), watchesDisabled ? ui_getstring (UI_off) : ui_getstring (UI_on));
@@ -7398,6 +7845,10 @@ void cheat_periodic(int param)
 		cheat_periodicEntry(&cheatList[i]);
 }
 
+/*--------------
+  PrintBinary
+--------------*/
+
 UINT32 PrintBinary(char * buf, UINT32 data, UINT32 mask)
 {
 	UINT32	traverse = 0x80000000;
@@ -7418,6 +7869,10 @@ UINT32 PrintBinary(char * buf, UINT32 data, UINT32 mask)
 
 	return written;
 }
+
+/*-------------
+  PrintASCII
+-------------*/
 
 UINT32 PrintASCII(char * buf, UINT32 data, UINT8 size)
 {
@@ -7460,6 +7915,10 @@ UINT32 PrintASCII(char * buf, UINT32 data, UINT8 size)
 	return 0;
 }
 
+/*---------------------------------------------
+  cheat_display_watches - display watchpoint
+---------------------------------------------*/
+
 void cheat_display_watches(void)
 {
 	int		i;
@@ -7477,8 +7936,10 @@ void cheat_display_watches(void)
 		int			numChars;
 		int			lineElements = 0;
 
+		/* ----- if the length of the watchpoint is not 0, display it ----- */
 		if(info->numElements)
 		{
+			/* ----- label display ----- */
 			switch(info->labelType)
 			{
 				case kWatchLabel_Address:
@@ -7496,6 +7957,7 @@ void cheat_display_watches(void)
 					break;
 			}
 
+			/* ----- value display ----- */
 			for(j = 0; j < info->numElements; j++)
 			{
 				UINT32	data = 0;
@@ -7503,8 +7965,8 @@ void cheat_display_watches(void)
 				switch(info->locationType)
 				{
 					case kLocation_Standard:
-						data = (DoCPURead(info->cpu, address, kSearchByteIncrementTable[info->elementBytes], CPUNeedsSwap(info->cpu)) + info->addValue)
-								& kSearchByteMaskTable[info->elementBytes];
+						data =	(DoCPURead(info->cpu, address, kSearchByteIncrementTable[info->elementBytes], CPUNeedsSwap(info->cpu)) + info->addValue) &
+								kSearchByteMaskTable[info->elementBytes];
 						break;
 
 					case kLocation_MemoryRegion:
@@ -7512,14 +7974,29 @@ void cheat_display_watches(void)
 						int		region = REGION_CPU1 + info->cpu;
 						UINT8	* buf = memory_region(region);
 
-						if(buf)
-							data =  DoMemoryRead(buf, address, kSearchByteIncrementTable[info->elementBytes], RegionNeedsSwap(region) + info->addValue, GetRegionCPUInfo(region))
-									& kSearchByteMaskTable[info->elementBytes];
-						break;
+						data =	DoMemoryRead(buf, address, kSearchByteIncrementTable[info->elementBytes], RegionNeedsSwap(region) + info->addValue, GetRegionCPUInfo(region)) &
+								kSearchByteMaskTable[info->elementBytes];
 					}
+					break;
 
 					case kLocation_IndirectIndexed:
 						return; // under construction...
+
+					case kLocation_ProgramSpace:
+					{
+						UINT8	* buf;
+
+						memory_set_opbase(address);
+
+						buf = memory_get_op_ptr(info->cpu, address, 0);
+
+						buf -= address;
+
+						if(buf)
+							data =	DoMemoryRead(buf, address, kSearchByteIncrementTable[info->elementBytes], CPUNeedsSwap(info->cpu) + info->addValue, GetCPUInfo(info->cpu)) &
+									kSearchByteMaskTable[info->elementBytes];
+					}
+					break;
 
 					default:
 						logerror("invalid location type : %x\n", info->locationType);
@@ -7530,8 +8007,7 @@ void cheat_display_watches(void)
 				data = DoShift(data, info->dataShift);
 				data ^= info->xor;
 
-				if(	(lineElements >= info->elementsPerLine) &&
-					info->elementsPerLine)
+				if(	(lineElements >= info->elementsPerLine) && info->elementsPerLine)
 				{
 					lineElements = 0;
 
@@ -7580,24 +8056,9 @@ void cheat_display_watches(void)
 	}
 }
 
-static char * CreateStringCopy(char * buf)
-{
-	char	* temp = NULL;
-
-	if(buf)
-	{
-		UINT32	length = strlen(buf) + 1;
-
-		temp = malloc(length);
-
-		if(temp)
-		{
-			memcpy(temp, buf, length);
-		}
-	}
-
-	return temp;
-}
+/*------------------
+  ResizeCheatList
+------------------*/
 
 static void ResizeCheatList(UINT32 newLength)
 {
@@ -7612,6 +8073,7 @@ static void ResizeCheatList(UINT32 newLength)
 		}
 
 		cheatList = realloc(cheatList, newLength * sizeof(CheatEntry));
+
 		if(!cheatList && (newLength != 0))
 		{
 			logerror("ResizeCheatList: out of memory resizing cheat list\n");
@@ -7629,20 +8091,23 @@ static void ResizeCheatList(UINT32 newLength)
 			memset(&cheatList[cheatListLength], 0, (newLength - cheatListLength) * sizeof(CheatEntry));
 
 			for(i = cheatListLength; i < newLength; i++)
-			{
 				cheatList[i].flags |= kCheatFlag_Dirty;
-			}
 		}
 
 		cheatListLength = newLength;
 	}
 }
 
+/*---------------------------
+  ResizeCheatListNoDispose
+---------------------------*/
+
 static void ResizeCheatListNoDispose(UINT32 newLength)
 {
 	if(newLength != cheatListLength)
 	{
 		cheatList = realloc(cheatList, newLength * sizeof(CheatEntry));
+
 		if(!cheatList && (newLength != 0))
 		{
 			logerror("ResizeCheatListNoDispose: out of memory resizing cheat list\n");
@@ -7660,17 +8125,20 @@ static void ResizeCheatListNoDispose(UINT32 newLength)
 			memset(&cheatList[cheatListLength], 0, (newLength - cheatListLength) * sizeof(CheatEntry));
 
 			for(i = cheatListLength; i < newLength; i++)
-			{
 				cheatList[i].flags |= kCheatFlag_Dirty;
-			}
 		}
 
 		cheatListLength = newLength;
 	}
 }
 
+/*---------------------------------------------------------------
+  AddCheatBefore - insert new cheat entry before selected code
+---------------------------------------------------------------*/
+
 static void AddCheatBefore(UINT32 idx)
 {
+	/* ----- memory reallocation ----- */
 	ResizeCheatList(cheatListLength + 1);
 
 	if(idx < (cheatListLength - 1))
@@ -7679,11 +8147,17 @@ static void AddCheatBefore(UINT32 idx)
 	if(idx >= cheatListLength)
 		idx = cheatListLength - 1;
 
+	/* ----- insert new entry ----- */
 	memset(&cheatList[idx], 0, sizeof(CheatEntry));
+
 	cheatList[idx].flags |= kCheatFlag_Dirty;
 
 	ResizeCheatActionList(&cheatList[idx], 1);
 }
+
+/*----------------
+  DeleteCheatAt
+----------------*/
 
 static void DeleteCheatAt(UINT32 idx)
 {
@@ -7699,6 +8173,10 @@ static void DeleteCheatAt(UINT32 idx)
 
 	ResizeCheatListNoDispose(cheatListLength - 1);
 }
+
+/*------------------------------------------------
+  DisposeCheat - free memory for selected entry
+------------------------------------------------*/
 
 static void DisposeCheat(CheatEntry * entry)
 {
@@ -7722,12 +8200,22 @@ static void DisposeCheat(CheatEntry * entry)
 	}
 }
 
+/*------------------------------------
+  GetNewCheat - get new cheat entry
+------------------------------------*/
+
 static CheatEntry *	GetNewCheat(void)
 {
+	/* ----- insert new cheat entry ----- */
 	AddCheatBefore(cheatListLength);
 
+	/* ----- return inserted entry ----- */
 	return &cheatList[cheatListLength - 1];
 }
+
+/*------------------------
+  ResizeCheatActionList
+------------------------*/
 
 static void ResizeCheatActionList(CheatEntry * entry, UINT32 newLength)
 {
@@ -7761,6 +8249,10 @@ static void ResizeCheatActionList(CheatEntry * entry, UINT32 newLength)
 	}
 }
 
+/*---------------------------------
+  ResizeCheatActionListNoDispose
+---------------------------------*/
+
 static void ResizeCheatActionListNoDispose(CheatEntry * entry, UINT32 newLength)
 {
 	if(newLength != entry->actionListLength)
@@ -7785,6 +8277,10 @@ static void ResizeCheatActionListNoDispose(CheatEntry * entry, UINT32 newLength)
 	}
 }
 
+/*------------------
+  AddActionBefore
+------------------*/
+
 static void AddActionBefore(CheatEntry * entry, UINT32 idx)
 {
 	ResizeCheatActionList(entry, entry->actionListLength + 1);
@@ -7798,6 +8294,10 @@ static void AddActionBefore(CheatEntry * entry, UINT32 idx)
 	memset(&entry->actionList[idx], 0, sizeof(CheatAction));
 }
 
+/*-----------------
+  DeleteActionAt
+-----------------*/
+
 static void DeleteActionAt(CheatEntry * entry, UINT32 idx)
 {
 	if(idx >= entry->actionListLength)
@@ -7806,12 +8306,14 @@ static void DeleteActionAt(CheatEntry * entry, UINT32 idx)
 	DisposeAction(&entry->actionList[idx]);
 
 	if(idx < (entry->actionListLength - 1))
-	{
 		memmove(&entry->actionList[idx], &entry->actionList[idx + 1], sizeof(CheatAction) * (entry->actionListLength - 1 - idx));
-	}
 
 	ResizeCheatActionListNoDispose(entry, entry->actionListLength - 1);
 }
+
+/*----------------
+  DisposeAction
+----------------*/
 
 static void DisposeAction(CheatAction * action)
 {
@@ -7823,13 +8325,23 @@ static void DisposeAction(CheatAction * action)
 	}
 }
 
+/*----------------------------------------------------
+  InitWatch - initialize y-position for watchpoints
+----------------------------------------------------*/
+
 static void InitWatch(WatchInfo * info, UINT32 idx)
 {
 	if(idx > 0)
+		/* ----- set 2nd or later y-position ----- */
 		info->y = watchList[idx - 1].y + ui_get_line_height();
 	else
+		/* ----- set 1st y-position (always Y=0) ----- */
 		info->y = 0;
 }
+
+/*------------------
+  ResizeWatchList
+------------------*/
 
 static void ResizeWatchList(UINT32 newLength)
 {
@@ -7861,14 +8373,16 @@ static void ResizeWatchList(UINT32 newLength)
 			memset(&watchList[watchListLength], 0, (newLength - watchListLength) * sizeof(WatchInfo));
 
 			for(i = watchListLength; i < newLength; i++)
-			{
 				InitWatch(&watchList[i], i);
-			}
 		}
 
 		watchListLength = newLength;
 	}
 }
+
+/*---------------------------
+  ResizeWatchListNoDispose
+---------------------------*/
 
 static void ResizeWatchListNoDispose(UINT32 newLength)
 {
@@ -7892,14 +8406,16 @@ static void ResizeWatchListNoDispose(UINT32 newLength)
 			memset(&watchList[watchListLength], 0, (newLength - watchListLength) * sizeof(WatchInfo));
 
 			for(i = watchListLength; i < newLength; i++)
-			{
 				InitWatch(&watchList[i], i);
-			}
 		}
 
 		watchListLength = newLength;
 	}
 }
+
+/*-----------------
+  AddWatchBefore
+-----------------*/
 
 static void AddWatchBefore(UINT32 idx)
 {
@@ -7916,6 +8432,10 @@ static void AddWatchBefore(UINT32 idx)
 	InitWatch(&watchList[idx], idx);
 }
 
+/*----------------
+  DeleteWatchAt
+----------------*/
+
 static void DeleteWatchAt(UINT32 idx)
 {
 	if(idx >= watchListLength)
@@ -7924,20 +8444,24 @@ static void DeleteWatchAt(UINT32 idx)
 	DisposeWatch(&watchList[idx]);
 
 	if(idx < (watchListLength - 1))
-	{
 		memmove(&watchList[idx], &watchList[idx + 1], sizeof(WatchInfo) * (watchListLength - 1 - idx));
-	}
 
 	ResizeWatchListNoDispose(watchListLength - 1);
 }
 
+/*---------------
+  DisposeWatch
+---------------*/
+
 static void DisposeWatch(WatchInfo * watch)
 {
 	if(watch)
-	{
 		memset(watch, 0, sizeof(WatchInfo));
-	}
 }
+
+/*----------------------------------------------------------
+  GetUnusedWatch - search unused watchpoint and return it
+----------------------------------------------------------*/
 
 static WatchInfo * GetUnusedWatch(void)
 {
@@ -7945,6 +8469,7 @@ static WatchInfo * GetUnusedWatch(void)
 	WatchInfo	* info;
 	WatchInfo	* theWatch = NULL;
 
+	/* ----- search unused watchpoint ----- */
 	for(i = 0; i < watchListLength; i++)
 	{
 		info = &watchList[i];
@@ -7952,11 +8477,11 @@ static WatchInfo * GetUnusedWatch(void)
 		if(info->numElements == 0)
 		{
 			theWatch = info;
-
 			break;
 		}
 	}
 
+	/* ----- if unused watchpoint is not found, insert new watchpoint as unused ----- */
 	if(!theWatch)
 	{
 		AddWatchBefore(watchListLength);
@@ -7964,8 +8489,13 @@ static WatchInfo * GetUnusedWatch(void)
 		theWatch = &watchList[watchListLength - 1];
 	}
 
+	/* ----- return unused watchpoint ----- */
 	return theWatch;
 }
+
+/*----------------------------------------------------------------------------
+  AddCheatFromWatch - add new cheat code from watchpoint list to cheat list
+----------------------------------------------------------------------------*/
 
 static void AddCheatFromWatch(WatchInfo * watch)
 {
@@ -7992,6 +8522,10 @@ static void AddCheatFromWatch(WatchInfo * watch)
 		UpdateCheatInfo(entry, 0);
 	}
 }
+
+/*-------------------------------------------------------------------------------------
+  SetupCheatFromWatchAsWatch - add new watch code from watchpoint list to cheat list
+-------------------------------------------------------------------------------------*/
 
 static void SetupCheatFromWatchAsWatch(CheatEntry * entry, WatchInfo * watch)
 {
@@ -8033,6 +8567,10 @@ static void SetupCheatFromWatchAsWatch(CheatEntry * entry, WatchInfo * watch)
 	}
 }
 
+/*-------------------
+  ResizeSearchList
+-------------------*/
+
 static void ResizeSearchList(UINT32 newLength)
 {
 	if(newLength != searchListLength)
@@ -8072,6 +8610,10 @@ static void ResizeSearchList(UINT32 newLength)
 	}
 }
 
+/*----------------------------
+  ResizeSearchListNoDispose
+----------------------------*/
+
 static void ResizeSearchListNoDispose(UINT32 newLength)
 {
 	if(newLength != searchListLength)
@@ -8096,6 +8638,10 @@ static void ResizeSearchListNoDispose(UINT32 newLength)
 	}
 }
 
+/*------------------
+  AddSearchBefore
+------------------*/
+
 static void AddSearchBefore(UINT32 idx)
 {
 	ResizeSearchListNoDispose(searchListLength + 1);
@@ -8109,6 +8655,10 @@ static void AddSearchBefore(UINT32 idx)
 	memset(&searchList[idx], 0, sizeof(SearchInfo));
 	InitSearch(&searchList[idx]);
 }
+
+/*-----------------
+  DeleteSearchAt
+-----------------*/
 
 static void DeleteSearchAt(UINT32 idx)
 {
@@ -8125,6 +8675,10 @@ static void DeleteSearchAt(UINT32 idx)
 	ResizeSearchListNoDispose(searchListLength - 1);
 }
 
+/*--------------------------------------
+  InitSearch - initialize search info
+--------------------------------------*/
+
 static void InitSearch(SearchInfo * info)
 {
 	if(info)
@@ -8132,6 +8686,10 @@ static void InitSearch(SearchInfo * info)
 		info->searchSpeed = kSearchSpeed_Medium;
 	}
 }
+
+/*-----------------------
+  DisposeSearchRegions
+-----------------------*/
 
 static void DisposeSearchRegions(SearchInfo * info)
 {
@@ -8158,6 +8716,10 @@ static void DisposeSearchRegions(SearchInfo * info)
 	info->regionListLength = 0;
 }
 
+/*------------------
+  DisposeSearch
+  ----------------*/
+
 static void DisposeSearch(UINT32 idx)
 {
 	SearchInfo	* info;
@@ -8173,6 +8735,10 @@ static void DisposeSearch(UINT32 idx)
 	info->name = NULL;
 }
 
+/*----------------------------------------
+  GetCurrentSearch - return search info
+----------------------------------------*/
+
 static SearchInfo *	GetCurrentSearch(void)
 {
 	if(currentSearchIdx >= searchListLength)
@@ -8183,17 +8749,22 @@ static SearchInfo *	GetCurrentSearch(void)
 	return &searchList[currentSearchIdx];
 }
 
+/*-------------------------------------------------------
+  FillBufferFromRegion - set a data into search region
+-------------------------------------------------------*/
+
 static void FillBufferFromRegion(SearchRegion * region, UINT8 * buf)
 {
 	UINT32	offset;
 
-	// ### optimize if needed
-
+	/* ### optimize if needed ### */
 	for(offset = 0; offset < region->length; offset++)
-	{
 		buf[offset] = ReadRegionData(region, offset, 1, 0);
-	}
 }
+
+/*-------------------------------------------------------
+  ReadRegionData - read a data from region when search
+-------------------------------------------------------*/
 
 static UINT32 ReadRegionData(SearchRegion * region, UINT32 offset, UINT8 size, UINT8 swap)
 {
@@ -8213,6 +8784,9 @@ static UINT32 ReadRegionData(SearchRegion * region, UINT32 offset, UINT8 size, U
 
 	return 0;
 }
+/*-----------------------------------------------
+  BackupSearch - back up current search region
+-----------------------------------------------*/
 
 static void BackupSearch(SearchInfo * info)
 {
@@ -8224,6 +8798,10 @@ static void BackupSearch(SearchInfo * info)
 	info->oldNumResults = info->numResults;
 	info->backupValid = 1;
 }
+
+/*-------------------------------------------------------
+  RestoreSearchBackup - restore previous search region
+-------------------------------------------------------*/
 
 static void RestoreSearchBackup(SearchInfo * info)
 {
@@ -8243,6 +8821,10 @@ static void RestoreSearchBackup(SearchInfo * info)
 		ui_popup_time(1, "there are no old values");
 }
 
+/*------------------------------------------------
+  BackupRegion - back up current search results
+------------------------------------------------*/
+
 static void BackupRegion(SearchRegion * region)
 {
 	if(region->flags & kRegionFlag_Enabled)
@@ -8253,6 +8835,10 @@ static void BackupRegion(SearchRegion * region)
 	}
 }
 
+/*--------------------------------------------------------
+  RestoreSearchBackup - restore previous search results
+--------------------------------------------------------*/
+
 static void RestoreRegionBackup(SearchRegion * region)
 {
 	if(region->flags & kRegionFlag_Enabled)
@@ -8262,6 +8848,10 @@ static void RestoreRegionBackup(SearchRegion * region)
 		region->numResults =	region->oldNumResults;
 	}
 }
+
+/*-----------------------------------------------------------
+  DefaultEnableRegion - get default regions you can search
+-----------------------------------------------------------*/
 
 static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 {
@@ -8275,27 +8865,22 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 #if HAS_SH2
 			if(Machine->drv->cpu[0].cpu_type == CPU_SH2)
 			{
-				if(	(info->targetType == kRegionType_CPU) &&
-					(info->targetIdx == 0) &&
-					(region->address == 0x06000000))
+				if(	(info->targetType == kRegionType_CPU) && (info->targetIdx == 0) && (region->address == 0x06000000))
 					return 1;
 
 				return 0;
 			}
 #endif
 
-			if(	(handler == MWA8_RAM) &&
-				(!region->writeHandler->base))
+			if(	(handler == MWA8_RAM) && (!region->writeHandler->base))
 				return 1;
 
 #ifndef MESS
 
 			{
-				// for neogeo, search bank one
-				if(	(!strcmp(Machine->gamedrv->parent, "neogeo")) &&
-					(info->targetType == kRegionType_CPU) &&
-					(info->targetIdx == 0) &&
-					(handler == MWA8_BANK1))
+				/* ----- for neogeo, search bank one ----- */
+				if(	(!strcmp(Machine->gamedrv->parent, "neogeo")) && (info->targetType == kRegionType_CPU) &&
+					(info->targetIdx == 0) && (handler == MWA8_BANK1))
 					return 1;
 			}
 
@@ -8303,27 +8888,21 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 
 #if HAS_TMS34010
 
-			// for exterminator, search bank one
-			if(	(Machine->drv->cpu[1].cpu_type == CPU_TMS34010) &&
-				(info->targetType == kRegionType_CPU) &&
-				(info->targetIdx == 1) &&
-				(handler == MWA8_BANK1))
+			/* ----- for exterminator, search bank one ----- */
+			if(	(Machine->drv->cpu[1].cpu_type == CPU_TMS34010) && (info->targetType == kRegionType_CPU) &&
+				(info->targetIdx == 1) && (handler == MWA8_BANK1))
 				return 1;
 
-			// for smashtv, search bank two
-			if(	(Machine->drv->cpu[0].cpu_type == CPU_TMS34010) &&
-				(info->targetType == kRegionType_CPU) &&
-				(info->targetIdx == 0) &&
-				(handler == MWA8_BANK2))
+			/* ----- for smashtv, search bank two ----- */
+			if(	(Machine->drv->cpu[0].cpu_type == CPU_TMS34010) && (info->targetType == kRegionType_CPU) &&
+				(info->targetIdx == 0) && (handler == MWA8_BANK2))
 				return 1;
 
 #endif
-
 			return 0;
 
 		case kSearchSpeed_Medium:
-			if(	(handlerAddress >= ((UINT32)MWA8_BANK1)) &&
-				(handlerAddress <= ((UINT32)MWA8_BANK24)))
+			if(	(handlerAddress >= ((UINT32)MWA8_BANK1)) && (handlerAddress <= ((UINT32)MWA8_BANK24)))
 				return 1;
 
 			if(handler == MWA8_RAM)
@@ -8332,19 +8911,16 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 			return 0;
 
 		case kSearchSpeed_Slow:
-			if(	(handler == MWA8_NOP) ||
-				(handler == MWA8_ROM))
+			if(	(handler == MWA8_NOP) || (handler == MWA8_ROM))
 				return 0;
 
-			if(	(handlerAddress > STATIC_COUNT) &&
-				(!region->writeHandler->base))
+			if(	(handlerAddress > STATIC_COUNT) && (!region->writeHandler->base))
 				return 0;
 
 			return 1;
 
 		case kSearchSpeed_VerySlow:
-			if(	(handler == MWA8_NOP) ||
-				(handler == MWA8_ROM))
+			if(	(handler == MWA8_NOP) || (handler == MWA8_ROM))
 				return 0;
 
 			return 1;
@@ -8352,6 +8928,10 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 
 	return 0;
 }
+
+/*-----------------------------
+  SetSearchRegionDefaultName
+-----------------------------*/
 
 static void SetSearchRegionDefaultName(SearchRegion * region)
 {
@@ -8366,11 +8946,8 @@ static void SetSearchRegionDefaultName(SearchRegion * region)
 				genf *				handler = region->writeHandler->write.handler;
 				UINT32				handlerAddress = (UINT32)handler;
 
-				if(	(handlerAddress >= ((UINT32)MWA8_BANK1)) &&
-					(handlerAddress <= ((UINT32)MWA8_BANK24)))
-				{
+				if(	(handlerAddress >= ((UINT32)MWA8_BANK1)) && (handlerAddress <= ((UINT32)MWA8_BANK24)))
 					sprintf(desc, "BANK%.2d", (handlerAddress - ((UINT32)MWA8_BANK1)) + 1);
-				}
 				else
 				{
 					switch(handlerAddress)
@@ -8383,9 +8960,7 @@ static void SetSearchRegionDefaultName(SearchRegion * region)
 				}
 			}
 			else
-			{
 				sprintf(desc, "CPU%.2d ", region->targetIdx);
-			}
 
 			sprintf(region->name,	"%.*X-%.*X %s",
 									cpuInfoList[region->targetIdx].addressCharsNeeded,
@@ -8405,6 +8980,10 @@ static void SetSearchRegionDefaultName(SearchRegion * region)
 			break;
 	}
 }
+
+/*-----------------------------------------------------------------------------------
+  AllocateSearchRegions - free memory for search region then realloc if searchable
+-----------------------------------------------------------------------------------*/
 
 static void AllocateSearchRegions(SearchInfo * info)
 {
@@ -8435,11 +9014,7 @@ static void AllocateSearchRegions(SearchInfo * info)
 			region->backupLast =	malloc(region->length);
 			region->backupStatus =	malloc(region->length);
 
-			if(	!region->first ||
-				!region->last ||
-				!region->status ||
-				!region->backupLast ||
-				!region->backupStatus)
+			if(!region->first || !region->last || !region->status || !region->backupLast || !region->backupStatus)
 			{
 				free(region->first);
 				free(region->last);
@@ -8466,6 +9041,10 @@ static void AllocateSearchRegions(SearchInfo * info)
 		}
 	}
 }
+
+/*---------------------
+  BuildSearchRegions
+---------------------*/
 
 static void BuildSearchRegions(SearchInfo * info)
 {
@@ -8504,58 +9083,59 @@ static void BuildSearchRegions(SearchInfo * info)
 
 				SetSearchRegionDefaultName(region);
 			}
-			else if(info->targetIdx < cpu_gettotalcpu())
+			else
 			{
-				const address_map			* map = NULL;
-				SearchRegion						* traverse;
-				int									count = 0;
-
-				map = memory_get_map(info->targetIdx, ADDRESS_SPACE_PROGRAM);
-
-				while(!IS_AMENTRY_END(map))
+				if(info->targetIdx < cpu_gettotalcpu())
 				{
-					if(!IS_AMENTRY_EXTENDED(map) && map->write.handler)
+					const address_map			* map = NULL;
+					SearchRegion						* traverse;
+					int									count = 0;
+
+					map = memory_get_map(info->targetIdx, ADDRESS_SPACE_PROGRAM);
+
+					while(!IS_AMENTRY_END(map))
 					{
-						count++;
+						if(!IS_AMENTRY_EXTENDED(map) && map->write.handler)
+							count++;
+
+						map++;
 					}
 
-					map++;
-				}
+					info->regionList = calloc(sizeof(SearchRegion), count);
+					info->regionListLength = count;
+					traverse = info->regionList;
 
-				info->regionList = calloc(sizeof(SearchRegion), count);
-				info->regionListLength = count;
-				traverse = info->regionList;
+					map = memory_get_map(info->targetIdx, ADDRESS_SPACE_PROGRAM);
 
-				map = memory_get_map(info->targetIdx, ADDRESS_SPACE_PROGRAM);
-
-				while(!IS_AMENTRY_END(map))
-				{
-					if(!IS_AMENTRY_EXTENDED(map) && map->write.handler)
+					while(!IS_AMENTRY_END(map))
 					{
-						UINT32	length = (map->end - map->start) + 1;
+						if(!IS_AMENTRY_EXTENDED(map) && map->write.handler)
+						{
+							UINT32	length = (map->end - map->start) + 1;
 
-						traverse->address = map->start;
-						traverse->length = length;
+							traverse->address = map->start;
+							traverse->length = length;
 
-						traverse->targetIdx = info->targetIdx;
-						traverse->targetType = info->targetType;
-						traverse->writeHandler = map;
+							traverse->targetIdx = info->targetIdx;
+							traverse->targetType = info->targetType;
+							traverse->writeHandler = map;
 
-						traverse->first = NULL;
-						traverse->last = NULL;
-						traverse->status = NULL;
+							traverse->first = NULL;
+							traverse->last = NULL;
+							traverse->status = NULL;
 
-						traverse->backupLast = NULL;
-						traverse->backupStatus = NULL;
+							traverse->backupLast = NULL;
+							traverse->backupStatus = NULL;
 
-						traverse->flags = DefaultEnableRegion(traverse, info) ? kRegionFlag_Enabled : 0;
+							traverse->flags = DefaultEnableRegion(traverse, info) ? kRegionFlag_Enabled : 0;
 
-						SetSearchRegionDefaultName(traverse);
+							SetSearchRegionDefaultName(traverse);
 
-						traverse++;
+							traverse++;
+						}
+
+						map++;
 					}
-
-					map++;
 				}
 			}
 		}
@@ -8565,6 +9145,10 @@ static void BuildSearchRegions(SearchInfo * info)
 			break;
 	}
 }
+
+/*---------------------------------------------------------------------
+  ConvertOldCode - convert old format code to new when load database
+---------------------------------------------------------------------*/
 
 static int ConvertOldCode(int code, int cpu, int * data, int * extendData)
 {
@@ -8659,67 +9243,58 @@ static int ConvertOldCode(int code, int cpu, int * data, int * extendData)
 	UINT32					newCode;
 	UINT8					linkCheat = 0;
 
-	// convert link cheats
+	/* ----- convert link cheats ----- */
 	if((code >= 500) && (code <= 699))
 	{
 		linkCheat = 1;
-
 		code -= 500;
 	}
 
-	// look up code
+	/* ----- look up code ----- */
 	while(traverse->oldCode >= 0)
 	{
 		if(code == traverse->oldCode)
-		{
 			goto foundCode;
-		}
-
 		traverse++;
 	}
 
 	logerror("ConvertOldCode: %d not found\n", code);
 
-	// not found
+	/* ----- not found ----- */
 	*extendData = 0;
 	return 0;
 
+	/* ----- found ----- */
 	foundCode:
 
 	newCode = traverse->newCode;
 
-	// add in the CPU field
+	/* ----- add in the CPU field ----- */
 	if(!(traverse->customField & kCustomField_DontApplyCPUField))
-	{
 		newCode = (newCode & ~0x1F000000) | ((cpu << 24) & 0x1F000000);
-	}
 
-	// hack-ish, subtract one from data field for x5 user select
+	/* ----- hack-ish, subtract one from data field for x5 user select ----- */
 	if(traverse->customField & kCustomField_SubtractOne)
 		(*data)--;	// yaay for C operator precedence
 
-	//  set up the extend data
+	/* ----- set up the extend data ----- */
 	if(traverse->customField & kCustomField_BitMask)
-	{
 		*extendData = *data;
-	}
 	else
-	{
 		*extendData = 0xFFFFFFFF;
-	}
 
 	if(traverse->customField & kCustomField_ClearBit)
-	{
 		*data = 0;
-	}
 
 	if(linkCheat)
-	{
 		SET_MASK_FIELD(newCode, LinkEnable);
-	}
 
 	return newCode;
 }
+
+/*--------------------------------------------------------------------------------
+  HandleLocalCommandCheat - get special code which is not added into cheat list
+--------------------------------------------------------------------------------*/
 
 static void HandleLocalCommandCheat(UINT32 type, UINT32 address, UINT32 data, UINT32 extendData, char * name, char * description)
 {
@@ -8728,6 +9303,7 @@ static void HandleLocalCommandCheat(UINT32 type, UINT32 address, UINT32 data, UI
 		case kLocation_Custom:
 			switch(EXTRACT_FIELD(type, LocationParameter))
 			{
+				/* ----- activation key ----- */
 				case kCustomLocation_AssignActivationKey:
 				{
 					if(address < cheatListLength)
@@ -8736,11 +9312,13 @@ static void HandleLocalCommandCheat(UINT32 type, UINT32 address, UINT32 data, UI
 
 						if(!TEST_FIELD(type, OneShot))
 						{
+							/* ----- 1st activation key ----- */
 							entry->activationKey1 = data;
 							entry->flags |= kCheatFlag_HasActivationKey1;
 						}
 						else
 						{
+							/* ----- 2nd activation key ----- */
 							entry->activationKey2 = data;
 							entry->flags |= kCheatFlag_HasActivationKey2;
 						}
@@ -8748,6 +9326,7 @@ static void HandleLocalCommandCheat(UINT32 type, UINT32 address, UINT32 data, UI
 				}
 				break;
 
+				/* ----- pre-enable ----- */
 				case kCustomLocation_Enable:
 				{
 					if(address < cheatListLength)
@@ -8759,6 +9338,7 @@ static void HandleLocalCommandCheat(UINT32 type, UINT32 address, UINT32 data, UI
 				}
 				break;
 
+				/* ----- over-clock ----- */
 				case kCustomLocation_Overclock:
 				{
 					if(address < cpu_gettotalcpu())
@@ -8772,10 +9352,11 @@ static void HandleLocalCommandCheat(UINT32 type, UINT32 address, UINT32 data, UI
 				}
 				break;
 
+				/* ----- refresh rate ----- */
 				case kCustomLocation_RefreshRate:
 				{
-					screen_state *state = &Machine->screen[0];
-					double	refresh = data;
+					screen_state	*state = &Machine->screen[0];
+					double			refresh = data;
 
 					refresh /= 65536.0;
 
@@ -8787,15 +9368,20 @@ static void HandleLocalCommandCheat(UINT32 type, UINT32 address, UINT32 data, UI
 	}
 }
 
+/*------------------------------------------------
+  LoadCheatFile - load cheat code from database
+------------------------------------------------*/
+
 static void LoadCheatFile(char * fileName)
 {
-	mame_file_error filerr;
 	mame_file	* theFile;
+	mame_file_error filerr;
 	char		formatString[256];
 	char		oldFormatString[256];
 	char		buf[2048];
 	int			recordNames = 0;
 
+	/* ----- open the database ----- */
 	filerr = mame_fopen(SEARCHPATH_CHEAT, fileName, OPEN_FLAG_READ, &theFile);
 
 	if(filerr != FILERR_NONE)
@@ -8803,7 +9389,7 @@ static void LoadCheatFile(char * fileName)
 
 	foundCheatDatabase = 1;
 
-	// make the format strings
+	/* ----- make the format strings ----- */
 #ifdef MESS
 	sprintf(formatString, ":%s:%s", Machine->gamedrv->name, "%x:%x:%x:%x:%x:%[^:\n\r]:%[^:\n\r]");
 	sprintf(oldFormatString, "%s:%s", Machine->gamedrv->name, "%x:%d:%x:%x:%d:%[^:\n\r]:%[^:\n\r]");
@@ -8812,6 +9398,7 @@ static void LoadCheatFile(char * fileName)
 	sprintf(oldFormatString, "%s:%s", Machine->gamedrv->name, "%d:%x:%x:%d:%[^:\n\r]:%[^:\n\r]");
 #endif
 
+	/* ----- get a line from database ----- */
 	while(mame_fgets(buf, 2048, theFile))
 	{
 		int			type;
@@ -8835,12 +9422,13 @@ static void LoadCheatFile(char * fileName)
 
 		if(argumentsMatched == 1)
 		{
-			/* ----- set cheatOption field then continue ----- */
+			/* ----- set cheatOptions from command line ----- */
 			cheatOptions = command;
 
 			continue;
 		}
 
+		/* ----- get cheat code ----- */
 		name[0] = 0;
 		description[0] = 0;
 
@@ -8861,23 +9449,25 @@ static void LoadCheatFile(char * fileName)
 
 #ifdef MESS
 			argumentsMatched = sscanf(buf, oldFormatString, &crc, &oldCPU, &address, &data, &oldCode, name, description);
+
 			if(argumentsMatched < 5)
 #else
 			argumentsMatched = sscanf(buf, oldFormatString, &oldCPU, &address, &data, &oldCode, name, description);
+
 			if(argumentsMatched < 4)
 #endif
-			{
+				/* ----- if it is not a cheat code, continue ----- */
 				continue;
-			}
 			else
 			{
 #ifdef MESS
 				if(!MatchesCRCTable(crc))
 					continue;
 #endif
-				continue;
-				// convert the old code to the new format
-				type = ConvertOldCode(oldCode, oldCPU, &data, &extendData);
+				/* ----- convert the old code to the new format ----- */
+				if(TEST_FIELD(cheatOptions, LoadOldFormat))
+					type = ConvertOldCode(oldCode, oldCPU, &data, &extendData);
+//                  continue;
 			}
 		}
 		else
@@ -8900,6 +9490,7 @@ static void LoadCheatFile(char * fileName)
 		{
 			if(TEST_FIELD(type, LinkEnable))
 			{
+				/* ----- if 1st code is the link code, it is invalid ----- */
 				if(cheatListLength == 0)
 				{
 					logerror("LoadCheatFile: first cheat found was link cheat; bailing\n");
@@ -8913,7 +9504,7 @@ static void LoadCheatFile(char * fileName)
 			}
 			else
 			{
-				// go to the next cheat
+				/* ----- go to the next cheat entry ----- */
 				ResizeCheatList(cheatListLength + 1);
 
 				//logerror("cheat: doing normal cheat\n");
@@ -8927,21 +9518,19 @@ static void LoadCheatFile(char * fileName)
 
 				entry = &cheatList[cheatListLength - 1];
 
+				/* ----- copy the code name ----- */
 				entry->name = CreateStringCopy(name);
 
-				// copy the description if we got it
+				/* ----- copy the description if we got it ----- */
 				if(argumentsMatched == 6)
-				{
 					entry->comment = CreateStringCopy(description);
-				}
 
 				recordNames = 0;
 
+				/* ----- try to copy the label if label-selection ------ */
 				if(	(EXTRACT_FIELD(type, LocationType) == kLocation_Custom) &&
 					(EXTRACT_FIELD(type, LocationParameter) == kCustomLocation_Select))
-				{
-					recordNames = 1;
-				}
+						recordNames = 1;
 			}
 
 			ResizeCheatActionList(&cheatList[cheatListLength - 1], entry->actionListLength + 1);
@@ -8961,29 +9550,34 @@ static void LoadCheatFile(char * fileName)
 			action->originalDataField = data;
 			action->extendData = extendData;
 
+			/* ----- copy the label if label-selection ------ */
 			if(recordNames)
-			{
 				action->optionalName = CreateStringCopy(name);
-			}
 		}
 	}
 
 	bail:
 
+	/* ----- close the database ----- */
 	mame_fclose(theFile);
 }
 
+/*---------------------------------------------------------
+  LoadCheatDatabase - get the database name then load it
+---------------------------------------------------------*/
+
 static void LoadCheatDatabase(void)
 {
-	char	buf[4096];
+	char		buf[4096];
 	const char	* inTraverse;
-	char	* outTraverse;
-	char	* mainTraverse;
-	int		first = 1;
-	char	data;
+	char		* outTraverse;
+	char		* mainTraverse;
+	int			first = 1;
+	char		data;
 
 	cheatfile = options_get_string(OPTION_CHEAT_FILE);
 
+	/* ----- set default database name as "cheat.dat" ----- */
 	if(!cheatfile)
 		cheatfile = "cheat.dat";
 
@@ -8993,22 +9587,25 @@ static void LoadCheatDatabase(void)
 
 	buf[0] = 0;
 
+	/* ----- get database name ----- */
 	do
 	{
 		data = *inTraverse;
 
-		if(	(data == ';') ||
-			(data == 0))
+		/* ----- check separator or line end ----- */
+		if((data == ';') || (data == 0))
 		{
 			*outTraverse++ = 0;
+
 			if(first)
 				*mainTraverse++ = 0;
 
 			if(buf[0])
 			{
+				/* ----- load database based on the name we gotten ----- */
 				LoadCheatFile(buf);
 
-				outTraverse = buf;
+				outTraverse =buf;
 				buf[0] = 0;
 				first = 0;
 			}
@@ -9016,6 +9613,7 @@ static void LoadCheatDatabase(void)
 		else
 		{
 			*outTraverse++ = data;
+
 			if(first)
 				*mainTraverse++ = data;
 		}
@@ -9027,21 +9625,23 @@ static void LoadCheatDatabase(void)
 	UpdateAllCheatInfo();
 }
 
+/*-----------------------------------------------------------------------------------------
+  DisposeCheatDatabase - deactivate all cheats when reload database or exit cheat system
+-----------------------------------------------------------------------------------------*/
+
 static void DisposeCheatDatabase(void)
 {
 	int	i;
 
+	/* ----- first, turn all cheats "OFF" ----- */
 	for(i = 0; i < cheatListLength; i++)
-	{
 		TempDeactivateCheat(&cheatList[i]);
-	}
 
+	/* ----- next, free memory for all cheat entries ----- */
 	if(cheatList)
 	{
 		for(i = 0; i < cheatListLength; i++)
-		{
 			DisposeCheat(&cheatList[i]);
-		}
 
 		free(cheatList);
 
@@ -9049,6 +9649,10 @@ static void DisposeCheatDatabase(void)
 		cheatListLength = 0;
 	}
 }
+
+/*-------------------------------------------------------------------------
+  ReloadCheatDatabase - reload cheat database directly on the cheat menu
+-------------------------------------------------------------------------*/
 
 static void ReloadCheatDatabase(void)
 {
@@ -9058,29 +9662,39 @@ static void ReloadCheatDatabase(void)
 	ui_popup_time(1, "Cheat Database reloaded");
 }
 
+/*---------------------------------------------------------------
+  SaveCheat - save a code (normal code, activation key, option)
+---------------------------------------------------------------*/
+
 static void SaveCheat(CheatEntry * entry, int selection, int saveCode)
 {
 	enum{
-		normalCode = 0,
-		activationKey,
-		// command,
+			normalCode = 0,
+			activationKey,
+			command,
 		};
 
-	mame_file_error filerr;
 	mame_file * theFile;
+	mame_file_error filerr;
 	UINT32	i;
 	char	buf[4096];
 
-	if(!entry || !entry->actionList)
-		return;
+	/* ----- check selected entry ----- */
+	if((saveCode == normalCode) || (saveCode == activationKey))
+	{
+		if(!entry || !entry->actionList)
+			return;
 
-	if((saveCode == activationKey) && (entry->flags & kCheatFlag_Select) && !entry->actionListLength)
-		return;
+		if((saveCode == activationKey) && (entry->flags & kCheatFlag_Select) && !entry->actionListLength)
+			return;
+	}
 
-	/* ----- open the database with write mode ----- */
+	/* ----- open the database ----- */
 	filerr = mame_fopen(SEARCHPATH_CHEAT, mainDatabaseName, OPEN_FLAG_WRITE, &theFile);
 
-	/* ----- if the file is not found, create new database ----- */
+	/* ----- if fails to create, no save ----- */
+	if(!theFile)
+		return;
 	if (filerr != FILERR_NONE)
 	{
 		filerr = mame_fopen(SEARCHPATH_CHEAT, mainDatabaseName, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &theFile);
@@ -9117,6 +9731,7 @@ static void SaveCheat(CheatEntry * entry, int selection, int saveCode)
 				{
 					case kLocation_Standard:
 					case kLocation_HandlerMemory:
+					case kLocation_ProgramSpace:
 						addressLength = cpuInfoList[EXTRACT_FIELD(type, LocationParameter)].addressCharsNeeded;
 						break;
 
@@ -9154,6 +9769,7 @@ static void SaveCheat(CheatEntry * entry, int selection, int saveCode)
 
 				bufTraverse += sprintf(bufTraverse, "\n");
 
+				/* ----- write the normal cheat code ----- */
 				mame_fwrite(theFile, buf, strlen(buf));
 			}
 			break;
@@ -9191,14 +9807,16 @@ static void SaveCheat(CheatEntry * entry, int selection, int saveCode)
 				/* ----- set description and button index ----- */
 				if(!i)
 				{
-					if(entry->name)		// 1st key
+					/* ----- 1st key ----- */
+					if(entry->name)
 						bufTraverse += sprintf(bufTraverse, ":1st Activation Key for %s (%s)\n", entry->name, code_name(entry->activationKey1));
 					else
 						bufTraverse += sprintf(bufTraverse, ":1st Activation Key (%s)\n", code_name(entry->activationKey1));
 				}
 				else
 				{
-					if(entry->name)		// 2nd key
+					/* ----- 2nd key ----- */
+					if(entry->name)
 						bufTraverse += sprintf(bufTraverse, ":2nd Activation Key for %s (%s)\n", entry->name, code_name(entry->activationKey2));
 					else
 						bufTraverse += sprintf(bufTraverse, ":2nd Activation Key (%s)\n", code_name(entry->activationKey2));
@@ -9209,7 +9827,12 @@ static void SaveCheat(CheatEntry * entry, int selection, int saveCode)
 			}
 			break;
 
-		//case command:
+		case command:
+			sprintf(buf, ":_command:%.8X\n", cheatOptions);
+
+			/* ----- write the command code ----- */
+			mame_fwrite(theFile, buf, strlen(buf));
+			break;
 
 		default:
 			break;
@@ -9219,8 +9842,13 @@ static void SaveCheat(CheatEntry * entry, int selection, int saveCode)
 	mame_fclose(theFile);
 
 	/* ----- clear dirty flag ----- */
-	entry->flags &= ~kCheatFlag_Dirty;
+	if((saveCode == normalCode) || (saveCode == activationKey))
+		entry->flags &= ~kCheatFlag_Dirty;
 }
+
+/*--------------------------------------------------------------------------
+  DoAutoSaveCheat - save normal code automatically when exit cheat system
+--------------------------------------------------------------------------*/
 
 static void DoAutoSaveCheats(void)
 {
@@ -9231,11 +9859,13 @@ static void DoAutoSaveCheats(void)
 		CheatEntry	* entry = &cheatList[i];
 
 		if(entry->flags & kCheatFlag_Dirty)
-		{
 			SaveCheat(entry, 0, 0);
-		}
 	}
 }
+
+/*-------------------------------------------------------------------
+  AddCheatFromResult - add a code from result viewer to cheat list
+-------------------------------------------------------------------*/
 
 static void AddCheatFromResult(SearchInfo * search, SearchRegion * region, UINT32 address)
 {
@@ -9262,6 +9892,10 @@ static void AddCheatFromResult(SearchInfo * search, SearchRegion * region, UINT3
 		UpdateCheatInfo(entry, 0);
 	}
 }
+
+/*--------------------------------------------------------------------------------------------
+  AddCheatFromFirstResult - add a code from search box to cheat list if found result is one
+--------------------------------------------------------------------------------------------*/
 
 static void AddCheatFromFirstResult(SearchInfo * search)
 {
@@ -9290,6 +9924,10 @@ static void AddCheatFromFirstResult(SearchInfo * search)
 	}
 }
 
+/*-------------------------------------------------------------------------
+  AddWatchFromResult - add a watch code from result viewer to cheat list
+-------------------------------------------------------------------------*/
+
 static void AddWatchFromResult(SearchInfo * search, SearchRegion * region, UINT32 address)
 {
 	if(region->targetType == kRegionType_CPU)
@@ -9312,18 +9950,24 @@ static void AddWatchFromResult(SearchInfo * search, SearchRegion * region, UINT3
 	}
 }
 
+/*--------------------
+  SearchSignExtend
+--------------------*/
+
 static UINT32 SearchSignExtend(SearchInfo * search, UINT32 value)
 {
 	if(search->sign)
 	{
 		if(value & kSearchByteSignBitTable[search->bytes])
-		{
 			value |= ~kSearchByteUnsignedMaskTable[search->bytes];
-		}
 	}
 
 	return value;
 }
+
+/*-------------------------------------------------------------------
+  ReadSearchOperand - read a data from search region and return it
+-------------------------------------------------------------------*/
 
 static UINT32 ReadSearchOperand(UINT8 type, SearchInfo * search, SearchRegion * region, UINT32 address)
 {
@@ -9352,6 +9996,10 @@ static UINT32 ReadSearchOperand(UINT8 type, SearchInfo * search, SearchRegion * 
 
 	return value;
 }
+
+/*------------------------------------------------------------------------------------------
+  ReadSearchOperandBit - read a bit data from search region and return it when bit search
+------------------------------------------------------------------------------------------*/
 
 static UINT32 ReadSearchOperandBit(UINT8 type, SearchInfo * search, SearchRegion * region, UINT32 address)
 {
@@ -9384,16 +10032,19 @@ static UINT32 ReadSearchOperandBit(UINT8 type, SearchInfo * search, SearchRegion
 	return value;
 }
 
+/*----------------------------------------------------------
+  DoSearchComparison - compare data and return it matched
+----------------------------------------------------------*/
+
 static UINT8 DoSearchComparison(SearchInfo * search, UINT32 lhs, UINT32 rhs)
 {
 	INT32	svalue;
 
 	if(search->sign)
 	{
-		INT32	slhs, srhs;
-
-		slhs = lhs;
-		srhs = rhs;
+		/* ----- signed ----- */
+		INT32	slhs = lhs;
+		INT32	srhs = rhs;
 
 		switch(search->comparison)
 		{
@@ -9428,6 +10079,7 @@ static UINT8 DoSearchComparison(SearchInfo * search, UINT32 lhs, UINT32 rhs)
 	}
 	else
 	{
+		/* ----- unsigned ----- */
 		switch(search->comparison)
 		{
 			case kSearchComparison_LessThan:
@@ -9463,6 +10115,10 @@ static UINT8 DoSearchComparison(SearchInfo * search, UINT32 lhs, UINT32 rhs)
 	return 0;
 }
 
+/*-----------------------------------------------------------------
+  DoSearchComparisonBit - compare bit data and return it matched
+-----------------------------------------------------------------*/
+
 static UINT32 DoSearchComparisonBit(SearchInfo * search, UINT32 lhs, UINT32 rhs)
 {
 	switch(search->comparison)
@@ -9482,6 +10138,10 @@ static UINT32 DoSearchComparisonBit(SearchInfo * search, UINT32 lhs, UINT32 rhs)
 
 	return 0;
 }
+
+/*----------------------
+  IsRegionOffsetValid
+----------------------*/
 
 /*
 static UINT8 IsRegionOffsetValid(SearchInfo * search, SearchRegion * region, UINT32 offset)
@@ -9504,6 +10164,10 @@ static UINT8 IsRegionOffsetValid(SearchInfo * search, SearchRegion * region, UIN
     return 0;
 }
 */
+
+/*----------------------------------------------------------
+  IsRegionOffsetValidBit - check selected offset is valid
+----------------------------------------------------------*/
 
 static UINT8 IsRegionOffsetValidBit(SearchInfo * search, SearchRegion * region, UINT32 offset)
 {
@@ -9529,6 +10193,10 @@ static UINT8 IsRegionOffsetValidBit(SearchInfo * search, SearchRegion * region, 
 	return 0;
 }
 
+/*----------------------------------------------------------------
+  InvalidateRegionOffset - remove unmatched offset after search
+----------------------------------------------------------------*/
+
 static void InvalidateRegionOffset(SearchInfo * search, SearchRegion * region, UINT32 offset)
 {
 	switch(kSearchByteStep[search->bytes])
@@ -9551,6 +10219,10 @@ static void InvalidateRegionOffset(SearchInfo * search, SearchRegion * region, U
 			break;
 	}
 }
+
+/*-----------------------------------------------------------------------
+  InvalidateRegionOffsetBit - remove unmatched offset after bit search
+-----------------------------------------------------------------------*/
 
 static void InvalidateRegionOffsetBit(SearchInfo * search, SearchRegion * region, UINT32 offset, UINT32 invalidate)
 {
@@ -9575,6 +10247,10 @@ static void InvalidateRegionOffsetBit(SearchInfo * search, SearchRegion * region
 	}
 }
 
+/*--------------------------------------------------------------
+  InvalidateEntireRegions - invalidate selected search region
+--------------------------------------------------------------*/
+
 static void InvalidateEntireRegion(SearchInfo * search, SearchRegion * region)
 {
 	memset(region->status, 0, region->length);
@@ -9582,6 +10258,10 @@ static void InvalidateEntireRegion(SearchInfo * search, SearchRegion * region)
 	search->numResults -= region->numResults;
 	region->numResults = 0;
 }
+
+/*-------------------------------------------------------------------
+  InitializeNewSearch - initialize search region to start a search
+-------------------------------------------------------------------*/
 
 static void InitializeNewSearch(SearchInfo * search)
 {
@@ -9606,6 +10286,10 @@ static void InitializeNewSearch(SearchInfo * search)
 	}
 }
 
+/*---------------------------------------------------------------------------
+  UpdateSearch - updata a data in search region after initialize or search
+---------------------------------------------------------------------------*/
+
 static void UpdateSearch(SearchInfo * search)
 {
 	int	i;
@@ -9615,11 +10299,13 @@ static void UpdateSearch(SearchInfo * search)
 		SearchRegion	* region = &search->regionList[i];
 
 		if(region->flags & kRegionFlag_Enabled)
-		{
 			FillBufferFromRegion(region, region->last);
-		}
 	}
 }
+
+/*-------------------------------------
+  DoSearch - management for a search
+-------------------------------------*/
 
 static void DoSearch(SearchInfo * search)
 {
@@ -9629,6 +10315,7 @@ static void DoSearch(SearchInfo * search)
 
 	if(search->bytes == kSearchSize_1Bit)
 	{
+		/* ----- bit search ----- */
 		for(i = 0; i < search->regionListLength; i++)
 		{
 			SearchRegion	* region = &search->regionList[i];
@@ -9637,11 +10324,8 @@ static void DoSearch(SearchInfo * search)
 
 			region->numResults = 0;
 
-			if(	(region->length < kSearchByteIncrementTable[search->bytes]) ||
-				!region->flags & kRegionFlag_Enabled)
-			{
+			if((region->length < kSearchByteIncrementTable[search->bytes]) || !region->flags & kRegionFlag_Enabled)
 				continue;
-			}
 
 			for(j = 0; j < lastAddress; j += increment)
 			{
@@ -9657,6 +10341,7 @@ static void DoSearch(SearchInfo * search)
 					lhs = ReadSearchOperandBit(search->lhs, search, region, address);
 					rhs = ReadSearchOperandBit(search->rhs, search, region, address);
 
+					/* ----- do search ----- */
 					validBits = DoSearchComparisonBit(search, lhs, rhs);
 
 					InvalidateRegionOffsetBit(search, region, j, ~validBits);
@@ -9672,6 +10357,7 @@ static void DoSearch(SearchInfo * search)
 	}
 	else
 	{
+		/* ----- normal search ----- */
 		for(i = 0; i < search->regionListLength; i++)
 		{
 			SearchRegion	* region = &search->regionList[i];
@@ -9680,11 +10366,8 @@ static void DoSearch(SearchInfo * search)
 
 			region->numResults = 0;
 
-			if(	(region->length < kSearchByteIncrementTable[search->bytes]) ||
-				!region->flags & kRegionFlag_Enabled)
-			{
+			if((region->length < kSearchByteIncrementTable[search->bytes]) || !region->flags & kRegionFlag_Enabled)
 				continue;
-			}
 
 			for(j = 0; j < lastAddress; j += increment)
 			{
@@ -9698,12 +10381,13 @@ static void DoSearch(SearchInfo * search)
 					lhs = ReadSearchOperand(search->lhs, search, region, address);
 					rhs = ReadSearchOperand(search->rhs, search, region, address);
 
+					/* ----- do search ----- */
 					if(!DoSearchComparison(search, lhs, rhs))
-					{
+						/* ----- unmatched ----- */
 						InvalidateRegionOffset(search, region, j);
-					}
 					else
 					{
+						/* ----- matched ----- */
 						search->numResults++;
 						region->numResults++;
 					}
@@ -9713,6 +10397,10 @@ static void DoSearch(SearchInfo * search)
 	}
 }
 
+/*----------------------
+  LookupHandlerMemory
+----------------------*/
+
 static UINT8 ** LookupHandlerMemory(UINT8 cpu, UINT32 address, UINT32 * outRelativeAddress)
 {
 	const address_map	* map = memory_get_map(cpu, ADDRESS_SPACE_PROGRAM);
@@ -9721,8 +10409,7 @@ static UINT8 ** LookupHandlerMemory(UINT8 cpu, UINT32 address, UINT32 * outRelat
 	{
 		if(!IS_AMENTRY_EXTENDED(map) && map->write.handler)
 		{
-			if(	(address >= map->start) &&
-				(address <= map->end))
+			if((address >= map->start) && (address <= map->end))
 			{
 				if(outRelativeAddress)
 					*outRelativeAddress = address - map->start;
@@ -9737,6 +10424,10 @@ static UINT8 ** LookupHandlerMemory(UINT8 cpu, UINT32 address, UINT32 * outRelat
 	return NULL;
 }
 
+/*------------------------------------------
+  DoCPURead - read a data from RAM region
+------------------------------------------*/
+
 static UINT32 DoCPURead(UINT8 cpu, UINT32 address, UINT8 bytes, UINT8 swap)
 {
 	switch(bytes)
@@ -9746,52 +10437,36 @@ static UINT32 DoCPURead(UINT8 cpu, UINT32 address, UINT8 bytes, UINT8 swap)
 
 		case 2:
 			if(swap)
-			{
-				return	(cpunum_read_byte(cpu, address + 0) <<  0) |
-						(cpunum_read_byte(cpu, address + 1) <<  8);
-			}
+				return	(cpunum_read_byte(cpu, address + 0) <<  0) | (cpunum_read_byte(cpu, address + 1) <<  8);
 			else
-			{
-				return	(cpunum_read_byte(cpu, address + 0) <<  8) |
-						(cpunum_read_byte(cpu, address + 1) <<  0);
-			}
+				return	(cpunum_read_byte(cpu, address + 0) <<  8) | (cpunum_read_byte(cpu, address + 1) <<  0);
 			break;
 
 		case 3:
 			if(swap)
-			{
-				return	(cpunum_read_byte(cpu, address + 0) <<  0) |
-						(cpunum_read_byte(cpu, address + 1) <<  8) |
+				return	(cpunum_read_byte(cpu, address + 0) <<  0) | (cpunum_read_byte(cpu, address + 1) <<  8) |
 						(cpunum_read_byte(cpu, address + 2) << 16);
-			}
 			else
-			{
-				return	(cpunum_read_byte(cpu, address + 0) << 16) |
-						(cpunum_read_byte(cpu, address + 1) <<  8) |
+				return	(cpunum_read_byte(cpu, address + 0) << 16) | (cpunum_read_byte(cpu, address + 1) <<  8) |
 						(cpunum_read_byte(cpu, address + 2) <<  0);
-			}
 			break;
 
 		case 4:
 			if(swap)
-			{
-				return	(cpunum_read_byte(cpu, address + 0) <<  0) |
-						(cpunum_read_byte(cpu, address + 1) <<  8) |
-						(cpunum_read_byte(cpu, address + 2) << 16) |
-						(cpunum_read_byte(cpu, address + 3) << 24);
-			}
+				return	(cpunum_read_byte(cpu, address + 0) <<  0) | (cpunum_read_byte(cpu, address + 1) <<  8) |
+						(cpunum_read_byte(cpu, address + 2) << 16) | (cpunum_read_byte(cpu, address + 3) << 24);
 			else
-			{
-				return	(cpunum_read_byte(cpu, address + 0) << 24) |
-						(cpunum_read_byte(cpu, address + 1) << 16) |
-						(cpunum_read_byte(cpu, address + 2) <<  8) |
-						(cpunum_read_byte(cpu, address + 3) <<  0);
-			}
+				return	(cpunum_read_byte(cpu, address + 0) << 24) | (cpunum_read_byte(cpu, address + 1) << 16) |
+						(cpunum_read_byte(cpu, address + 2) <<  8) | (cpunum_read_byte(cpu, address + 3) <<  0);
 			break;
 	}
 
 	return 0;
 }
+
+/*-----------------------------------------------------
+  DoMemoryRead - read a data from ROM or User region
+-----------------------------------------------------*/
 
 static UINT32 DoMemoryRead(UINT8 * buf, UINT32 address, UINT8 bytes, UINT8 swap, CPUInfo * info)
 {
@@ -9809,22 +10484,15 @@ static UINT32 DoMemoryRead(UINT8 * buf, UINT32 address, UINT8 bytes, UINT8 swap,
 				data = *((UINT16 *)&buf[address]);
 
 				if(swap)
-				{
-					data =	((data >> 8) & 0x00FF) |
-							((data << 8) & 0xFF00);
-				}
+					data =	((data >> 8) & 0x00FF) | ((data << 8) & 0xFF00);
 				break;
 
 			case 4:
 				data = *((UINT32 *)&buf[address]);
 
 				if(swap)
-				{
-					data =	((data >> 24) & 0x000000FF) |
-							((data >>  8) & 0x0000FF00) |
-							((data <<  8) & 0x00FF0000) |
-							((data << 24) & 0xFF000000);
-				}
+					data =	((data >> 24) & 0x000000FF) | ((data >>  8) & 0x0000FF00) |
+							((data <<  8) & 0x00FF0000) | ((data << 24) & 0xFF000000);
 				break;
 
 			default:
@@ -9854,6 +10522,10 @@ generic:
 
 	return data;
 }
+
+/*--------------------------------------------
+  DoCPUWrite - write a data into RAM region
+--------------------------------------------*/
 
 static void DoCPUWrite(UINT32 data, UINT8 cpu, UINT32 address, UINT8 bytes, UINT8 swap)
 {
@@ -9914,6 +10586,10 @@ static void DoCPUWrite(UINT32 data, UINT8 cpu, UINT32 address, UINT8 bytes, UINT
 	}
 }
 
+/*-------------------------------------------------------
+  DoMemoryWrite - write a data into ROM or User region
+-------------------------------------------------------*/
+
 static void DoMemoryWrite(UINT32 data, UINT8 * buf, UINT32 address, UINT8 bytes, UINT8 swap, CPUInfo * info)
 {
 	if(!info)
@@ -9926,22 +10602,15 @@ static void DoMemoryWrite(UINT32 data, UINT8 * buf, UINT32 address, UINT8 bytes,
 
 			case 2:
 				if(swap)
-				{
-					data =	((data >> 8) & 0x00FF) |
-							((data << 8) & 0xFF00);
-				}
+					data =	((data >> 8) & 0x00FF) | ((data << 8) & 0xFF00);
 
 				*((UINT16 *)&buf[address]) = data;
 				break;
 
 			case 4:
 				if(swap)
-				{
-					data =	((data >> 24) & 0x000000FF) |
-							((data >>  8) & 0x0000FF00) |
-							((data <<  8) & 0x00FF0000) |
-							((data << 24) & 0xFF000000);
-				}
+					data =	((data >> 24) & 0x000000FF) | ((data >>  8) & 0x0000FF00) |
+							((data <<  8) & 0x00FF0000) | ((data << 24) & 0xFF000000);
 
 				*((UINT32 *)&buf[address]) = data;
 				break;
@@ -9972,10 +10641,18 @@ generic:
 	}
 }
 
+/*--------------------------------
+  CPUNeedsSwap - endian checker
+--------------------------------*/
+
 static UINT8 CPUNeedsSwap(UINT8 cpu)
 {
 	return cpuInfoList[cpu].endianness ^ 1;
 }
+
+/*-----------------------------------
+  RegionNeedsSwap - endian checker
+-----------------------------------*/
 
 static UINT8 RegionNeedsSwap(UINT8 region)
 {
@@ -9987,19 +10664,30 @@ static UINT8 RegionNeedsSwap(UINT8 region)
 	return 0;
 }
 
+/*----------------------------------------------------
+  GetCPUInfo - return CPU info for standard region
+----------------------------------------------------*/
+
 static CPUInfo * GetCPUInfo(UINT8 cpu)
 {
-	return &cpuInfoList[cpu];
+		return &cpuInfoList[cpu];
 }
+
+/*-------------------------------------------------
+  GetRegionCPUInfo - return CPU info for regions
+-------------------------------------------------*/
 
 static CPUInfo * GetRegionCPUInfo(UINT8 region)
 {
-	if(	(region >= REGION_INVALID) &&
-		(region < REGION_MAX))
+	if((region >= REGION_INVALID) && (region < REGION_MAX))
 		return &regionInfoList[region - REGION_INVALID];
 
 	return NULL;
 }
+
+/*--------------
+  SwapAddress
+--------------*/
 
 static UINT32 SwapAddress(UINT32 address, UINT8 dataSize, CPUInfo * info)
 {
@@ -10021,6 +10709,10 @@ static UINT32 SwapAddress(UINT32 address, UINT8 dataSize, CPUInfo * info)
 	return address;
 }
 
+/*------------------------------------
+  ReadData - read a data per region
+------------------------------------*/
+
 static UINT32 ReadData(CheatAction * action)
 {
 	UINT8	parameter = EXTRACT_FIELD(action->type, LocationParameter);
@@ -10030,10 +10722,8 @@ static UINT32 ReadData(CheatAction * action)
 	switch(EXTRACT_FIELD(action->type, LocationType))
 	{
 		case kLocation_Standard:
-		{
 			return DoCPURead(parameter, action->address, bytes, CPUNeedsSwap(parameter) ^ swapBytes);
-		}
-		break;
+			break;
 
 		case kLocation_MemoryRegion:
 		{
@@ -10042,10 +10732,14 @@ static UINT32 ReadData(CheatAction * action)
 
 			if(buf)
 			{
-				if(IsAddressInRange(action, memory_region_length(region)))
+				if(TEST_FIELD(cheatOptions, Debug))
 				{
-					return DoMemoryRead(buf, action->address, bytes, RegionNeedsSwap(region) ^ swapBytes, GetRegionCPUInfo(region));
+					if(ControlKeyPressed())
+						ui_popup_time(1, "MR : %x : %p", region, buf);
 				}
+
+				if(IsAddressInRange(action, memory_region_length(region)))
+					return DoMemoryRead(buf, action->address, bytes, RegionNeedsSwap(region) ^ swapBytes, GetRegionCPUInfo(region));
 			}
 		}
 		break;
@@ -10056,17 +10750,13 @@ static UINT32 ReadData(CheatAction * action)
 			UINT8	** buf;
 
 			if(!action->cachedPointer)
-			{
 				action->cachedPointer = LookupHandlerMemory(parameter, action->address, &action->cachedOffset);
-			}
 
 			buf = action->cachedPointer;
 			relativeAddress = action->cachedOffset;
 
 			if(buf && *buf)
-			{
 				return DoMemoryRead(*buf, relativeAddress, bytes, CPUNeedsSwap(parameter) ^ swapBytes, GetCPUInfo(parameter));
-			}
 		}
 		break;
 
@@ -10079,6 +10769,7 @@ static UINT32 ReadData(CheatAction * action)
 			CPUInfo	* info = GetCPUInfo(cpu);
 
 			address = DoCPURead(cpu, action->address, addressBytes, CPUNeedsSwap(cpu) ^ swapBytes);
+
 			if(info)
 				address = DoShift(address, info->addressShift);
 
@@ -10087,6 +10778,29 @@ static UINT32 ReadData(CheatAction * action)
 				address += offset;
 
 				return DoCPURead(cpu, address, bytes, CPUNeedsSwap(cpu) ^ swapBytes);
+			}
+		}
+		break;
+
+		case kLocation_ProgramSpace:
+		{
+			UINT8	* buf;
+
+			memory_set_opbase(action->address);
+
+			buf = memory_get_op_ptr(parameter, action->address, 0);
+
+			buf -= action->address;
+
+			if(buf)
+			{
+				if(TEST_FIELD(cheatOptions, Debug))
+				{
+					if(ControlKeyPressed())
+						ui_popup_time(1,"PG : %x : %p", parameter, buf);
+				}
+
+				return DoMemoryRead(buf, action->address, bytes, CPUNeedsSwap(parameter) ^ swapBytes, GetCPUInfo(parameter));
 			}
 		}
 		break;
@@ -10120,6 +10834,10 @@ static UINT32 ReadData(CheatAction * action)
 	return 0;
 }
 
+/*--------------------------------------
+  WriteData - write a data per region
+--------------------------------------*/
+
 static void WriteData(CheatAction * action, UINT32 data)
 {
 	UINT8	parameter = EXTRACT_FIELD(action->type, LocationParameter);
@@ -10129,10 +10847,9 @@ static void WriteData(CheatAction * action, UINT32 data)
 	switch(EXTRACT_FIELD(action->type, LocationType))
 	{
 		case kLocation_Standard:
-		{
 			DoCPUWrite(data, parameter, action->address, bytes, CPUNeedsSwap(parameter) ^ swapBytes);
-		}
-		break;
+
+			break;
 
 		case kLocation_MemoryRegion:
 		{
@@ -10142,9 +10859,7 @@ static void WriteData(CheatAction * action, UINT32 data)
 			if(buf)
 			{
 				if(IsAddressInRange(action, memory_region_length(region)))
-				{
 					DoMemoryWrite(data, buf, action->address, bytes, RegionNeedsSwap(region) ^ swapBytes, GetRegionCPUInfo(region));
-				}
 			}
 		}
 		break;
@@ -10163,9 +10878,7 @@ static void WriteData(CheatAction * action, UINT32 data)
 			relativeAddress = action->cachedOffset;
 
 			if(buf && *buf)
-			{
 				DoMemoryWrite(data, *buf, relativeAddress, bytes, CPUNeedsSwap(parameter) ^ swapBytes, GetCPUInfo(parameter));
-			}
 		}
 		break;
 
@@ -10178,6 +10891,7 @@ static void WriteData(CheatAction * action, UINT32 data)
 			CPUInfo	* info = GetCPUInfo(cpu);
 
 			address = DoCPURead(cpu, action->address, addressBytes, CPUNeedsSwap(cpu) ^ swapBytes);
+
 			if(info)
 				address = DoShift(address, info->addressShift);
 
@@ -10187,6 +10901,21 @@ static void WriteData(CheatAction * action, UINT32 data)
 
 				DoCPUWrite(data, cpu, address, bytes, CPUNeedsSwap(cpu) ^ swapBytes);
 			}
+		}
+		break;
+
+		case kLocation_ProgramSpace:
+		{
+			UINT8	* buf;
+
+			memory_set_opbase(action->address);
+
+			buf = memory_get_op_ptr(parameter, action->address, 0);
+
+			buf -= action->address;
+
+			if(buf)
+				DoMemoryWrite(data, buf, action->address, bytes, CPUNeedsSwap(parameter) ^ swapBytes, GetCPUInfo(parameter));
 		}
 		break;
 
@@ -10217,9 +10946,13 @@ static void WriteData(CheatAction * action, UINT32 data)
 	}
 }
 
+/*-----------------------------------------------------
+  WatchCheatEntry - set watchpoint from action entry
+-----------------------------------------------------*/
+
 static void WatchCheatEntry(CheatEntry * entry, UINT8 associate)
 {
-	UINT32		i,j;
+	UINT32		i, j;
 	CheatEntry	* associateEntry = NULL;
 
 	if(associate)
@@ -10231,10 +10964,12 @@ static void WatchCheatEntry(CheatEntry * entry, UINT8 associate)
 	for(i = 0; i < entry->actionListLength; i++)
 	{
 		if(!i)
+			/* ----- first action entry ----- */
 			AddActionWatch(&entry->actionList[i], associateEntry);
 		else
 		{
-			UINT8		sameAddress = 0;
+			/* ----- 2nd or later action entry ----- */
+			UINT8	sameAddress = 0;
 
 			for(j = 0; j < i; j++)
 			{
@@ -10249,11 +10984,16 @@ static void WatchCheatEntry(CheatEntry * entry, UINT8 associate)
 	}
 }
 
+/*--------------------------------------------------
+  AddActionWatch - add watchpoint into watch list
+--------------------------------------------------*/
+
 static void AddActionWatch(CheatAction * action, CheatEntry * entry)
 {
-	if((EXTRACT_FIELD(action->type, LocationType) == kLocation_Standard) ||
+	if(	(EXTRACT_FIELD(action->type, LocationType) == kLocation_Standard) ||
 		(EXTRACT_FIELD(action->type, LocationType) == kLocation_MemoryRegion) ||
-		(EXTRACT_FIELD(action->type, LocationType) == kLocation_IndirectIndexed))
+		(EXTRACT_FIELD(action->type, LocationType) == kLocation_IndirectIndexed) ||
+		(EXTRACT_FIELD(action->type, LocationType) == kLocation_ProgramSpace))
 
 	{
 		WatchInfo	* info = GetUnusedWatch();
@@ -10272,6 +11012,7 @@ static void AddActionWatch(CheatAction * action, CheatEntry * entry)
 
 		if(EXTRACT_FIELD(action->type, Type) == kType_Watch)
 		{
+			/* ----- set watchpoint from watch code ----- */
 			UINT32	typeParameter = EXTRACT_FIELD(action->type, TypeParameter);
 
 			info->numElements = (action->data & 0xFF) + 1;
@@ -10279,18 +11020,19 @@ static void AddActionWatch(CheatAction * action, CheatEntry * entry)
 			info->skip = (action->data >> 8) & 0xFF;
 			info->elementsPerLine = (action->data >> 16) & 0xFF;
 			info->addValue = (action->data >> 24) & 0xFF;
+
 			if(info->addValue & 0x80)
 				info->addValue |= ~0xFF;
 
 			if(action->extendData != 0xFFFFFFFF)
 			{
+				/* ### fix me... ### */
 				info->x = (float)((action->extendData >> 16) & 0xFFFF)/100;
 				info->y = (float)((action->extendData >>  0) & 0xFFFF)/100;
 			}
 
-			if(	(typeParameter & 0x04) &&
-				(entry->comment) &&
-				(strlen(entry->comment) < 256))
+			/* ----- if label is needed, copy the description from comment field ----- */
+			if((typeParameter & 0x04) && (entry->comment) && (strlen(entry->comment) < 256))
 			{
 				info->labelType = kWatchLabel_String;
 				strcpy(info->label, entry->comment);
@@ -10300,6 +11042,10 @@ static void AddActionWatch(CheatAction * action, CheatEntry * entry)
 		}
 	}
 }
+
+/*-----------------------------------------------------------------
+  RemoveAssociatedWatches - remove watchpoint when CODE is "OFF"
+-----------------------------------------------------------------*/
 
 static void RemoveAssociatedWatches(CheatEntry * entry)
 {
@@ -10314,16 +11060,25 @@ static void RemoveAssociatedWatches(CheatEntry * entry)
 	}
 }
 
+/*----------------------------------------------------------------------
+  ResetAction - back up data and set action flags when turn CODE "ON"
+----------------------------------------------------------------------*/
+
 static void ResetAction(CheatAction * action)
 {
 	action->frameTimer = 0;
 
+	/* ----- backup value ----- */
 	if(!(action->flags & kActionFlag_LastValueGood))
 		action->lastValue = ReadData(action);
 
 	action->flags &= ~kActionFlag_StateMask;
 	action->flags |= kActionFlag_LastValueGood;
 }
+
+/*-------------------------------------------------------------------------------------
+  ActivateCheat - reset action entry and set activate entry flag when turn CODE "ON"
+-------------------------------------------------------------------------------------*/
 
 static void ActivateCheat(CheatEntry * entry)
 {
@@ -10335,12 +11090,17 @@ static void ActivateCheat(CheatEntry * entry)
 
 		ResetAction(action);
 
+		/* ----- if watchpoint code, add watchpoint ----- */
 		if(EXTRACT_FIELD(action->type, Type) == kType_Watch)
 			AddActionWatch(action, entry);
 	}
 
 	entry->flags |= kCheatFlag_Active;
 }
+
+/*--------------------------------------------------------------------------------------
+  DeactivateCheat - restore previous value and remove watchpoint when turn CODE "OFF"
+--------------------------------------------------------------------------------------*/
 
 static void DeactivateCheat(CheatEntry * entry)
 {
@@ -10350,8 +11110,8 @@ static void DeactivateCheat(CheatEntry * entry)
 	{
 		CheatAction	* action = &entry->actionList[i];
 
-		if(	EXTRACT_FIELD(action->type, RestorePreviousValue) &&
-			(action->flags & kActionFlag_LastValueGood))
+		/* ----- restore previous value and clear backup flag if needed ----- */
+		if(EXTRACT_FIELD(action->type, RestorePreviousValue) && (action->flags & kActionFlag_LastValueGood))
 		{
 			WriteData(action, action->lastValue);
 
@@ -10359,10 +11119,15 @@ static void DeactivateCheat(CheatEntry * entry)
 		}
 	}
 
+	/* ----- remove watchpoint ----- */
 	RemoveAssociatedWatches(entry);
 
 	entry->flags &= ~kCheatFlag_StateMask;
 }
+
+/*--------------------------------------------------------------------
+  TempDeactivateCheat - restore previous value when turn CHEAT "OFF"
+--------------------------------------------------------------------*/
 
 static void TempDeactivateCheat(CheatEntry * entry)
 {
@@ -10374,19 +11139,20 @@ static void TempDeactivateCheat(CheatEntry * entry)
 		{
 			CheatAction	* action = &entry->actionList[i];
 
-			if(	EXTRACT_FIELD(action->type, RestorePreviousValue) &&
-				(action->flags & kActionFlag_LastValueGood))
-			{
+			/* ----- restore previous value if needed ----- */
+			if(EXTRACT_FIELD(action->type, RestorePreviousValue) && (action->flags & kActionFlag_LastValueGood))
 				WriteData(action, action->lastValue);
-			}
 		}
 	}
 }
 
+/*------------------------------------------------------------
+  cheat_periodicOperation - management for cheat operations
+------------------------------------------------------------*/
+
 static void cheat_periodicOperation(CheatAction * action)
 {
-	UINT8	operation =	EXTRACT_FIELD(action->type, Operation) |
-						(EXTRACT_FIELD(action->type, OperationExtend) << 2);
+	UINT8	operation = EXTRACT_FIELD(action->type, Operation) | (EXTRACT_FIELD(action->type, OperationExtend) << 2);
 
 	switch(operation)
 	{
@@ -10395,9 +11161,7 @@ static void cheat_periodicOperation(CheatAction * action)
 			UINT32	temp;
 
 			if(action->flags & kActionFlag_IgnoreMask)
-			{
 				WriteData(action, action->data);
-			}
 			else
 			{
 				temp = ReadData(action);
@@ -10413,16 +11177,16 @@ static void cheat_periodicOperation(CheatAction * action)
 		{
 			INT32	temp, bound;
 
-			if(action->flags & kActionFlag_IgnoreMask)
+			/* ----- if extend data field is invalid, direct return ----- */
+			//if(action->flags & kActionFlag_IgnoreMask)
 				return;
 
 			temp = ReadData(action);
 
-			// OperationParameter field stores add/subtract
+			/* ----- OperationParameter field stores add/subtract ----- */
 			if(TEST_FIELD(action->type, OperationParameter))
 			{
-				// subtract
-
+				/* ----- subtract ----- */
 				bound = action->extendData + action->data;
 
 				if(temp > bound)
@@ -10430,8 +11194,7 @@ static void cheat_periodicOperation(CheatAction * action)
 			}
 			else
 			{
-				// add
-
+				/* ----- add ----- */
 				bound = action->extendData - action->data;
 
 				if(temp < bound)
@@ -10446,6 +11209,7 @@ static void cheat_periodicOperation(CheatAction * action)
 		{
 			UINT32	temp;
 
+			/* ----- if extend data field is invalid, direct return ----- */
 			if(action->flags & kActionFlag_IgnoreMask)
 				return;
 
@@ -10453,21 +11217,21 @@ static void cheat_periodicOperation(CheatAction * action)
 
 			if(!TEST_FIELD(action->type, BytesUsed))
 			{
-				// 8 bit
-				if(	(temp < ((action->extendData >> 8) & 0xFF)) ||
-					(temp > ((action->extendData >> 0) & 0xFF)))
+				/* ----- 8 bit ----- */
+				if(	(temp < ((action->extendData >> 8) & 0xFF)) || (temp > ((action->extendData >> 0) & 0xFF)))
 				{
 					temp = action->data;
+
 					WriteData(action, temp);
 				}
 			}
 			else
 			{
-				// 16 bit (or 24, 32 bit...)
-				if(	(temp < ((action->extendData >> 16) & 0xFFFF)) ||
-					(temp > ((action->extendData >> 0) & 0xFFFF)))
+				/* ----- 16 bit (or 24, 32 bit) ----- */
+				if(	(temp < ((action->extendData >> 16) & 0xFFFF)) || (temp > ((action->extendData >> 0) & 0xFFFF)))
 				{
 					temp = action->data;
+
 					WriteData(action, temp);
 				}
 			}
@@ -10481,19 +11245,33 @@ static void cheat_periodicOperation(CheatAction * action)
 			temp = ReadData(action);
 
 			if(TEST_FIELD(action->type, OperationParameter))
-			{
-				// clear
-
+				/* ----- clear bit ----- */
 				temp &= ~action->data;
-			}
 			else
-			{
-				// set
-
+				/* ----- set bit ----- */
 				temp |= action->data;
-			}
 
 			WriteData(action, temp);
+		}
+		break;
+
+		case kOperation_WriteMatch:
+		{
+			UINT32	temp;
+
+			/* ----- if extend data field is invalid, direct return ----- */
+			if(action->flags & kActionFlag_IgnoreMask)
+				return;
+
+			temp = ReadData(action);
+
+			/* ----- if current value matches appointed value, write ----- */
+			if(temp == action->extendData)
+			{
+				temp = action->data;
+
+				WriteData(action, temp);
+			}
 		}
 		break;
 
@@ -10505,20 +11283,26 @@ static void cheat_periodicOperation(CheatAction * action)
 	}
 }
 
+/*------------------------------------------------------
+  cheat_periodicAction - management for cheat actions
+------------------------------------------------------*/
+
 static void cheat_periodicAction(CheatAction * action)
 {
 	UINT8	parameter = EXTRACT_FIELD(action->type, TypeParameter);
 
+	/* ----- if operation is done in case of one shot, no action ----- */
 	if(action->flags & kActionFlag_OperationDone)
 		return;
 
-	if(	TEST_FIELD(action->type, Prefill) &&
-		(!(action->flags & kActionFlag_PrefillDone)))
+	if(TEST_FIELD(action->type, Prefill) && (!(action->flags & kActionFlag_PrefillDone)))
 	{
+		/* ----- pre-fill ----- */
 		UINT32	prefillValue = kPrefillValueTable[EXTRACT_FIELD(action->type, Prefill)];
 
 		if(!(action->flags & kActionFlag_PrefillWritten))
 		{
+			/* ----- set pre-fill value ---- */
 			WriteData(action, prefillValue);
 
 			action->flags |= kActionFlag_PrefillWritten;
@@ -10527,6 +11311,7 @@ static void cheat_periodicAction(CheatAction * action)
 		}
 		else
 		{
+			/* ----- if value is changed, try to write new value ----- */
 			if(ReadData(action) == prefillValue)
 				return;
 
@@ -10538,12 +11323,12 @@ static void cheat_periodicAction(CheatAction * action)
 	{
 		case kType_NormalOrDelay:
 		{
-			/* ----- special action when one shot, restore previous value and delay are set ----- */
 			if(TEST_FIELD(action->type, OneShot) && TEST_FIELD(action->type, RestorePreviousValue) && parameter)
 			{
+				/* ----- keep if one shot + restore prevous value + delay !=0 ----- */
 				cheat_periodicOperation(action);
 
-				if(action->frameTimer >= (parameter * Machine->screen[0].refresh))		// keep
+				if(action->frameTimer >= (parameter * Machine->screen[0].refresh))
 				{
 					action->frameTimer = 0;
 
@@ -10554,7 +11339,8 @@ static void cheat_periodicAction(CheatAction * action)
 			}
 			else
 			{
-				if(action->frameTimer >= (parameter * Machine->screen[0].refresh))		// delay
+				/* ----- otherwise, delay ----- */
+				if(action->frameTimer >= (parameter * Machine->screen[0].refresh))
 				{
 					action->frameTimer = 0;
 
@@ -10580,20 +11366,15 @@ static void cheat_periodicAction(CheatAction * action)
 					action->flags &= ~kActionFlag_WasModified;
 
 					if(TEST_FIELD(action->type, OneShot))
-					{
 						action->flags |= kActionFlag_OperationDone;
-					}
 				}
 				else
-				{
 					action->frameTimer--;
-				}
 
 				action->lastValue = ReadData(action);
 			}
 			else
 			{
-
 				UINT32	currentValue = ReadData(action);
 
 				if(currentValue != action->lastValue)
@@ -10610,28 +11391,29 @@ static void cheat_periodicAction(CheatAction * action)
 
 		case kType_IgnoreIfDecrementing:
 		{
-
 			UINT32	currentValue = ReadData(action);
 
+			/* ### is "NotEqual" correct ? "LessOrEqual" seems to be good... ### */
 			if(currentValue != (action->lastValue - parameter))
 			{
 				cheat_periodicOperation(action);
 
 				if(TEST_FIELD(action->type, OneShot))
-				{
 					action->flags |= kActionFlag_OperationDone;
-				}
 			}
 
 			action->lastValue = currentValue;
 		}
 		break;
 
-		case kType_Watch:
 		default:
 			break;
 	}
 }
+
+/*-----------------------------------------------------
+  cheat_periodicEntry - management for cheat entries
+-----------------------------------------------------*/
 
 static void cheat_periodicEntry(CheatEntry * entry)
 {
@@ -10719,7 +11501,7 @@ static void cheat_periodicEntry(CheatEntry * entry)
 						}
 					}while(entry->selection && TEST_FIELD(entry->actionList[entry->selection].type, LinkExtension));
 
-					/* ----- display selected label name if requested ----- */
+					/* ----- display selected label name if needed ----- */
 					if(TEST_FIELD(cheatOptions, ActivationKeyMessage))
 					{
 						if(!entry->selection)
@@ -10728,11 +11510,11 @@ static void cheat_periodicEntry(CheatEntry * entry)
 							ui_popup_time(1,"%s : %s selected", entry->name, entry->actionList[entry->selection].optionalName);
 					}
 
-					entry->flags |= kCheatFlag_ActivationKeyPressed;		// set
+					entry->flags |= kCheatFlag_ActivationKeyPressed;		// set flag
 				}
 			}
 			else
-				entry->flags &= ~kCheatFlag_ActivationKeyPressed;			// clear
+				entry->flags &= ~kCheatFlag_ActivationKeyPressed;			// clear flag
 		}
 
 		/* ----- if a subcheat is selected, handle it ----- */
@@ -10769,7 +11551,7 @@ static void cheat_periodicEntry(CheatEntry * entry)
 					{
 						ActivateCheat(entry);
 
-						/* ----- display description for one shot if requested ----- */
+						/* ----- display description for one shot if needed ----- */
 						if(TEST_FIELD(cheatOptions, ActivationKeyMessage))
 							ui_popup_time(1,"set %s", entry->name);
 					}
@@ -10779,7 +11561,7 @@ static void cheat_periodicEntry(CheatEntry * entry)
 						{
 							DeactivateCheat(entry);
 
-							/* ----- display description for OFF if requested ----- */
+							/* ----- display description for OFF if needed ----- */
 							if(TEST_FIELD(cheatOptions, ActivationKeyMessage))
 								ui_popup_time(1,"%s disabled", entry->name);
 						}
@@ -10787,7 +11569,7 @@ static void cheat_periodicEntry(CheatEntry * entry)
 						{
 							ActivateCheat(entry);
 
-							/* ----- display description for ON if requested ----- */
+							/* ----- display description for ON if needed ----- */
 							if(TEST_FIELD(cheatOptions, ActivationKeyMessage))
 								ui_popup_time(1,"%s enabled", entry->name);
 						}
@@ -10807,7 +11589,7 @@ static void cheat_periodicEntry(CheatEntry * entry)
 		for(i = 0; i < entry->actionListLength; i++)
 			cheat_periodicAction(&entry->actionList[i]);
 
-		/* ----- if all actions are done, deactivate the cheat ----- */
+		/* ----- if all actions are done, deactivate the cheat if oneshot entry ----- */
 		{
 			UINT8	done = 1;
 
@@ -10821,15 +11603,21 @@ static void cheat_periodicEntry(CheatEntry * entry)
 	}
 }
 
+/*------------------------------------------------------------------
+  UpdateAllCheatInfo - update all cheat info when database loaded
+------------------------------------------------------------------*/
+
 static void UpdateAllCheatInfo(void)
 {
 	int	i;
 
 	for(i = 0; i < cheatListLength; i++)
-	{
 		UpdateCheatInfo(&cheatList[i], 1);
-	}
 }
+
+/*--------------------------------------------------
+  UpdateCheatInfo - update entry, action and flag
+--------------------------------------------------*/
 
 static void UpdateCheatInfo(CheatEntry * entry, UINT8 isLoadTime)
 {
@@ -10840,60 +11628,60 @@ static void UpdateCheatInfo(CheatEntry * entry, UINT8 isLoadTime)
 
 	flags = entry->flags & kCheatFlag_PersistentMask;
 
+	/* ---- is it label-selection ? ----- */
 	if(	(EXTRACT_FIELD(entry->actionList[0].type, LocationType) == kLocation_Custom) &&
 		(EXTRACT_FIELD(entry->actionList[0].type, LocationParameter) == kCustomLocation_Select))
-		flags |= kCheatFlag_Select;
+			flags |= kCheatFlag_Select;
 
 	for(i = 0; i < entry->actionListLength; i++)
 	{
-		CheatAction	* action =		&entry->actionList[i];
+		CheatAction	* action = &entry->actionList[i];
+
 		int			isActionNull =	0;
 		UINT32		size;
 		UINT32		operation;
 		UINT32		actionFlags = action->flags & kActionFlag_PersistentMask;
 
 		size = EXTRACT_FIELD(action->type, BytesUsed);
+
 		operation = EXTRACT_FIELD(action->type, Operation) | EXTRACT_FIELD(action->type, OperationExtend) << 2;
 
+		/* ---- is it comment ? ----- */
 		if(	(EXTRACT_FIELD(action->type, LocationType) == kLocation_Custom) &&
 			(EXTRACT_FIELD(action->type, LocationParameter) == kCustomLocation_Comment))
-		{
-			isActionNull = 1;
-		}
+				isActionNull = 1;
 		else
-		{
 			isNull = 0;
-		}
 
+		/* ---- is it one shot ? ----- */
 		if(!TEST_FIELD(action->type, OneShot))
 			isOneShot = 0;
 
+		/* ---- is it value-selection ? ----- */
 		if(TEST_FIELD(action->type, UserSelectEnable))
 			flags |= kCheatFlag_UserSelect;
 
+		/* ---- is it relative address ? ----- */
 		if(EXTRACT_FIELD(action->type, LocationType) == kLocation_IndirectIndexed)
-		{
 			actionFlags |= kActionFlag_IgnoreMask;
-		}
 		else
 		{
 			if(isLoadTime)
 			{
-				// check for mask == 0, fix
-				if(	(operation == kOperation_WriteMask) &&
-					(action->extendData == 0))
-				{
+				/* ----- check for mask == 0 and fix when database loaded ----- */
+				if((operation == kOperation_WriteMask) && (action->extendData == 0))
 					action->extendData = ~0;
-				}
 			}
 		}
 
 		action->flags = actionFlags;
 	}
 
+	/* ---- set one shot flag ----- */
 	if(isOneShot)
 		flags |= kCheatFlag_OneShot;
 
+	/* ---- set null flag ----- */
 	if(isNull)
 		flags |= kCheatFlag_Null;
 
@@ -10903,6 +11691,10 @@ static void UpdateCheatInfo(CheatEntry * entry, UINT8 isLoadTime)
 		entry->flags &= ~kCheatFlag_Dirty;
 }
 
+/*--------------------------------------------------------------------------------
+  IsAddressInRange - check an address is in range (1 = in range, 0 = out range)
+--------------------------------------------------------------------------------*/
+
 static int IsAddressInRange(CheatAction * action, UINT32 length)
 {
 	UINT8	bytes = EXTRACT_FIELD(action->type, BytesUsed) + 1;
@@ -10910,13 +11702,17 @@ static int IsAddressInRange(CheatAction * action, UINT32 length)
 	return ((action->address + bytes) <= length);
 }
 
+/*---------------------------------------------------------------
+  BuildCPUInfoList - get CPU info when initialize cheat system
+---------------------------------------------------------------*/
+
 static void BuildCPUInfoList(void)
 {
 	int	i;
 
-	// do regions
+	/* ----- do regions ----- */
 	{
-		const rom_entry *	traverse = rom_first_region(Machine->gamedrv);
+		const rom_entry	 * traverse = rom_first_region(Machine->gamedrv);
 
 		memset(regionInfoList, 0, sizeof(CPUInfo) * kRegionListLength);
 
@@ -10926,9 +11722,8 @@ static void BuildCPUInfoList(void)
 			{
 				UINT8	regionType = ROMREGION_GETTYPE(traverse);
 
-				// non-cpu region?
-				if(	(regionType >= REGION_GFX1) &&
-					(regionType <= REGION_USER8))
+				/* ----- non-cpu region ? ----- */
+				if((regionType >= REGION_GFX1) && (regionType <= REGION_USER8))
 				{
 					CPUInfo	* info = &regionInfoList[regionType - REGION_INVALID];
 					UINT32	length = memory_region_length(regionType);
@@ -10940,15 +11735,13 @@ static void BuildCPUInfoList(void)
 					info->addressBits = 0;
 					info->addressMask = length;
 
-					// build address mask
+					/* ----- build address mask ----- */
 					for(i = 0; i < 32; i++)
 					{
 						UINT32	mask = 1 << (31 - i);
 
 						if(bitState)
-						{
 							info->addressMask |= mask;
-						}
 						else
 						{
 							if(info->addressMask & mask)
@@ -10960,6 +11753,7 @@ static void BuildCPUInfoList(void)
 					}
 
 					info->addressCharsNeeded = info->addressBits >> 2;
+
 					if(info->addressBits & 3)
 						info->addressCharsNeeded++;
 
@@ -10971,7 +11765,7 @@ static void BuildCPUInfoList(void)
 		}
 	}
 
-	// do CPUs
+	/* ----- do CPUs ----- */
 	{
 		memset(cpuInfoList, 0, sizeof(CPUInfo) * MAX_CPU);
 
@@ -11010,7 +11804,7 @@ static void BuildCPUInfoList(void)
 					break;
 			}
 
-			// copy to region list
+			/* ----- copy to region list ----- */
 			memcpy(regionInfo, info, sizeof(CPUInfo));
 		}
 	}

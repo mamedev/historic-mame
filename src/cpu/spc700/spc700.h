@@ -130,7 +130,7 @@ void spc700_branching(unsigned int new_pc);
 
 #include "cpuintrf.h"
 
-extern void spc700_get_info(UINT32 state, union cpuinfo *info);
+extern void spc700_get_info(UINT32 state, cpuinfo *info);
 
 #define spc700_read_8(addr) program_read_byte_8(addr)
 #define spc700_write_8(addr,data) program_write_byte_8(addr,data)

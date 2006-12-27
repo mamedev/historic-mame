@@ -36,7 +36,7 @@ enum {
 
 #define M4510_IRQ_LINE					M6502_IRQ_LINE
 
-void m4510_get_info(UINT32 state, union cpuinfo *info);
+void m4510_get_info(UINT32 state, cpuinfo *info);
 
 
 #ifdef MAME_DEBUG

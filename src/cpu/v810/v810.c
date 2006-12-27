@@ -1001,34 +1001,34 @@ static void set_irq_line(int irqline, int state)
  * Generic set_info
  **************************************************************************/
 
-static void v810_set_info(UINT32 state, union cpuinfo *info)
+static void v810_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_INPUT_STATE + 0:			set_irq_line(0, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 1:			set_irq_line(1, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 2:			set_irq_line(2, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 3:			set_irq_line(3, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 4:			set_irq_line(4, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 5:			set_irq_line(5, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 6:			set_irq_line(6, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 7:			set_irq_line(7, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 8:			set_irq_line(8, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 9:			set_irq_line(9, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 10:		set_irq_line(10, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 11:		set_irq_line(11, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 12:		set_irq_line(12, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 13:		set_irq_line(13, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 14:		set_irq_line(14, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 15:		set_irq_line(15, info->i);
+		case CPUINFO_INT_INPUT_STATE + 0:				set_irq_line(0, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 1:				set_irq_line(1, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 2:				set_irq_line(2, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 3:				set_irq_line(3, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 4:				set_irq_line(4, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 5:				set_irq_line(5, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 6:				set_irq_line(6, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 7:				set_irq_line(7, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 8:				set_irq_line(8, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 9:				set_irq_line(9, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 10:				set_irq_line(10, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 11:				set_irq_line(11, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 12:				set_irq_line(12, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 13:				set_irq_line(13, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 14:				set_irq_line(14, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 15:				set_irq_line(15, info->i);				break;
 
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	set_irq_line(INPUT_LINE_NMI, info->i);	break;
 
-		case CPUINFO_INT_PREVIOUSPC:					 		v810.PPC = info->i;						break;
+		case CPUINFO_INT_PREVIOUSPC:					v810.PPC = info->i;						break;
 
 		case CPUINFO_INT_REGISTER + V810_PC:
-		case CPUINFO_INT_PC:											PC = info->i; 						break;
+		case CPUINFO_INT_PC:							PC = info->i; 							break;
 
 		case CPUINFO_INT_REGISTER + V810_R0:			R0 = info->i;							break;
 		case CPUINFO_INT_REGISTER + V810_R1:			R1 = info->i;							break;
@@ -1041,8 +1041,8 @@ static void v810_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + V810_R7:			R7 = info->i;							break;
 		case CPUINFO_INT_REGISTER + V810_R8:			R8 = info->i;							break;
 		case CPUINFO_INT_REGISTER + V810_R9:			R9 = info->i;							break;
-		case CPUINFO_INT_REGISTER + V810_R10:			R10 = info->i;						break;
-		case CPUINFO_INT_REGISTER + V810_R11:			R11 = info->i;						break;
+		case CPUINFO_INT_REGISTER + V810_R10:			R10 = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_R11:			R11 = info->i;							break;
 		case CPUINFO_INT_REGISTER + V810_R12:			R12 = info->i;							break;
 		case CPUINFO_INT_REGISTER + V810_R13:			R13 = info->i;							break;
 		case CPUINFO_INT_REGISTER + V810_R14:			R14 = info->i;							break;
@@ -1064,15 +1064,15 @@ static void v810_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + V810_R30:			R30 = info->i;							break;
 		case CPUINFO_INT_REGISTER + V810_R31:			R31 = info->i;							break;
 		case CPUINFO_INT_REGISTER + V810_PSW:			PSW = info->i;							break;
-		case CPUINFO_INT_REGISTER + V810_EIPC:		EIPC = info->i;							break;
-		case CPUINFO_INT_REGISTER + V810_EIPSW:		EIPSW = info->i;						break;
-		case CPUINFO_INT_REGISTER + V810_FEPC:		FEPC = info->i;							break;
-		case CPUINFO_INT_REGISTER + V810_FEPSW:		FEPSW = info->i;						break;
+		case CPUINFO_INT_REGISTER + V810_EIPC:			EIPC = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_EIPSW:			EIPSW = info->i;						break;
+		case CPUINFO_INT_REGISTER + V810_FEPC:			FEPC = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_FEPSW:			FEPSW = info->i;						break;
 		case CPUINFO_INT_REGISTER + V810_ECR:			ECR = info->i;							break;
 		case CPUINFO_INT_REGISTER + V810_PIR:			PIR = info->i;							break;
-		case CPUINFO_INT_REGISTER + V810_TKCW:		TKCW = info->i;							break;
-		case CPUINFO_INT_REGISTER + V810_CHCW:		CHCW = info->i;							break;
-		case CPUINFO_INT_REGISTER + V810_ADTRE:		ADTRE = info->i;						break;
+		case CPUINFO_INT_REGISTER + V810_TKCW:			TKCW = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_CHCW:			CHCW = info->i;							break;
+		case CPUINFO_INT_REGISTER + V810_ADTRE:			ADTRE = info->i;						break;
 	}
 }
 
@@ -1082,15 +1082,14 @@ static void v810_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void v810_get_info(UINT32 state, union cpuinfo *info)
+void v810_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 
-
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				GET_AE ? 'A':'.',
 				GET_NP ? 'N':'.',
 				GET_EP ? 'E':'.',
@@ -1101,16 +1100,15 @@ void v810_get_info(UINT32 state, union cpuinfo *info)
 				GET_Z ?  'Z':'.');
 			break;
 
-
-		case CPUINFO_INT_CONTEXT_SIZE:						info->i = sizeof(v810);					break;
-		case CPUINFO_INT_INPUT_LINES:							info->i = 9;							break;
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(v810);					break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 9;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
-		case CPUINFO_INT_ENDIANNESS:							info->i = CPU_IS_LE;					break;
-		case CPUINFO_INT_CLOCK_DIVIDER:						info->i = 1;							break;
-		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:		info->i = 2;							break;
-		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:		info->i = 4;							break;
-		case CPUINFO_INT_MIN_CYCLES:							info->i = 1;							break;
-		case CPUINFO_INT_MAX_CYCLES:							info->i = 1;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 2;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 1;							break;
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
@@ -1122,13 +1120,13 @@ void v810_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_INPUT_STATE + 0:				info->i = v810.irq_line;					break;
-		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = v810.nmi_line;					break;
+		case CPUINFO_INT_INPUT_STATE + 0:				info->i = v810.irq_line;				break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = v810.nmi_line;				break;
 
-		case CPUINFO_INT_PREVIOUSPC:					info->i = v810.PPC;							break;
+		case CPUINFO_INT_PREVIOUSPC:					info->i = v810.PPC;						break;
 
 		case CPUINFO_INT_REGISTER + V810_PC:
-		case CPUINFO_INT_PC:											info->i = PC;  						break;
+		case CPUINFO_INT_PC:							info->i = PC;  							break;
 
 		case CPUINFO_INT_REGISTER + V810_R0:			info->i = R0;							break;
 		case CPUINFO_INT_REGISTER + V810_R1:			info->i = R1;							break;
@@ -1164,82 +1162,79 @@ void v810_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + V810_R30:			info->i = R30;							break;
 		case CPUINFO_INT_REGISTER + V810_R31:			info->i = R31;							break;
 		case CPUINFO_INT_REGISTER + V810_PSW:			info->i = PSW;							break;
-		case CPUINFO_INT_REGISTER + V810_EIPC:		info->i = EIPC;							break;
-		case CPUINFO_INT_REGISTER + V810_EIPSW:		info->i = EIPSW;						break;
-		case CPUINFO_INT_REGISTER + V810_FEPC:		info->i = FEPC;							break;
-		case CPUINFO_INT_REGISTER + V810_FEPSW:		info->i = FEPSW;						break;
+		case CPUINFO_INT_REGISTER + V810_EIPC:			info->i = EIPC;							break;
+		case CPUINFO_INT_REGISTER + V810_EIPSW:			info->i = EIPSW;						break;
+		case CPUINFO_INT_REGISTER + V810_FEPC:			info->i = FEPC;							break;
+		case CPUINFO_INT_REGISTER + V810_FEPSW:			info->i = FEPSW;						break;
 		case CPUINFO_INT_REGISTER + V810_ECR:			info->i = ECR;							break;
 		case CPUINFO_INT_REGISTER + V810_PIR:			info->i = PIR;							break;
-		case CPUINFO_INT_REGISTER + V810_TKCW:		info->i = TKCW;							break;
-		case CPUINFO_INT_REGISTER + V810_CHCW:		info->i = CHCW;							break;
-		case CPUINFO_INT_REGISTER + V810_ADTRE:		info->i = ADTRE;						break;
+		case CPUINFO_INT_REGISTER + V810_TKCW:			info->i = TKCW;							break;
+		case CPUINFO_INT_REGISTER + V810_CHCW:			info->i = CHCW;							break;
+		case CPUINFO_INT_REGISTER + V810_ADTRE:			info->i = ADTRE;						break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = v810_set_info;			break;
-		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = v810_get_context;		break;
-		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = v810_set_context;		break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = v810_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = v810_set_context;	break;
 		case CPUINFO_PTR_INIT:							info->init = v810_init;					break;
 		case CPUINFO_PTR_RESET:							info->reset = v810_reset;				break;
-		case CPUINFO_PTR_EXIT:							info->exit = NULL;					break;
+		case CPUINFO_PTR_EXIT:							info->exit = NULL;						break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = v810_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 #ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v810_dasm;			break;
 #endif /* MAME_DEBUG */
-		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &v810_ICount;				break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &v810_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V810"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "NEC V810"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Tomasz Slanina"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "V810");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "NEC V810");			break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Tomasz Slanina");		break;
 
-		case CPUINFO_STR_REGISTER + V810_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%08X", PC);	break;
-		case CPUINFO_STR_REGISTER + V810_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0 :%08X", R0);	break;
-		case CPUINFO_STR_REGISTER + V810_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1 :%08X", R1);	break;
-		case CPUINFO_STR_REGISTER + V810_R2:			sprintf(info->s = cpuintrf_temp_str(), "R2 :%08X", R2);	break;
-		case CPUINFO_STR_REGISTER + V810_SP:			sprintf(info->s = cpuintrf_temp_str(), "SP :%08X", SP);	break;
-		case CPUINFO_STR_REGISTER + V810_R4:			sprintf(info->s = cpuintrf_temp_str(), "R4 :%08X", R4);	break;
-		case CPUINFO_STR_REGISTER + V810_R5:			sprintf(info->s = cpuintrf_temp_str(), "R5 :%08X", R5);	break;
-		case CPUINFO_STR_REGISTER + V810_R6:			sprintf(info->s = cpuintrf_temp_str(), "R6 :%08X", R6);	break;
-		case CPUINFO_STR_REGISTER + V810_R7:			sprintf(info->s = cpuintrf_temp_str(), "R7 :%08X", R7);	break;
-		case CPUINFO_STR_REGISTER + V810_R8:			sprintf(info->s = cpuintrf_temp_str(), "R8 :%08X", R8);	break;
-		case CPUINFO_STR_REGISTER + V810_R9:			sprintf(info->s = cpuintrf_temp_str(), "R9 :%08X", R9);	break;
-		case CPUINFO_STR_REGISTER + V810_R10:			sprintf(info->s = cpuintrf_temp_str(), "R10:%08X", R10);	break;
-		case CPUINFO_STR_REGISTER + V810_R11:			sprintf(info->s = cpuintrf_temp_str(), "R11:%08X", R11);	break;
-		case CPUINFO_STR_REGISTER + V810_R12:			sprintf(info->s = cpuintrf_temp_str(), "R12:%08X", R12);	break;
-		case CPUINFO_STR_REGISTER + V810_R13:			sprintf(info->s = cpuintrf_temp_str(), "R13:%08X", R13);	break;
-		case CPUINFO_STR_REGISTER + V810_R14:			sprintf(info->s = cpuintrf_temp_str(), "R14:%08X", R14);	break;
-		case CPUINFO_STR_REGISTER + V810_R15:			sprintf(info->s = cpuintrf_temp_str(), "R15:%08X", R15);	break;
-		case CPUINFO_STR_REGISTER + V810_R16:			sprintf(info->s = cpuintrf_temp_str(), "R16:%08X", R16);	break;
-		case CPUINFO_STR_REGISTER + V810_R17:			sprintf(info->s = cpuintrf_temp_str(), "R17:%08X", R17);	break;
-		case CPUINFO_STR_REGISTER + V810_R18:			sprintf(info->s = cpuintrf_temp_str(), "R18:%08X", R18);	break;
-		case CPUINFO_STR_REGISTER + V810_R19:			sprintf(info->s = cpuintrf_temp_str(), "R19:%08X", R19);	break;
-		case CPUINFO_STR_REGISTER + V810_R20:			sprintf(info->s = cpuintrf_temp_str(), "R20:%08X", R20);	break;
-		case CPUINFO_STR_REGISTER + V810_R21:			sprintf(info->s = cpuintrf_temp_str(), "R21:%08X", R21);	break;
-		case CPUINFO_STR_REGISTER + V810_R22:			sprintf(info->s = cpuintrf_temp_str(), "R22:%08X", R22);	break;
-		case CPUINFO_STR_REGISTER + V810_R23:			sprintf(info->s = cpuintrf_temp_str(), "R23:%08X", R23);	break;
-		case CPUINFO_STR_REGISTER + V810_R24:			sprintf(info->s = cpuintrf_temp_str(), "R24:%08X", R24);	break;
-		case CPUINFO_STR_REGISTER + V810_R25:			sprintf(info->s = cpuintrf_temp_str(), "R25:%08X", R25);	break;
-		case CPUINFO_STR_REGISTER + V810_R26:			sprintf(info->s = cpuintrf_temp_str(), "R26:%08X", R26);	break;
-		case CPUINFO_STR_REGISTER + V810_R27:			sprintf(info->s = cpuintrf_temp_str(), "R27:%08X", R27);	break;
-		case CPUINFO_STR_REGISTER + V810_R28:			sprintf(info->s = cpuintrf_temp_str(), "R28:%08X", R28);	break;
-		case CPUINFO_STR_REGISTER + V810_R29:			sprintf(info->s = cpuintrf_temp_str(), "R29:%08X", R29);	break;
-		case CPUINFO_STR_REGISTER + V810_R30:			sprintf(info->s = cpuintrf_temp_str(), "R30:%08X", R30);	break;
-		case CPUINFO_STR_REGISTER + V810_R31:			sprintf(info->s = cpuintrf_temp_str(), "R31:%08X", R31);	break;
-		case CPUINFO_STR_REGISTER + V810_EIPC:		sprintf(info->s = cpuintrf_temp_str(), "EIPC :%08X", EIPC);	break;
-		case CPUINFO_STR_REGISTER + V810_PSW:			sprintf(info->s = cpuintrf_temp_str(), "PSW  :%08X", PSW);	break;
-		case CPUINFO_STR_REGISTER + V810_EIPSW:		sprintf(info->s = cpuintrf_temp_str(), "EIPSW:%08X", EIPSW);	break;
-		case CPUINFO_STR_REGISTER + V810_FEPC:		sprintf(info->s = cpuintrf_temp_str(), "FEPC :%08X", FEPC);	break;
-		case CPUINFO_STR_REGISTER + V810_FEPSW:		sprintf(info->s = cpuintrf_temp_str(), "FEPSW:%08X", FEPSW);	break;
-		case CPUINFO_STR_REGISTER + V810_ECR:			sprintf(info->s = cpuintrf_temp_str(), "ECR  :%08X", ECR);	break;
-		case CPUINFO_STR_REGISTER + V810_PIR:			sprintf(info->s = cpuintrf_temp_str(), "PIR  :%08X", PIR);	break;
-		case CPUINFO_STR_REGISTER + V810_TKCW:		sprintf(info->s = cpuintrf_temp_str(), "TKCW :%08X", TKCW);	break;
-		case CPUINFO_STR_REGISTER + V810_CHCW:		sprintf(info->s = cpuintrf_temp_str(), "CHCW :%08X", CHCW);	break;
-		case CPUINFO_STR_REGISTER + V810_ADTRE:		sprintf(info->s = cpuintrf_temp_str(), "ADTRE:%08X", ADTRE);	break;
-
-
-
+		case CPUINFO_STR_REGISTER + V810_PC:			sprintf(info->s, "PC:%08X", PC);		break;
+		case CPUINFO_STR_REGISTER + V810_R0:			sprintf(info->s, "R0 :%08X", R0);		break;
+		case CPUINFO_STR_REGISTER + V810_R1:			sprintf(info->s, "R1 :%08X", R1);		break;
+		case CPUINFO_STR_REGISTER + V810_R2:			sprintf(info->s, "R2 :%08X", R2);		break;
+		case CPUINFO_STR_REGISTER + V810_SP:			sprintf(info->s, "SP :%08X", SP);		break;
+		case CPUINFO_STR_REGISTER + V810_R4:			sprintf(info->s, "R4 :%08X", R4);		break;
+		case CPUINFO_STR_REGISTER + V810_R5:			sprintf(info->s, "R5 :%08X", R5);		break;
+		case CPUINFO_STR_REGISTER + V810_R6:			sprintf(info->s, "R6 :%08X", R6);		break;
+		case CPUINFO_STR_REGISTER + V810_R7:			sprintf(info->s, "R7 :%08X", R7);		break;
+		case CPUINFO_STR_REGISTER + V810_R8:			sprintf(info->s, "R8 :%08X", R8);		break;
+		case CPUINFO_STR_REGISTER + V810_R9:			sprintf(info->s, "R9 :%08X", R9);		break;
+		case CPUINFO_STR_REGISTER + V810_R10:			sprintf(info->s, "R10:%08X", R10);		break;
+		case CPUINFO_STR_REGISTER + V810_R11:			sprintf(info->s, "R11:%08X", R11);		break;
+		case CPUINFO_STR_REGISTER + V810_R12:			sprintf(info->s, "R12:%08X", R12);		break;
+		case CPUINFO_STR_REGISTER + V810_R13:			sprintf(info->s, "R13:%08X", R13);		break;
+		case CPUINFO_STR_REGISTER + V810_R14:			sprintf(info->s, "R14:%08X", R14);		break;
+		case CPUINFO_STR_REGISTER + V810_R15:			sprintf(info->s, "R15:%08X", R15);		break;
+		case CPUINFO_STR_REGISTER + V810_R16:			sprintf(info->s, "R16:%08X", R16);		break;
+		case CPUINFO_STR_REGISTER + V810_R17:			sprintf(info->s, "R17:%08X", R17);		break;
+		case CPUINFO_STR_REGISTER + V810_R18:			sprintf(info->s, "R18:%08X", R18);		break;
+		case CPUINFO_STR_REGISTER + V810_R19:			sprintf(info->s, "R19:%08X", R19);		break;
+		case CPUINFO_STR_REGISTER + V810_R20:			sprintf(info->s, "R20:%08X", R20);		break;
+		case CPUINFO_STR_REGISTER + V810_R21:			sprintf(info->s, "R21:%08X", R21);		break;
+		case CPUINFO_STR_REGISTER + V810_R22:			sprintf(info->s, "R22:%08X", R22);		break;
+		case CPUINFO_STR_REGISTER + V810_R23:			sprintf(info->s, "R23:%08X", R23);		break;
+		case CPUINFO_STR_REGISTER + V810_R24:			sprintf(info->s, "R24:%08X", R24);		break;
+		case CPUINFO_STR_REGISTER + V810_R25:			sprintf(info->s, "R25:%08X", R25);		break;
+		case CPUINFO_STR_REGISTER + V810_R26:			sprintf(info->s, "R26:%08X", R26);		break;
+		case CPUINFO_STR_REGISTER + V810_R27:			sprintf(info->s, "R27:%08X", R27);		break;
+		case CPUINFO_STR_REGISTER + V810_R28:			sprintf(info->s, "R28:%08X", R28);		break;
+		case CPUINFO_STR_REGISTER + V810_R29:			sprintf(info->s, "R29:%08X", R29);		break;
+		case CPUINFO_STR_REGISTER + V810_R30:			sprintf(info->s, "R30:%08X", R30);		break;
+		case CPUINFO_STR_REGISTER + V810_R31:			sprintf(info->s, "R31:%08X", R31);		break;
+		case CPUINFO_STR_REGISTER + V810_EIPC:			sprintf(info->s, "EIPC :%08X", EIPC);	break;
+		case CPUINFO_STR_REGISTER + V810_PSW:			sprintf(info->s, "PSW  :%08X", PSW);	break;
+		case CPUINFO_STR_REGISTER + V810_EIPSW:			sprintf(info->s, "EIPSW:%08X", EIPSW);	break;
+		case CPUINFO_STR_REGISTER + V810_FEPC:			sprintf(info->s, "FEPC :%08X", FEPC);	break;
+		case CPUINFO_STR_REGISTER + V810_FEPSW:			sprintf(info->s, "FEPSW:%08X", FEPSW);	break;
+		case CPUINFO_STR_REGISTER + V810_ECR:			sprintf(info->s, "ECR  :%08X", ECR);	break;
+		case CPUINFO_STR_REGISTER + V810_PIR:			sprintf(info->s, "PIR  :%08X", PIR);	break;
+		case CPUINFO_STR_REGISTER + V810_TKCW:			sprintf(info->s, "TKCW :%08X", TKCW);	break;
+		case CPUINFO_STR_REGISTER + V810_CHCW:			sprintf(info->s, "CHCW :%08X", CHCW);	break;
+		case CPUINFO_STR_REGISTER + V810_ADTRE:			sprintf(info->s, "ADTRE:%08X", ADTRE);	break;
 	}
 }

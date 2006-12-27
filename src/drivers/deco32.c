@@ -1790,7 +1790,8 @@ static void sound_irq(int state)
 
 static void sound_irq_nslasher(int state)
 {
-	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, 0x38);
+	if (state != 0)
+		cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, 0x38);
 }
 
 static WRITE8_HANDLER( sound_bankswitch_w )

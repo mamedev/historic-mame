@@ -14,7 +14,7 @@
  *  PUBLIC FUNCTIONS
  ***************************************************************************************************/
 
-extern void arm_get_info(UINT32 state, union cpuinfo *info);
+extern void arm_get_info(UINT32 state, cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern UINT32 arm_disasm( char *pBuf, UINT32 pc, UINT32 opcode );

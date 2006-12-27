@@ -154,6 +154,7 @@ CPUS += ALPHA8301
 CPUS += CDP1802
 CPUS += COP420
 CPUS += COP410
+CPUS += TLCS90
 
 
 #-------------------------------------------------
@@ -366,6 +367,7 @@ $(OBJ)/shared.a: \
  	$(OBJ)/machine/intelfsh.o \
 	$(OBJ)/machine/laserdsc.o \
 	$(OBJ)/machine/mc146818.o \
+	$(OBJ)/machine/msm6242.o \
 	$(OBJ)/machine/nmk112.o \
 	$(OBJ)/machine/pc16552d.o \
 	$(OBJ)/machine/pci.o \
@@ -913,7 +915,9 @@ $(OBJ)/msx.a: \
 	$(OBJ)/vidhrdw/v9938.o \
 
 $(OBJ)/namco.a: \
+	$(OBJ)/drivers/20pacgal.o $(OBJ)/vidhrdw/20pacgal.o \
 	$(OBJ)/drivers/baraduke.o $(OBJ)/vidhrdw/baraduke.o \
+	$(OBJ)/drivers/dambustr.o \
 	$(OBJ)/drivers/galaga.o $(OBJ)/vidhrdw/galaga.o \
 	$(OBJ)/drivers/galaxian.o $(OBJ)/machine/galaxian.o $(OBJ)/sndhrdw/galaxian.o $(OBJ)/vidhrdw/galaxian.o \
 	$(OBJ)/drivers/gaplus.o $(OBJ)/machine/gaplus.o $(OBJ)/vidhrdw/gaplus.o \
@@ -947,7 +951,6 @@ $(OBJ)/namco.a: \
 	$(OBJ)/vidhrdw/digdug.o \
 	$(OBJ)/machine/psx.o $(OBJ)/vidhrdw/psx.o \
 	$(OBJ)/machine/xevious.o $(OBJ)/vidhrdw/xevious.o \
-	$(OBJ)/drivers/dambustr.o \
 
 $(OBJ)/nasco.a: \
 	$(OBJ)/drivers/crgolf.o $(OBJ)/vidhrdw/crgolf.o \
@@ -1005,6 +1008,7 @@ $(OBJ)/nix.a: \
 
 $(OBJ)/nmk.a: \
 	$(OBJ)/drivers/acommand.o \
+	$(OBJ)/drivers/ddealer.o \
 	$(OBJ)/drivers/jalmah.o \
 	$(OBJ)/drivers/macrossp.o $(OBJ)/vidhrdw/macrossp.o \
 	$(OBJ)/drivers/nmk16.o $(OBJ)/machine/nmk004.o $(OBJ)/vidhrdw/nmk16.o \
@@ -1447,6 +1451,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/cidelsa.o $(OBJ)/vidhrdw/cdp1869.o \
 	$(OBJ)/drivers/coinmstr.o \
 	$(OBJ)/drivers/coolpool.o \
+	$(OBJ)/drivers/cowrace.o \
 	$(OBJ)/drivers/crystal.o $(OBJ)/machine/ds1302.o $(OBJ)/vidhrdw/vrender0.o \
 	$(OBJ)/drivers/cybertnk.o \
 	$(OBJ)/drivers/dcheese.o $(OBJ)/vidhrdw/dcheese.o \
@@ -1486,6 +1491,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/malzak.o $(OBJ)/vidhrdw/malzak.o \
 	$(OBJ)/drivers/mcatadv.o $(OBJ)/vidhrdw/mcatadv.o \
 	$(OBJ)/drivers/micro3d.o $(OBJ)/vidhrdw/micro3d.o \
+	$(OBJ)/drivers/midas.o \
 	$(OBJ)/drivers/mirax.o \
 	$(OBJ)/drivers/mole.o $(OBJ)/vidhrdw/mole.o \
 	$(OBJ)/drivers/monzagp.o \
@@ -1509,6 +1515,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/sfkick.o \
 	$(OBJ)/drivers/shangkid.o $(OBJ)/vidhrdw/shangkid.o \
 	$(OBJ)/drivers/skyarmy.o \
+	$(OBJ)/drivers/skylncr.o \
 	$(OBJ)/drivers/sliver.o \
 	$(OBJ)/drivers/smstrv.o \
 	$(OBJ)/drivers/sprcros2.o $(OBJ)/vidhrdw/sprcros2.o \

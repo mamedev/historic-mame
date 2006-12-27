@@ -1,745 +1,610 @@
-/* this code was hacked out of the fully-featured 6809 disassembler by Sean Riddle */
+/*****************************************************************************
 
+    6809dasm.c - a 6809 opcode disassembler
+    Version 1.4 1-MAR-95
+    Copyright 1995 Sean Riddle
 
-/* 6809dasm.c - a 6809 opcode disassembler */
-/* Version 1.4 1-MAR-95 */
-/* Copyright 1995 Sean Riddle */
+    Thanks to Franklin Bowen for bug fixes, ideas
 
-/* thanks to Franklin Bowen for bug fixes, ideas */
+    Freely distributable on any medium given all copyrights are retained
+    by the author and no charge greater than $7.00 is made for obtaining
+    this software
 
-/* Freely distributable on any medium given all copyrights are retained */
-/* by the author and no charge greater than $7.00 is made for obtaining */
-/* this software */
+    Please send all bug reports, update ideas and data files to:
+    sriddle@ionet.net
 
-/* Please send all bug reports, update ideas and data files to: */
-/* sriddle@ionet.net */
+*****************************************************************************/
 
 #include "debugger.h"
-#include "debug/eainfo.h"
 #include "m6809.h"
 
-typedef struct {                /* opcode structure */
-   UINT8	opcode; 			/* 8-bit opcode value */
-   UINT8	numoperands;
-   char 	name[6];			/* opcode name */
-   UINT8	mode;				/* addressing mode */
-   UINT8	size;				/* access size */
-   UINT8	access; 			/* access mode */
-   UINT8	numcycles;			/* number of cycles - not used */
-   unsigned flags;				/* disassembly flags */
+// Opcode structure
+typedef struct
+{
+   UINT8	opcode;		// 8-bit opcode value
+   UINT8	length;		// Opcode length in bytes
+   char 	name[6];	// Opcode name
+   UINT8	mode;		// Addressing mode
+   unsigned flags;		// Disassembly flags
 } opcodeinfo;
 
-/* 6809/6309 ADDRESSING MODES */
-enum M6809_ADDRESSING_MODES
+enum m6809_addressing_modes
 {
-	INH,
-	DIR,
-	DIR_IM,
-	IND,
-	REL,
-	EXT,
-	IMM,
-	IMM_RR,
-	IMM_BW,
-	IMM_TFM,
-	LREL,
-	PG2,						/* PAGE SWITCHES -  Page 2 */
-	PG3 						/*                  Page 3 */
+	INH,				// Inherent
+	DIR,				// Direct
+	IND,				// Indexed
+	REL,				// Relative (8 bit)
+	LREL,				// Long relative (16 bit)
+	EXT,				// Extended
+	IMM,				// Immediate
+	IMM_RR,				// Register-to-register
+	PG1,				// Switch to page 1 opcodes
+	PG2 				// Switch to page 2 opcodes
 };
 
+// Page 0 opcodes (single byte)
+static const opcodeinfo m6809_pg0opcodes[] =
+{
+	{ 0x00, 2, "NEG",   DIR    },
+	{ 0x03, 2, "COM",   DIR    },
+	{ 0x04, 2, "LSR",   DIR    },
+	{ 0x06, 2, "ROR",   DIR    },
+	{ 0x07, 2, "ASR",   DIR    },
+	{ 0x08, 2, "ASL",   DIR    },
+	{ 0x09, 2, "ROL",   DIR    },
+	{ 0x0A, 2, "DEC",   DIR    },
+	{ 0x0C, 2, "INC",   DIR    },
+	{ 0x0D, 2, "TST",   DIR    },
+	{ 0x0E, 2, "JMP",   DIR    },
+	{ 0x0F, 2, "CLR",   DIR    },
 
-/* page 1 ops */
+	{ 0x10, 1, "page1", PG1    },
+	{ 0x11, 1, "page2", PG2    },
+	{ 0x12, 1, "NOP",   INH    },
+	{ 0x13, 1, "SYNC",  INH    },
+	{ 0x16, 3, "LBRA",  LREL   },
+	{ 0x17, 3, "LBSR",  LREL    , DASMFLAG_STEP_OVER },
+	{ 0x19, 1, "DAA",   INH    },
+	{ 0x1A, 2, "ORCC",  IMM    },
+	{ 0x1C, 2, "ANDCC", IMM    },
+	{ 0x1D, 1, "SEX",   INH    },
+	{ 0x1E, 2, "EXG",   IMM_RR },
+	{ 0x1F, 2, "TFR",   IMM_RR },
+
+	{ 0x20, 2, "BRA",   REL    },
+	{ 0x21, 2, "BRN",   REL    },
+	{ 0x22, 2, "BHI",   REL    },
+	{ 0x23, 2, "BLS",   REL    },
+	{ 0x24, 2, "BCC",   REL    },
+	{ 0x25, 2, "BCS",   REL    },
+	{ 0x26, 2, "BNE",   REL    },
+	{ 0x27, 2, "BEQ",   REL    },
+	{ 0x28, 2, "BVC",   REL    },
+	{ 0x29, 2, "BVS",   REL    },
+	{ 0x2A, 2, "BPL",   REL    },
+	{ 0x2B, 2, "BMI",   REL    },
+	{ 0x2C, 2, "BGE",   REL    },
+	{ 0x2D, 2, "BLT",   REL    },
+	{ 0x2E, 2, "BGT",   REL    },
+	{ 0x2F, 2, "BLE",   REL    },
+
+	{ 0x30, 2, "LEAX",  IND    },
+	{ 0x31, 2, "LEAY",  IND    },
+	{ 0x32, 2, "LEAS",  IND    },
+	{ 0x33, 2, "LEAU",  IND    },
+	{ 0x34, 2, "PSHS",  INH    },
+	{ 0x35, 2, "PULS",  INH    },
+	{ 0x36, 2, "PSHU",  INH    },
+	{ 0x37, 2, "PULU",  INH    },
+	{ 0x39, 1, "RTS",   INH    },
+	{ 0x3A, 1, "ABX",   INH    },
+	{ 0x3B, 1, "RTI",   INH    },
+	{ 0x3C, 2, "CWAI",  IMM    },
+	{ 0x3D, 1, "MUL",   INH    },
+	{ 0x3F, 1, "SWI",   INH    },
+
+	{ 0x40, 1, "NEGA",  INH    },
+	{ 0x43, 1, "COMA",  INH    },
+	{ 0x44, 1, "LSRA",  INH    },
+	{ 0x46, 1, "RORA",  INH    },
+	{ 0x47, 1, "ASRA",  INH    },
+	{ 0x48, 1, "ASLA",  INH    },
+	{ 0x49, 1, "ROLA",  INH    },
+	{ 0x4A, 1, "DECA",  INH    },
+	{ 0x4C, 1, "INCA",  INH    },
+	{ 0x4D, 1, "TSTA",  INH    },
+	{ 0x4F, 1, "CLRA",  INH    },
+
+	{ 0x50, 1, "NEGB",  INH    },
+	{ 0x53, 1, "COMB",  INH    },
+	{ 0x54, 1, "LSRB",  INH    },
+	{ 0x56, 1, "RORB",  INH    },
+	{ 0x57, 1, "ASRB",  INH    },
+	{ 0x58, 1, "ASLB",  INH    },
+	{ 0x59, 1, "ROLB",  INH    },
+	{ 0x5A, 1, "DECB",  INH    },
+	{ 0x5C, 1, "INCB",  INH    },
+	{ 0x5D, 1, "TSTB",  INH    },
+	{ 0x5F, 1, "CLRB",  INH    },
+
+	{ 0x60, 2, "NEG",   IND    },
+	{ 0x63, 2, "COM",   IND    },
+	{ 0x64, 2, "LSR",   IND    },
+	{ 0x66, 2, "ROR",   IND    },
+	{ 0x67, 2, "ASR",   IND    },
+	{ 0x68, 2, "ASL",   IND    },
+	{ 0x69, 2, "ROL",   IND    },
+	{ 0x6A, 2, "DEC",   IND    },
+	{ 0x6C, 2, "INC",   IND    },
+	{ 0x6D, 2, "TST",   IND    },
+	{ 0x6E, 2, "JMP",   IND    },
+	{ 0x6F, 2, "CLR",   IND    },
+
+	{ 0x70, 3, "NEG",   EXT    },
+	{ 0x73, 3, "COM",   EXT    },
+	{ 0x74, 3, "LSR",   EXT    },
+	{ 0x76, 3, "ROR",   EXT    },
+	{ 0x77, 3, "ASR",   EXT    },
+	{ 0x78, 3, "ASL",   EXT    },
+	{ 0x79, 3, "ROL",   EXT    },
+	{ 0x7A, 3, "DEC",   EXT    },
+	{ 0x7C, 3, "INC",   EXT    },
+	{ 0x7D, 3, "TST",   EXT    },
+	{ 0x7E, 3, "JMP",   EXT    },
+	{ 0x7F, 3, "CLR",   EXT    },
+
+	{ 0x80, 2, "SUBA",  IMM    },
+	{ 0x81, 2, "CMPA",  IMM    },
+	{ 0x82, 2, "SBCA",  IMM    },
+	{ 0x83, 3, "SUBD",  IMM    },
+	{ 0x84, 2, "ANDA",  IMM    },
+	{ 0x85, 2, "BITA",  IMM    },
+	{ 0x86, 2, "LDA",   IMM    },
+	{ 0x88, 2, "EORA",  IMM    },
+	{ 0x89, 2, "ADCA",  IMM    },
+	{ 0x8A, 2, "ORA",   IMM    },
+	{ 0x8B, 2, "ADDA",  IMM    },
+	{ 0x8C, 3, "CMPX",  IMM    },
+	{ 0x8D, 2, "BSR",   REL     , DASMFLAG_STEP_OVER },
+	{ 0x8E, 3, "LDX",   IMM    },
+
+	{ 0x90, 2, "SUBA",  DIR    },
+	{ 0x91, 2, "CMPA",  DIR    },
+	{ 0x92, 2, "SBCA",  DIR    },
+	{ 0x93, 2, "SUBD",  DIR    },
+	{ 0x94, 2, "ANDA",  DIR    },
+	{ 0x95, 2, "BITA",  DIR    },
+	{ 0x96, 2, "LDA",   DIR    },
+	{ 0x97, 2, "STA",   DIR    },
+	{ 0x98, 2, "EORA",  DIR    },
+	{ 0x99, 2, "ADCA",  DIR    },
+	{ 0x9A, 2, "ORA",   DIR    },
+	{ 0x9B, 2, "ADDA",  DIR    },
+	{ 0x9C, 2, "CMPX",  DIR    },
+	{ 0x9D, 2, "JSR",   DIR     , DASMFLAG_STEP_OVER },
+	{ 0x9E, 2, "LDX",   DIR    },
+	{ 0x9F, 2, "STX",   DIR    },
+
+	{ 0xA0, 2, "SUBA",  IND    },
+	{ 0xA1, 2, "CMPA",  IND    },
+	{ 0xA2, 2, "SBCA",  IND    },
+	{ 0xA3, 2, "SUBD",  IND    },
+	{ 0xA4, 2, "ANDA",  IND    },
+	{ 0xA5, 2, "BITA",  IND    },
+	{ 0xA6, 2, "LDA",   IND    },
+	{ 0xA7, 2, "STA",   IND    },
+	{ 0xA8, 2, "EORA",  IND    },
+	{ 0xA9, 2, "ADCA",  IND    },
+	{ 0xAA, 2, "ORA",   IND    },
+	{ 0xAB, 2, "ADDA",  IND    },
+	{ 0xAC, 2, "CMPX",  IND    },
+	{ 0xAD, 2, "JSR",   IND     , DASMFLAG_STEP_OVER },
+	{ 0xAE, 2, "LDX",   IND    },
+	{ 0xAF, 2, "STX",   IND    },
+
+	{ 0xB0, 3, "SUBA",  EXT    },
+	{ 0xB1, 3, "CMPA",  EXT    },
+	{ 0xB2, 3, "SBCA",  EXT    },
+	{ 0xB3, 3, "SUBD",  EXT    },
+	{ 0xB4, 3, "ANDA",  EXT    },
+	{ 0xB5, 3, "BITA",  EXT    },
+	{ 0xB6, 3, "LDA",   EXT    },
+	{ 0xB7, 3, "STA",   EXT    },
+	{ 0xB8, 3, "EORA",  EXT    },
+	{ 0xB9, 3, "ADCA",  EXT    },
+	{ 0xBA, 3, "ORA",   EXT    },
+	{ 0xBB, 3, "ADDA",  EXT    },
+	{ 0xBC, 3, "CMPX",  EXT    },
+	{ 0xBD, 3, "JSR",   EXT     , DASMFLAG_STEP_OVER },
+	{ 0xBE, 3, "LDX",   EXT    },
+	{ 0xBF, 3, "STX",   EXT    },
+
+	{ 0xC0, 2, "SUBB",  IMM    },
+	{ 0xC1, 2, "CMPB",  IMM    },
+	{ 0xC2, 2, "SBCB",  IMM    },
+	{ 0xC3, 3, "ADDD",  IMM    },
+	{ 0xC4, 2, "ANDB",  IMM    },
+	{ 0xC5, 2, "BITB",  IMM    },
+	{ 0xC6, 2, "LDB",   IMM    },
+	{ 0xC8, 2, "EORB",  IMM    },
+	{ 0xC9, 2, "ADCB",  IMM    },
+	{ 0xCA, 2, "ORB",   IMM    },
+	{ 0xCB, 2, "ADDB",  IMM    },
+	{ 0xCC, 3, "LDD",   IMM    },
+	{ 0xCE, 3, "LDU",   IMM    },
+
+	{ 0xD0, 2, "SUBB",  DIR    },
+	{ 0xD1, 2, "CMPB",  DIR    },
+	{ 0xD2, 2, "SBCB",  DIR    },
+	{ 0xD3, 2, "ADDD",  DIR    },
+	{ 0xD4, 2, "ANDB",  DIR    },
+	{ 0xD5, 2, "BITB",  DIR    },
+	{ 0xD6, 2, "LDB",   DIR    },
+	{ 0xD7, 2, "STB",   DIR    },
+	{ 0xD8, 2, "EORB",  DIR    },
+	{ 0xD9, 2, "ADCB",  DIR    },
+	{ 0xDA, 2, "ORB",   DIR    },
+	{ 0xDB, 2, "ADDB",  DIR    },
+	{ 0xDC, 2, "LDD",   DIR    },
+	{ 0xDD, 2, "STD",   DIR    },
+	{ 0xDE, 2, "LDU",   DIR    },
+	{ 0xDF, 2, "STU",   DIR    },
+
+	{ 0xE0, 2, "SUBB",  IND    },
+	{ 0xE1, 2, "CMPB",  IND    },
+	{ 0xE2, 2, "SBCB",  IND    },
+	{ 0xE3, 2, "ADDD",  IND    },
+	{ 0xE4, 2, "ANDB",  IND    },
+	{ 0xE5, 2, "BITB",  IND    },
+	{ 0xE6, 2, "LDB",   IND    },
+	{ 0xE7, 2, "STB",   IND    },
+	{ 0xE8, 2, "EORB",  IND    },
+	{ 0xE9, 2, "ADCB",  IND    },
+	{ 0xEA, 2, "ORB",   IND    },
+	{ 0xEB, 2, "ADDB",  IND    },
+	{ 0xEC, 2, "LDD",   IND    },
+	{ 0xED, 2, "STD",   IND    },
+	{ 0xEE, 2, "LDU",   IND    },
+	{ 0xEF, 2, "STU",   IND    },
+
+	{ 0xF0, 3, "SUBB",  EXT    },
+	{ 0xF1, 3, "CMPB",  EXT    },
+	{ 0xF2, 3, "SBCB",  EXT    },
+	{ 0xF3, 3, "ADDD",  EXT    },
+	{ 0xF4, 3, "ANDB",  EXT    },
+	{ 0xF5, 3, "BITB",  EXT    },
+	{ 0xF6, 3, "LDB",   EXT    },
+	{ 0xF7, 3, "STB",   EXT    },
+	{ 0xF8, 3, "EORB",  EXT    },
+	{ 0xF9, 3, "ADCB",  EXT    },
+	{ 0xFA, 3, "ORB",   EXT    },
+	{ 0xFB, 3, "ADDB",  EXT    },
+	{ 0xFC, 3, "LDD",   EXT    },
+	{ 0xFD, 3, "STD",   EXT    },
+	{ 0xFE, 3, "LDU",   EXT    },
+	{ 0xFF, 3, "STU",   EXT    }
+};
+
+// Page 1 opcodes (0x10 0x..)
 static const opcodeinfo m6809_pg1opcodes[] =
 {
-	{  0,1,"NEG",     DIR, EA_UINT8, EA_ZPG_RDWR,  6},
-	{  3,1,"COM",     DIR, EA_UINT8, EA_ZPG_RDWR,  6},
-	{  4,1,"LSR",     DIR, EA_UINT8, EA_ZPG_RDWR,  6},
-	{  6,1,"ROR",     DIR, EA_UINT8, EA_ZPG_RDWR,  6},
-	{  7,1,"ASR",     DIR, EA_UINT8, EA_ZPG_RDWR,  6},
-	{  8,1,"ASL",     DIR, EA_UINT8, EA_ZPG_RDWR,  6},
-	{  9,1,"ROL",     DIR, EA_UINT8, EA_ZPG_RDWR,  6},
-	{ 10,1,"DEC",     DIR, EA_UINT8, EA_ZPG_RDWR,  6},
-	{ 12,1,"INC",     DIR, EA_UINT8, EA_ZPG_RDWR,  6},
-	{ 13,1,"TST",     DIR, EA_UINT8, EA_ZPG_RDWR,  6},
-	{ 14,1,"JMP",     DIR, EA_UINT8, EA_ABS_PC,    3},
-	{ 15,1,"CLR",     DIR, EA_UINT8, EA_ZPG_WR,    6},
-
-	{ 16,1,"page2",   PG2, 0,        0,            0},
-	{ 17,1,"page3",   PG3, 0,        0,            0},
-	{ 18,0,"NOP",     INH, 0,        0,            2},
-	{ 19,0,"SYNC",    INH, 0,        0,            4},
-	{ 22,2,"LBRA",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 23,2,"LBSR",    LREL,EA_INT16, EA_REL_PC,    9, DASMFLAG_STEP_OVER},
-	{ 25,0,"DAA",     INH, 0,        0,            2},
-	{ 26,1,"ORCC",    IMM, 0,        0,            3},
-	{ 28,1,"ANDCC",   IMM, 0,        0,            3},
-	{ 29,0,"SEX",     INH, 0,        0,            2},
-	{ 30,1,"EXG",     IMM_RR, 0,        0,            8},
-	{ 31,1,"TFR",     IMM_RR, 0,        0,            6},
-
-	{ 32,1,"BRA",     REL, EA_INT8,  EA_REL_PC,    3},
-	{ 33,1,"BRN",     REL, EA_INT8,  EA_REL_PC,    3},
-	{ 34,1,"BHI",     REL, EA_INT8,  EA_REL_PC,    3},
-	{ 35,1,"BLS",     REL, EA_INT8,  EA_REL_PC,    3},
-	{ 36,1,"BCC",     REL, EA_INT8,  EA_REL_PC,    3},
-	{ 37,1,"BCS",     REL, EA_INT8,  EA_REL_PC,    3},
-	{ 38,1,"BNE",     REL, EA_INT8,  EA_REL_PC,    3},
-	{ 39,1,"BEQ",     REL, EA_INT8,  EA_REL_PC,    3},
-	{ 40,1,"BVC",     REL, EA_INT8,  EA_REL_PC,    3},
-	{ 41,1,"BVS",     REL, EA_INT8,  EA_REL_PC,    3},
-	{ 42,1,"BPL",     REL, EA_INT8,  EA_REL_PC,    3},
-	{ 43,1,"BMI",     REL, EA_INT8,  EA_REL_PC,    3},
-	{ 44,1,"BGE",     REL, EA_INT8,  EA_REL_PC,    3},
-	{ 45,1,"BLT",     REL, EA_INT8,  EA_REL_PC,    3},
-	{ 46,1,"BGT",     REL, EA_INT8,  EA_REL_PC,    3},
-	{ 47,1,"BLE",     REL, EA_INT8,  EA_REL_PC,    3},
-
-	{ 48,1,"LEAX",    IND, EA_UINT16,EA_VALUE,     2},
-	{ 49,1,"LEAY",    IND, EA_UINT16,EA_VALUE,     2},
-	{ 50,1,"LEAS",    IND, EA_UINT16,EA_VALUE,     2},
-	{ 51,1,"LEAU",    IND, EA_UINT16,EA_VALUE,     2},
-	{ 52,1,"PSHS",    INH, 0,        0,            5},
-	{ 53,1,"PULS",    INH, 0,        0,            5},
-	{ 54,1,"PSHU",    INH, 0,        0,            5},
-	{ 55,1,"PULU",    INH, 0,        0,            5},
-	{ 57,0,"RTS",     INH, 0,        0,            5},
-	{ 58,0,"ABX",     INH, 0,        0,            3},
-	{ 59,0,"RTI",     INH, 0,        0,            6},
-	{ 60,1,"CWAI",    IMM, 0,        0,           20},
-	{ 61,0,"MUL",     INH, 0,        0,           11},
-	{ 63,0,"SWI",     INH, 0,        0,           19},
-
-	{ 64,0,"NEGA",    INH, 0,        0,            2},
-	{ 67,0,"COMA",    INH, 0,        0,            2},
-	{ 68,0,"LSRA",    INH, 0,        0,            2},
-	{ 70,0,"RORA",    INH, 0,        0,            2},
-	{ 71,0,"ASRA",    INH, 0,        0,            2},
-	{ 72,0,"ASLA",    INH, 0,        0,            2},
-	{ 73,0,"ROLA",    INH, 0,        0,            2},
-	{ 74,0,"DECA",    INH, 0,        0,            2},
-	{ 76,0,"INCA",    INH, 0,        0,            2},
-	{ 77,0,"TSTA",    INH, 0,        0,            2},
-	{ 79,0,"CLRA",    INH, 0,        0,            2},
-
-	{ 80,0,"NEGB",    INH, 0,        0,            2},
-	{ 83,0,"COMB",    INH, 0,        0,            2},
-	{ 84,0,"LSRB",    INH, 0,        0,            2},
-	{ 86,0,"RORB",    INH, 0,        0,            2},
-	{ 87,0,"ASRB",    INH, 0,        0,            2},
-	{ 88,0,"ASLB",    INH, 0,        0,            2},
-	{ 89,0,"ROLB",    INH, 0,        0,            2},
-	{ 90,0,"DECB",    INH, 0,        0,            2},
-	{ 92,0,"INCB",    INH, 0,        0,            2},
-	{ 93,0,"TSTB",    INH, 0,        0,            2},
-	{ 95,0,"CLRB",    INH, 0,        0,            2},
-
-	{ 96,1,"NEG",     IND, EA_UINT8, EA_MEM_RDWR,  6},
-	{ 99,1,"COM",     IND, EA_UINT8, EA_MEM_RDWR,  6},
-	{100,1,"LSR",     IND, EA_UINT8, EA_MEM_RDWR,  6},
-	{102,1,"ROR",     IND, EA_UINT8, EA_MEM_RDWR,  6},
-	{103,1,"ASR",     IND, EA_UINT8, EA_MEM_RDWR,  6},
-	{104,1,"ASL",     IND, EA_UINT8, EA_MEM_RDWR,  6},
-	{105,1,"ROL",     IND, EA_UINT8, EA_MEM_RDWR,  6},
-	{106,1,"DEC",     IND, EA_UINT8, EA_MEM_RDWR,  6},
-	{108,1,"INC",     IND, EA_UINT8, EA_MEM_RDWR,  6},
-	{109,1,"TST",     IND, EA_UINT8, EA_MEM_RD,    6},
-	{110,1,"JMP",     IND, EA_UINT8, EA_ABS_PC,    3},
-	{111,1,"CLR",     IND, EA_UINT8, EA_MEM_WR,    6},
-
-	{112,2,"NEG",     EXT, EA_UINT8, EA_MEM_RDWR,  7},
-	{115,2,"COM",     EXT, EA_UINT8, EA_MEM_RDWR,  7},
-	{116,2,"LSR",     EXT, EA_UINT8, EA_MEM_RDWR,  7},
-	{118,2,"ROR",     EXT, EA_UINT8, EA_MEM_RDWR,  7},
-	{119,2,"ASR",     EXT, EA_UINT8, EA_MEM_RDWR,  7},
-	{120,2,"ASL",     EXT, EA_UINT8, EA_MEM_RDWR,  7},
-	{121,2,"ROL",     EXT, EA_UINT8, EA_MEM_RDWR,  7},
-	{122,2,"DEC",     EXT, EA_UINT8, EA_MEM_RDWR,  7},
-	{124,2,"INC",     EXT, EA_UINT8, EA_MEM_RDWR,  7},
-	{125,2,"TST",     EXT, EA_UINT8, EA_MEM_RD,    7},
-	{126,2,"JMP",     EXT, EA_UINT8, EA_ABS_PC,    4},
-	{127,2,"CLR",     EXT, EA_UINT8, EA_MEM_WR,    7},
-
-	{128,1,"SUBA",    IMM, EA_UINT8, EA_VALUE,     2},
-	{129,1,"CMPA",    IMM, EA_UINT8, EA_VALUE,     2},
-	{130,1,"SBCA",    IMM, EA_UINT8, EA_VALUE,     2},
-	{131,2,"SUBD",    IMM, EA_UINT16,EA_VALUE,     4},
-	{132,1,"ANDA",    IMM, EA_UINT8, EA_VALUE,     2},
-	{133,1,"BITA",    IMM, EA_UINT8, EA_VALUE,     2},
-	{134,1,"LDA",     IMM, EA_UINT8, EA_VALUE,     2},
-	{136,1,"EORA",    IMM, EA_UINT8, EA_VALUE,     2},
-	{137,1,"ADCA",    IMM, EA_UINT8, EA_VALUE,     2},
-	{138,1,"ORA",     IMM, EA_UINT8, EA_VALUE,     2},
-	{139,1,"ADDA",    IMM, EA_UINT8, EA_VALUE,     2},
-	{140,2,"CMPX",    IMM, EA_UINT16,EA_VALUE,     4},
-	{141,1,"BSR",     REL, EA_INT8,  EA_REL_PC,    7, DASMFLAG_STEP_OVER},
-	{142,2,"LDX",     IMM, EA_UINT16,EA_VALUE,     3},
-
-	{144,1,"SUBA",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{145,1,"CMPA",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{146,1,"SBCA",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{147,1,"SUBD",    DIR, EA_UINT16,EA_ZPG_RD,    6},
-	{148,1,"ANDA",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{149,1,"BITA",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{150,1,"LDA",     DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{151,1,"STA",     DIR, EA_UINT8, EA_ZPG_WR,    4},
-	{152,1,"EORA",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{153,1,"ADCA",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{154,1,"ORA",     DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{155,1,"ADDA",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{156,1,"CMPX",    DIR, EA_UINT16,EA_ZPG_RD,    6},
-	{157,1,"JSR",     DIR, EA_UINT8, EA_ABS_PC,    7, DASMFLAG_STEP_OVER},
-	{158,1,"LDX",     DIR, EA_UINT16,EA_ZPG_RD,    5},
-	{159,1,"STX",     DIR, EA_UINT16,EA_ZPG_WR,    5},
-
-	{160,1,"SUBA",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{161,1,"CMPA",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{162,1,"SBCA",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{163,1,"SUBD",    IND, EA_UINT16,EA_MEM_RD,    6},
-	{164,1,"ANDA",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{165,1,"BITA",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{166,1,"LDA",     IND, EA_UINT8, EA_MEM_RD,    4},
-	{167,1,"STA",     IND, EA_UINT8, EA_MEM_WR,    4},
-	{168,1,"EORA",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{169,1,"ADCA",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{170,1,"ORA",     IND, EA_UINT8, EA_MEM_RD,    4},
-	{171,1,"ADDA",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{172,1,"CMPX",    IND, EA_UINT16,EA_MEM_RD,    6},
-	{173,1,"JSR",     IND, EA_UINT8, EA_ABS_PC,    7, DASMFLAG_STEP_OVER},
-	{174,1,"LDX",     IND, EA_UINT16,EA_MEM_RD,    5},
-	{175,1,"STX",     IND, EA_UINT16,EA_MEM_WR,    5},
-
-	{176,2,"SUBA",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{177,2,"CMPA",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{178,2,"SBCA",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{179,2,"SUBD",    EXT, EA_UINT16,EA_MEM_RD,    7},
-	{180,2,"ANDA",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{181,2,"BITA",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{182,2,"LDA",     EXT, EA_UINT8, EA_MEM_RD,    5},
-	{183,2,"STA",     EXT, EA_UINT8, EA_MEM_WR,    5},
-	{184,2,"EORA",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{185,2,"ADCA",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{186,2,"ORA",     EXT, EA_UINT8, EA_MEM_RD,    5},
-	{187,2,"ADDA",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{188,2,"CMPX",    EXT, EA_UINT16,EA_MEM_RD,    7},
-	{189,2,"JSR",     EXT, EA_UINT8, EA_ABS_PC,    8, DASMFLAG_STEP_OVER},
-	{190,2,"LDX",     EXT, EA_UINT16,EA_MEM_RD,    6},
-	{191,2,"STX",     EXT, EA_UINT16,EA_MEM_WR,    6},
-
-	{192,1,"SUBB",    IMM, EA_UINT8, EA_VALUE,     2},
-	{193,1,"CMPB",    IMM, EA_UINT8, EA_VALUE,     2},
-	{194,1,"SBCB",    IMM, EA_UINT8, EA_VALUE,     2},
-	{195,2,"ADDD",    IMM, EA_UINT16,EA_VALUE,     4},
-	{196,1,"ANDB",    IMM, EA_UINT8, EA_VALUE,     2},
-	{197,1,"BITB",    IMM, EA_UINT8, EA_VALUE,     2},
-	{198,1,"LDB",     IMM, EA_UINT8, EA_VALUE,     2},
-	{200,1,"EORB",    IMM, EA_UINT8, EA_VALUE,     2},
-	{201,1,"ADCB",    IMM, EA_UINT8, EA_VALUE,     2},
-	{202,1,"ORB",     IMM, EA_UINT8, EA_VALUE,     2},
-	{203,1,"ADDB",    IMM, EA_UINT8, EA_VALUE,     2},
-	{204,2,"LDD",     IMM, EA_UINT16,EA_VALUE,     3},
-	{206,2,"LDU",     IMM, EA_UINT16,EA_VALUE,     3},
-
-	{208,1,"SUBB",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{209,1,"CMPB",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{210,1,"SBCB",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{211,1,"ADDD",    DIR, EA_UINT8, EA_ZPG_RD,    6},
-	{212,1,"ANDB",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{213,1,"BITB",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{214,1,"LDB",     DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{215,1,"STB",     DIR, EA_UINT8, EA_ZPG_WR,    4},
-	{216,1,"EORB",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{217,1,"ADCB",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{218,1,"ORB",     DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{219,1,"ADDB",    DIR, EA_UINT8, EA_ZPG_RD,    4},
-	{220,1,"LDD",     DIR, EA_UINT16,EA_ZPG_RD,    5},
-	{221,1,"STD",     DIR, EA_UINT16,EA_ZPG_WR,    5},
-	{222,1,"LDU",     DIR, EA_UINT16,EA_ZPG_RD,    5},
-	{223,1,"STU",     DIR, EA_UINT16,EA_ZPG_WR,    5},
-
-	{224,1,"SUBB",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{225,1,"CMPB",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{226,1,"SBCB",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{227,1,"ADDD",    IND, EA_UINT8, EA_MEM_RD,    6},
-	{228,1,"ANDB",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{229,1,"BITB",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{230,1,"LDB",     IND, EA_UINT8, EA_MEM_RD,    4},
-	{231,1,"STB",     IND, EA_UINT8, EA_MEM_WR,    4},
-	{232,1,"EORB",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{233,1,"ADCB",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{234,1,"ORB",     IND, EA_UINT8, EA_MEM_RD,    4},
-	{235,1,"ADDB",    IND, EA_UINT8, EA_MEM_RD,    4},
-	{236,1,"LDD",     IND, EA_UINT16,EA_MEM_RD,    5},
-	{237,1,"STD",     IND, EA_UINT16,EA_MEM_WR,    5},
-	{238,1,"LDU",     IND, EA_UINT16,EA_MEM_RD,    5},
-	{239,1,"STU",     IND, EA_UINT16,EA_MEM_WR,    5},
-
-	{240,2,"SUBB",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{241,2,"CMPB",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{242,2,"SBCB",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{243,2,"ADDD",    EXT, EA_UINT8, EA_MEM_RD,    7},
-	{244,2,"ANDB",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{245,2,"BITB",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{246,2,"LDB",     EXT, EA_UINT8, EA_MEM_RD,    5},
-	{247,2,"STB",     EXT, EA_UINT8, EA_MEM_WR,    5},
-	{248,2,"EORB",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{249,2,"ADCB",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{250,2,"ORB",     EXT, EA_UINT8, EA_MEM_RD,    5},
-	{251,2,"ADDB",    EXT, EA_UINT8, EA_MEM_RD,    5},
-	{252,2,"LDD",     EXT, EA_UINT16,EA_MEM_RD,    6},
-	{253,2,"STD",     EXT, EA_UINT16,EA_MEM_WR,    6},
-	{254,2,"LDU",     EXT, EA_UINT16,EA_MEM_RD,    6},
-	{255,2,"STU",     EXT, EA_UINT16,EA_MEM_WR,    6},
+	{ 0x21, 4, "LBRN",  LREL   },
+	{ 0x22, 4, "LBHI",  LREL   },
+	{ 0x23, 4, "LBLS",  LREL   },
+	{ 0x24, 4, "LBCC",  LREL   },
+	{ 0x25, 4, "LBCS",  LREL   },
+	{ 0x26, 4, "LBNE",  LREL   },
+	{ 0x27, 4, "LBEQ",  LREL   },
+	{ 0x28, 4, "LBVC",  LREL   },
+	{ 0x29, 4, "LBVS",  LREL   },
+	{ 0x2A, 4, "LBPL",  LREL   },
+	{ 0x2B, 4, "LBMI",  LREL   },
+	{ 0x2C, 4, "LBGE",  LREL   },
+	{ 0x2D, 4, "LBLT",  LREL   },
+	{ 0x2E, 4, "LBGT",  LREL   },
+	{ 0x2F, 4, "LBLE",  LREL   },
+	{ 0x3F, 2, "SWI2",  INH    },
+	{ 0x83, 4, "CMPD",  IMM    },
+	{ 0x8C, 4, "CMPY",  IMM    },
+	{ 0x8E, 4, "LDY",   IMM    },
+	{ 0x93, 3, "CMPD",  DIR    },
+	{ 0x9C, 3, "CMPY",  DIR    },
+	{ 0x9E, 3, "LDY",   DIR    },
+	{ 0x9F, 3, "STY",   DIR    },
+	{ 0xA3, 3, "CMPD",  IND    },
+	{ 0xAC, 3, "CMPY",  IND    },
+	{ 0xAE, 3, "LDY",   IND    },
+	{ 0xAF, 3, "STY",   IND    },
+	{ 0xB3, 4, "CMPD",  EXT    },
+	{ 0xBC, 4, "CMPY",  EXT    },
+	{ 0xBE, 4, "LDY",   EXT    },
+	{ 0xBF, 4, "STY",   EXT    },
+	{ 0xCE, 4, "LDS",   IMM    },
+	{ 0xDE, 3, "LDS",   DIR    },
+	{ 0xDF, 3, "STS",   DIR    },
+	{ 0xEE, 3, "LDS",   IND    },
+	{ 0xEF, 3, "STS",   IND    },
+	{ 0xFE, 4, "LDS",   EXT    },
+	{ 0xFF, 4, "STS",   EXT    }
 };
 
-/* page 2 ops 10xx*/
+// Page 2 opcodes (0x11 0x..)
 static const opcodeinfo m6809_pg2opcodes[] =
 {
-	{ 33,3,"LBRN",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 34,3,"LBHI",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 35,3,"LBLS",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 36,3,"LBCC",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 37,3,"LBCS",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 38,3,"LBNE",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 39,3,"LBEQ",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 40,3,"LBVC",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 41,3,"LBVS",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 42,3,"LBPL",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 43,3,"LBMI",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 44,3,"LBGE",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 45,3,"LBLT",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 46,3,"LBGT",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 47,3,"LBLE",    LREL,EA_INT16, EA_REL_PC,    5},
-	{ 63,2,"SWI2",    INH, 0,        0,           20},
-	{131,3,"CMPD",    IMM, EA_UINT16,EA_VALUE,     5},
-	{140,3,"CMPY",    IMM, EA_UINT16,EA_VALUE,     5},
-	{142,3,"LDY",     IMM, EA_UINT16,EA_VALUE,     4},
-	{147,2,"CMPD",    DIR, EA_UINT16,EA_ZPG_RD,    7},
-	{156,2,"CMPY",    DIR, EA_UINT16,EA_ZPG_RD,    7},
-	{158,2,"LDY",     DIR, EA_UINT16,EA_ZPG_RD,    6},
-	{159,2,"STY",     DIR, EA_UINT16,EA_ZPG_RD,    6},
-	{163,2,"CMPD",    IND, EA_UINT16,EA_MEM_RD,    7},
-	{172,2,"CMPY",    IND, EA_UINT16,EA_MEM_RD,    7},
-	{174,2,"LDY",     IND, EA_UINT16,EA_MEM_RD,    6},
-	{175,2,"STY",     IND, EA_UINT16,EA_MEM_RD,    6},
-	{179,3,"CMPD",    EXT, EA_UINT16,EA_MEM_RD,    8},
-	{188,3,"CMPY",    EXT, EA_UINT16,EA_MEM_RD,    8},
-	{190,3,"LDY",     EXT, EA_UINT16,EA_MEM_RD,    7},
-	{191,3,"STY",     EXT, EA_UINT16,EA_MEM_RD,    7},
-	{206,3,"LDS",     IMM, EA_UINT16,EA_VALUE,     4},
-	{222,2,"LDS",     DIR, EA_UINT16,EA_ZPG_RD,    6},
-	{223,2,"STS",     DIR, EA_UINT16,EA_ZPG_WR,    6},
-	{238,2,"LDS",     IND, EA_UINT16,EA_MEM_RD,    6},
-	{239,2,"STS",     IND, EA_UINT16,EA_MEM_WR,    6},
-	{254,3,"LDS",     EXT, EA_UINT16,EA_MEM_RD,    7},
-	{255,3,"STS",     EXT, EA_UINT16,EA_MEM_WR,    7},
-};
-
-/* page 3 ops 11xx */
-static const opcodeinfo m6809_pg3opcodes[] =
-{
-	{ 63,1,"SWI3",    INH, 0,        0,           20},
-	{131,3,"CMPU",    IMM, EA_UINT16,EA_VALUE,     5},
-	{140,3,"CMPS",    IMM, EA_UINT16,EA_VALUE,     5},
-	{147,2,"CMPU",    DIR, EA_UINT16,EA_ZPG_RD,    7},
-	{156,2,"CMPS",    DIR, EA_UINT16,EA_ZPG_RD,    7},
-	{163,2,"CMPU",    IND, EA_UINT16,EA_MEM_RD,    7},
-	{172,2,"CMPS",    IND, EA_UINT16,EA_MEM_RD,    7},
-	{179,3,"CMPU",    EXT, EA_UINT16,EA_MEM_RD,    8},
-	{188,3,"CMPS",    EXT, EA_UINT16,EA_MEM_RD,    8},
+	{ 0x3F, 2, "SWI3",  INH    },
+	{ 0x83, 4, "CMPU",  IMM    },
+	{ 0x8C, 4, "CMPS",  IMM    },
+	{ 0x93, 3, "CMPU",  DIR    },
+	{ 0x9C, 3, "CMPS",  DIR    },
+	{ 0xA3, 3, "CMPU",  IND    },
+	{ 0xAC, 3, "CMPS",  IND    },
+	{ 0xB3, 4, "CMPU",  EXT    },
+	{ 0xBC, 4, "CMPS",  EXT    }
 };
 
 static const opcodeinfo *m6809_pgpointers[3] =
 {
-	m6809_pg1opcodes, m6809_pg2opcodes, m6809_pg3opcodes
+	m6809_pg0opcodes, m6809_pg1opcodes, m6809_pg2opcodes
 };
 
 static const int m6809_numops[3] =
 {
+	sizeof(m6809_pg0opcodes) / sizeof(m6809_pg0opcodes[0]),
 	sizeof(m6809_pg1opcodes) / sizeof(m6809_pg1opcodes[0]),
-	sizeof(m6809_pg2opcodes) / sizeof(m6809_pg2opcodes[0]),
-	sizeof(m6809_pg3opcodes) / sizeof(m6809_pg3opcodes[0])
+	sizeof(m6809_pg2opcodes) / sizeof(m6809_pg2opcodes[0])
 };
 
-static const char *regs_6809[5] = { "X","Y","U","S","PC" };
+static const char *m6809_regs[5] = { "X", "Y", "U", "S", "PC" };
 
-static const char *btwRegs[5] = { "CC", "A", "B", "inv" };
-
-static const char *teregs_6809[16] =
+static const char *m6809_regs_te[16] =
 {
-	"D","X","Y","U","S","PC","inv","inv",
-	"A","B","CC","DP","inv","inv","inv","inv"
+	"D", "X",  "Y",  "U",   "S",  "PC", "inv", "inv",
+	"A", "B", "CC", "DP", "inv", "inv", "inv", "inv"
 };
-
-static const char *tfmregs[16] = {
-	"D","X","Y","U","S","inv","inv","inv",
-	"inv","inv","inv","inv","inv","inv","inv","inv"
-};
-
-static const char *tfm_s[] = { "%s+,%s+", "%s-,%s-", "%s+,%s", "%s,%s+" };
 
 offs_t m6809_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-	int i, k, page = 0, opcode, numoperands, mode, size, access;
+	UINT8 opcode, mode, pb, pbm, reg;
 	const UINT8 *operandarray;
-	const char *sym1;
-	int rel, pb, offset = 0, reg, pb2;
-	unsigned ea = 0;
-    int p = 0;
-	unsigned flags;
-	const int *numops;
-	const opcodeinfo **pgpointers;
-	const opcodeinfo *pg1opcodes;
-	const char **regs;
-	const char **teregs;
+	unsigned int ea, flags;
+	int numoperands, offset, indirect;
 
-	numops = m6809_numops;
-	pgpointers = m6809_pgpointers;
-	pg1opcodes = pgpointers[0];
-	regs = regs_6809;
-	teregs = teregs_6809;
+	int i, p = 0, page = 0, opcode_found = FALSE;
 
-	*buffer = '\0';
-
-	opcode = oprom[p++];
-	for( i = 0; i < numops[0]; i++ )
-		if (pg1opcodes[i].opcode == opcode)
-			break;
-
-	if( i < numops[0] )
+	do
 	{
-		if( pg1opcodes[i].mode >= PG2 )
-		{
-			opcode = oprom[p++];
-			page = pg1opcodes[i].mode - PG2 + 1;          /* get page # */
-			for( k = 0; k < numops[page]; k++ )
-				if (opcode == pgpointers[page][k].opcode)
-					break;
+		opcode = oprom[p++];
+		for (i = 0; i < m6809_numops[page]; i++)
+			if (m6809_pgpointers[page][i].opcode == opcode)
+				break;
 
-			if( k != numops[page] )
-			{	/* opcode found */
-				numoperands = pgpointers[page][k].numoperands - 1;
-				operandarray = &opram[p];
-				p += numoperands;
-				mode = pgpointers[page][k].mode;
-				size = pgpointers[page][k].size;
-				access = pgpointers[page][k].access;
-				flags = pgpointers[page][k].flags;
-				buffer += sprintf (buffer, "%-6s", pgpointers[page][k].name);
-			 }
-			 else
-			 {	/* not found in alternate page */
-				strcpy (buffer, "Illegal Opcode");
-				return 2 | DASMFLAG_SUPPORTED;
-			 }
-		}
+		if (i < m6809_numops[page])
+			opcode_found = TRUE;
 		else
-		{	/* page 1 opcode */
-			numoperands = pg1opcodes[i].numoperands;
-			operandarray = &opram[p];
-			p += numoperands;
-			mode = pg1opcodes[i].mode;
-			size = pg1opcodes[i].size;
-			access = pg1opcodes[i].access;
-			flags = pg1opcodes[i].flags;
-			buffer += sprintf (buffer, "%-6s", pg1opcodes[i].name);
+		{
+			strcpy(buffer, "Illegal Opcode");
+			return p | DASMFLAG_SUPPORTED;
 		}
-	}
+
+		if (m6809_pgpointers[page][i].mode >= PG1)
+		{
+			page = m6809_pgpointers[page][i].mode - PG1 + 1;
+			opcode_found = FALSE;
+		}
+	} while (!opcode_found);
+
+	if (page == 0)
+		numoperands = m6809_pgpointers[page][i].length - 1;
 	else
-	{
-		strcpy (buffer, "Illegal Opcode");
-		return 1 | DASMFLAG_SUPPORTED;
-	}
+		numoperands = m6809_pgpointers[page][i].length - 2;
 
-		if( mode == IMM )
-			buffer += sprintf (buffer, "#");
-
+	operandarray = &opram[p];
+	p += numoperands;
 	pc += p;
+	mode = m6809_pgpointers[page][i].mode;
+	flags = m6809_pgpointers[page][i].flags;
+
+	buffer += sprintf(buffer, "%-6s", m6809_pgpointers[page][i].name);
 
 	switch (mode)
 	{
-	case REL:	  /* 8-bit relative */
-		rel = operandarray[0];
-		sym1 = set_ea_info(0, pc, (INT8)rel, access);
-		buffer += sprintf (buffer, "%s", sym1);
+	case INH:
+		switch (opcode)
+		{
+		case 0x34:	// PSHS
+		case 0x36:	// PSHU
+			pb = operandarray[0];
+			if (pb & 0x80)
+				buffer += sprintf(buffer, "PC");
+			if (pb & 0x40)
+				buffer += sprintf(buffer, "%s%s", (pb&0x80)?",":"", (opcode==0x34)?"U":"S");
+			if (pb & 0x20)
+                buffer += sprintf(buffer, "%sY",  (pb&0xc0)?",":"");
+			if (pb & 0x10)
+                buffer += sprintf(buffer, "%sX",  (pb&0xe0)?",":"");
+			if (pb & 0x08)
+                buffer += sprintf(buffer, "%sDP", (pb&0xf0)?",":"");
+			if (pb & 0x04)
+                buffer += sprintf(buffer, "%sB",  (pb&0xf8)?",":"");
+			if (pb & 0x02)
+				buffer += sprintf(buffer, "%sA",  (pb&0xfc)?",":"");
+			if (pb & 0x01)
+				buffer += sprintf(buffer, "%sCC", (pb&0xfe)?",":"");
+			break;
+		case 0x35:	// PULS
+		case 0x37:	// PULU
+			pb = operandarray[0];
+			if (pb & 0x01)
+				buffer += sprintf(buffer, "CC");
+			if (pb & 0x02)
+				buffer += sprintf(buffer, "%sA",  (pb&0x01)?",":"");
+			if (pb & 0x04)
+				buffer += sprintf(buffer, "%sB",  (pb&0x03)?",":"");
+			if (pb & 0x08)
+				buffer += sprintf(buffer, "%sDP", (pb&0x07)?",":"");
+			if (pb & 0x10)
+				buffer += sprintf(buffer, "%sX",  (pb&0x0f)?",":"");
+			if (pb & 0x20)
+				buffer += sprintf(buffer, "%sY",  (pb&0x1f)?",":"");
+			if (pb & 0x40)
+				buffer += sprintf(buffer, "%s%s", (pb&0x3f)?",":"", (opcode==0x35)?"U":"S");
+			if (pb & 0x80)
+				buffer += sprintf(buffer, "%sPC ; (PUL? PC=RTS)", (pb&0x7f)?",":"");
+			break;
+		default:
+			// No operands
+			break;
+		}
 		break;
 
-	case LREL:	  /* 16-bit long relative */
-		rel = (operandarray[0] << 8) + operandarray[1];
-		sym1 = set_ea_info(0, pc, (INT16)rel, access);
-		buffer += sprintf (buffer, "%s", sym1);
+	case DIR:
+		ea = operandarray[0];
+		buffer += sprintf(buffer, "$%02X", ea);
 		break;
 
-	case IND:	  /* indirect- many flavors */
+	case REL:
+		offset = (INT8)operandarray[0];
+		buffer += sprintf(buffer, "$%04X", (pc + offset) & 0xffff);
+		break;
+
+	case LREL:
+		offset = (INT16)((operandarray[0] << 8) + operandarray[1]);
+		buffer += sprintf(buffer, "$%04X", (pc + offset) & 0xffff);
+		break;
+
+	case EXT:
+		ea = (operandarray[0] << 8) + operandarray[1];
+		buffer += sprintf(buffer, "$%04X", ea);
+		break;
+
+	case IND:
 		pb = operandarray[0];
 		reg = (pb >> 5) & 3;
-		pb2 = pb & 0x8f;
-		if( pb2 == 0x88 || pb2 == 0x8c )
-		{	/* 8-bit offset */
+		pbm = pb & 0x8f;
+		indirect = ((pb & 0x90) == 0x90 )? TRUE : FALSE;
 
-			/* KW 11/05/98 Fix of indirect opcodes      */
-			offset = (INT8) opram[p];
-			p++;
-			if( pb == 0x8c ) reg = 4;
-			if( (pb & 0x90) == 0x90 ) buffer += sprintf (buffer, "[");
-			if( pb == 0x8c )
-			{
-				sym1 = set_ea_info(1, pc, (INT8)offset, EA_REL_PC);
-				buffer += sprintf (buffer, "%s,%s", sym1, regs[reg]);
-			}
-			else
-			{
-				sym1 = set_ea_info(1, offset, EA_INT8, EA_VALUE);
-				buffer += sprintf (buffer, "%s,%s", sym1, regs[reg]);
-			}
-		}
-		else
-		if( pb2 == 0x89 || pb2 == 0x8d || pb2 == 0x8f )
-		{	/* 16-bit */
+		// open brackets if indirect
+		if (indirect && pbm != 0x80 && pbm != 0x82)
+			buffer += sprintf(buffer, "[");
 
-			/* KW 11/05/98 Fix of indirect opcodes      */
-
-			offset = (INT16)( (opram[p+0] << 8) + opram[p+1] );
-			p += 2;
-
-			if( pb == 0x8d )
-				reg = 4;
-			if( (pb&0x90) == 0x90 )
-				buffer += sprintf(buffer, "[");
-			if( pb == 0x8d )
-			{
-				sym1 = set_ea_info(1, pc, (INT16)offset, EA_REL_PC);
-                buffer += sprintf (buffer, "%s,%s", sym1, regs_6809[reg]);
-			}
-			else
-			if( pb2 == 0x8f )
-			{
-				sym1 = set_ea_info(1, offset, EA_INT16, EA_VALUE);
-                buffer += sprintf (buffer, "%s", sym1);
-			}
-			else
-			{
-				sym1 = set_ea_info(1, offset, EA_INT16, EA_VALUE);
-				buffer += sprintf (buffer, "%s,%s", sym1, regs[reg]);
-			}
-		}
-		else
-		if( pb & 0x80 )
+		switch (pbm)
 		{
-			if( (pb & 0x90) == 0x90 )
-				buffer += sprintf (buffer, "[");
+		case 0x80:	// ,R+
+			if (indirect)
+				strcpy(buffer, "Illegal Postbyte");
+			else
+				buffer += sprintf(buffer, ",%s+", m6809_regs[reg]);
+			break;
 
-			switch( pb & 0x8f )
-			{
-			case 0x80:
-				buffer += sprintf (buffer, ",%s+", regs[reg]);
-				break;
-			case 0x81:
-				buffer += sprintf (buffer, ",%s++", regs[reg]);
-				break;
-			case 0x82:
-				buffer += sprintf (buffer, ",-%s", regs[reg]);
-				break;
-			case 0x83:
-				buffer += sprintf (buffer, ",--%s", regs[reg]);
-				break;
-			case 0x84:
-				buffer += sprintf (buffer, ",%s", regs[reg]);
-				break;
-			case 0x85:
-				buffer += sprintf (buffer, "B,%s", regs[reg]);
-				break;
-			case 0x86:
-				buffer += sprintf (buffer, "A,%s", regs[reg]);
-				break;
-			case 0x8b:
-				buffer += sprintf (buffer, "D,%s", regs[reg]);
-				break;
-			}
-		}
-		else
-		{										   /* 5-bit offset */
+		case 0x81:	// ,R++
+			buffer += sprintf(buffer, ",%s++", m6809_regs[reg]);
+			break;
+
+		case 0x82:	// ,-R
+			if (indirect)
+				strcpy(buffer, "Illegal Postbyte");
+			else
+				buffer += sprintf(buffer, ",-%s", m6809_regs[reg]);
+			break;
+
+		case 0x83:	// ,--R
+			buffer += sprintf(buffer, ",--%s", m6809_regs[reg]);
+			break;
+
+		case 0x84:	// ,R
+			buffer += sprintf(buffer, ",%s", m6809_regs[reg]);
+			break;
+
+		case 0x85:	// (+/- B),R
+			buffer += sprintf(buffer, "B,%s", m6809_regs[reg]);
+			break;
+
+		case 0x86:	// (+/- A),R
+			buffer += sprintf(buffer, "A,%s", m6809_regs[reg]);
+			break;
+
+		case 0x87:
+			strcpy(buffer, "Illegal Postbyte");
+			break;
+
+		case 0x88:	// (+/- 7 bit offset),R
+			offset = (INT8)opram[p++];
+			buffer += sprintf(buffer, "%s", (offset < 0) ? "-" : "");
+			buffer += sprintf(buffer, "$%02X,", (offset < 0) ? -offset : offset);
+			buffer += sprintf(buffer, "%s", m6809_regs[reg]);
+			break;
+
+		case 0x89:	// (+/- 15 bit offset),R
+			offset = (INT16)((opram[p+0] << 8) + opram[p+1]);
+			p += 2;
+			buffer += sprintf(buffer, "%s", (offset < 0) ? "-" : "");
+			buffer += sprintf(buffer, "$%04X,", (offset < 0) ? -offset : offset);
+			buffer += sprintf(buffer, "%s", m6809_regs[reg]);
+			break;
+
+		case 0x8a:
+			strcpy(buffer, "Illegal Postbyte");
+			break;
+
+		case 0x8b:	// (+/- D),R
+			buffer += sprintf(buffer, "D,%s", m6809_regs[reg]);
+			break;
+
+		case 0x8c:	// (+/- 7 bit offset),PC
+			offset = (INT8)opram[p++];
+			buffer += sprintf(buffer, "%s", (offset < 0) ? "-" : "");
+			buffer += sprintf(buffer, "$%02X,PC", (offset < 0) ? -offset : offset);
+			break;
+
+		case 0x8d:	// (+/- 15 bit offset),PC
+			offset = (INT16)((opram[p+0] << 8) + opram[p+1]);
+			p += 2;
+			buffer += sprintf(buffer, "%s", (offset < 0) ? "-" : "");
+			buffer += sprintf(buffer, "$%04X,PC", (offset < 0) ? -offset : offset);
+			break;
+
+		case 0x8e:
+			strcpy(buffer, "Illegal Postbyte");
+			break;
+
+		case 0x8f:	// address
+			ea = (UINT16)((opram[p+0] << 8) + opram[p+1]);
+			p += 2;
+			buffer += sprintf(buffer, "$%04X", ea);
+			break;
+
+		default:	// (+/- 4 bit offset),R
 			offset = pb & 0x1f;
 			if (offset > 15)
 				offset = offset - 32;
-			buffer += sprintf (buffer, "$%04hX,%s", (unsigned short) offset, regs[reg]);
+			buffer += sprintf(buffer, "%s", (offset < 0) ? "-" : "");
+			buffer += sprintf(buffer, "$%X,", (offset < 0) ? -offset : offset);
+			buffer += sprintf(buffer, "%s", m6809_regs[reg]);
+			break;
 		}
-		/* indirect */
-		if( (pb & 0x90) == 0x90 )
-		{
-            buffer += sprintf (buffer, "]");
-		}
-        break;
 
-	case IMM_RR:	  /* immediate register-register */
-			buffer += sprintf (buffer, "%s,%s", teregs[ (operandarray[0] >> 4) & 0xf], teregs[operandarray[0] & 0xf]);
+		// close brackets if indirect
+		if (indirect && pbm != 0x80 && pbm != 0x82)
+			buffer += sprintf(buffer, "]");
 		break;
 
-	case IMM_BW:	  /* bitwise operations (6309 only) */
-		/* Decode register */
+	case IMM:
+		if (numoperands == 2)
+		{
+			ea = (operandarray[0] << 8) + operandarray[1];
+			buffer += sprintf(buffer, "#$%04X", ea);
+		}
+		else
+		if (numoperands == 1)
+		{
+			ea = operandarray[0];
+			buffer += sprintf(buffer, "#$%02X", ea);
+		}
+		break;
+
+	case IMM_RR:
 		pb = operandarray[0];
-
-		buffer += sprintf (buffer, "%s", btwRegs[ ((pb & 0xc0) >> 6) ]);
-		buffer += sprintf (buffer, ",");
-		buffer += sprintf (buffer, "%d", ((pb & 0x38) >> 3) );
-		buffer += sprintf (buffer, ",");
-		buffer += sprintf (buffer, "%d", (pb & 0x07) );
-		buffer += sprintf (buffer, ",");
-
-		/* print zero page access */
-		ea = operandarray[1];
-		sym1 = set_ea_info(0, ea, size, access );
-		buffer += sprintf (buffer, "%s", sym1 );
-		break;
-
-	case IMM_TFM:	  /* transfer from memory (6309 only) */
-		buffer += sprintf (buffer, tfm_s[opcode & 0x07], tfmregs[ (operandarray[0] >> 4) & 0xf], tfmregs[operandarray[0] & 0xf]);
-		break;
-
-	case DIR_IM:	  /* direct in memory (6309 only) */
-		buffer += sprintf (buffer, "#");
-		ea = operandarray[0];
-		sym1 = set_ea_info(0, ea, EA_UINT8, EA_VALUE );
-		buffer += sprintf (buffer, "%s", sym1 );
-
-		buffer += sprintf (buffer, ",");
-
-		ea = operandarray[1];
-		sym1 = set_ea_info(0, ea, size, access );
-		buffer += sprintf (buffer, "%s", sym1 );
-		break;
-
-	default:
-		if( opcode == 0x34 || opcode == 0x36 )
-		{	/* PUSH */
-			pb2 = operandarray[0];
-			if( pb2 & 0x80 )
-			{
-				buffer += sprintf (buffer, "PC");
-			}
-			if( pb2 & 0x40 )
-			{
-				if( pb2 & 0x80 ) buffer += sprintf (buffer, ",");
-                if( opcode == 0x34 || opcode == 0x35 )
-				   buffer += sprintf (buffer, "U");
-				else
-				   buffer += sprintf (buffer, "S");
-			}
-			if( pb2 & 0x20 )
-			{
-				if( pb2 & 0xc0 ) buffer += sprintf (buffer, ",");
-                buffer += sprintf (buffer, "Y");
-			}
-			if( pb2 & 0x10 )
-			{
-				if( pb2 & 0xe0 ) buffer += sprintf (buffer, ",");
-                buffer += sprintf (buffer, "X");
-			}
-			if( pb2 & 0x08 )
-			{
-				if( pb2 & 0xf0 ) buffer += sprintf (buffer, ",");
-                buffer += sprintf (buffer, "DP");
-			}
-			if( pb2 & 0x04 )
-			{
-				if( pb2 & 0xf8 ) buffer += sprintf (buffer, ",");
-                buffer += sprintf (buffer, "B");
-			}
-			if( pb2 & 0x02 )
-			{
-				if( pb2 & 0xfc ) buffer += sprintf (buffer, ",");
-				buffer += sprintf (buffer, "A");
-			}
-			if( pb2 & 0x01 )
-			{
-				if( pb2 & 0xfe ) buffer += sprintf (buffer, ",");
-                strcat (buffer, "CC");
-			}
-		}
-		else
-		if( opcode == 0x35 || opcode == 0x37 )
-		{	/* PULL */
-			pb2 = operandarray[0];
-			if( pb2 & 0x01 )
-			{
-				buffer += sprintf (buffer, "CC");
-			}
-			if( pb2 & 0x02 )
-			{
-				if( pb2 & 0x01 ) buffer += sprintf (buffer, ",");
-				buffer += sprintf (buffer, "A");
-			}
-			if( pb2 & 0x04 )
-			{
-				if( pb2 & 0x03 ) buffer += sprintf (buffer, ",");
-				buffer += sprintf (buffer, "B");
-			}
-			if( pb2 & 0x08 )
-			{
-				if( pb2 & 0x07 ) buffer += sprintf (buffer, ",");
-				buffer += sprintf (buffer, "DP");
-			}
-			if( pb2 & 0x10 )
-			{
-				if( pb2 & 0x0f ) buffer += sprintf (buffer, ",");
-				buffer += sprintf (buffer, "X");
-			}
-			if( pb2 & 0x20 )
-			{
-				if( pb2 & 0x1f ) buffer += sprintf (buffer, ",");
-				buffer += sprintf (buffer, "Y");
-			}
-			if( pb2 & 0x40 )
-			{
-				if( pb2 & 0x3f ) buffer += sprintf (buffer, ",");
-				if( opcode == 0x34 || opcode == 0x35 )
-					buffer += sprintf (buffer, "U");
-				else
-					buffer += sprintf (buffer, "S");
-			}
-			if( pb2 & 0x80 )
-			{
-				if( pb2 & 0x7f ) buffer += sprintf (buffer, ",");
-				buffer += sprintf (buffer, "PC");
-				buffer += sprintf (buffer, " ; (PUL? PC=RTS)");
-			}
-		}
-		else
-		{
-			if ( numoperands == 4)
-			{
-				ea = (operandarray[0] << 24) + (operandarray[1] << 16) + (operandarray[2] << 8) + operandarray[3];
-				sym1 = set_ea_info(0, ea, size, access );
-				buffer += sprintf (buffer, "%s", sym1 );
-			}
-			else
-			if ( numoperands == 3)
-			{
-				buffer += sprintf (buffer, "#");
-				ea = operandarray[0];
-				sym1 = set_ea_info(0, ea, EA_INT8, EA_VALUE );
-				buffer += sprintf (buffer, "%s", sym1 );
-
-				buffer += sprintf (buffer, ",");
-
-				ea = (operandarray[1] << 8) + operandarray[2];
-				sym1 = set_ea_info(0, ea, size, access );
-				buffer += sprintf (buffer, "%s", sym1 );
-			}
-			else
-			if( numoperands == 2 )
-			{
-				ea = (operandarray[0] << 8) + operandarray[1];
-				sym1 = set_ea_info(0, ea, size, access );
-				buffer += sprintf (buffer, "%s", sym1 );
-			}
-			else
-			if( numoperands == 1 )
-			{
-				ea = operandarray[0];
-				sym1 = set_ea_info(0, ea, size, access );
-                buffer += sprintf (buffer, "%s", sym1 );
-			}
-		}
+		buffer += sprintf(buffer, "%s,%s", m6809_regs_te[(pb >> 4) & 0xf], m6809_regs_te[pb & 0xf]);
 		break;
 	}
 

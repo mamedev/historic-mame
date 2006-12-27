@@ -375,8 +375,24 @@ ROM_START( frenzy )
 	ROM_LOAD( "2c",           0x0800, 0x0800, CRC(d2b6324e) SHA1(20a6611ad6ec19409ac138bdae7bdfaeab6c47cf) )
 ROM_END
 
+/*
+   The original / prototype version of moonwar appears to run on Frenzy hardware, however the only board found
+   had been stripped for parts, leaving only the sound ROMs.
+
+   The more common version of MoonWar runs on modified Super Cobra (scobra.c) hardware and is often called
+   'Moon War 2' because it is the second version, and many of the PCBs are labeled as such
+*/
+ROM_START( moonwarp )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "code_roms",         0x0000, 0x1000, NO_DUMP )
+
+	ROM_REGION( 0x01000, REGION_SOUND1, 0 ) /* voice data */
+	ROM_LOAD( "moonwar.1c.bin",           0x0000, 0x0800, CRC(9e9a653f) SHA1(cf49a38ef343ace271ba1e5dde38bd8b9c0bd876) )	/* VSU-1000 board */
+	ROM_LOAD( "moonwar.2c.bin",           0x0800, 0x0800, CRC(73fd988d) SHA1(08a2aeb4d87eee58e38e4e3f749a95f2308aceb0) )
+ROM_END
 
 
 GAME( 1980, berzerk,  0,       berzerk, berzerk, 0, ROT0, "Stern", "Berzerk (set 1)", 0 )
 GAME( 1980, berzerk1, berzerk, berzerk, berzerk, 0, ROT0, "Stern", "Berzerk (set 2)", 0 )
 GAME( 1982, frenzy,   0,       frenzy,  frenzy,  0, ROT0, "Stern", "Frenzy", 0 )
+GAME( 1982, moonwarp, 0,       frenzy,  frenzy,  0, ROT0, "Stern", "Moonwar (prototype on Frenzy hardware)", GAME_NOT_WORKING )

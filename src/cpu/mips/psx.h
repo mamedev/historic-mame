@@ -200,7 +200,7 @@ extern unsigned DasmMIPS( char *buffer, UINT32 pc, const UINT8 *opram );
 #endif
 
 #if (HAS_PSXCPU)
-extern void psxcpu_get_info(UINT32 state, union cpuinfo *info);
+extern void psxcpu_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #endif

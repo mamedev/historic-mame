@@ -661,7 +661,7 @@ static int ccpu_execute(int cycles)
     INFORMATION SETTERS
 ***************************************************************************/
 
-static void ccpu_set_info(UINT32 state, union cpuinfo *info)
+static void ccpu_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -694,7 +694,7 @@ static void ccpu_set_info(UINT32 state, union cpuinfo *info)
     INFORMATION GETTERS
 ***************************************************************************/
 
-void ccpu_get_info(UINT32 state, union cpuinfo *info)
+void ccpu_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -756,14 +756,14 @@ void ccpu_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &ccpu_icount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "CCPU"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Cinematronics CPU"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright 2004 Aaron Giles & Zonn Moore"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "CCPU");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Cinematronics CPU");	break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright 2004 Aaron Giles & Zonn Moore"); break;
 
 		case CPUINFO_STR_FLAGS:
-    		sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c",
+    		sprintf(info->s, "%c%c%c%c%c%c",
 	        		TEST_A0() ? '0' : 'o',
 	        		TEST_NC() ? 'N' : 'n',
 	        		TEST_LT() ? 'L' : 'l',
@@ -773,7 +773,7 @@ void ccpu_get_info(UINT32 state, union cpuinfo *info)
 	        break;
 
         case CPUINFO_STR_REGISTER + CCPU_FLAGS:
-    		sprintf(info->s = cpuintrf_temp_str(), "FL:%c%c%c%c%c%c",
+    		sprintf(info->s, "FL:%c%c%c%c%c%c",
 	        		TEST_A0() ? '0' : 'o',
 	        		TEST_NC() ? 'N' : 'n',
 	        		TEST_LT() ? 'L' : 'l',
@@ -782,14 +782,14 @@ void ccpu_get_info(UINT32 state, union cpuinfo *info)
 	        		TEST_DR() ? 'D' : 'd');
 	        break;
 
-        case CPUINFO_STR_REGISTER + CCPU_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", ccpu.PC); break;
-		case CPUINFO_STR_REGISTER + CCPU_A:				sprintf(info->s = cpuintrf_temp_str(), "A:%03X", ccpu.A); break;
-		case CPUINFO_STR_REGISTER + CCPU_B:				sprintf(info->s = cpuintrf_temp_str(), "B:%03X", ccpu.B); break;
-		case CPUINFO_STR_REGISTER + CCPU_I:				sprintf(info->s = cpuintrf_temp_str(), "I:%03X", ccpu.I); break;
-		case CPUINFO_STR_REGISTER + CCPU_J:				sprintf(info->s = cpuintrf_temp_str(), "J:%03X", ccpu.J); break;
-        case CPUINFO_STR_REGISTER + CCPU_P:				sprintf(info->s = cpuintrf_temp_str(), "P:%X", ccpu.P); break;
-		case CPUINFO_STR_REGISTER + CCPU_X:				sprintf(info->s = cpuintrf_temp_str(), "X:%03X", ccpu.X); break;
-		case CPUINFO_STR_REGISTER + CCPU_Y:				sprintf(info->s = cpuintrf_temp_str(), "Y:%03X", ccpu.Y); break;
-		case CPUINFO_STR_REGISTER + CCPU_T:				sprintf(info->s = cpuintrf_temp_str(), "T:%03X", ccpu.T); break;
+        case CPUINFO_STR_REGISTER + CCPU_PC:			sprintf(info->s, "PC:%04X", ccpu.PC);	break;
+		case CPUINFO_STR_REGISTER + CCPU_A:				sprintf(info->s, "A:%03X",  ccpu.A);	break;
+		case CPUINFO_STR_REGISTER + CCPU_B:				sprintf(info->s, "B:%03X",  ccpu.B);	break;
+		case CPUINFO_STR_REGISTER + CCPU_I:				sprintf(info->s, "I:%03X",  ccpu.I);	break;
+		case CPUINFO_STR_REGISTER + CCPU_J:				sprintf(info->s, "J:%03X",  ccpu.J);	break;
+        case CPUINFO_STR_REGISTER + CCPU_P:				sprintf(info->s, "P:%X",    ccpu.P);	break;
+		case CPUINFO_STR_REGISTER + CCPU_X:				sprintf(info->s, "X:%03X",  ccpu.X);	break;
+		case CPUINFO_STR_REGISTER + CCPU_Y:				sprintf(info->s, "Y:%03X",  ccpu.Y);	break;
+		case CPUINFO_STR_REGISTER + CCPU_T:				sprintf(info->s, "T:%03X",  ccpu.T);	break;
 	}
 }

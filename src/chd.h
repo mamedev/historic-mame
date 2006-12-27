@@ -121,7 +121,6 @@
 #define CHD_OPEN_READWRITE			2
 
 /* error types */
-typedef enum _chd_error chd_error;
 enum _chd_error
 {
 	CHDERR_NONE,
@@ -150,6 +149,7 @@ enum _chd_error
 	CHDERR_INVALID_METADATA,
 	CHDERR_INVALID_STATE
 };
+typedef enum _chd_error chd_error;
 
 
 

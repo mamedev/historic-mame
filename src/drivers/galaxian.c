@@ -154,6 +154,7 @@ static ADDRESS_MAP_START( galaxian_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x6800, 0x6800) AM_READ(input_port_1_r)
 	AM_RANGE(0x7000, 0x7000) AM_READ(input_port_2_r)
 	AM_RANGE(0x7800, 0x7fff) AM_READ(watchdog_reset_r)
+	AM_RANGE(0xfffc, 0xffff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( galaxian_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -177,6 +178,7 @@ static ADDRESS_MAP_START( galaxian_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x7006, 0x7006) AM_WRITE(galaxian_flip_screen_x_w)
 	AM_RANGE(0x7007, 0x7007) AM_WRITE(galaxian_flip_screen_y_w)
 	AM_RANGE(0x7800, 0x7800) AM_WRITE(galaxian_pitch_w)
+	AM_RANGE(0xfffc, 0xffff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
 

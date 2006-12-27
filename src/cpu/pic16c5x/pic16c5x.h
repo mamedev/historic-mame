@@ -103,27 +103,27 @@ void pic16c5x_config(int data);
 
 
 #if (HAS_PIC16C54)
-void pic16C54_get_info(UINT32 state, union cpuinfo *info);
+void pic16C54_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 
 #if (HAS_PIC16C55)
-void pic16C55_get_info(UINT32 state, union cpuinfo *info);
+void pic16C55_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 
 #if (HAS_PIC16C56)
-void pic16C56_get_info(UINT32 state, union cpuinfo *info);
+void pic16C56_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 
 #if (HAS_PIC16C57)
-void pic16C57_get_info(UINT32 state, union cpuinfo *info);
+void pic16C57_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 
 #if (HAS_PIC16C58)
-void pic16C58_get_info(UINT32 state, union cpuinfo *info);
+void pic16C58_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 

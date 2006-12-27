@@ -859,7 +859,7 @@ static MACHINE_DRIVER_START( perfrman )
 
 	MDRV_CPU_ADD(Z80,16000000/8)			/* 2MHz ???, 16MHz Oscillator */
 	MDRV_CPU_PROGRAM_MAP(perfrman_sound_readmem,perfrman_sound_writemem)
-	MDRV_CPU_VBLANK_INT(getstar_interrupt,6)
+	MDRV_CPU_VBLANK_INT(getstar_interrupt,4)	/* music speed, verified */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

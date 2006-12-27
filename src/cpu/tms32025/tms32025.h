@@ -67,8 +67,8 @@ enum {
  *  Public Functions
  */
 
-extern void tms32025_get_info(UINT32 state, union cpuinfo *info);
-extern void tms32026_get_info(UINT32 state, union cpuinfo *info);
+extern void tms32025_get_info(UINT32 state, cpuinfo *info);
+extern void tms32026_get_info(UINT32 state, cpuinfo *info);
 
 
 #ifdef	MAME_DEBUG

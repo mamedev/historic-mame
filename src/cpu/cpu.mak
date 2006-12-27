@@ -1010,6 +1010,20 @@ endif
 
 
 #-------------------------------------------------
+# Toshiba TLCS-90 Series
+#-------------------------------------------------
+
+CPUDEFS += -DHAS_TLCS90=$(if $(filter TLCS90,$(CPUS)),1,0)
+ifneq ($(filter TLCS90,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/tlcs90
+CPUOBJS += $(OBJ)/cpu/tlcs90/tlcs90.o
+#DBGOBJS += $(OBJ)/cpu/tlcs90/tlcs90.o
+$(OBJ)/cpu/tlcs90/tlcs90.o: tlcs90.c tlcs90.h
+endif
+
+
+
+#-------------------------------------------------
 # Zilog Z80
 #-------------------------------------------------
 

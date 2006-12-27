@@ -132,7 +132,7 @@ static void draw_background( mame_bitmap *bitmap )
 	{
 		if (dirtybuffer[offs] || dirtybuffer[offs+1])
 		{
-			int sx,sy,code,attr,flipx;
+			int sx,sy,code,attr,flipx,flipy;
 
 
 			dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
@@ -140,9 +140,10 @@ static void draw_background( mame_bitmap *bitmap )
 			sx = (offs/2) % 32;
 			sy = (offs/2) / 32;
 
-			attr = videoram[offs];
-			code = videoram[offs+1] + ((attr & 0xc0) << 2);
+			attr = videoram[offs+0];
+			code = videoram[offs+1] | ((attr & 0xc0) << 2);
 			flipx = attr & 0x20;
+			flipy = (attr & 0x10) >> 4;
 
 			if (flipscreen)
 			{
@@ -153,8 +154,8 @@ static void draw_background( mame_bitmap *bitmap )
 
 			drawgfx(tmpbitmap,gfx,
 				code,
-				attr & 0x1f,
-				flipx,flipscreen,
+				attr & 0x0f,
+				flipx,flipy ^ flipscreen,
 				8*sx,8*sy,
 				0,TRANSPARENCY_NONE,0);
 		}

@@ -867,7 +867,7 @@ static void hd63705_set_irq_line(int irqline, int state)
  * Generic set_info
  **************************************************************************/
 
-static void m6805_set_info(UINT32 state, union cpuinfo *info)
+static void m6805_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -890,7 +890,7 @@ static void m6805_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void m6805_get_info(UINT32 state, union cpuinfo *info)
+void m6805_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -942,14 +942,14 @@ void m6805_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6805_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6805"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Motorola 6805"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "The MAME team."); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M6805");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Motorola 6805");		break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "The MAME team.");		break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				m6805.cc & 0x80 ? '?':'.',
                 m6805.cc & 0x40 ? '?':'.',
                 m6805.cc & 0x20 ? '?':'.',
@@ -960,11 +960,11 @@ void m6805_get_info(UINT32 state, union cpuinfo *info)
                 m6805.cc & 0x01 ? 'C':'.');
             break;
 
-		case CPUINFO_STR_REGISTER + M6805_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%02X", m6805.a); break;
-		case CPUINFO_STR_REGISTER + M6805_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", m6805.pc.w.l); break;
-		case CPUINFO_STR_REGISTER + M6805_S:			sprintf(info->s = cpuintrf_temp_str(), "S:%02X", m6805.s.w.l); break;
-		case CPUINFO_STR_REGISTER + M6805_X:			sprintf(info->s = cpuintrf_temp_str(), "X:%02X", m6805.x); break;
-		case CPUINFO_STR_REGISTER + M6805_CC:			sprintf(info->s = cpuintrf_temp_str(), "CC:%02X", m6805.cc); break;
+		case CPUINFO_STR_REGISTER + M6805_A:			sprintf(info->s, "A:%02X", m6805.a); break;
+		case CPUINFO_STR_REGISTER + M6805_PC:			sprintf(info->s, "PC:%04X", m6805.pc.w.l); break;
+		case CPUINFO_STR_REGISTER + M6805_S:			sprintf(info->s, "S:%02X", m6805.s.w.l); break;
+		case CPUINFO_STR_REGISTER + M6805_X:			sprintf(info->s, "X:%02X", m6805.x); break;
+		case CPUINFO_STR_REGISTER + M6805_CC:			sprintf(info->s, "CC:%02X", m6805.cc); break;
 	}
 }
 
@@ -973,20 +973,18 @@ void m6805_get_info(UINT32 state, union cpuinfo *info)
 /**************************************************************************
  * CPU-specific set_info
  **************************************************************************/
-static void m68705_set_info(UINT32 state, union cpuinfo *info)
+static void m68705_set_info(UINT32 state, cpuinfo *info)
 {
 	switch(state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
 		case CPUINFO_INT_INPUT_STATE + M68705_INT_TIMER:	m68705_set_irq_line(M68705_INT_TIMER, info->i); break;
 
-		default:
-			m6805_set_info(state,info);
-			break;
+		default:										m6805_set_info(state,info);				break;
 	}
 }
 
-void m68705_get_info(UINT32 state, union cpuinfo *info)
+void m68705_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -999,11 +997,9 @@ void m68705_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = m68705_reset;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M68705"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "M68705");				break;
 
-		default:
-			m6805_get_info(state, info);
-			break;
+		default:										m6805_get_info(state, info);			break;
 	}
 }
 #endif
@@ -1014,7 +1010,7 @@ void m68705_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-static void hd63705_set_info(UINT32 state, union cpuinfo *info)
+static void hd63705_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1029,15 +1025,11 @@ static void hd63705_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + HD63705_INT_ADCONV:	hd63705_set_irq_line(HD63705_INT_ADCONV, info->i); break;
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:		hd63705_set_irq_line(INPUT_LINE_NMI, info->i); break;
 
-		/* --- the following bits of info are set as pointers to data or functions --- */
-
-		default:
-			m6805_set_info(state, info);
-			break;
+		default:											m6805_set_info(state, info);		break;
 	}
 }
 
-void hd63705_get_info(UINT32 state, union cpuinfo *info)
+void hd63705_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1060,13 +1052,11 @@ void hd63705_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = hd63705_reset;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "HD63705"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Keith Wilkins, Juergen Buchmueller"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "HD63705");				break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Keith Wilkins, Juergen Buchmueller"); break;
 
-		default:
-			m6805_get_info(state, info);
-			break;
+		default:										m6805_get_info(state, info);			break;
 	}
 }
 #endif

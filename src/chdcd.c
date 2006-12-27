@@ -11,13 +11,11 @@
 #include "md5.h"
 #include "sha1.h"
 #include "cdrom.h"
+#include "osd_tool.h"
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
-#ifdef _WIN32
-#include <windows.h>
-#endif
 
 /***************************************************************************
     CONSTANTS & DEFINES
@@ -79,50 +77,6 @@ static char linebuffer[512];
 /***************************************************************************
     IMPLEMENTATION
 ***************************************************************************/
-
-/*-------------------------------------------------
-    get_file_size - returns the 64-bit file size
-    for a file
--------------------------------------------------*/
-
-static UINT64 get_file_size(const char *file)
-{
-#ifdef _WIN32
-	DWORD highSize = 0, lowSize;
-	HANDLE handle;
-	UINT64 filesize;
-
-	/* attempt to open the file */
-	handle = CreateFile(file, GENERIC_READ, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-	if (handle == INVALID_HANDLE_VALUE)
-		return 0;
-
-	/* get the file size */
-	lowSize = GetFileSize(handle, &highSize);
-	filesize = lowSize | ((UINT64)highSize << 32);
-	if (lowSize == INVALID_FILE_SIZE && GetLastError() != NO_ERROR)
-		filesize = 0;
-
-	/* close the file and return */
-	CloseHandle(handle);
-	return filesize;
-#else
-	size_t filesize;
-	FILE *f;
-
-	/* attempt to open the file */
-	f = fopen(file, "rb");
-	if (!f)
-		return 0;
-
-	/* get the size */
-	fseek(f, 0, SEEK_END);
-	filesize = ftell(f);
-	fclose(f);
-
-	return filesize;
-#endif
-}
 
 /*-------------------------------------------------
     cdrom_parse_toc - parse a CDRDAO format TOC file
@@ -296,7 +250,7 @@ trycolonagain:
 
 					printf("Warning: Estimating length of track %d.  If this is not the final or only track\n on the disc, the estimate may be wrong.\n", trknum+1);
 
-					tlen = get_file_size(outinfo->fname[trknum]);
+					tlen = osd_get_file_size(outinfo->fname[trknum]);
 
 					tlen /= (outtoc->tracks[trknum].datasize + outtoc->tracks[trknum].subsize);
 

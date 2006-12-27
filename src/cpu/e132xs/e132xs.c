@@ -4875,7 +4875,7 @@ static void hyperstone_trap(void)
  * Generic set_info
  **************************************************************************/
 
-static void hyperstone_set_info(UINT32 state, union cpuinfo *info)
+static void hyperstone_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -4885,21 +4885,21 @@ static void hyperstone_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + E132XS_PC:			PC = info->i; change_pc(PC);			break;
 		case CPUINFO_INT_REGISTER + E132XS_SR:			SR = info->i;							break;
 		case CPUINFO_INT_REGISTER + E132XS_FER:			FER = info->i;							break;
-		case CPUINFO_INT_REGISTER + E132XS_G3:			hyperstone.global_regs[3] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G4:			hyperstone.global_regs[4] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G5:			hyperstone.global_regs[5] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G6:			hyperstone.global_regs[6] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G7:			hyperstone.global_regs[7] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G8:			hyperstone.global_regs[8] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G9:			hyperstone.global_regs[9] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G10:			hyperstone.global_regs[10] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G11:			hyperstone.global_regs[11] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G12:			hyperstone.global_regs[12] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G13:			hyperstone.global_regs[13] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G14:			hyperstone.global_regs[14] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G15:			hyperstone.global_regs[15] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G16:			hyperstone.global_regs[16] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G17:			hyperstone.global_regs[17] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G3:			hyperstone.global_regs[3] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G4:			hyperstone.global_regs[4] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G5:			hyperstone.global_regs[5] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G6:			hyperstone.global_regs[6] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G7:			hyperstone.global_regs[7] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G8:			hyperstone.global_regs[8] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G9:			hyperstone.global_regs[9] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G10:			hyperstone.global_regs[10] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G11:			hyperstone.global_regs[11] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G12:			hyperstone.global_regs[12] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G13:			hyperstone.global_regs[13] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G14:			hyperstone.global_regs[14] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G15:			hyperstone.global_regs[15] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G16:			hyperstone.global_regs[16] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G17:			hyperstone.global_regs[17] = info->i;	break;
 		case CPUINFO_INT_SP:
 		case CPUINFO_INT_REGISTER + E132XS_SP:			SP  = info->i;							break;
 		case CPUINFO_INT_REGISTER + E132XS_UB:			UB  = info->i;							break;
@@ -4911,10 +4911,10 @@ static void hyperstone_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + E132XS_ISR:			ISR = info->i;							break;
 		case CPUINFO_INT_REGISTER + E132XS_FCR:			FCR = info->i;							break;
 		case CPUINFO_INT_REGISTER + E132XS_MCR:			MCR = info->i;							break;
-		case CPUINFO_INT_REGISTER + E132XS_G28:			hyperstone.global_regs[28] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G29:			hyperstone.global_regs[29] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G30:			hyperstone.global_regs[30] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_G31:			hyperstone.global_regs[31] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_G28:			hyperstone.global_regs[28] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G29:			hyperstone.global_regs[29] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G30:			hyperstone.global_regs[30] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_G31:			hyperstone.global_regs[31] = info->i;	break;
 		case CPUINFO_INT_REGISTER + E132XS_CL0:			hyperstone.local_regs[(0 + GET_FP) % 64] = info->i; break;
 		case CPUINFO_INT_REGISTER + E132XS_CL1:			hyperstone.local_regs[(1 + GET_FP) % 64] = info->i; break;
 		case CPUINFO_INT_REGISTER + E132XS_CL2:			hyperstone.local_regs[(2 + GET_FP) % 64] = info->i; break;
@@ -4941,69 +4941,69 @@ static void hyperstone_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + E132XS_L7:			hyperstone.local_regs[7] = info->i;		break;
 		case CPUINFO_INT_REGISTER + E132XS_L8:			hyperstone.local_regs[8] = info->i;		break;
 		case CPUINFO_INT_REGISTER + E132XS_L9:			hyperstone.local_regs[9] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L10:			hyperstone.local_regs[10] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L11:			hyperstone.local_regs[11] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L12:			hyperstone.local_regs[12] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L13:			hyperstone.local_regs[13] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L14:			hyperstone.local_regs[14] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L15:			hyperstone.local_regs[15] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L16:			hyperstone.local_regs[16] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L17:			hyperstone.local_regs[17] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L18:			hyperstone.local_regs[18] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L19:			hyperstone.local_regs[19] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L20:			hyperstone.local_regs[20] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L21:			hyperstone.local_regs[21] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L22:			hyperstone.local_regs[22] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L23:			hyperstone.local_regs[23] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L24:			hyperstone.local_regs[24] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L25:			hyperstone.local_regs[25] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L26:			hyperstone.local_regs[26] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L27:			hyperstone.local_regs[27] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L28:			hyperstone.local_regs[28] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L29:			hyperstone.local_regs[29] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L30:			hyperstone.local_regs[30] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L31:			hyperstone.local_regs[31] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L32:			hyperstone.local_regs[32] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L33:			hyperstone.local_regs[33] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L34:			hyperstone.local_regs[34] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L35:			hyperstone.local_regs[35] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L36:			hyperstone.local_regs[36] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L37:			hyperstone.local_regs[37] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L38:			hyperstone.local_regs[38] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L39:			hyperstone.local_regs[39] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L40:			hyperstone.local_regs[40] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L41:			hyperstone.local_regs[41] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L42:			hyperstone.local_regs[42] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L43:			hyperstone.local_regs[43] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L44:			hyperstone.local_regs[44] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L45:			hyperstone.local_regs[45] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L46:			hyperstone.local_regs[46] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L47:			hyperstone.local_regs[47] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L48:			hyperstone.local_regs[48] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L49:			hyperstone.local_regs[49] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L50:			hyperstone.local_regs[50] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L51:			hyperstone.local_regs[51] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L52:			hyperstone.local_regs[52] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L53:			hyperstone.local_regs[53] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L54:			hyperstone.local_regs[54] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L55:			hyperstone.local_regs[55] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L56:			hyperstone.local_regs[56] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L57:			hyperstone.local_regs[57] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L58:			hyperstone.local_regs[58] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L59:			hyperstone.local_regs[59] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L60:			hyperstone.local_regs[60] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L61:			hyperstone.local_regs[61] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L62:			hyperstone.local_regs[62] = info->i;		break;
-		case CPUINFO_INT_REGISTER + E132XS_L63:			hyperstone.local_regs[63] = info->i;		break;
+		case CPUINFO_INT_REGISTER + E132XS_L10:			hyperstone.local_regs[10] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L11:			hyperstone.local_regs[11] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L12:			hyperstone.local_regs[12] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L13:			hyperstone.local_regs[13] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L14:			hyperstone.local_regs[14] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L15:			hyperstone.local_regs[15] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L16:			hyperstone.local_regs[16] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L17:			hyperstone.local_regs[17] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L18:			hyperstone.local_regs[18] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L19:			hyperstone.local_regs[19] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L20:			hyperstone.local_regs[20] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L21:			hyperstone.local_regs[21] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L22:			hyperstone.local_regs[22] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L23:			hyperstone.local_regs[23] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L24:			hyperstone.local_regs[24] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L25:			hyperstone.local_regs[25] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L26:			hyperstone.local_regs[26] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L27:			hyperstone.local_regs[27] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L28:			hyperstone.local_regs[28] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L29:			hyperstone.local_regs[29] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L30:			hyperstone.local_regs[30] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L31:			hyperstone.local_regs[31] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L32:			hyperstone.local_regs[32] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L33:			hyperstone.local_regs[33] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L34:			hyperstone.local_regs[34] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L35:			hyperstone.local_regs[35] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L36:			hyperstone.local_regs[36] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L37:			hyperstone.local_regs[37] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L38:			hyperstone.local_regs[38] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L39:			hyperstone.local_regs[39] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L40:			hyperstone.local_regs[40] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L41:			hyperstone.local_regs[41] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L42:			hyperstone.local_regs[42] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L43:			hyperstone.local_regs[43] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L44:			hyperstone.local_regs[44] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L45:			hyperstone.local_regs[45] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L46:			hyperstone.local_regs[46] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L47:			hyperstone.local_regs[47] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L48:			hyperstone.local_regs[48] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L49:			hyperstone.local_regs[49] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L50:			hyperstone.local_regs[50] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L51:			hyperstone.local_regs[51] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L52:			hyperstone.local_regs[52] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L53:			hyperstone.local_regs[53] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L54:			hyperstone.local_regs[54] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L55:			hyperstone.local_regs[55] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L56:			hyperstone.local_regs[56] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L57:			hyperstone.local_regs[57] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L58:			hyperstone.local_regs[58] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L59:			hyperstone.local_regs[59] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L60:			hyperstone.local_regs[60] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L61:			hyperstone.local_regs[61] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L62:			hyperstone.local_regs[62] = info->i;	break;
+		case CPUINFO_INT_REGISTER + E132XS_L63:			hyperstone.local_regs[63] = info->i;	break;
 
-		case CPUINFO_INT_INPUT_STATE + 0:				set_irq_line(0, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 1:				set_irq_line(1, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 2:				set_irq_line(2, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 3:				set_irq_line(3, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 4:				set_irq_line(4, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 5:				set_irq_line(5, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 6:				set_irq_line(6, info->i);					break;
-		case CPUINFO_INT_INPUT_STATE + 7:				set_irq_line(7, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 0:				set_irq_line(0, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 1:				set_irq_line(1, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 2:				set_irq_line(2, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 3:				set_irq_line(3, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 4:				set_irq_line(4, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 5:				set_irq_line(5, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 6:				set_irq_line(6, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 7:				set_irq_line(7, info->i);				break;
 	}
 }
 
@@ -5011,7 +5011,7 @@ static void hyperstone_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void hyperstone_get_info(UINT32 state, union cpuinfo *info)
+void hyperstone_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -5088,96 +5088,96 @@ void hyperstone_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + E132XS_CL13:		info->i =  hyperstone.local_regs[(13 + GET_FP) % 64]; break;
 		case CPUINFO_INT_REGISTER + E132XS_CL14:		info->i =  hyperstone.local_regs[(14 + GET_FP) % 64]; break;
 		case CPUINFO_INT_REGISTER + E132XS_CL15:		info->i =  hyperstone.local_regs[(15 + GET_FP) % 64]; break;
-		case CPUINFO_INT_REGISTER + E132XS_L0:			info->i =  hyperstone.local_regs[0];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L1:			info->i =  hyperstone.local_regs[1];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L2:			info->i =  hyperstone.local_regs[2];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L3:			info->i =  hyperstone.local_regs[3];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L4:			info->i =  hyperstone.local_regs[4];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L5:			info->i =  hyperstone.local_regs[5];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L6:			info->i =  hyperstone.local_regs[6];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L7:			info->i =  hyperstone.local_regs[7];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L8:			info->i =  hyperstone.local_regs[8];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L9:			info->i =  hyperstone.local_regs[9];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L10:			info->i =  hyperstone.local_regs[10];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L11:			info->i =  hyperstone.local_regs[11];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L12:			info->i =  hyperstone.local_regs[12];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L13:			info->i =  hyperstone.local_regs[13];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L14:			info->i =  hyperstone.local_regs[14];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L15:			info->i =  hyperstone.local_regs[15];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L16:			info->i =  hyperstone.local_regs[16];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L17:			info->i =  hyperstone.local_regs[17];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L18:			info->i =  hyperstone.local_regs[18];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L19:			info->i =  hyperstone.local_regs[19];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L20:			info->i =  hyperstone.local_regs[20];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L21:			info->i =  hyperstone.local_regs[21];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L22:			info->i =  hyperstone.local_regs[22];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L23:			info->i =  hyperstone.local_regs[23];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L24:			info->i =  hyperstone.local_regs[24];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L25:			info->i =  hyperstone.local_regs[25];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L26:			info->i =  hyperstone.local_regs[26];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L27:			info->i =  hyperstone.local_regs[27];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L28:			info->i =  hyperstone.local_regs[28];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L29:			info->i =  hyperstone.local_regs[29];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L30:			info->i =  hyperstone.local_regs[30];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L31:			info->i =  hyperstone.local_regs[31];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L32:			info->i =  hyperstone.local_regs[32];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L33:			info->i =  hyperstone.local_regs[33];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L34:			info->i =  hyperstone.local_regs[34];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L35:			info->i =  hyperstone.local_regs[35];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L36:			info->i =  hyperstone.local_regs[36];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L37:			info->i =  hyperstone.local_regs[37];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L38:			info->i =  hyperstone.local_regs[38];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L39:			info->i =  hyperstone.local_regs[39];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L40:			info->i =  hyperstone.local_regs[40];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L41:			info->i =  hyperstone.local_regs[41];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L42:			info->i =  hyperstone.local_regs[42];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L43:			info->i =  hyperstone.local_regs[43];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L44:			info->i =  hyperstone.local_regs[44];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L45:			info->i =  hyperstone.local_regs[45];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L46:			info->i =  hyperstone.local_regs[46];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L47:			info->i =  hyperstone.local_regs[47];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L48:			info->i =  hyperstone.local_regs[48];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L49:			info->i =  hyperstone.local_regs[49];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L50:			info->i =  hyperstone.local_regs[50];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L51:			info->i =  hyperstone.local_regs[51];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L52:			info->i =  hyperstone.local_regs[52];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L53:			info->i =  hyperstone.local_regs[53];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L54:			info->i =  hyperstone.local_regs[54];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L55:			info->i =  hyperstone.local_regs[55];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L56:			info->i =  hyperstone.local_regs[56];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L57:			info->i =  hyperstone.local_regs[57];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L58:			info->i =  hyperstone.local_regs[58];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L59:			info->i =  hyperstone.local_regs[59];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L60:			info->i =  hyperstone.local_regs[60];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L61:			info->i =  hyperstone.local_regs[61];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L62:			info->i =  hyperstone.local_regs[62];		break;
-		case CPUINFO_INT_REGISTER + E132XS_L63:			info->i =  hyperstone.local_regs[63];		break;
+		case CPUINFO_INT_REGISTER + E132XS_L0:			info->i =  hyperstone.local_regs[0];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L1:			info->i =  hyperstone.local_regs[1];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L2:			info->i =  hyperstone.local_regs[2];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L3:			info->i =  hyperstone.local_regs[3];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L4:			info->i =  hyperstone.local_regs[4];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L5:			info->i =  hyperstone.local_regs[5];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L6:			info->i =  hyperstone.local_regs[6];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L7:			info->i =  hyperstone.local_regs[7];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L8:			info->i =  hyperstone.local_regs[8];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L9:			info->i =  hyperstone.local_regs[9];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L10:			info->i =  hyperstone.local_regs[10];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L11:			info->i =  hyperstone.local_regs[11];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L12:			info->i =  hyperstone.local_regs[12];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L13:			info->i =  hyperstone.local_regs[13];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L14:			info->i =  hyperstone.local_regs[14];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L15:			info->i =  hyperstone.local_regs[15];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L16:			info->i =  hyperstone.local_regs[16];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L17:			info->i =  hyperstone.local_regs[17];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L18:			info->i =  hyperstone.local_regs[18];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L19:			info->i =  hyperstone.local_regs[19];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L20:			info->i =  hyperstone.local_regs[20];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L21:			info->i =  hyperstone.local_regs[21];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L22:			info->i =  hyperstone.local_regs[22];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L23:			info->i =  hyperstone.local_regs[23];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L24:			info->i =  hyperstone.local_regs[24];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L25:			info->i =  hyperstone.local_regs[25];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L26:			info->i =  hyperstone.local_regs[26];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L27:			info->i =  hyperstone.local_regs[27];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L28:			info->i =  hyperstone.local_regs[28];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L29:			info->i =  hyperstone.local_regs[29];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L30:			info->i =  hyperstone.local_regs[30];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L31:			info->i =  hyperstone.local_regs[31];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L32:			info->i =  hyperstone.local_regs[32];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L33:			info->i =  hyperstone.local_regs[33];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L34:			info->i =  hyperstone.local_regs[34];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L35:			info->i =  hyperstone.local_regs[35];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L36:			info->i =  hyperstone.local_regs[36];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L37:			info->i =  hyperstone.local_regs[37];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L38:			info->i =  hyperstone.local_regs[38];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L39:			info->i =  hyperstone.local_regs[39];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L40:			info->i =  hyperstone.local_regs[40];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L41:			info->i =  hyperstone.local_regs[41];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L42:			info->i =  hyperstone.local_regs[42];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L43:			info->i =  hyperstone.local_regs[43];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L44:			info->i =  hyperstone.local_regs[44];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L45:			info->i =  hyperstone.local_regs[45];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L46:			info->i =  hyperstone.local_regs[46];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L47:			info->i =  hyperstone.local_regs[47];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L48:			info->i =  hyperstone.local_regs[48];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L49:			info->i =  hyperstone.local_regs[49];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L50:			info->i =  hyperstone.local_regs[50];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L51:			info->i =  hyperstone.local_regs[51];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L52:			info->i =  hyperstone.local_regs[52];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L53:			info->i =  hyperstone.local_regs[53];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L54:			info->i =  hyperstone.local_regs[54];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L55:			info->i =  hyperstone.local_regs[55];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L56:			info->i =  hyperstone.local_regs[56];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L57:			info->i =  hyperstone.local_regs[57];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L58:			info->i =  hyperstone.local_regs[58];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L59:			info->i =  hyperstone.local_regs[59];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L60:			info->i =  hyperstone.local_regs[60];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L61:			info->i =  hyperstone.local_regs[61];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L62:			info->i =  hyperstone.local_regs[62];	break;
+		case CPUINFO_INT_REGISTER + E132XS_L63:			info->i =  hyperstone.local_regs[63];	break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_SET_INFO:						info->setinfo = hyperstone_set_info;		break;
-		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = hyperstone_get_context;	break;
-		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = hyperstone_set_context;	break;
-		case CPUINFO_PTR_INIT:							info->init = hyperstone_init;				break;
-		case CPUINFO_PTR_RESET:							info->reset = hyperstone_reset;				break;
-		case CPUINFO_PTR_EXIT:							info->exit = hyperstone_exit;				break;
-		case CPUINFO_PTR_EXECUTE:						info->execute = hyperstone_execute;			break;
-		case CPUINFO_PTR_BURN:							info->burn = NULL;						    break;
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = hyperstone_set_info;	break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = hyperstone_get_context; break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = hyperstone_set_context; break;
+		case CPUINFO_PTR_INIT:							info->init = hyperstone_init;			break;
+		case CPUINFO_PTR_RESET:							info->reset = hyperstone_reset;			break;
+		case CPUINFO_PTR_EXIT:							info->exit = hyperstone_exit;			break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = hyperstone_execute;		break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 #ifdef MAME_DEBUG
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = hyperstone_dasm;		break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = hyperstone_dasm;	break;
 #endif /* MAME_DEBUG */
-		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &hyperstone_ICount;			break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &hyperstone_ICount;		break;
 
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:    info->internal_map = 0; break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_IO:      info->internal_map = 0; break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:    info->internal_map = 0;	break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_IO:      info->internal_map = 0;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Hyperstone CPU"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "0.9"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright Pierpaolo Prazzoli and Ryan Holtz"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Hyperstone CPU");		break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "0.9");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright Pierpaolo Prazzoli and Ryan Holtz"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c FTE:%X FRM:%X ILC:%d FL:%d FP:%d",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c%c%c%c%c FTE:%X FRM:%X ILC:%d FL:%d FP:%d",
 				GET_S ? 'S':'.',
 				GET_P ? 'P':'.',
 				GET_T ? 'T':'.',
@@ -5197,124 +5197,124 @@ void hyperstone_get_info(UINT32 state, union cpuinfo *info)
 				GET_FP);
 			break;
 
-		case CPUINFO_STR_REGISTER + E132XS_PC:  		sprintf(info->s = cpuintrf_temp_str(), "PC  :%08X", hyperstone.global_regs[0]); break;
-		case CPUINFO_STR_REGISTER + E132XS_SR:  		sprintf(info->s = cpuintrf_temp_str(), "SR  :%08X", hyperstone.global_regs[1]); break;
-		case CPUINFO_STR_REGISTER + E132XS_FER: 		sprintf(info->s = cpuintrf_temp_str(), "FER :%08X", hyperstone.global_regs[2]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G3:  		sprintf(info->s = cpuintrf_temp_str(), "G3  :%08X", hyperstone.global_regs[3]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G4:  		sprintf(info->s = cpuintrf_temp_str(), "G4  :%08X", hyperstone.global_regs[4]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G5:  		sprintf(info->s = cpuintrf_temp_str(), "G5  :%08X", hyperstone.global_regs[5]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G6:  		sprintf(info->s = cpuintrf_temp_str(), "G6  :%08X", hyperstone.global_regs[6]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G7:  		sprintf(info->s = cpuintrf_temp_str(), "G7  :%08X", hyperstone.global_regs[7]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G8:  		sprintf(info->s = cpuintrf_temp_str(), "G8  :%08X", hyperstone.global_regs[8]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G9:  		sprintf(info->s = cpuintrf_temp_str(), "G9  :%08X", hyperstone.global_regs[9]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G10: 		sprintf(info->s = cpuintrf_temp_str(), "G10 :%08X", hyperstone.global_regs[10]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G11: 		sprintf(info->s = cpuintrf_temp_str(), "G11 :%08X", hyperstone.global_regs[11]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G12: 		sprintf(info->s = cpuintrf_temp_str(), "G12 :%08X", hyperstone.global_regs[12]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G13: 		sprintf(info->s = cpuintrf_temp_str(), "G13 :%08X", hyperstone.global_regs[13]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G14: 		sprintf(info->s = cpuintrf_temp_str(), "G14 :%08X", hyperstone.global_regs[14]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G15: 		sprintf(info->s = cpuintrf_temp_str(), "G15 :%08X", hyperstone.global_regs[15]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G16: 		sprintf(info->s = cpuintrf_temp_str(), "G16 :%08X", hyperstone.global_regs[16]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G17: 		sprintf(info->s = cpuintrf_temp_str(), "G17 :%08X", hyperstone.global_regs[17]); break;
-		case CPUINFO_STR_REGISTER + E132XS_SP:  		sprintf(info->s = cpuintrf_temp_str(), "SP  :%08X", hyperstone.global_regs[18]); break;
-		case CPUINFO_STR_REGISTER + E132XS_UB:  		sprintf(info->s = cpuintrf_temp_str(), "UB  :%08X", hyperstone.global_regs[19]); break;
-		case CPUINFO_STR_REGISTER + E132XS_BCR: 		sprintf(info->s = cpuintrf_temp_str(), "BCR :%08X", hyperstone.global_regs[20]); break;
-		case CPUINFO_STR_REGISTER + E132XS_TPR: 		sprintf(info->s = cpuintrf_temp_str(), "TPR :%08X", hyperstone.global_regs[21]); break;
-		case CPUINFO_STR_REGISTER + E132XS_TCR: 		sprintf(info->s = cpuintrf_temp_str(), "TCR :%08X", hyperstone.global_regs[22]); break;
-		case CPUINFO_STR_REGISTER + E132XS_TR:  		sprintf(info->s = cpuintrf_temp_str(), "TR  :%08X", hyperstone.global_regs[23]); break;
-		case CPUINFO_STR_REGISTER + E132XS_WCR: 		sprintf(info->s = cpuintrf_temp_str(), "WCR :%08X", hyperstone.global_regs[24]); break;
-		case CPUINFO_STR_REGISTER + E132XS_ISR: 		sprintf(info->s = cpuintrf_temp_str(), "ISR :%08X", hyperstone.global_regs[25]); break;
-		case CPUINFO_STR_REGISTER + E132XS_FCR: 		sprintf(info->s = cpuintrf_temp_str(), "FCR :%08X", hyperstone.global_regs[26]); break;
-		case CPUINFO_STR_REGISTER + E132XS_MCR: 		sprintf(info->s = cpuintrf_temp_str(), "MCR :%08X", hyperstone.global_regs[27]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G28: 		sprintf(info->s = cpuintrf_temp_str(), "G28 :%08X", hyperstone.global_regs[28]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G29: 		sprintf(info->s = cpuintrf_temp_str(), "G29 :%08X", hyperstone.global_regs[29]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G30: 		sprintf(info->s = cpuintrf_temp_str(), "G30 :%08X", hyperstone.global_regs[30]); break;
-		case CPUINFO_STR_REGISTER + E132XS_G31: 		sprintf(info->s = cpuintrf_temp_str(), "G31 :%08X", hyperstone.global_regs[31]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL0:  		sprintf(info->s = cpuintrf_temp_str(), "CL0 :%08X", hyperstone.local_regs[(0 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL1:  		sprintf(info->s = cpuintrf_temp_str(), "CL1 :%08X", hyperstone.local_regs[(1 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL2:  		sprintf(info->s = cpuintrf_temp_str(), "CL2 :%08X", hyperstone.local_regs[(2 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL3:  		sprintf(info->s = cpuintrf_temp_str(), "CL3 :%08X", hyperstone.local_regs[(3 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL4:  		sprintf(info->s = cpuintrf_temp_str(), "CL4 :%08X", hyperstone.local_regs[(4 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL5:  		sprintf(info->s = cpuintrf_temp_str(), "CL5 :%08X", hyperstone.local_regs[(5 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL6:  		sprintf(info->s = cpuintrf_temp_str(), "CL6 :%08X", hyperstone.local_regs[(6 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL7:  		sprintf(info->s = cpuintrf_temp_str(), "CL7 :%08X", hyperstone.local_regs[(7 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL8:  		sprintf(info->s = cpuintrf_temp_str(), "CL8 :%08X", hyperstone.local_regs[(8 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL9:  		sprintf(info->s = cpuintrf_temp_str(), "CL9 :%08X", hyperstone.local_regs[(9 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL10: 		sprintf(info->s = cpuintrf_temp_str(), "CL10:%08X", hyperstone.local_regs[(10 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL11: 		sprintf(info->s = cpuintrf_temp_str(), "CL11:%08X", hyperstone.local_regs[(11 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL12: 		sprintf(info->s = cpuintrf_temp_str(), "CL12:%08X", hyperstone.local_regs[(12 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL13: 		sprintf(info->s = cpuintrf_temp_str(), "CL13:%08X", hyperstone.local_regs[(13 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL14: 		sprintf(info->s = cpuintrf_temp_str(), "CL14:%08X", hyperstone.local_regs[(14 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_CL15: 		sprintf(info->s = cpuintrf_temp_str(), "CL15:%08X", hyperstone.local_regs[(15 + GET_FP) % 64]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L0:  		sprintf(info->s = cpuintrf_temp_str(), "L0  :%08X", hyperstone.local_regs[0]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L1:  		sprintf(info->s = cpuintrf_temp_str(), "L1  :%08X", hyperstone.local_regs[1]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L2:  		sprintf(info->s = cpuintrf_temp_str(), "L2  :%08X", hyperstone.local_regs[2]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L3:  		sprintf(info->s = cpuintrf_temp_str(), "L3  :%08X", hyperstone.local_regs[3]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L4:  		sprintf(info->s = cpuintrf_temp_str(), "L4  :%08X", hyperstone.local_regs[4]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L5:  		sprintf(info->s = cpuintrf_temp_str(), "L5  :%08X", hyperstone.local_regs[5]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L6:  		sprintf(info->s = cpuintrf_temp_str(), "L6  :%08X", hyperstone.local_regs[6]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L7:  		sprintf(info->s = cpuintrf_temp_str(), "L7  :%08X", hyperstone.local_regs[7]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L8:  		sprintf(info->s = cpuintrf_temp_str(), "L8  :%08X", hyperstone.local_regs[8]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L9:  		sprintf(info->s = cpuintrf_temp_str(), "L9  :%08X", hyperstone.local_regs[9]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L10: 		sprintf(info->s = cpuintrf_temp_str(), "L10 :%08X", hyperstone.local_regs[10]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L11: 		sprintf(info->s = cpuintrf_temp_str(), "L11 :%08X", hyperstone.local_regs[11]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L12: 		sprintf(info->s = cpuintrf_temp_str(), "L12 :%08X", hyperstone.local_regs[12]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L13: 		sprintf(info->s = cpuintrf_temp_str(), "L13 :%08X", hyperstone.local_regs[13]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L14: 		sprintf(info->s = cpuintrf_temp_str(), "L14 :%08X", hyperstone.local_regs[14]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L15: 		sprintf(info->s = cpuintrf_temp_str(), "L15 :%08X", hyperstone.local_regs[15]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L16: 		sprintf(info->s = cpuintrf_temp_str(), "L16 :%08X", hyperstone.local_regs[16]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L17: 		sprintf(info->s = cpuintrf_temp_str(), "L17 :%08X", hyperstone.local_regs[17]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L18: 		sprintf(info->s = cpuintrf_temp_str(), "L18 :%08X", hyperstone.local_regs[18]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L19: 		sprintf(info->s = cpuintrf_temp_str(), "L19 :%08X", hyperstone.local_regs[19]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L20: 		sprintf(info->s = cpuintrf_temp_str(), "L20 :%08X", hyperstone.local_regs[20]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L21: 		sprintf(info->s = cpuintrf_temp_str(), "L21 :%08X", hyperstone.local_regs[21]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L22: 		sprintf(info->s = cpuintrf_temp_str(), "L22 :%08X", hyperstone.local_regs[22]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L23: 		sprintf(info->s = cpuintrf_temp_str(), "L23 :%08X", hyperstone.local_regs[23]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L24: 		sprintf(info->s = cpuintrf_temp_str(), "L24 :%08X", hyperstone.local_regs[24]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L25: 		sprintf(info->s = cpuintrf_temp_str(), "L25 :%08X", hyperstone.local_regs[25]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L26: 		sprintf(info->s = cpuintrf_temp_str(), "L26 :%08X", hyperstone.local_regs[26]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L27: 		sprintf(info->s = cpuintrf_temp_str(), "L27 :%08X", hyperstone.local_regs[27]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L28: 		sprintf(info->s = cpuintrf_temp_str(), "L28 :%08X", hyperstone.local_regs[28]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L29: 		sprintf(info->s = cpuintrf_temp_str(), "L29 :%08X", hyperstone.local_regs[29]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L30: 		sprintf(info->s = cpuintrf_temp_str(), "L30 :%08X", hyperstone.local_regs[30]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L31: 		sprintf(info->s = cpuintrf_temp_str(), "L31 :%08X", hyperstone.local_regs[31]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L32: 		sprintf(info->s = cpuintrf_temp_str(), "L32 :%08X", hyperstone.local_regs[32]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L33: 		sprintf(info->s = cpuintrf_temp_str(), "L33 :%08X", hyperstone.local_regs[33]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L34: 		sprintf(info->s = cpuintrf_temp_str(), "L34 :%08X", hyperstone.local_regs[34]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L35: 		sprintf(info->s = cpuintrf_temp_str(), "L35 :%08X", hyperstone.local_regs[35]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L36: 		sprintf(info->s = cpuintrf_temp_str(), "L36 :%08X", hyperstone.local_regs[36]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L37: 		sprintf(info->s = cpuintrf_temp_str(), "L37 :%08X", hyperstone.local_regs[37]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L38: 		sprintf(info->s = cpuintrf_temp_str(), "L38 :%08X", hyperstone.local_regs[38]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L39: 		sprintf(info->s = cpuintrf_temp_str(), "L39 :%08X", hyperstone.local_regs[39]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L40: 		sprintf(info->s = cpuintrf_temp_str(), "L40 :%08X", hyperstone.local_regs[40]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L41: 		sprintf(info->s = cpuintrf_temp_str(), "L41 :%08X", hyperstone.local_regs[41]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L42: 		sprintf(info->s = cpuintrf_temp_str(), "L42 :%08X", hyperstone.local_regs[42]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L43: 		sprintf(info->s = cpuintrf_temp_str(), "L43 :%08X", hyperstone.local_regs[43]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L44: 		sprintf(info->s = cpuintrf_temp_str(), "L44 :%08X", hyperstone.local_regs[44]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L45: 		sprintf(info->s = cpuintrf_temp_str(), "L45 :%08X", hyperstone.local_regs[45]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L46: 		sprintf(info->s = cpuintrf_temp_str(), "L46 :%08X", hyperstone.local_regs[46]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L47: 		sprintf(info->s = cpuintrf_temp_str(), "L47 :%08X", hyperstone.local_regs[47]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L48: 		sprintf(info->s = cpuintrf_temp_str(), "L48 :%08X", hyperstone.local_regs[48]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L49: 		sprintf(info->s = cpuintrf_temp_str(), "L49 :%08X", hyperstone.local_regs[49]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L50: 		sprintf(info->s = cpuintrf_temp_str(), "L50 :%08X", hyperstone.local_regs[50]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L51: 		sprintf(info->s = cpuintrf_temp_str(), "L51 :%08X", hyperstone.local_regs[51]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L52: 		sprintf(info->s = cpuintrf_temp_str(), "L52 :%08X", hyperstone.local_regs[52]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L53: 		sprintf(info->s = cpuintrf_temp_str(), "L53 :%08X", hyperstone.local_regs[53]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L54: 		sprintf(info->s = cpuintrf_temp_str(), "L54 :%08X", hyperstone.local_regs[54]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L55: 		sprintf(info->s = cpuintrf_temp_str(), "L55 :%08X", hyperstone.local_regs[55]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L56: 		sprintf(info->s = cpuintrf_temp_str(), "L56 :%08X", hyperstone.local_regs[56]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L57: 		sprintf(info->s = cpuintrf_temp_str(), "L57 :%08X", hyperstone.local_regs[57]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L58: 		sprintf(info->s = cpuintrf_temp_str(), "L58 :%08X", hyperstone.local_regs[58]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L59: 		sprintf(info->s = cpuintrf_temp_str(), "L59 :%08X", hyperstone.local_regs[59]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L60: 		sprintf(info->s = cpuintrf_temp_str(), "L60 :%08X", hyperstone.local_regs[60]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L61: 		sprintf(info->s = cpuintrf_temp_str(), "L61 :%08X", hyperstone.local_regs[61]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L62: 		sprintf(info->s = cpuintrf_temp_str(), "L62 :%08X", hyperstone.local_regs[62]); break;
-		case CPUINFO_STR_REGISTER + E132XS_L63: 		sprintf(info->s = cpuintrf_temp_str(), "L63 :%08X", hyperstone.local_regs[63]); break;
+		case CPUINFO_STR_REGISTER + E132XS_PC:  		sprintf(info->s, "PC  :%08X", hyperstone.global_regs[0]); break;
+		case CPUINFO_STR_REGISTER + E132XS_SR:  		sprintf(info->s, "SR  :%08X", hyperstone.global_regs[1]); break;
+		case CPUINFO_STR_REGISTER + E132XS_FER: 		sprintf(info->s, "FER :%08X", hyperstone.global_regs[2]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G3:  		sprintf(info->s, "G3  :%08X", hyperstone.global_regs[3]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G4:  		sprintf(info->s, "G4  :%08X", hyperstone.global_regs[4]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G5:  		sprintf(info->s, "G5  :%08X", hyperstone.global_regs[5]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G6:  		sprintf(info->s, "G6  :%08X", hyperstone.global_regs[6]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G7:  		sprintf(info->s, "G7  :%08X", hyperstone.global_regs[7]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G8:  		sprintf(info->s, "G8  :%08X", hyperstone.global_regs[8]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G9:  		sprintf(info->s, "G9  :%08X", hyperstone.global_regs[9]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G10: 		sprintf(info->s, "G10 :%08X", hyperstone.global_regs[10]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G11: 		sprintf(info->s, "G11 :%08X", hyperstone.global_regs[11]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G12: 		sprintf(info->s, "G12 :%08X", hyperstone.global_regs[12]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G13: 		sprintf(info->s, "G13 :%08X", hyperstone.global_regs[13]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G14: 		sprintf(info->s, "G14 :%08X", hyperstone.global_regs[14]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G15: 		sprintf(info->s, "G15 :%08X", hyperstone.global_regs[15]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G16: 		sprintf(info->s, "G16 :%08X", hyperstone.global_regs[16]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G17: 		sprintf(info->s, "G17 :%08X", hyperstone.global_regs[17]); break;
+		case CPUINFO_STR_REGISTER + E132XS_SP:  		sprintf(info->s, "SP  :%08X", hyperstone.global_regs[18]); break;
+		case CPUINFO_STR_REGISTER + E132XS_UB:  		sprintf(info->s, "UB  :%08X", hyperstone.global_regs[19]); break;
+		case CPUINFO_STR_REGISTER + E132XS_BCR: 		sprintf(info->s, "BCR :%08X", hyperstone.global_regs[20]); break;
+		case CPUINFO_STR_REGISTER + E132XS_TPR: 		sprintf(info->s, "TPR :%08X", hyperstone.global_regs[21]); break;
+		case CPUINFO_STR_REGISTER + E132XS_TCR: 		sprintf(info->s, "TCR :%08X", hyperstone.global_regs[22]); break;
+		case CPUINFO_STR_REGISTER + E132XS_TR:  		sprintf(info->s, "TR  :%08X", hyperstone.global_regs[23]); break;
+		case CPUINFO_STR_REGISTER + E132XS_WCR: 		sprintf(info->s, "WCR :%08X", hyperstone.global_regs[24]); break;
+		case CPUINFO_STR_REGISTER + E132XS_ISR: 		sprintf(info->s, "ISR :%08X", hyperstone.global_regs[25]); break;
+		case CPUINFO_STR_REGISTER + E132XS_FCR: 		sprintf(info->s, "FCR :%08X", hyperstone.global_regs[26]); break;
+		case CPUINFO_STR_REGISTER + E132XS_MCR: 		sprintf(info->s, "MCR :%08X", hyperstone.global_regs[27]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G28: 		sprintf(info->s, "G28 :%08X", hyperstone.global_regs[28]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G29: 		sprintf(info->s, "G29 :%08X", hyperstone.global_regs[29]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G30: 		sprintf(info->s, "G30 :%08X", hyperstone.global_regs[30]); break;
+		case CPUINFO_STR_REGISTER + E132XS_G31: 		sprintf(info->s, "G31 :%08X", hyperstone.global_regs[31]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL0:  		sprintf(info->s, "CL0 :%08X", hyperstone.local_regs[(0 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL1:  		sprintf(info->s, "CL1 :%08X", hyperstone.local_regs[(1 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL2:  		sprintf(info->s, "CL2 :%08X", hyperstone.local_regs[(2 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL3:  		sprintf(info->s, "CL3 :%08X", hyperstone.local_regs[(3 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL4:  		sprintf(info->s, "CL4 :%08X", hyperstone.local_regs[(4 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL5:  		sprintf(info->s, "CL5 :%08X", hyperstone.local_regs[(5 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL6:  		sprintf(info->s, "CL6 :%08X", hyperstone.local_regs[(6 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL7:  		sprintf(info->s, "CL7 :%08X", hyperstone.local_regs[(7 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL8:  		sprintf(info->s, "CL8 :%08X", hyperstone.local_regs[(8 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL9:  		sprintf(info->s, "CL9 :%08X", hyperstone.local_regs[(9 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL10: 		sprintf(info->s, "CL10:%08X", hyperstone.local_regs[(10 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL11: 		sprintf(info->s, "CL11:%08X", hyperstone.local_regs[(11 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL12: 		sprintf(info->s, "CL12:%08X", hyperstone.local_regs[(12 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL13: 		sprintf(info->s, "CL13:%08X", hyperstone.local_regs[(13 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL14: 		sprintf(info->s, "CL14:%08X", hyperstone.local_regs[(14 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_CL15: 		sprintf(info->s, "CL15:%08X", hyperstone.local_regs[(15 + GET_FP) % 64]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L0:  		sprintf(info->s, "L0  :%08X", hyperstone.local_regs[0]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L1:  		sprintf(info->s, "L1  :%08X", hyperstone.local_regs[1]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L2:  		sprintf(info->s, "L2  :%08X", hyperstone.local_regs[2]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L3:  		sprintf(info->s, "L3  :%08X", hyperstone.local_regs[3]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L4:  		sprintf(info->s, "L4  :%08X", hyperstone.local_regs[4]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L5:  		sprintf(info->s, "L5  :%08X", hyperstone.local_regs[5]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L6:  		sprintf(info->s, "L6  :%08X", hyperstone.local_regs[6]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L7:  		sprintf(info->s, "L7  :%08X", hyperstone.local_regs[7]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L8:  		sprintf(info->s, "L8  :%08X", hyperstone.local_regs[8]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L9:  		sprintf(info->s, "L9  :%08X", hyperstone.local_regs[9]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L10: 		sprintf(info->s, "L10 :%08X", hyperstone.local_regs[10]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L11: 		sprintf(info->s, "L11 :%08X", hyperstone.local_regs[11]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L12: 		sprintf(info->s, "L12 :%08X", hyperstone.local_regs[12]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L13: 		sprintf(info->s, "L13 :%08X", hyperstone.local_regs[13]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L14: 		sprintf(info->s, "L14 :%08X", hyperstone.local_regs[14]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L15: 		sprintf(info->s, "L15 :%08X", hyperstone.local_regs[15]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L16: 		sprintf(info->s, "L16 :%08X", hyperstone.local_regs[16]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L17: 		sprintf(info->s, "L17 :%08X", hyperstone.local_regs[17]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L18: 		sprintf(info->s, "L18 :%08X", hyperstone.local_regs[18]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L19: 		sprintf(info->s, "L19 :%08X", hyperstone.local_regs[19]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L20: 		sprintf(info->s, "L20 :%08X", hyperstone.local_regs[20]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L21: 		sprintf(info->s, "L21 :%08X", hyperstone.local_regs[21]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L22: 		sprintf(info->s, "L22 :%08X", hyperstone.local_regs[22]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L23: 		sprintf(info->s, "L23 :%08X", hyperstone.local_regs[23]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L24: 		sprintf(info->s, "L24 :%08X", hyperstone.local_regs[24]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L25: 		sprintf(info->s, "L25 :%08X", hyperstone.local_regs[25]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L26: 		sprintf(info->s, "L26 :%08X", hyperstone.local_regs[26]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L27: 		sprintf(info->s, "L27 :%08X", hyperstone.local_regs[27]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L28: 		sprintf(info->s, "L28 :%08X", hyperstone.local_regs[28]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L29: 		sprintf(info->s, "L29 :%08X", hyperstone.local_regs[29]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L30: 		sprintf(info->s, "L30 :%08X", hyperstone.local_regs[30]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L31: 		sprintf(info->s, "L31 :%08X", hyperstone.local_regs[31]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L32: 		sprintf(info->s, "L32 :%08X", hyperstone.local_regs[32]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L33: 		sprintf(info->s, "L33 :%08X", hyperstone.local_regs[33]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L34: 		sprintf(info->s, "L34 :%08X", hyperstone.local_regs[34]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L35: 		sprintf(info->s, "L35 :%08X", hyperstone.local_regs[35]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L36: 		sprintf(info->s, "L36 :%08X", hyperstone.local_regs[36]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L37: 		sprintf(info->s, "L37 :%08X", hyperstone.local_regs[37]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L38: 		sprintf(info->s, "L38 :%08X", hyperstone.local_regs[38]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L39: 		sprintf(info->s, "L39 :%08X", hyperstone.local_regs[39]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L40: 		sprintf(info->s, "L40 :%08X", hyperstone.local_regs[40]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L41: 		sprintf(info->s, "L41 :%08X", hyperstone.local_regs[41]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L42: 		sprintf(info->s, "L42 :%08X", hyperstone.local_regs[42]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L43: 		sprintf(info->s, "L43 :%08X", hyperstone.local_regs[43]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L44: 		sprintf(info->s, "L44 :%08X", hyperstone.local_regs[44]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L45: 		sprintf(info->s, "L45 :%08X", hyperstone.local_regs[45]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L46: 		sprintf(info->s, "L46 :%08X", hyperstone.local_regs[46]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L47: 		sprintf(info->s, "L47 :%08X", hyperstone.local_regs[47]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L48: 		sprintf(info->s, "L48 :%08X", hyperstone.local_regs[48]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L49: 		sprintf(info->s, "L49 :%08X", hyperstone.local_regs[49]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L50: 		sprintf(info->s, "L50 :%08X", hyperstone.local_regs[50]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L51: 		sprintf(info->s, "L51 :%08X", hyperstone.local_regs[51]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L52: 		sprintf(info->s, "L52 :%08X", hyperstone.local_regs[52]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L53: 		sprintf(info->s, "L53 :%08X", hyperstone.local_regs[53]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L54: 		sprintf(info->s, "L54 :%08X", hyperstone.local_regs[54]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L55: 		sprintf(info->s, "L55 :%08X", hyperstone.local_regs[55]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L56: 		sprintf(info->s, "L56 :%08X", hyperstone.local_regs[56]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L57: 		sprintf(info->s, "L57 :%08X", hyperstone.local_regs[57]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L58: 		sprintf(info->s, "L58 :%08X", hyperstone.local_regs[58]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L59: 		sprintf(info->s, "L59 :%08X", hyperstone.local_regs[59]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L60: 		sprintf(info->s, "L60 :%08X", hyperstone.local_regs[60]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L61: 		sprintf(info->s, "L61 :%08X", hyperstone.local_regs[61]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L62: 		sprintf(info->s, "L62 :%08X", hyperstone.local_regs[62]); break;
+		case CPUINFO_STR_REGISTER + E132XS_L63: 		sprintf(info->s, "L63 :%08X", hyperstone.local_regs[63]); break;
 	}
 }
 
 
 #if (HAS_E116T)
-void e116t_get_info(UINT32 state, union cpuinfo *info)
+void e116t_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -5325,10 +5325,10 @@ void e116t_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e116_4k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = e116_init;				break;
+		case CPUINFO_PTR_INIT:							info->init = e116_init;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "E1-16T"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "E1-16T");				break;
 
 		default:
 			hyperstone_get_info(state, info);
@@ -5337,7 +5337,7 @@ void e116t_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 #if (HAS_E116XT)
-void e116xt_get_info(UINT32 state, union cpuinfo *info)
+void e116xt_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -5348,10 +5348,10 @@ void e116xt_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e116_8k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = e116_init;				break;
+		case CPUINFO_PTR_INIT:							info->init = e116_init;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "E1-16XT"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "E1-16XT");				break;
 
 		default:
 			hyperstone_get_info(state, info);
@@ -5360,7 +5360,7 @@ void e116xt_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 #if (HAS_E116XS)
-void e116xs_get_info(UINT32 state, union cpuinfo *info)
+void e116xs_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -5371,10 +5371,10 @@ void e116xs_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e116_16k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = e116_init;				break;
+		case CPUINFO_PTR_INIT:							info->init = e116_init;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "E1-16XS"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "E1-16XS");				break;
 
 		default:
 			hyperstone_get_info(state, info);
@@ -5383,7 +5383,7 @@ void e116xs_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 #if (HAS_E116XSR)
-void e116xsr_get_info(UINT32 state, union cpuinfo *info)
+void e116xsr_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -5394,10 +5394,10 @@ void e116xsr_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e116_16k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = e116_init;				break;
+		case CPUINFO_PTR_INIT:							info->init = e116_init;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "E1-16XSR"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "E1-16XSR");			break;
 
 		default:
 			hyperstone_get_info(state, info);
@@ -5406,7 +5406,7 @@ void e116xsr_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 #if (HAS_E132N)
-void e132n_get_info(UINT32 state, union cpuinfo *info)
+void e132n_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -5417,10 +5417,10 @@ void e132n_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e132_4k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = e132_init;				break;
+		case CPUINFO_PTR_INIT:							info->init = e132_init;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "E1-32N"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "E1-32N");				break;
 
 		default:
 			hyperstone_get_info(state, info);
@@ -5429,7 +5429,7 @@ void e132n_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 #if (HAS_E132T)
-void e132t_get_info(UINT32 state, union cpuinfo *info)
+void e132t_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -5440,10 +5440,10 @@ void e132t_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e132_4k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = e132_init;				break;
+		case CPUINFO_PTR_INIT:							info->init = e132_init;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "E1-32T"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "E1-32T");				break;
 
 		default:
 			hyperstone_get_info(state, info);
@@ -5452,7 +5452,7 @@ void e132t_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 #if (HAS_E132XN)
-void e132xn_get_info(UINT32 state, union cpuinfo *info)
+void e132xn_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -5463,10 +5463,10 @@ void e132xn_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e132_8k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = e132_init;				break;
+		case CPUINFO_PTR_INIT:							info->init = e132_init;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "E1-32XN"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "E1-32XN");				break;
 
 		default:
 			hyperstone_get_info(state, info);
@@ -5475,7 +5475,7 @@ void e132xn_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 #if (HAS_E132XT)
-void e132xt_get_info(UINT32 state, union cpuinfo *info)
+void e132xt_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -5486,10 +5486,10 @@ void e132xt_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e132_8k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = e132_init;				break;
+		case CPUINFO_PTR_INIT:							info->init = e132_init;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "E1-32XT"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "E1-32XT");				break;
 
 		default:
 			hyperstone_get_info(state, info);
@@ -5498,7 +5498,7 @@ void e132xt_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 #if (HAS_E132XS)
-void e132xs_get_info(UINT32 state, union cpuinfo *info)
+void e132xs_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -5509,10 +5509,10 @@ void e132xs_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e132_16k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = e132_init;				break;
+		case CPUINFO_PTR_INIT:							info->init = e132_init;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "E1-32XS"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "E1-32XS");				break;
 
 		default:
 			hyperstone_get_info(state, info);
@@ -5521,7 +5521,7 @@ void e132xs_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 #if (HAS_E132XSR)
-void e132xsr_get_info(UINT32 state, union cpuinfo *info)
+void e132xsr_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -5532,10 +5532,10 @@ void e132xsr_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e132_16k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = e132_init;				break;
+		case CPUINFO_PTR_INIT:							info->init = e132_init;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "E1-32XSR"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "E1-32XSR");			break;
 
 		default:
 			hyperstone_get_info(state, info);
@@ -5544,7 +5544,7 @@ void e132xsr_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 #if (HAS_GMS30C2116)
-void gms30c2116_get_info(UINT32 state, union cpuinfo *info)
+void gms30c2116_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -5555,10 +5555,10 @@ void gms30c2116_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e116_4k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = e116_init;				break;
+		case CPUINFO_PTR_INIT:							info->init = e116_init;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "GMS30C2116"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "GMS30C2116");			break;
 
 		default:
 			hyperstone_get_info(state, info);
@@ -5567,7 +5567,7 @@ void gms30c2116_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 #if (HAS_GMS30C2132)
-void gms30c2132_get_info(UINT32 state, union cpuinfo *info)
+void gms30c2132_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -5578,10 +5578,10 @@ void gms30c2132_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e132_4k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = e132_init;				break;
+		case CPUINFO_PTR_INIT:							info->init = e132_init;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "GMS30C2132"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "GMS30C2132");			break;
 
 		default:
 			hyperstone_get_info(state, info);
@@ -5590,7 +5590,7 @@ void gms30c2132_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 #if (HAS_GMS30C2216)
-void gms30c2216_get_info(UINT32 state, union cpuinfo *info)
+void gms30c2216_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -5601,10 +5601,10 @@ void gms30c2216_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e116_8k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = e116_init;				break;
+		case CPUINFO_PTR_INIT:							info->init = e116_init;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "GMS30C2216"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "GMS30C2216");			break;
 
 		default:
 			hyperstone_get_info(state, info);
@@ -5613,7 +5613,7 @@ void gms30c2216_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 #if (HAS_GMS30C2232)
-void gms30c2232_get_info(UINT32 state, union cpuinfo *info)
+void gms30c2232_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -5624,10 +5624,10 @@ void gms30c2232_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e132_8k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = e132_init;				break;
+		case CPUINFO_PTR_INIT:							info->init = e132_init;					break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "GMS30C2232"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "GMS30C2232");			break;
 
 		default:
 			hyperstone_get_info(state, info);

@@ -45,7 +45,7 @@ enum {
 
 #if (HAS_TI990_10)
 
-extern void ti990_10_get_info(UINT32 state, union cpuinfo *info);
+extern void ti990_10_get_info(UINT32 state, cpuinfo *info);
 
 /*
     structure with the parameters ti990_10_reset wants.
@@ -74,7 +74,7 @@ extern WRITE8_HANDLER(ti990_10_eir_cru_w);
 
 #if (HAS_TMS9900)
 
-extern void tms9900_get_info(UINT32 state, union cpuinfo *info);
+extern void tms9900_get_info(UINT32 state, cpuinfo *info);
 
 /*
     structure with optional parameters for tms9900_reset.
@@ -88,7 +88,7 @@ typedef struct tms9900reset_param
 
 #if (HAS_TMS9940)
 
-extern void tms9940_get_info(UINT32 state, union cpuinfo *info);
+extern void tms9940_get_info(UINT32 state, cpuinfo *info);
 
 /*
     structure with optional parameters for tms9940_reset.
@@ -102,7 +102,7 @@ typedef struct tms9940reset_param
 
 #if (HAS_TMS9980)
 
-extern void tms9980a_get_info(UINT32 state, union cpuinfo *info);
+extern void tms9980a_get_info(UINT32 state, cpuinfo *info);
 
 /*
     structure with optional parameters for tms9980a_reset.
@@ -116,7 +116,7 @@ typedef struct tms9980areset_param
 
 #if (HAS_TMS9985)
 
-extern void tms9985_get_info(UINT32 state, union cpuinfo *info);
+extern void tms9985_get_info(UINT32 state, cpuinfo *info);
 
 /*
     structure with optional parameters for tms9985_reset.
@@ -130,7 +130,7 @@ typedef struct tms9985reset_param
 
 #if (HAS_TMS9989)
 
-extern void tms9989_get_info(UINT32 state, union cpuinfo *info);
+extern void tms9989_get_info(UINT32 state, cpuinfo *info);
 
 /*
     structure with optional parameters for tms9989_reset.
@@ -144,7 +144,7 @@ typedef struct tms9989reset_param
 
 #if (HAS_TMS9995)
 
-extern void tms9995_get_info(UINT32 state, union cpuinfo *info);
+extern void tms9995_get_info(UINT32 state, cpuinfo *info);
 
 /*
   structure with the parameters tms9995_reset wants.
@@ -174,7 +174,7 @@ extern WRITE8_HANDLER(tms9995_internal2_w);
 
 #if (HAS_TMS99000)
 
-extern void tms99000_get_info(UINT32 state, union cpuinfo *info);
+extern void tms99000_get_info(UINT32 state, cpuinfo *info);
 
 /*
     structure with optional parameters for tms99000_reset.
@@ -188,7 +188,7 @@ typedef struct tms99000reset_param
 
 #if (HAS_TMS99105A)
 
-extern void tms99105a_get_info(UINT32 state, union cpuinfo *info);
+extern void tms99105a_get_info(UINT32 state, cpuinfo *info);
 
 /*
     structure with optional parameters for tms99105a_reset.
@@ -202,7 +202,7 @@ typedef struct tms99105areset_param
 
 #if (HAS_TMS99110A)
 
-extern void tms99110a_get_info(UINT32 state, union cpuinfo *info);
+extern void tms99110a_get_info(UINT32 state, cpuinfo *info);
 
 /*
     structure with optional parameters for tms99110a_reset.

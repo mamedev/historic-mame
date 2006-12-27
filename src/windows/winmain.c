@@ -13,6 +13,7 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <mmsystem.h>
+#include <tchar.h>
 
 // standard includes
 #include <time.h>
@@ -70,9 +71,9 @@ static char mapfile_name[MAX_PATH];
 static LPTOP_LEVEL_EXCEPTION_FILTER pass_thru_filter;
 
 #ifndef MESS
-static const char helpfile[] = "docs\\windows.txt";
+static const TCHAR helpfile[] = TEXT("docs\\windows.txt");
 #else
-static const char helpfile[] = "mess.chm";
+static const TCHAR helpfile[] = TEXT("mess.chm");
 #endif
 
 
@@ -408,11 +409,11 @@ static int check_for_double_click_start(int argc)
 		if (button == IDYES)
 		{
 			// check if windows.txt exists
-			FILE *fp = fopen(helpfile, "r");
+			FILE *fp = _tfopen(helpfile, TEXT("r"));
 			if (fp)
 			{
 				HANDLE hShell32;
-				HINSTANCE (WINAPI *pfnShellExecuteA)(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, int nShowCmd);
+				HINSTANCE (WINAPI *pfnShellExecute)(HWND hwnd, LPCTSTR lpOperation, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, int nShowCmd);
 
 				fclose(fp);
 
@@ -420,9 +421,13 @@ static int check_for_double_click_start(int argc)
 				hShell32 = LoadLibrary(TEXT("shell32.dll"));
 				if (NULL != hShell32)
 				{
-					pfnShellExecuteA = (HINSTANCE (WINAPI *)(HWND,LPCSTR,LPCSTR,LPCSTR,LPCSTR,int))GetProcAddress(hShell32, TEXT("ShellExecuteA"));
-					if (NULL != pfnShellExecuteA)
-						pfnShellExecuteA(NULL, "open", helpfile, NULL, NULL, SW_SHOWNORMAL);
+#ifdef UNICODE
+					pfnShellExecute = (HINSTANCE (WINAPI *)(HWND,LPCWSTR,LPCWSTR,LPCWSTR,LPCWSTR,int))GetProcAddress(hShell32, "ShellExecuteW");
+#else
+					pfnShellExecute = (HINSTANCE (WINAPI *)(HWND,LPCSTR,LPCSTR,LPCSTR,LPCSTR,int))GetProcAddress(hShell32, "ShellExecuteA");
+#endif
+					if (NULL != pfnShellExecute)
+						pfnShellExecute(NULL, TEXT("open"), helpfile, NULL, NULL, SW_SHOWNORMAL);
 					FreeLibrary(hShell32);
 				}
 			}

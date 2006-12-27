@@ -110,7 +110,8 @@ struct AY8910interface irem_ay8910_interface_2 =
 {
 	0,
 	0,
-	irem_analog_w
+	irem_analog_w,
+	0
 };
 
 struct MSM5205interface irem_msm5205_interface_1 =
@@ -121,8 +122,8 @@ struct MSM5205interface irem_msm5205_interface_1 =
 
 struct MSM5205interface irem_msm5205_interface_2 =
 {
-	0,					/* interrupt function */
-	MSM5205_S96_4B		/* default to 4KHz, but can be changed at run time */
+	0,				/* interrupt function */
+	MSM5205_SEX_4B		/* default to 4KHz, but can be changed at run time, slave */
 };
 
 

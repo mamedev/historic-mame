@@ -267,24 +267,24 @@ static void cop410_set_context (void *src)
  * Generic set_info
  **************************************************************************/
 
-static void cop410_set_info(UINT32 state, union cpuinfo *info)
+static void cop410_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + COP400_PC:			PC = info->i;					break;
+		case CPUINFO_INT_REGISTER + COP400_PC:			PC = info->i;							break;
 
-	    case CPUINFO_INT_REGISTER + COP400_A:			A = info->i;					break;
-		case CPUINFO_INT_REGISTER + COP400_B:			B = info->i;					break;
-		case CPUINFO_INT_REGISTER + COP400_C:			C = info->i;					break;
-		case CPUINFO_INT_REGISTER + COP400_EN:			EN = info->i;					break;
-		case CPUINFO_INT_REGISTER + COP400_G:			G = info->i;					break;
-		case CPUINFO_INT_REGISTER + COP400_Q:			Q = info->i;					break;
-		case CPUINFO_INT_REGISTER + COP400_SA:			SA = info->i;					break;
-		case CPUINFO_INT_REGISTER + COP400_SB:			SB = info->i;					break;
-		case CPUINFO_INT_REGISTER + COP400_SIO:			SIO = info->i;					break;
-		case CPUINFO_INT_REGISTER + COP400_SKL:			SKL = info->i;					break;
+	    case CPUINFO_INT_REGISTER + COP400_A:			A = info->i;							break;
+		case CPUINFO_INT_REGISTER + COP400_B:			B = info->i;							break;
+		case CPUINFO_INT_REGISTER + COP400_C:			C = info->i;							break;
+		case CPUINFO_INT_REGISTER + COP400_EN:			EN = info->i;							break;
+		case CPUINFO_INT_REGISTER + COP400_G:			G = info->i;							break;
+		case CPUINFO_INT_REGISTER + COP400_Q:			Q = info->i;							break;
+		case CPUINFO_INT_REGISTER + COP400_SA:			SA = info->i;							break;
+		case CPUINFO_INT_REGISTER + COP400_SB:			SB = info->i;							break;
+		case CPUINFO_INT_REGISTER + COP400_SIO:			SIO = info->i;							break;
+		case CPUINFO_INT_REGISTER + COP400_SKL:			SKL = info->i;							break;
 	}
 }
 
@@ -292,7 +292,7 @@ static void cop410_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void cop410_get_info(UINT32 state, union cpuinfo *info)
+void cop410_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -348,31 +348,31 @@ void cop410_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &cop410_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "COP410"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "National Semiconductor COP410"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2006 MAME Team"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "COP410");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "National Semiconductor COP410"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C) 2006 MAME Team"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), " ");
+			sprintf(info->s, " ");
 			break;
 
-		case CPUINFO_STR_REGISTER + COP400_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", PC); break;
-		case CPUINFO_STR_REGISTER + COP400_A:			sprintf(info->s = cpuintrf_temp_str(), "A:%01X", A ); break;
-		case CPUINFO_STR_REGISTER + COP400_B:			sprintf(info->s = cpuintrf_temp_str(), "B:%02X", B ); break;
-		case CPUINFO_STR_REGISTER + COP400_C:			sprintf(info->s = cpuintrf_temp_str(), "C:%01X", C); break;
-		case CPUINFO_STR_REGISTER + COP400_EN:			sprintf(info->s = cpuintrf_temp_str(), "EN:%01X", EN); break;
-		case CPUINFO_STR_REGISTER + COP400_G:			sprintf(info->s = cpuintrf_temp_str(), "G:%01X", G); break;
-		case CPUINFO_STR_REGISTER + COP400_Q:			sprintf(info->s = cpuintrf_temp_str(), "Q:%02X", Q); break;
-		case CPUINFO_STR_REGISTER + COP400_SA:			sprintf(info->s = cpuintrf_temp_str(), "SA:%04X", SA); break;
-		case CPUINFO_STR_REGISTER + COP400_SB:			sprintf(info->s = cpuintrf_temp_str(), "SB:%04X", SB); break;
-		case CPUINFO_STR_REGISTER + COP400_SIO:			sprintf(info->s = cpuintrf_temp_str(), "SIO:%01X", SIO); break;
-		case CPUINFO_STR_REGISTER + COP400_SKL:			sprintf(info->s = cpuintrf_temp_str(), "SKL:%01X", SKL); break;
+		case CPUINFO_STR_REGISTER + COP400_PC:			sprintf(info->s, "PC:%04X", PC);		break;
+		case CPUINFO_STR_REGISTER + COP400_A:			sprintf(info->s, "A:%01X", A );			break;
+		case CPUINFO_STR_REGISTER + COP400_B:			sprintf(info->s, "B:%02X", B );			break;
+		case CPUINFO_STR_REGISTER + COP400_C:			sprintf(info->s, "C:%01X", C);			break;
+		case CPUINFO_STR_REGISTER + COP400_EN:			sprintf(info->s, "EN:%01X", EN);		break;
+		case CPUINFO_STR_REGISTER + COP400_G:			sprintf(info->s, "G:%01X", G);			break;
+		case CPUINFO_STR_REGISTER + COP400_Q:			sprintf(info->s, "Q:%02X", Q);			break;
+		case CPUINFO_STR_REGISTER + COP400_SA:			sprintf(info->s, "SA:%04X", SA);		break;
+		case CPUINFO_STR_REGISTER + COP400_SB:			sprintf(info->s, "SB:%04X", SB);		break;
+		case CPUINFO_STR_REGISTER + COP400_SIO:			sprintf(info->s, "SIO:%01X", SIO);		break;
+		case CPUINFO_STR_REGISTER + COP400_SKL:			sprintf(info->s, "SKL:%01X", SKL);		break;
 	}
 }
 
-void cop411_get_info(UINT32 state, union cpuinfo *info)
+void cop411_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -380,8 +380,8 @@ void cop411_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INIT:							info->init = cop411_init;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "COP411"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "National Semiconductor COP411"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "COP411");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "National Semiconductor COP411"); break;
 
 		default: cop410_get_info(state, info); break;
 	}

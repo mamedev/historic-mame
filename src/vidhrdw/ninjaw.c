@@ -99,8 +99,8 @@ static void ninjaw_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,in
 		invis    = (data & 0x8) >> 3;
 		color    = (data & 0x7f00) >> 8;
 
-//  Ninjaw: this stops your player flickering black and cutting into tank sprites
-//      if (invis && (priority==1)) continue;
+		/* Ninjaw: this stops your player flickering black and cutting into tank sprites */
+		if (invis) continue;
 
 #ifdef MAME_DEBUG
 		if (data & 0x80f0)   unknown |= (data &0x80f0);

@@ -579,7 +579,7 @@ static void set_irq_line(int irqline, int state)
  * Generic set_info
  **************************************************************************/
 
-static void z8000_set_info(UINT32 state, union cpuinfo *info)
+static void z8000_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -623,7 +623,7 @@ static void z8000_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void z8000_get_info(UINT32 state, union cpuinfo *info)
+void z8000_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -682,28 +682,28 @@ void z8000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + Z8000_R15:			info->i = RW(15);						break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_SET_INFO:						info->setinfo = z8000_set_info;				break;
-		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = z8000_get_context;			break;
-		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = z8000_set_context;			break;
-		case CPUINFO_PTR_INIT:							info->init = z8000_init;					break;
-		case CPUINFO_PTR_RESET:							info->reset = z8000_reset;					break;
-		case CPUINFO_PTR_EXIT:							info->exit = z8000_exit;					break;
-		case CPUINFO_PTR_EXECUTE:						info->execute = z8000_execute;				break;
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = z8000_set_info;			break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = z8000_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = z8000_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = z8000_init;				break;
+		case CPUINFO_PTR_RESET:							info->reset = z8000_reset;				break;
+		case CPUINFO_PTR_EXIT:							info->exit = z8000_exit;				break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = z8000_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 #ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = z8000_dasm;			break;
 #endif /* MAME_DEBUG */
-		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &z8000_ICount;				break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &z8000_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "Z8002"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Zilog Z8000"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.1"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved."); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "Z8002");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Zilog Z8000");			break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.1");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C) 1998,1999 Juergen Buchmueller, all rights reserved."); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
 				Z.fcw & 0x8000 ? 's':'.',
 				Z.fcw & 0x4000 ? 'n':'.',
 				Z.fcw & 0x2000 ? 'e':'.',
@@ -722,34 +722,34 @@ void z8000_get_info(UINT32 state, union cpuinfo *info)
 				Z.fcw & 0x0001 ? '?':'.');
             break;
 
-		case CPUINFO_STR_REGISTER + Z8000_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC :%04X", Z.pc); break;
-		case CPUINFO_STR_REGISTER + Z8000_NSP:			sprintf(info->s = cpuintrf_temp_str(), "SP :%04X", Z.nsp); break;
-		case CPUINFO_STR_REGISTER + Z8000_FCW:			sprintf(info->s = cpuintrf_temp_str(), "FCW:%04X", Z.fcw); break;
-		case CPUINFO_STR_REGISTER + Z8000_PSAP:			sprintf(info->s = cpuintrf_temp_str(), "NSP:%04X", Z.psap); break;
-		case CPUINFO_STR_REGISTER + Z8000_REFRESH:		sprintf(info->s = cpuintrf_temp_str(), "REFR:%04X", Z.refresh); break;
-		case CPUINFO_STR_REGISTER + Z8000_IRQ_REQ:		sprintf(info->s = cpuintrf_temp_str(), "IRQR:%04X", Z.irq_req); break;
-		case CPUINFO_STR_REGISTER + Z8000_IRQ_SRV:		sprintf(info->s = cpuintrf_temp_str(), "IRQS:%04X", Z.irq_srv); break;
-		case CPUINFO_STR_REGISTER + Z8000_IRQ_VEC:		sprintf(info->s = cpuintrf_temp_str(), "IRQV:%04X", Z.irq_vec); break;
+		case CPUINFO_STR_REGISTER + Z8000_PC:			sprintf(info->s, "PC :%04X", Z.pc);		break;
+		case CPUINFO_STR_REGISTER + Z8000_NSP:			sprintf(info->s, "SP :%04X", Z.nsp);	break;
+		case CPUINFO_STR_REGISTER + Z8000_FCW:			sprintf(info->s, "FCW:%04X", Z.fcw);	break;
+		case CPUINFO_STR_REGISTER + Z8000_PSAP:			sprintf(info->s, "NSP:%04X", Z.psap);	break;
+		case CPUINFO_STR_REGISTER + Z8000_REFRESH:		sprintf(info->s, "REFR:%04X", Z.refresh); break;
+		case CPUINFO_STR_REGISTER + Z8000_IRQ_REQ:		sprintf(info->s, "IRQR:%04X", Z.irq_req); break;
+		case CPUINFO_STR_REGISTER + Z8000_IRQ_SRV:		sprintf(info->s, "IRQS:%04X", Z.irq_srv); break;
+		case CPUINFO_STR_REGISTER + Z8000_IRQ_VEC:		sprintf(info->s, "IRQV:%04X", Z.irq_vec); break;
 #ifdef	LSB_FIRST
 #define REG_XOR 3
 #else
 #define REG_XOR 0
 #endif
-		case CPUINFO_STR_REGISTER + Z8000_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0 :%04X", Z.regs.W[ 0^REG_XOR]); break;
-		case CPUINFO_STR_REGISTER + Z8000_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1 :%04X", Z.regs.W[ 1^REG_XOR]); break;
-		case CPUINFO_STR_REGISTER + Z8000_R2:			sprintf(info->s = cpuintrf_temp_str(), "R2 :%04X", Z.regs.W[ 2^REG_XOR]); break;
-		case CPUINFO_STR_REGISTER + Z8000_R3:			sprintf(info->s = cpuintrf_temp_str(), "R3 :%04X", Z.regs.W[ 3^REG_XOR]); break;
-		case CPUINFO_STR_REGISTER + Z8000_R4:			sprintf(info->s = cpuintrf_temp_str(), "R4 :%04X", Z.regs.W[ 4^REG_XOR]); break;
-		case CPUINFO_STR_REGISTER + Z8000_R5:			sprintf(info->s = cpuintrf_temp_str(), "R5 :%04X", Z.regs.W[ 5^REG_XOR]); break;
-		case CPUINFO_STR_REGISTER + Z8000_R6:			sprintf(info->s = cpuintrf_temp_str(), "R6 :%04X", Z.regs.W[ 6^REG_XOR]); break;
-		case CPUINFO_STR_REGISTER + Z8000_R7:			sprintf(info->s = cpuintrf_temp_str(), "R7 :%04X", Z.regs.W[ 7^REG_XOR]); break;
-		case CPUINFO_STR_REGISTER + Z8000_R8:			sprintf(info->s = cpuintrf_temp_str(), "R8 :%04X", Z.regs.W[ 8^REG_XOR]); break;
-		case CPUINFO_STR_REGISTER + Z8000_R9:			sprintf(info->s = cpuintrf_temp_str(), "R9 :%04X", Z.regs.W[ 9^REG_XOR]); break;
-		case CPUINFO_STR_REGISTER + Z8000_R10:			sprintf(info->s = cpuintrf_temp_str(), "R10:%04X", Z.regs.W[10^REG_XOR]); break;
-		case CPUINFO_STR_REGISTER + Z8000_R11:			sprintf(info->s = cpuintrf_temp_str(), "R11:%04X", Z.regs.W[11^REG_XOR]); break;
-		case CPUINFO_STR_REGISTER + Z8000_R12:			sprintf(info->s = cpuintrf_temp_str(), "R12:%04X", Z.regs.W[12^REG_XOR]); break;
-		case CPUINFO_STR_REGISTER + Z8000_R13:			sprintf(info->s = cpuintrf_temp_str(), "R13:%04X", Z.regs.W[13^REG_XOR]); break;
-		case CPUINFO_STR_REGISTER + Z8000_R14:			sprintf(info->s = cpuintrf_temp_str(), "R14:%04X", Z.regs.W[14^REG_XOR]); break;
-		case CPUINFO_STR_REGISTER + Z8000_R15:			sprintf(info->s = cpuintrf_temp_str(), "R15:%04X", Z.regs.W[15^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R0:			sprintf(info->s, "R0 :%04X", Z.regs.W[ 0^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R1:			sprintf(info->s, "R1 :%04X", Z.regs.W[ 1^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R2:			sprintf(info->s, "R2 :%04X", Z.regs.W[ 2^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R3:			sprintf(info->s, "R3 :%04X", Z.regs.W[ 3^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R4:			sprintf(info->s, "R4 :%04X", Z.regs.W[ 4^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R5:			sprintf(info->s, "R5 :%04X", Z.regs.W[ 5^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R6:			sprintf(info->s, "R6 :%04X", Z.regs.W[ 6^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R7:			sprintf(info->s, "R7 :%04X", Z.regs.W[ 7^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R8:			sprintf(info->s, "R8 :%04X", Z.regs.W[ 8^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R9:			sprintf(info->s, "R9 :%04X", Z.regs.W[ 9^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R10:			sprintf(info->s, "R10:%04X", Z.regs.W[10^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R11:			sprintf(info->s, "R11:%04X", Z.regs.W[11^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R12:			sprintf(info->s, "R12:%04X", Z.regs.W[12^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R13:			sprintf(info->s, "R13:%04X", Z.regs.W[13^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R14:			sprintf(info->s, "R14:%04X", Z.regs.W[14^REG_XOR]); break;
+		case CPUINFO_STR_REGISTER + Z8000_R15:			sprintf(info->s, "R15:%04X", Z.regs.W[15^REG_XOR]); break;
 	}
 }

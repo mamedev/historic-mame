@@ -1825,33 +1825,33 @@ static void set_irq_line(int line,int state)
 }
 
 
-static void SE3208_set_info(UINT32 state, union cpuinfo *info)
+static void SE3208_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_INPUT_STATE + SE3208_INT:		set_irq_line(0, info->i);	break;
-		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:		set_irq_line(INPUT_LINE_NMI, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SE3208_INT:		set_irq_line(0, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	set_irq_line(INPUT_LINE_NMI, info->i);	break;
 
 		case CPUINFO_INT_REGISTER + SE3208_PC:
 		case CPUINFO_INT_PC:							Context.PC = info->i;					break;
 		case CPUINFO_INT_REGISTER + SE3208_SP:
 		case CPUINFO_INT_SP:							Context.SP = info->i;    				break;
-		case CPUINFO_INT_REGISTER + SE3208_ER:   			Context.ER = info->i;	   					break;
-		case CPUINFO_INT_REGISTER + SE3208_SR:				Context.SR = info->i;					    break;
-		case CPUINFO_INT_REGISTER + SE3208_R0:				Context.R[ 0] = info->i;					break;
-		case CPUINFO_INT_REGISTER + SE3208_R1:				Context.R[ 1] = info->i;					break;
-		case CPUINFO_INT_REGISTER + SE3208_R2:				Context.R[ 2] = info->i;					break;
-		case CPUINFO_INT_REGISTER + SE3208_R3:				Context.R[ 3] = info->i;					break;
-		case CPUINFO_INT_REGISTER + SE3208_R4:				Context.R[ 4] = info->i;					break;
-		case CPUINFO_INT_REGISTER + SE3208_R5:				Context.R[ 5] = info->i;					break;
-		case CPUINFO_INT_REGISTER + SE3208_R6:				Context.R[ 6] = info->i;					break;
-		case CPUINFO_INT_REGISTER + SE3208_R7:				Context.R[ 7] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SE3208_ER:   		Context.ER = info->i;	   				break;
+		case CPUINFO_INT_REGISTER + SE3208_SR:			Context.SR = info->i;				    break;
+		case CPUINFO_INT_REGISTER + SE3208_R0:			Context.R[ 0] = info->i;				break;
+		case CPUINFO_INT_REGISTER + SE3208_R1:			Context.R[ 1] = info->i;				break;
+		case CPUINFO_INT_REGISTER + SE3208_R2:			Context.R[ 2] = info->i;				break;
+		case CPUINFO_INT_REGISTER + SE3208_R3:			Context.R[ 3] = info->i;				break;
+		case CPUINFO_INT_REGISTER + SE3208_R4:			Context.R[ 4] = info->i;				break;
+		case CPUINFO_INT_REGISTER + SE3208_R5:			Context.R[ 5] = info->i;				break;
+		case CPUINFO_INT_REGISTER + SE3208_R6:			Context.R[ 6] = info->i;				break;
+		case CPUINFO_INT_REGISTER + SE3208_R7:			Context.R[ 7] = info->i;				break;
 	}
 }
 
 
-void SE3208_get_info(UINT32 state, union cpuinfo *info)
+void SE3208_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1876,49 +1876,49 @@ void SE3208_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_INPUT_STATE + SE3208_INT:	info->i = Context.IRQ; break;
-		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = Context.NMI; break;
+		case CPUINFO_INT_INPUT_STATE + SE3208_INT:		info->i = Context.IRQ;					break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = Context.NMI;					break;
 
-		case CPUINFO_INT_PREVIOUSPC:					info->i = Context.PPC;						break;
+		case CPUINFO_INT_PREVIOUSPC:					info->i = Context.PPC;					break;
 
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + SE3208_PC:				info->i = Context.PC;						break;
+		case CPUINFO_INT_REGISTER + SE3208_PC:			info->i = Context.PC;					break;
 		case CPUINFO_INT_REGISTER + SE3208_SP:
-		case CPUINFO_INT_SP:   							info->i = Context.SP;						break;
-		case CPUINFO_INT_REGISTER + SE3208_SR:				info->i = Context.SR;						break;
-		case CPUINFO_INT_REGISTER + SE3208_ER:				info->i = Context.ER;						break;
-		case CPUINFO_INT_REGISTER + SE3208_R0:				info->i = Context.R[ 0];					break;
-		case CPUINFO_INT_REGISTER + SE3208_R1:				info->i = Context.R[ 1];					break;
-		case CPUINFO_INT_REGISTER + SE3208_R2:				info->i = Context.R[ 2];					break;
-		case CPUINFO_INT_REGISTER + SE3208_R3:				info->i = Context.R[ 3];					break;
-		case CPUINFO_INT_REGISTER + SE3208_R4:				info->i = Context.R[ 4];					break;
-		case CPUINFO_INT_REGISTER + SE3208_R5:				info->i = Context.R[ 5];					break;
-		case CPUINFO_INT_REGISTER + SE3208_R6:				info->i = Context.R[ 6];					break;
-		case CPUINFO_INT_REGISTER + SE3208_R7:				info->i = Context.R[ 7];					break;
+		case CPUINFO_INT_SP:   							info->i = Context.SP;					break;
+		case CPUINFO_INT_REGISTER + SE3208_SR:			info->i = Context.SR;					break;
+		case CPUINFO_INT_REGISTER + SE3208_ER:			info->i = Context.ER;					break;
+		case CPUINFO_INT_REGISTER + SE3208_R0:			info->i = Context.R[ 0];				break;
+		case CPUINFO_INT_REGISTER + SE3208_R1:			info->i = Context.R[ 1];				break;
+		case CPUINFO_INT_REGISTER + SE3208_R2:			info->i = Context.R[ 2];				break;
+		case CPUINFO_INT_REGISTER + SE3208_R3:			info->i = Context.R[ 3];				break;
+		case CPUINFO_INT_REGISTER + SE3208_R4:			info->i = Context.R[ 4];				break;
+		case CPUINFO_INT_REGISTER + SE3208_R5:			info->i = Context.R[ 5];				break;
+		case CPUINFO_INT_REGISTER + SE3208_R6:			info->i = Context.R[ 6];				break;
+		case CPUINFO_INT_REGISTER + SE3208_R7:			info->i = Context.R[ 7];				break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_SET_INFO:						info->setinfo = SE3208_set_info;			break;
-		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = SE3208_get_context;		break;
-		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = SE3208_set_context;		break;
-		case CPUINFO_PTR_INIT:							info->init = SE3208_Init;					break;
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = SE3208_set_info;		break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = SE3208_get_context;	break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = SE3208_set_context;	break;
+		case CPUINFO_PTR_INIT:							info->init = SE3208_Init;				break;
 		case CPUINFO_PTR_RESET:							info->reset = SE3208_Reset;				break;
-		case CPUINFO_PTR_EXIT:							info->exit = SE3208_Exit;					break;
+		case CPUINFO_PTR_EXIT:							info->exit = SE3208_Exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = SE3208_Run;				break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 #ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = SE3208_Dasm;		break;
 #endif /* MAME_DEBUG */
-		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &SE3208_ICount;				break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &SE3208_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "SE3208"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Advanced Digital Chips Inc."); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.00"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 2005 ElSemi, all rights reserved."); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "SE3208");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Advanced Digital Chips Inc."); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.00");				break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (c) 2005 ElSemi, all rights reserved."); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c %c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c %c%c%c%c%c",
 					Context.SR&FLAG_C?'C':'.',
 					Context.SR&FLAG_V?'V':'.',
 					Context.SR&FLAG_S?'S':'.',
@@ -1934,19 +1934,19 @@ void SE3208_get_info(UINT32 state, union cpuinfo *info)
 
 			break;
 
-		case CPUINFO_STR_REGISTER + SE3208_PC:				sprintf(info->s = cpuintrf_temp_str(), "PC  :%08X", Context.PC); break;
-		case CPUINFO_STR_REGISTER + SE3208_SR:				sprintf(info->s = cpuintrf_temp_str(), "SR  :%08X", Context.SR); break;
-		case CPUINFO_STR_REGISTER + SE3208_ER:				sprintf(info->s = cpuintrf_temp_str(), "ER  :%08X", Context.ER); break;
-		case CPUINFO_STR_REGISTER + SE3208_SP: 				sprintf(info->s = cpuintrf_temp_str(), "SP  :%08X", Context.SP); break;
-		case CPUINFO_STR_REGISTER + SE3208_R0:				sprintf(info->s = cpuintrf_temp_str(), "R0  :%08X", Context.R[ 0]); break;
-		case CPUINFO_STR_REGISTER + SE3208_R1:				sprintf(info->s = cpuintrf_temp_str(), "R1  :%08X", Context.R[ 1]); break;
-		case CPUINFO_STR_REGISTER + SE3208_R2:				sprintf(info->s = cpuintrf_temp_str(), "R2  :%08X", Context.R[ 2]); break;
-		case CPUINFO_STR_REGISTER + SE3208_R3:				sprintf(info->s = cpuintrf_temp_str(), "R3  :%08X", Context.R[ 3]); break;
-		case CPUINFO_STR_REGISTER + SE3208_R4:				sprintf(info->s = cpuintrf_temp_str(), "R4  :%08X", Context.R[ 4]); break;
-		case CPUINFO_STR_REGISTER + SE3208_R5:				sprintf(info->s = cpuintrf_temp_str(), "R5  :%08X", Context.R[ 5]); break;
-		case CPUINFO_STR_REGISTER + SE3208_R6:				sprintf(info->s = cpuintrf_temp_str(), "R6  :%08X", Context.R[ 6]); break;
-		case CPUINFO_STR_REGISTER + SE3208_R7:				sprintf(info->s = cpuintrf_temp_str(), "R7  :%08X", Context.R[ 7]); break;
-		case CPUINFO_STR_REGISTER + SE3208_PPC:				sprintf(info->s = cpuintrf_temp_str(), "PPC  :%08X", Context.PPC); break;
+		case CPUINFO_STR_REGISTER + SE3208_PC:				sprintf(info->s, "PC  :%08X", Context.PC); break;
+		case CPUINFO_STR_REGISTER + SE3208_SR:				sprintf(info->s, "SR  :%08X", Context.SR); break;
+		case CPUINFO_STR_REGISTER + SE3208_ER:				sprintf(info->s, "ER  :%08X", Context.ER); break;
+		case CPUINFO_STR_REGISTER + SE3208_SP: 				sprintf(info->s, "SP  :%08X", Context.SP); break;
+		case CPUINFO_STR_REGISTER + SE3208_R0:				sprintf(info->s, "R0  :%08X", Context.R[ 0]); break;
+		case CPUINFO_STR_REGISTER + SE3208_R1:				sprintf(info->s, "R1  :%08X", Context.R[ 1]); break;
+		case CPUINFO_STR_REGISTER + SE3208_R2:				sprintf(info->s, "R2  :%08X", Context.R[ 2]); break;
+		case CPUINFO_STR_REGISTER + SE3208_R3:				sprintf(info->s, "R3  :%08X", Context.R[ 3]); break;
+		case CPUINFO_STR_REGISTER + SE3208_R4:				sprintf(info->s, "R4  :%08X", Context.R[ 4]); break;
+		case CPUINFO_STR_REGISTER + SE3208_R5:				sprintf(info->s, "R5  :%08X", Context.R[ 5]); break;
+		case CPUINFO_STR_REGISTER + SE3208_R6:				sprintf(info->s, "R6  :%08X", Context.R[ 6]); break;
+		case CPUINFO_STR_REGISTER + SE3208_R7:				sprintf(info->s, "R7  :%08X", Context.R[ 7]); break;
+		case CPUINFO_STR_REGISTER + SE3208_PPC:				sprintf(info->s, "PPC  :%08X", Context.PPC); break;
 	}
 }
 

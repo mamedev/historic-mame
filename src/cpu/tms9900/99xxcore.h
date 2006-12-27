@@ -4600,7 +4600,7 @@ INLINE void execute(UINT16 opcode)
  * Generic set_info
  **************************************************************************/
 
-static void tms99xx_set_info(UINT32 state, union cpuinfo *info)
+static void tms99xx_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -4681,7 +4681,7 @@ static void tms99xx_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void TMS99XX_GET_INFO(UINT32 state, union cpuinfo *info)
+void TMS99XX_GET_INFO(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -4745,10 +4745,10 @@ void TMS99XX_GET_INFO(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
 /* not implemented */
-/*      case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:      info->i = get_irq_line(INPUT_LINE_NMI); break;
+/*      case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:  info->i = get_irq_line(INPUT_LINE_NMI); break;
         case CPUINFO_INT_INPUT_STATE + 0:               info->i = get_irq_line(0);              break;
         case CPUINFO_INT_INPUT_STATE + 1:               info->i = get_irq_line(1);              break;
-        case CPUINFO_INT_INPUT_STATE + 2:                   info->i = get_irq_line(2);              break;*/
+        case CPUINFO_INT_INPUT_STATE + 2:               info->i = get_irq_line(2);              break;*/
 
 		case CPUINFO_INT_PREVIOUSPC:					/* not implemented */					break;
 
@@ -4818,14 +4818,14 @@ void TMS99XX_GET_INFO(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &TMS99XX_ICOUNT;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), TMS99XX_CPU_NAME); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Texas Instruments 9900"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "2.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "C TMS9900 emulator by Edward Swartz, initially converted for Mame by M.Coates, updated by R. Nabet"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, TMS99XX_CPU_NAME);		break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Texas Instruments 9900"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "2.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "C TMS9900 emulator by Edward Swartz, initially converted for Mame by M.Coates, updated by R. Nabet"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
 				I.WP & 0x8000 ? 'L':'.',
 				I.WP & 0x4000 ? 'A':'.',
 				I.WP & 0x2000 ? 'E':'.',
@@ -4844,26 +4844,26 @@ void TMS99XX_GET_INFO(UINT32 state, union cpuinfo *info)
 				I.WP & 0x0001 ? 'I':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + TMS9900_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC :%04X",  I.PC); break;
-		case CPUINFO_STR_REGISTER + TMS9900_IR:			sprintf(info->s = cpuintrf_temp_str(), "IR :%04X",  I.IR); break;
-		case CPUINFO_STR_REGISTER + TMS9900_WP:			sprintf(info->s = cpuintrf_temp_str(), "WP :%04X",  I.WP); break;
-		case CPUINFO_STR_REGISTER + TMS9900_STATUS:		sprintf(info->s = cpuintrf_temp_str(), "ST :%04X",  I.STATUS); break;
+		case CPUINFO_STR_REGISTER + TMS9900_PC:			sprintf(info->s, "PC :%04X",  I.PC); break;
+		case CPUINFO_STR_REGISTER + TMS9900_IR:			sprintf(info->s, "IR :%04X",  I.IR); break;
+		case CPUINFO_STR_REGISTER + TMS9900_WP:			sprintf(info->s, "WP :%04X",  I.WP); break;
+		case CPUINFO_STR_REGISTER + TMS9900_STATUS:		sprintf(info->s, "ST :%04X",  I.STATUS); break;
 
-		case CPUINFO_STR_REGISTER + TMS9900_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0 :%04X",  READREG_DEBUG(R0)); break;
-		case CPUINFO_STR_REGISTER + TMS9900_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1 :%04X",  READREG_DEBUG(R1)); break;
-		case CPUINFO_STR_REGISTER + TMS9900_R2:			sprintf(info->s = cpuintrf_temp_str(), "R2 :%04X",  READREG_DEBUG(R2)); break;
-		case CPUINFO_STR_REGISTER + TMS9900_R3:			sprintf(info->s = cpuintrf_temp_str(), "R3 :%04X",  READREG_DEBUG(R3)); break;
-		case CPUINFO_STR_REGISTER + TMS9900_R4:			sprintf(info->s = cpuintrf_temp_str(), "R4 :%04X",  READREG_DEBUG(R4)); break;
-		case CPUINFO_STR_REGISTER + TMS9900_R5:			sprintf(info->s = cpuintrf_temp_str(), "R5 :%04X",  READREG_DEBUG(R5)); break;
-		case CPUINFO_STR_REGISTER + TMS9900_R6:			sprintf(info->s = cpuintrf_temp_str(), "R6 :%04X",  READREG_DEBUG(R6)); break;
-		case CPUINFO_STR_REGISTER + TMS9900_R7:			sprintf(info->s = cpuintrf_temp_str(), "R7 :%04X",  READREG_DEBUG(R7)); break;
-		case CPUINFO_STR_REGISTER + TMS9900_R8:			sprintf(info->s = cpuintrf_temp_str(), "R8 :%04X",  READREG_DEBUG(R8)); break;
-		case CPUINFO_STR_REGISTER + TMS9900_R9:			sprintf(info->s = cpuintrf_temp_str(), "R9 :%04X",  READREG_DEBUG(R9)); break;
-		case CPUINFO_STR_REGISTER + TMS9900_R10:		sprintf(info->s = cpuintrf_temp_str(), "R10:%04X",  READREG_DEBUG(R10)); break;
-		case CPUINFO_STR_REGISTER + TMS9900_R11:		sprintf(info->s = cpuintrf_temp_str(), "R11:%04X",  READREG_DEBUG(R11)); break;
-		case CPUINFO_STR_REGISTER + TMS9900_R12:		sprintf(info->s = cpuintrf_temp_str(), "R12:%04X",  READREG_DEBUG(R12)); break;
-		case CPUINFO_STR_REGISTER + TMS9900_R13:		sprintf(info->s = cpuintrf_temp_str(), "R13:%04X",  READREG_DEBUG(R13)); break;
-		case CPUINFO_STR_REGISTER + TMS9900_R14:		sprintf(info->s = cpuintrf_temp_str(), "R14:%04X",  READREG_DEBUG(R14)); break;
-		case CPUINFO_STR_REGISTER + TMS9900_R15:		sprintf(info->s = cpuintrf_temp_str(), "R15:%04X",  READREG_DEBUG(R15)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R0:			sprintf(info->s, "R0 :%04X",  READREG_DEBUG(R0)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R1:			sprintf(info->s, "R1 :%04X",  READREG_DEBUG(R1)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R2:			sprintf(info->s, "R2 :%04X",  READREG_DEBUG(R2)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R3:			sprintf(info->s, "R3 :%04X",  READREG_DEBUG(R3)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R4:			sprintf(info->s, "R4 :%04X",  READREG_DEBUG(R4)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R5:			sprintf(info->s, "R5 :%04X",  READREG_DEBUG(R5)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R6:			sprintf(info->s, "R6 :%04X",  READREG_DEBUG(R6)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R7:			sprintf(info->s, "R7 :%04X",  READREG_DEBUG(R7)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R8:			sprintf(info->s, "R8 :%04X",  READREG_DEBUG(R8)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R9:			sprintf(info->s, "R9 :%04X",  READREG_DEBUG(R9)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R10:		sprintf(info->s, "R10:%04X",  READREG_DEBUG(R10)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R11:		sprintf(info->s, "R11:%04X",  READREG_DEBUG(R11)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R12:		sprintf(info->s, "R12:%04X",  READREG_DEBUG(R12)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R13:		sprintf(info->s, "R13:%04X",  READREG_DEBUG(R13)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R14:		sprintf(info->s, "R14:%04X",  READREG_DEBUG(R14)); break;
+		case CPUINFO_STR_REGISTER + TMS9900_R15:		sprintf(info->s, "R15:%04X",  READREG_DEBUG(R15)); break;
 	}
 }

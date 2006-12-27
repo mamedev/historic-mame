@@ -422,14 +422,14 @@ static int v30_execute(int num_cycles)
  * Generic set_info
  **************************************************************************/
 
-static void i86_set_info(UINT32 state, union cpuinfo *info)
+static void i86_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
 		case CPUINFO_INT_INPUT_STATE + 0:				set_irq_line(0, info->i);				break;
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	set_irq_line(INPUT_LINE_NMI, info->i);	break;
-		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_TEST:	set_test_line(info->i);	break; /* PJB 03/05 */
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_TEST:	set_test_line(info->i);					break; /* PJB 03/05 */
 
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + I86_PC:
@@ -476,7 +476,7 @@ static void i86_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void i86_get_info(UINT32 state, union cpuinfo *info)
+void i86_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -504,7 +504,7 @@ void i86_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + 0:				info->i = I.irq_state;					break;
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = I.nmi_state;					break;
 
-		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_TEST:	info->i = I.test_state;	                                break; /* PJB 03/05 */
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_TEST:	info->i = I.test_state;					break; /* PJB 03/05 */
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = I.prevpc;						break;
 
@@ -513,7 +513,7 @@ void i86_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I86_IP:				info->i = I.pc - I.base[CS];			break;
 		case CPUINFO_INT_SP:							info->i = I.base[SS] + I.regs.w[SP];	break;
 		case CPUINFO_INT_REGISTER + I86_SP:				info->i = I.regs.w[SP];					break;
-		case CPUINFO_INT_REGISTER + I86_FLAGS: 			I.flags = CompressFlags(); info->i = I.flags;		break;
+		case CPUINFO_INT_REGISTER + I86_FLAGS: 			I.flags = CompressFlags(); info->i = I.flags; break;
 		case CPUINFO_INT_REGISTER + I86_AX:				info->i = I.regs.w[AX];					break;
 		case CPUINFO_INT_REGISTER + I86_CX:				info->i = I.regs.w[CX];					break;
 		case CPUINFO_INT_REGISTER + I86_DX:				info->i = I.regs.w[DX];					break;
@@ -542,15 +542,15 @@ void i86_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i86_ICount;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I8086"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Intel 80x86"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.4"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Real mode i286 emulator v1.4 by Fabrice Frances\n(initial work I.based on David Hedley's pcemu)"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "I8086");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Intel 80x86");			break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.4");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Real mode i286 emulator v1.4 by Fabrice Frances\n(initial work I.based on David Hedley's pcemu)"); break;
 
 		case CPUINFO_STR_FLAGS:
 			I.flags = CompressFlags();
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
 					I.flags & 0x8000 ? '?' : '.',
 					I.flags & 0x4000 ? '?' : '.',
 					I.flags & 0x2000 ? '?' : '.',
@@ -569,22 +569,22 @@ void i86_get_info(UINT32 state, union cpuinfo *info)
 					I.flags & 0x0001 ? 'C' : '.');
 			break;
 
-		case CPUINFO_STR_REGISTER + I86_PC: 			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", I.pc); break;
-		case CPUINFO_STR_REGISTER + I86_IP: 			sprintf(info->s = cpuintrf_temp_str(), "IP: %04X", I.pc - I.base[CS]); break;
-		case CPUINFO_STR_REGISTER + I86_SP: 			sprintf(info->s = cpuintrf_temp_str(), "SP: %04X", I.regs.w[SP]);  break;
-		case CPUINFO_STR_REGISTER + I86_FLAGS:			sprintf(info->s = cpuintrf_temp_str(), "F:%04X", I.flags);         break;
-		case CPUINFO_STR_REGISTER + I86_AX: 			sprintf(info->s = cpuintrf_temp_str(), "AX:%04X", I.regs.w[AX]);   break;
-		case CPUINFO_STR_REGISTER + I86_CX: 			sprintf(info->s = cpuintrf_temp_str(), "CX:%04X", I.regs.w[CX]);   break;
-		case CPUINFO_STR_REGISTER + I86_DX: 			sprintf(info->s = cpuintrf_temp_str(), "DX:%04X", I.regs.w[DX]);   break;
-		case CPUINFO_STR_REGISTER + I86_BX: 			sprintf(info->s = cpuintrf_temp_str(), "BX:%04X", I.regs.w[BX]);   break;
-		case CPUINFO_STR_REGISTER + I86_BP: 			sprintf(info->s = cpuintrf_temp_str(), "BP:%04X", I.regs.w[BP]);   break;
-		case CPUINFO_STR_REGISTER + I86_SI: 			sprintf(info->s = cpuintrf_temp_str(), "SI: %04X", I.regs.w[SI]);  break;
-		case CPUINFO_STR_REGISTER + I86_DI: 			sprintf(info->s = cpuintrf_temp_str(), "DI: %04X", I.regs.w[DI]);  break;
-		case CPUINFO_STR_REGISTER + I86_ES: 			sprintf(info->s = cpuintrf_temp_str(), "ES:%04X", I.sregs[ES]);    break;
-		case CPUINFO_STR_REGISTER + I86_CS: 			sprintf(info->s = cpuintrf_temp_str(), "CS:%04X", I.sregs[CS]);    break;
-		case CPUINFO_STR_REGISTER + I86_SS: 			sprintf(info->s = cpuintrf_temp_str(), "SS:%04X", I.sregs[SS]);    break;
-		case CPUINFO_STR_REGISTER + I86_DS: 			sprintf(info->s = cpuintrf_temp_str(), "DS:%04X", I.sregs[DS]);    break;
-		case CPUINFO_STR_REGISTER + I86_VECTOR:		 	sprintf(info->s = cpuintrf_temp_str(), "V:%02X", I.int_vector);    break;
+		case CPUINFO_STR_REGISTER + I86_PC: 			sprintf(info->s, "PC:%04X", I.pc); break;
+		case CPUINFO_STR_REGISTER + I86_IP: 			sprintf(info->s, "IP: %04X", I.pc - I.base[CS]); break;
+		case CPUINFO_STR_REGISTER + I86_SP: 			sprintf(info->s, "SP: %04X", I.regs.w[SP]); break;
+		case CPUINFO_STR_REGISTER + I86_FLAGS:			sprintf(info->s, "F:%04X", I.flags); break;
+		case CPUINFO_STR_REGISTER + I86_AX: 			sprintf(info->s, "AX:%04X", I.regs.w[AX]); break;
+		case CPUINFO_STR_REGISTER + I86_CX: 			sprintf(info->s, "CX:%04X", I.regs.w[CX]); break;
+		case CPUINFO_STR_REGISTER + I86_DX: 			sprintf(info->s, "DX:%04X", I.regs.w[DX]); break;
+		case CPUINFO_STR_REGISTER + I86_BX: 			sprintf(info->s, "BX:%04X", I.regs.w[BX]); break;
+		case CPUINFO_STR_REGISTER + I86_BP: 			sprintf(info->s, "BP:%04X", I.regs.w[BP]); break;
+		case CPUINFO_STR_REGISTER + I86_SI: 			sprintf(info->s, "SI: %04X", I.regs.w[SI]); break;
+		case CPUINFO_STR_REGISTER + I86_DI: 			sprintf(info->s, "DI: %04X", I.regs.w[DI]); break;
+		case CPUINFO_STR_REGISTER + I86_ES: 			sprintf(info->s, "ES:%04X", I.sregs[ES]); break;
+		case CPUINFO_STR_REGISTER + I86_CS: 			sprintf(info->s, "CS:%04X", I.sregs[CS]); break;
+		case CPUINFO_STR_REGISTER + I86_SS: 			sprintf(info->s, "SS:%04X", I.sregs[SS]); break;
+		case CPUINFO_STR_REGISTER + I86_DS: 			sprintf(info->s, "DS:%04X", I.sregs[DS]); break;
+		case CPUINFO_STR_REGISTER + I86_VECTOR:		 	sprintf(info->s, "V:%02X", I.int_vector); break;
 	}
 }
 
@@ -594,16 +594,14 @@ void i86_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific get_info/set_info
  **************************************************************************/
 
-void i88_get_info(UINT32 state, union cpuinfo *info)
+void i88_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I8088"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "I8088");				break;
 
-		default:
-			i86_get_info(state, info);
-			break;
+		default:										i86_get_info(state, info);				break;
 	}
 }
 #endif
@@ -614,7 +612,7 @@ void i88_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific get_info/set_info
  **************************************************************************/
 
-void i186_get_info(UINT32 state, union cpuinfo *info)
+void i186_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -622,11 +620,9 @@ void i186_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = i186_execute;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I80186"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "I80186");				break;
 
-		default:
-			i86_get_info(state, info);
-			break;
+		default:										i86_get_info(state, info);				break;
 	}
 }
 #endif
@@ -637,7 +633,7 @@ void i186_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific get_info/set_info
  **************************************************************************/
 
-void i188_get_info(UINT32 state, union cpuinfo *info)
+void i188_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -645,11 +641,9 @@ void i188_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = i186_execute;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I80188"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "I80188");				break;
 
-		default:
-			i86_get_info(state, info);
-			break;
+		default:										i86_get_info(state, info);				break;
 	}
 }
 #endif
@@ -660,7 +654,7 @@ void i188_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific get_info/set_info
  **************************************************************************/
 
-void v20_get_info(UINT32 state, union cpuinfo *info)
+void v20_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -671,10 +665,10 @@ void v20_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v30_dasm;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V20"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "V20");					break;
 		case CPUINFO_STR_FLAGS:
 			I.flags = CompressFlags();
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
 					I.flags & 0x8000 ? 'M' : '.',
 					I.flags & 0x4000 ? '?' : '.',
 					I.flags & 0x2000 ? '?' : '.',
@@ -706,7 +700,7 @@ void v20_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific get_info/set_info
  **************************************************************************/
 
-void v30_get_info(UINT32 state, union cpuinfo *info)
+void v30_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -716,10 +710,10 @@ void v30_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = v30_execute;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V30"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "V30");					break;
 		case CPUINFO_STR_FLAGS:
 			I.flags = CompressFlags();
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
 					I.flags & 0x8000 ? 'M' : '.',
 					I.flags & 0x4000 ? '?' : '.',
 					I.flags & 0x2000 ? '?' : '.',
@@ -751,7 +745,7 @@ void v30_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific get_info/set_info
  **************************************************************************/
 
-void v33_get_info(UINT32 state, union cpuinfo *info)
+void v33_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -761,10 +755,10 @@ void v33_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = v33_execute;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V33"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "V33");					break;
 		case CPUINFO_STR_FLAGS:
 			I.flags = CompressFlags();
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c",
 					I.flags & 0x8000 ? 'M' : '.',
 					I.flags & 0x4000 ? '?' : '.',
 					I.flags & 0x2000 ? '?' : '.',

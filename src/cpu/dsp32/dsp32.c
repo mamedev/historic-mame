@@ -707,7 +707,7 @@ int dsp32c_pio_r(int cpunum, int reg)
  * Generic set_info
  **************************************************************************/
 
-static void dsp32c_set_info(UINT32 state, union cpuinfo *info)
+static void dsp32c_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -778,7 +778,7 @@ static void dsp32c_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void dsp32c_get_info(UINT32 state, union cpuinfo *info)
+void dsp32c_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -878,14 +878,14 @@ void dsp32c_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &dsp32_icount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "DSP32C"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Lucent DSP32"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Aaron Giles"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "DSP32C");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Lucent DSP32");		break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Aaron Giles");			break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				NFLAG ? 'N':'.',
 				ZFLAG ? 'Z':'.',
                 UFLAG ? 'U':'.',
@@ -897,56 +897,56 @@ void dsp32c_get_info(UINT32 state, union cpuinfo *info)
             break;
 
 		/* CAU */
-		case CPUINFO_STR_REGISTER + DSP32_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC: %06X", dsp32.PC); break;
-		case CPUINFO_STR_REGISTER + DSP32_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0: %06X", dsp32.R0); break;
-		case CPUINFO_STR_REGISTER + DSP32_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1: %06X", dsp32.R1); break;
-		case CPUINFO_STR_REGISTER + DSP32_R2:			sprintf(info->s = cpuintrf_temp_str(), "R2: %06X", dsp32.R2); break;
-		case CPUINFO_STR_REGISTER + DSP32_R3:			sprintf(info->s = cpuintrf_temp_str(), "R3: %06X", dsp32.R3); break;
-		case CPUINFO_STR_REGISTER + DSP32_R4:			sprintf(info->s = cpuintrf_temp_str(), "R4: %06X", dsp32.R4); break;
-		case CPUINFO_STR_REGISTER + DSP32_R5:			sprintf(info->s = cpuintrf_temp_str(), "R5: %06X", dsp32.R5); break;
-		case CPUINFO_STR_REGISTER + DSP32_R6:			sprintf(info->s = cpuintrf_temp_str(), "R6: %06X", dsp32.R6); break;
-		case CPUINFO_STR_REGISTER + DSP32_R7:			sprintf(info->s = cpuintrf_temp_str(), "R7: %06X", dsp32.R7); break;
-		case CPUINFO_STR_REGISTER + DSP32_R8:			sprintf(info->s = cpuintrf_temp_str(), "R8: %06X", dsp32.R8); break;
-		case CPUINFO_STR_REGISTER + DSP32_R9:			sprintf(info->s = cpuintrf_temp_str(), "R9: %06X", dsp32.R9); break;
-		case CPUINFO_STR_REGISTER + DSP32_R10:			sprintf(info->s = cpuintrf_temp_str(), "R10:%06X", dsp32.R10); break;
-		case CPUINFO_STR_REGISTER + DSP32_R11:			sprintf(info->s = cpuintrf_temp_str(), "R11:%06X", dsp32.R11); break;
-		case CPUINFO_STR_REGISTER + DSP32_R12:			sprintf(info->s = cpuintrf_temp_str(), "R12:%06X", dsp32.R12); break;
-		case CPUINFO_STR_REGISTER + DSP32_R13:			sprintf(info->s = cpuintrf_temp_str(), "R13:%06X", dsp32.R13); break;
-		case CPUINFO_STR_REGISTER + DSP32_R14:			sprintf(info->s = cpuintrf_temp_str(), "R14:%06X", dsp32.R14); break;
-		case CPUINFO_STR_REGISTER + DSP32_R15:			sprintf(info->s = cpuintrf_temp_str(), "R15:%06X", dsp32.R15); break;
-		case CPUINFO_STR_REGISTER + DSP32_R16:			sprintf(info->s = cpuintrf_temp_str(), "R16:%06X", dsp32.R16); break;
-		case CPUINFO_STR_REGISTER + DSP32_R17:			sprintf(info->s = cpuintrf_temp_str(), "R17:%06X", dsp32.R17); break;
-		case CPUINFO_STR_REGISTER + DSP32_R18:			sprintf(info->s = cpuintrf_temp_str(), "R18:%06X", dsp32.R18); break;
-		case CPUINFO_STR_REGISTER + DSP32_R19:			sprintf(info->s = cpuintrf_temp_str(), "R19:%06X", dsp32.R19); break;
-		case CPUINFO_STR_REGISTER + DSP32_R20:			sprintf(info->s = cpuintrf_temp_str(), "R20:%06X", dsp32.R20); break;
-		case CPUINFO_STR_REGISTER + DSP32_R21:			sprintf(info->s = cpuintrf_temp_str(), "R21:%06X", dsp32.R21); break;
-		case CPUINFO_STR_REGISTER + DSP32_R22:			sprintf(info->s = cpuintrf_temp_str(), "R22:%06X", dsp32.R22); break;
-		case CPUINFO_STR_REGISTER + DSP32_PIN:			sprintf(info->s = cpuintrf_temp_str(), "PIN:%06X", dsp32.pin); break;
-		case CPUINFO_STR_REGISTER + DSP32_POUT:			sprintf(info->s = cpuintrf_temp_str(), "POUT:%06X", dsp32.pout); break;
-		case CPUINFO_STR_REGISTER + DSP32_IVTP:			sprintf(info->s = cpuintrf_temp_str(), "IVTP:%06X", dsp32.ivtp); break;
+		case CPUINFO_STR_REGISTER + DSP32_PC:			sprintf(info->s, "PC: %06X", dsp32.PC); break;
+		case CPUINFO_STR_REGISTER + DSP32_R0:			sprintf(info->s, "R0: %06X", dsp32.R0); break;
+		case CPUINFO_STR_REGISTER + DSP32_R1:			sprintf(info->s, "R1: %06X", dsp32.R1); break;
+		case CPUINFO_STR_REGISTER + DSP32_R2:			sprintf(info->s, "R2: %06X", dsp32.R2); break;
+		case CPUINFO_STR_REGISTER + DSP32_R3:			sprintf(info->s, "R3: %06X", dsp32.R3); break;
+		case CPUINFO_STR_REGISTER + DSP32_R4:			sprintf(info->s, "R4: %06X", dsp32.R4); break;
+		case CPUINFO_STR_REGISTER + DSP32_R5:			sprintf(info->s, "R5: %06X", dsp32.R5); break;
+		case CPUINFO_STR_REGISTER + DSP32_R6:			sprintf(info->s, "R6: %06X", dsp32.R6); break;
+		case CPUINFO_STR_REGISTER + DSP32_R7:			sprintf(info->s, "R7: %06X", dsp32.R7); break;
+		case CPUINFO_STR_REGISTER + DSP32_R8:			sprintf(info->s, "R8: %06X", dsp32.R8); break;
+		case CPUINFO_STR_REGISTER + DSP32_R9:			sprintf(info->s, "R9: %06X", dsp32.R9); break;
+		case CPUINFO_STR_REGISTER + DSP32_R10:			sprintf(info->s, "R10:%06X", dsp32.R10); break;
+		case CPUINFO_STR_REGISTER + DSP32_R11:			sprintf(info->s, "R11:%06X", dsp32.R11); break;
+		case CPUINFO_STR_REGISTER + DSP32_R12:			sprintf(info->s, "R12:%06X", dsp32.R12); break;
+		case CPUINFO_STR_REGISTER + DSP32_R13:			sprintf(info->s, "R13:%06X", dsp32.R13); break;
+		case CPUINFO_STR_REGISTER + DSP32_R14:			sprintf(info->s, "R14:%06X", dsp32.R14); break;
+		case CPUINFO_STR_REGISTER + DSP32_R15:			sprintf(info->s, "R15:%06X", dsp32.R15); break;
+		case CPUINFO_STR_REGISTER + DSP32_R16:			sprintf(info->s, "R16:%06X", dsp32.R16); break;
+		case CPUINFO_STR_REGISTER + DSP32_R17:			sprintf(info->s, "R17:%06X", dsp32.R17); break;
+		case CPUINFO_STR_REGISTER + DSP32_R18:			sprintf(info->s, "R18:%06X", dsp32.R18); break;
+		case CPUINFO_STR_REGISTER + DSP32_R19:			sprintf(info->s, "R19:%06X", dsp32.R19); break;
+		case CPUINFO_STR_REGISTER + DSP32_R20:			sprintf(info->s, "R20:%06X", dsp32.R20); break;
+		case CPUINFO_STR_REGISTER + DSP32_R21:			sprintf(info->s, "R21:%06X", dsp32.R21); break;
+		case CPUINFO_STR_REGISTER + DSP32_R22:			sprintf(info->s, "R22:%06X", dsp32.R22); break;
+		case CPUINFO_STR_REGISTER + DSP32_PIN:			sprintf(info->s, "PIN:%06X", dsp32.pin); break;
+		case CPUINFO_STR_REGISTER + DSP32_POUT:			sprintf(info->s, "POUT:%06X", dsp32.pout); break;
+		case CPUINFO_STR_REGISTER + DSP32_IVTP:			sprintf(info->s, "IVTP:%06X", dsp32.ivtp); break;
 
 		/* DAU */
-		case CPUINFO_STR_REGISTER + DSP32_A0:			sprintf(info->s = cpuintrf_temp_str(), "A0:%8g", dsp32.A0); break;
-		case CPUINFO_STR_REGISTER + DSP32_A1:			sprintf(info->s = cpuintrf_temp_str(), "A1:%8g", dsp32.A1); break;
-		case CPUINFO_STR_REGISTER + DSP32_A2:			sprintf(info->s = cpuintrf_temp_str(), "A2:%8g", dsp32.A2); break;
-		case CPUINFO_STR_REGISTER + DSP32_A3:			sprintf(info->s = cpuintrf_temp_str(), "A3:%8g", dsp32.A3); break;
-		case CPUINFO_STR_REGISTER + DSP32_DAUC:			sprintf(info->s = cpuintrf_temp_str(), "DAUC:%02X", dsp32.DAUC); break;
+		case CPUINFO_STR_REGISTER + DSP32_A0:			sprintf(info->s, "A0:%8g", dsp32.A0); break;
+		case CPUINFO_STR_REGISTER + DSP32_A1:			sprintf(info->s, "A1:%8g", dsp32.A1); break;
+		case CPUINFO_STR_REGISTER + DSP32_A2:			sprintf(info->s, "A2:%8g", dsp32.A2); break;
+		case CPUINFO_STR_REGISTER + DSP32_A3:			sprintf(info->s, "A3:%8g", dsp32.A3); break;
+		case CPUINFO_STR_REGISTER + DSP32_DAUC:			sprintf(info->s, "DAUC:%02X", dsp32.DAUC); break;
 
 		/* PIO */
-		case CPUINFO_STR_REGISTER + DSP32_PAR:			sprintf(info->s = cpuintrf_temp_str(), "PAR:%08X", dsp32.par); break;
-		case CPUINFO_STR_REGISTER + DSP32_PDR:			sprintf(info->s = cpuintrf_temp_str(), "PDR:%08X", dsp32.pdr); break;
-		case CPUINFO_STR_REGISTER + DSP32_PIR:			sprintf(info->s = cpuintrf_temp_str(), "PIR:%04X", dsp32.pir); break;
-		case CPUINFO_STR_REGISTER + DSP32_PCR:			sprintf(info->s = cpuintrf_temp_str(), "PCR:%03X", dsp32.pcr); break;
-		case CPUINFO_STR_REGISTER + DSP32_EMR:			sprintf(info->s = cpuintrf_temp_str(), "EMR:%04X", dsp32.emr); break;
-		case CPUINFO_STR_REGISTER + DSP32_ESR:			sprintf(info->s = cpuintrf_temp_str(), "ESR:%02X", dsp32.esr); break;
-		case CPUINFO_STR_REGISTER + DSP32_PCW:			sprintf(info->s = cpuintrf_temp_str(), "PCW:%04X", dsp32.pcw); break;
-		case CPUINFO_STR_REGISTER + DSP32_PIOP:			sprintf(info->s = cpuintrf_temp_str(), "PIOP:%02X", dsp32.piop); break;
+		case CPUINFO_STR_REGISTER + DSP32_PAR:			sprintf(info->s, "PAR:%08X", dsp32.par); break;
+		case CPUINFO_STR_REGISTER + DSP32_PDR:			sprintf(info->s, "PDR:%08X", dsp32.pdr); break;
+		case CPUINFO_STR_REGISTER + DSP32_PIR:			sprintf(info->s, "PIR:%04X", dsp32.pir); break;
+		case CPUINFO_STR_REGISTER + DSP32_PCR:			sprintf(info->s, "PCR:%03X", dsp32.pcr); break;
+		case CPUINFO_STR_REGISTER + DSP32_EMR:			sprintf(info->s, "EMR:%04X", dsp32.emr); break;
+		case CPUINFO_STR_REGISTER + DSP32_ESR:			sprintf(info->s, "ESR:%02X", dsp32.esr); break;
+		case CPUINFO_STR_REGISTER + DSP32_PCW:			sprintf(info->s, "PCW:%04X", dsp32.pcw); break;
+		case CPUINFO_STR_REGISTER + DSP32_PIOP:			sprintf(info->s, "PIOP:%02X", dsp32.piop); break;
 
 		/* SIO */
-		case CPUINFO_STR_REGISTER + DSP32_IBUF:			sprintf(info->s = cpuintrf_temp_str(), "IBUF:%08X", dsp32.ibuf); break;
-		case CPUINFO_STR_REGISTER + DSP32_ISR:			sprintf(info->s = cpuintrf_temp_str(), "ISR:%08X", dsp32.isr); break;
-		case CPUINFO_STR_REGISTER + DSP32_OBUF:			sprintf(info->s = cpuintrf_temp_str(), "OBUF:%08X", dsp32.obuf); break;
-		case CPUINFO_STR_REGISTER + DSP32_OSR:			sprintf(info->s = cpuintrf_temp_str(), "OSR:%08X", dsp32.osr); break;
-		case CPUINFO_STR_REGISTER + DSP32_IOC:			sprintf(info->s = cpuintrf_temp_str(), "IOC:%05X", dsp32.IOC); break;
+		case CPUINFO_STR_REGISTER + DSP32_IBUF:			sprintf(info->s, "IBUF:%08X", dsp32.ibuf); break;
+		case CPUINFO_STR_REGISTER + DSP32_ISR:			sprintf(info->s, "ISR:%08X", dsp32.isr); break;
+		case CPUINFO_STR_REGISTER + DSP32_OBUF:			sprintf(info->s, "OBUF:%08X", dsp32.obuf); break;
+		case CPUINFO_STR_REGISTER + DSP32_OSR:			sprintf(info->s, "OSR:%08X", dsp32.osr); break;
+		case CPUINFO_STR_REGISTER + DSP32_IOC:			sprintf(info->s, "IOC:%05X", dsp32.IOC); break;
 	}
 }

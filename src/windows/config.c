@@ -534,23 +534,24 @@ static void execute_commands(const char *argv0)
 	if (options_get_bool("createconfig"))
 	{
 		char basename[128];
-		FILE *file;
+		mame_file *file;
+		mame_file_error filerr;
 
 		// make the base name
 		extract_base_name(argv0, basename, ARRAY_LENGTH(basename) - 5);
 		strcat(basename, ".ini");
-		file = fopen(basename, "w");
+		filerr = mame_fopen(NULL, basename, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);
 
 		// error if unable to create the file
-		if (file == NULL)
+		if (filerr)
 		{
 			fprintf(stderr, "Unable to create file %s\n", basename);
 			exit(1);
 		}
 
 		// output the configuration and exit cleanly
-		options_output_ini_file(file);
-		fclose(file);
+		options_output_ini_mame_file(file);
+		mame_fclose(file);
 		exit(0);
 	}
 

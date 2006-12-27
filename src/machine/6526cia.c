@@ -694,9 +694,18 @@ void cia_write(int which, offs_t offset, UINT8 data)
 			timer = &cia->timer[(offset >> 1) & 1];
 			timer->latch = (timer->latch & 0x00ff) | (data << 8);
 
-			/* if the timer is off, update the count */
-			if (!(timer->mode & 0x01))
+			/* if the timer is one-shot, then force a start on it */
+			if (timer->mode & 0x08)
+			{
+				timer->mode |= 1;
 				cia_timer_update(timer, timer->latch);
+			}
+			else
+			{
+				/* if the timer is off, update the count */
+				if (!(timer->mode & 0x01))
+					cia_timer_update(timer, timer->latch);
+			}
 			break;
 
 		/* time of day latches */

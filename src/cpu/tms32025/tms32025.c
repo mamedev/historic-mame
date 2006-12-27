@@ -2255,7 +2255,7 @@ static int tms32025_write(int space, UINT32 offset, int size, UINT64 value)
  * Generic set_info
  **************************************************************************/
 
-static void tms32025_set_info(UINT32 state, union cpuinfo *info)
+static void tms32025_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -2309,13 +2309,13 @@ static void tms32025_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void tms32025_get_info(UINT32 state, union cpuinfo *info)
+void tms32025_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(R);					break;
-		case CPUINFO_INT_INPUT_LINES:						info->i = 6;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 6;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -2395,14 +2395,14 @@ void tms32025_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms32025_icount;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "TMS32025"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Texas Instruments TMS320x25"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.10"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2001 by Tony La Porta"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "TMS32025");			break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Texas Instruments TMS320x25"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.10");				break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C) 2001 by Tony La Porta"); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "arp%d%c%c%c%cdp%03x  arb%d%c%c%c%c%c%c%c%c%c%c%cpm%d",
+			sprintf(info->s, "arp%d%c%c%c%cdp%03x  arb%d%c%c%c%c%c%c%c%c%c%c%cpm%d",
 				(R.STR0 & 0xe000) >> 13,
 				R.STR0 & 0x1000 ? 'O':'.',
 				R.STR0 & 0x0800 ? 'M':'.',
@@ -2425,36 +2425,36 @@ void tms32025_get_info(UINT32 state, union cpuinfo *info)
 				(R.STR1 & 0x0003) );
 			break;
 
-		case CPUINFO_STR_REGISTER + TMS32025_PC:		sprintf(info->s = cpuintrf_temp_str(), "PC:%04X",  R.PC); break;
-		case CPUINFO_STR_REGISTER + TMS32025_STR0:		sprintf(info->s = cpuintrf_temp_str(), "STR0:%04X", R.STR0); break;
-		case CPUINFO_STR_REGISTER + TMS32025_STR1:		sprintf(info->s = cpuintrf_temp_str(), "STR1:%04X", R.STR1); break;
-		case CPUINFO_STR_REGISTER + TMS32025_IFR:		sprintf(info->s = cpuintrf_temp_str(), "IFR:%04X", R.IFR); break;
-		case CPUINFO_STR_REGISTER + TMS32025_RPTC:		sprintf(info->s = cpuintrf_temp_str(), "RPTC:%02X", R.RPTC); break;
-		case CPUINFO_STR_REGISTER + TMS32025_STK7:		sprintf(info->s = cpuintrf_temp_str(), "STK7:%04X", R.STACK[7]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_STK6:		sprintf(info->s = cpuintrf_temp_str(), "STK6:%04X", R.STACK[6]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_STK5:		sprintf(info->s = cpuintrf_temp_str(), "STK5:%04X", R.STACK[5]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_STK4:		sprintf(info->s = cpuintrf_temp_str(), "STK4:%04X", R.STACK[4]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_STK3:		sprintf(info->s = cpuintrf_temp_str(), "STK3:%04X", R.STACK[3]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_STK2:		sprintf(info->s = cpuintrf_temp_str(), "STK2:%04X", R.STACK[2]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_STK1:		sprintf(info->s = cpuintrf_temp_str(), "STK1:%04X", R.STACK[1]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_STK0:		sprintf(info->s = cpuintrf_temp_str(), "STK0:%04X", R.STACK[0]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_ACC:		sprintf(info->s = cpuintrf_temp_str(), "ACC:%08X", R.ACC.d); break;
-		case CPUINFO_STR_REGISTER + TMS32025_PREG:		sprintf(info->s = cpuintrf_temp_str(), "P:%08X", R.Preg.d); break;
-		case CPUINFO_STR_REGISTER + TMS32025_TREG:		sprintf(info->s = cpuintrf_temp_str(), "T:%04X", R.Treg); break;
-		case CPUINFO_STR_REGISTER + TMS32025_AR0:		sprintf(info->s = cpuintrf_temp_str(), "AR0:%04X", R.AR[0]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_AR1:		sprintf(info->s = cpuintrf_temp_str(), "AR1:%04X", R.AR[1]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_AR2:		sprintf(info->s = cpuintrf_temp_str(), "AR2:%04X", R.AR[2]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_AR3:		sprintf(info->s = cpuintrf_temp_str(), "AR3:%04X", R.AR[3]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_AR4:		sprintf(info->s = cpuintrf_temp_str(), "AR4:%04X", R.AR[4]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_AR5:		sprintf(info->s = cpuintrf_temp_str(), "AR5:%04X", R.AR[5]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_AR6:		sprintf(info->s = cpuintrf_temp_str(), "AR6:%04X", R.AR[6]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_AR7:		sprintf(info->s = cpuintrf_temp_str(), "AR7:%04X", R.AR[7]); break;
-		case CPUINFO_STR_REGISTER + TMS32025_DRR:		sprintf(info->s = cpuintrf_temp_str(), "DRR:%04X", M_RDRAM(0)); break;
-		case CPUINFO_STR_REGISTER + TMS32025_DXR:		sprintf(info->s = cpuintrf_temp_str(), "DXR:%04X", M_RDRAM(1)); break;
-		case CPUINFO_STR_REGISTER + TMS32025_TIM:		sprintf(info->s = cpuintrf_temp_str(), "TIM:%04X", M_RDRAM(2)); break;
-		case CPUINFO_STR_REGISTER + TMS32025_PRD:		sprintf(info->s = cpuintrf_temp_str(), "PRD:%04X", M_RDRAM(3)); break;
-		case CPUINFO_STR_REGISTER + TMS32025_IMR:		sprintf(info->s = cpuintrf_temp_str(), "IMR:%04X", M_RDRAM(4)); break;
-		case CPUINFO_STR_REGISTER + TMS32025_GREG:		sprintf(info->s = cpuintrf_temp_str(), "GREG:%04X", M_RDRAM(5)); break;
+		case CPUINFO_STR_REGISTER + TMS32025_PC:		sprintf(info->s, "PC:%04X",  R.PC); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STR0:		sprintf(info->s, "STR0:%04X", R.STR0); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STR1:		sprintf(info->s, "STR1:%04X", R.STR1); break;
+		case CPUINFO_STR_REGISTER + TMS32025_IFR:		sprintf(info->s, "IFR:%04X", R.IFR); break;
+		case CPUINFO_STR_REGISTER + TMS32025_RPTC:		sprintf(info->s, "RPTC:%02X", R.RPTC); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK7:		sprintf(info->s, "STK7:%04X", R.STACK[7]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK6:		sprintf(info->s, "STK6:%04X", R.STACK[6]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK5:		sprintf(info->s, "STK5:%04X", R.STACK[5]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK4:		sprintf(info->s, "STK4:%04X", R.STACK[4]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK3:		sprintf(info->s, "STK3:%04X", R.STACK[3]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK2:		sprintf(info->s, "STK2:%04X", R.STACK[2]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK1:		sprintf(info->s, "STK1:%04X", R.STACK[1]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_STK0:		sprintf(info->s, "STK0:%04X", R.STACK[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_ACC:		sprintf(info->s, "ACC:%08X", R.ACC.d); break;
+		case CPUINFO_STR_REGISTER + TMS32025_PREG:		sprintf(info->s, "P:%08X", R.Preg.d); break;
+		case CPUINFO_STR_REGISTER + TMS32025_TREG:		sprintf(info->s, "T:%04X", R.Treg); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR0:		sprintf(info->s, "AR0:%04X", R.AR[0]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR1:		sprintf(info->s, "AR1:%04X", R.AR[1]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR2:		sprintf(info->s, "AR2:%04X", R.AR[2]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR3:		sprintf(info->s, "AR3:%04X", R.AR[3]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR4:		sprintf(info->s, "AR4:%04X", R.AR[4]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR5:		sprintf(info->s, "AR5:%04X", R.AR[5]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR6:		sprintf(info->s, "AR6:%04X", R.AR[6]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_AR7:		sprintf(info->s, "AR7:%04X", R.AR[7]); break;
+		case CPUINFO_STR_REGISTER + TMS32025_DRR:		sprintf(info->s, "DRR:%04X", M_RDRAM(0)); break;
+		case CPUINFO_STR_REGISTER + TMS32025_DXR:		sprintf(info->s, "DXR:%04X", M_RDRAM(1)); break;
+		case CPUINFO_STR_REGISTER + TMS32025_TIM:		sprintf(info->s, "TIM:%04X", M_RDRAM(2)); break;
+		case CPUINFO_STR_REGISTER + TMS32025_PRD:		sprintf(info->s, "PRD:%04X", M_RDRAM(3)); break;
+		case CPUINFO_STR_REGISTER + TMS32025_IMR:		sprintf(info->s, "IMR:%04X", M_RDRAM(4)); break;
+		case CPUINFO_STR_REGISTER + TMS32025_GREG:		sprintf(info->s, "GREG:%04X", M_RDRAM(5)); break;
 	}
 }
 
@@ -2464,7 +2464,7 @@ void tms32025_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void tms32026_get_info(UINT32 _state, union cpuinfo *info)
+void tms32026_get_info(UINT32 _state, cpuinfo *info)
 {
 	switch (_state)
 	{
@@ -2472,11 +2472,9 @@ void tms32026_get_info(UINT32 _state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = tms32026_reset;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "TMS32026"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "TMS32026");			break;
 
-		default:
-			tms32025_get_info(_state, info);
-			break;
+		default:										tms32025_get_info(_state, info);		break;
 	}
 }
 #endif

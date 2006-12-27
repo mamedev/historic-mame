@@ -779,6 +779,21 @@ READ8_HANDLER( namcos1_cus30_r )
 	return namco_wavedata[offset];
 }
 
+WRITE8_HANDLER( _20pacgal_wavedata_w )
+{
+	struct namco_sound *chip = sndti_token(SOUND_NAMCO, 0);
+
+	if (namco_wavedata[offset] != data)
+	{
+		/* update the streams */
+		stream_update(chip->stream);
+
+		namco_wavedata[offset] = data;
+
+		/* update the decoded waveform table */
+		update_namco_waveform(chip, offset, data);
+	}
+}
 
 /********************************************************************************/
 

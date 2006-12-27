@@ -27,7 +27,7 @@ enum
 	CPUINFO_PTR_Z80_CYCLE_TABLE_LAST = CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_ex
 };
 
-extern void z80_get_info(UINT32 state, union cpuinfo *info);
+extern void z80_get_info(UINT32 state, cpuinfo *info);
 
 #ifdef MAME_DEBUG
 extern unsigned z80_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);

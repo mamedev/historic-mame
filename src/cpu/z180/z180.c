@@ -772,7 +772,7 @@ static void z180_writecontrol(offs_t port, UINT8 data);
 static void z180_dma0(void);
 static void z180_dma1(void);
 static void z180_burn(int cycles);
-static void z180_set_info(UINT32 state, union cpuinfo *info);
+static void z180_set_info(UINT32 state, cpuinfo *info);
 
 #include "z180daa.h"
 #include "z180ops.h"
@@ -2122,7 +2122,7 @@ READ8_HANDLER( z180_internal_r )
 
 WRITE8_HANDLER( z180_internal_w )
 {
-	union cpuinfo info;
+	cpuinfo info;
 	info.i = data;
 	z180_set_info( CPUINFO_INT_REGISTER + Z180_CNTLA0 + (offset & 0x3f), &info );
 }
@@ -2177,7 +2177,7 @@ static void set_irq_line(int irqline, int state)
  * Generic set_info
  **************************************************************************/
 
-static void z180_set_info(UINT32 state, union cpuinfo *info)
+static void z180_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -2292,7 +2292,7 @@ static void z180_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void z180_get_info(UINT32 state, union cpuinfo *info)
+void z180_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -2431,14 +2431,14 @@ void z180_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_ex: info->p = cc[Z180_TABLE_ex];			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "Z180"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "Zilog Z8x180"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "0.2"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2000 Juergen Buchmueller, all rights reserved."); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "Z180");				break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "Zilog Z8x180");		break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "0.2");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C) 2000 Juergen Buchmueller, all rights reserved."); break;
 
 		case CPUINFO_STR_FLAGS:
-			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
+			sprintf(info->s, "%c%c%c%c%c%c%c%c",
 				Z180.AF.b.l & 0x80 ? 'S':'.',
 				Z180.AF.b.l & 0x40 ? 'Z':'.',
 				Z180.AF.b.l & 0x20 ? '5':'.',
@@ -2449,31 +2449,31 @@ void z180_get_info(UINT32 state, union cpuinfo *info)
 				Z180.AF.b.l & 0x01 ? 'C':'.');
 			break;
 
-		case CPUINFO_STR_REGISTER + Z180_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC:%04X", Z180.PC.w.l); break;
-		case CPUINFO_STR_REGISTER + Z180_SP:			sprintf(info->s = cpuintrf_temp_str(), "SP:%04X", Z180.SP.w.l); break;
-		case CPUINFO_STR_REGISTER + Z180_AF:			sprintf(info->s = cpuintrf_temp_str(), "AF:%04X", Z180.AF.w.l); break;
-		case CPUINFO_STR_REGISTER + Z180_BC:			sprintf(info->s = cpuintrf_temp_str(), "BC:%04X", Z180.BC.w.l); break;
-		case CPUINFO_STR_REGISTER + Z180_DE:			sprintf(info->s = cpuintrf_temp_str(), "DE:%04X", Z180.DE.w.l); break;
-		case CPUINFO_STR_REGISTER + Z180_HL:			sprintf(info->s = cpuintrf_temp_str(), "HL:%04X", Z180.HL.w.l); break;
-		case CPUINFO_STR_REGISTER + Z180_IX:			sprintf(info->s = cpuintrf_temp_str(), "IX:%04X", Z180.IX.w.l); break;
-		case CPUINFO_STR_REGISTER + Z180_IY:			sprintf(info->s = cpuintrf_temp_str(), "IY:%04X", Z180.IY.w.l); break;
-		case CPUINFO_STR_REGISTER + Z180_R: 			sprintf(info->s = cpuintrf_temp_str(), "R   :%02X", (Z180.R & 0x7f) | (Z180.R2 & 0x80)); break;
-		case CPUINFO_STR_REGISTER + Z180_I: 			sprintf(info->s = cpuintrf_temp_str(), "I   :%02X", Z180.I); break;
-		case CPUINFO_STR_REGISTER + Z180_IL:			sprintf(info->s = cpuintrf_temp_str(), "IL  :%02X", Z180.io[Z180_IL-Z180_CNTLA0]); break;
-		case CPUINFO_STR_REGISTER + Z180_AF2:			sprintf(info->s = cpuintrf_temp_str(), "AF2:%04X", Z180.AF2.w.l); break;
-		case CPUINFO_STR_REGISTER + Z180_BC2:			sprintf(info->s = cpuintrf_temp_str(), "BC2:%04X", Z180.BC2.w.l); break;
-		case CPUINFO_STR_REGISTER + Z180_DE2:			sprintf(info->s = cpuintrf_temp_str(), "DE2:%04X", Z180.DE2.w.l); break;
-		case CPUINFO_STR_REGISTER + Z180_HL2:			sprintf(info->s = cpuintrf_temp_str(), "HL2:%04X", Z180.HL2.w.l); break;
-		case CPUINFO_STR_REGISTER + Z180_IM:			sprintf(info->s = cpuintrf_temp_str(), "IM  :%X", Z180.IM); break;
-		case CPUINFO_STR_REGISTER + Z180_IFF1:			sprintf(info->s = cpuintrf_temp_str(), "IFF1:%X", Z180.IFF1); break;
-		case CPUINFO_STR_REGISTER + Z180_IFF2:			sprintf(info->s = cpuintrf_temp_str(), "IFF2:%X", Z180.IFF2); break;
-		case CPUINFO_STR_REGISTER + Z180_HALT:			sprintf(info->s = cpuintrf_temp_str(), "HALT:%X", Z180.HALT); break;
-		case CPUINFO_STR_REGISTER + Z180_CCR: 			sprintf(info->s = cpuintrf_temp_str(), "CCR :%02X", Z180.io[Z180_CCR-Z180_CNTLA0]); break;
-		case CPUINFO_STR_REGISTER + Z180_ITC: 			sprintf(info->s = cpuintrf_temp_str(), "ITC :%02X", Z180.io[Z180_ITC-Z180_CNTLA0]); break;
-		case CPUINFO_STR_REGISTER + Z180_CBR: 			sprintf(info->s = cpuintrf_temp_str(), "CBR :%02X", Z180.io[Z180_CBR-Z180_CNTLA0]); break;
-		case CPUINFO_STR_REGISTER + Z180_BBR: 			sprintf(info->s = cpuintrf_temp_str(), "BBR :%02X", Z180.io[Z180_BBR-Z180_CNTLA0]); break;
-		case CPUINFO_STR_REGISTER + Z180_CBAR:			sprintf(info->s = cpuintrf_temp_str(), "CBAR:%02X", Z180.io[Z180_CBAR-Z180_CNTLA0]); break;
-		case CPUINFO_STR_REGISTER + Z180_OMCR:			sprintf(info->s = cpuintrf_temp_str(), "OMCR:%02X", Z180.io[Z180_OMCR-Z180_CNTLA0]); break;
-		case CPUINFO_STR_REGISTER + Z180_IOCR:			sprintf(info->s = cpuintrf_temp_str(), "IOCR:%02X", Z180.io[Z180_IOCR-Z180_CNTLA0]); break;
+		case CPUINFO_STR_REGISTER + Z180_PC:			sprintf(info->s, "PC:%04X", Z180.PC.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_SP:			sprintf(info->s, "SP:%04X", Z180.SP.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_AF:			sprintf(info->s, "AF:%04X", Z180.AF.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_BC:			sprintf(info->s, "BC:%04X", Z180.BC.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_DE:			sprintf(info->s, "DE:%04X", Z180.DE.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_HL:			sprintf(info->s, "HL:%04X", Z180.HL.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_IX:			sprintf(info->s, "IX:%04X", Z180.IX.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_IY:			sprintf(info->s, "IY:%04X", Z180.IY.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_R: 			sprintf(info->s, "R   :%02X", (Z180.R & 0x7f) | (Z180.R2 & 0x80)); break;
+		case CPUINFO_STR_REGISTER + Z180_I: 			sprintf(info->s, "I   :%02X", Z180.I); break;
+		case CPUINFO_STR_REGISTER + Z180_IL:			sprintf(info->s, "IL  :%02X", Z180.io[Z180_IL-Z180_CNTLA0]); break;
+		case CPUINFO_STR_REGISTER + Z180_AF2:			sprintf(info->s, "AF2:%04X", Z180.AF2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_BC2:			sprintf(info->s, "BC2:%04X", Z180.BC2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_DE2:			sprintf(info->s, "DE2:%04X", Z180.DE2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_HL2:			sprintf(info->s, "HL2:%04X", Z180.HL2.w.l); break;
+		case CPUINFO_STR_REGISTER + Z180_IM:			sprintf(info->s, "IM  :%X", Z180.IM); break;
+		case CPUINFO_STR_REGISTER + Z180_IFF1:			sprintf(info->s, "IFF1:%X", Z180.IFF1); break;
+		case CPUINFO_STR_REGISTER + Z180_IFF2:			sprintf(info->s, "IFF2:%X", Z180.IFF2); break;
+		case CPUINFO_STR_REGISTER + Z180_HALT:			sprintf(info->s, "HALT:%X", Z180.HALT); break;
+		case CPUINFO_STR_REGISTER + Z180_CCR: 			sprintf(info->s, "CCR :%02X", Z180.io[Z180_CCR-Z180_CNTLA0]); break;
+		case CPUINFO_STR_REGISTER + Z180_ITC: 			sprintf(info->s, "ITC :%02X", Z180.io[Z180_ITC-Z180_CNTLA0]); break;
+		case CPUINFO_STR_REGISTER + Z180_CBR: 			sprintf(info->s, "CBR :%02X", Z180.io[Z180_CBR-Z180_CNTLA0]); break;
+		case CPUINFO_STR_REGISTER + Z180_BBR: 			sprintf(info->s, "BBR :%02X", Z180.io[Z180_BBR-Z180_CNTLA0]); break;
+		case CPUINFO_STR_REGISTER + Z180_CBAR:			sprintf(info->s, "CBAR:%02X", Z180.io[Z180_CBAR-Z180_CNTLA0]); break;
+		case CPUINFO_STR_REGISTER + Z180_OMCR:			sprintf(info->s, "OMCR:%02X", Z180.io[Z180_OMCR-Z180_CNTLA0]); break;
+		case CPUINFO_STR_REGISTER + Z180_IOCR:			sprintf(info->s, "IOCR:%02X", Z180.io[Z180_IOCR-Z180_CNTLA0]); break;
 	}
 }

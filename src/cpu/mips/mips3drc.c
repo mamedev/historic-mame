@@ -909,7 +909,7 @@ static offs_t mips3_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT
  * Generic set_info
  **************************************************************************/
 
-static void mips3_set_info(UINT32 state, union cpuinfo *info)
+static void mips3_set_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -996,7 +996,7 @@ static void mips3_set_info(UINT32 state, union cpuinfo *info)
  * Generic get_info
  **************************************************************************/
 
-void mips3_get_info(UINT32 state, union cpuinfo *info)
+void mips3_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1094,63 +1094,63 @@ void mips3_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_TRANSLATE:						info->translate = translate_address;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "MIPS III"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "MIPS III"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
-		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) Aaron Giles 2000-2004"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "MIPS III");			break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s, "MIPS III");			break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s, "1.0");					break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s, __FILE__);				break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s, "Copyright (C) Aaron Giles 2000-2004"); break;
 
-		case CPUINFO_STR_FLAGS:							strcpy(info->s = cpuintrf_temp_str(), " "); break;
+		case CPUINFO_STR_FLAGS:							strcpy(info->s, " ");					break;
 
-		case CPUINFO_STR_REGISTER + MIPS3_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC: %08X", mips3.pc); break;
-		case CPUINFO_STR_REGISTER + MIPS3_SR:			sprintf(info->s = cpuintrf_temp_str(), "SR: %08X", (UINT32)mips3.cpr[0][COP0_Status]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_EPC:			sprintf(info->s = cpuintrf_temp_str(), "EPC:%08X", (UINT32)mips3.cpr[0][COP0_EPC]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_CAUSE: 		sprintf(info->s = cpuintrf_temp_str(), "Cause:%08X", (UINT32)mips3.cpr[0][COP0_Cause]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_COUNT: 		sprintf(info->s = cpuintrf_temp_str(), "Count:%08X", (UINT32)((activecpu_gettotalcycles64() - mips3.count_zero_time) / 2)); break;
-		case CPUINFO_STR_REGISTER + MIPS3_COMPARE:		sprintf(info->s = cpuintrf_temp_str(), "Compare:%08X", (UINT32)mips3.cpr[0][COP0_Compare]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_INDEX:		sprintf(info->s = cpuintrf_temp_str(), "Index:%08X", (UINT32)mips3.cpr[0][COP0_Index]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_RANDOM:		sprintf(info->s = cpuintrf_temp_str(), "Random:%08X", (UINT32)mips3.cpr[0][COP0_Random]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_ENTRYHI:		sprintf(info->s = cpuintrf_temp_str(), "EntryHi:%08X%08X", (UINT32)(mips3.cpr[0][COP0_EntryHi] >> 32), (UINT32)mips3.cpr[0][COP0_EntryHi]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_ENTRYLO0:		sprintf(info->s = cpuintrf_temp_str(), "EntryLo0:%08X%08X", (UINT32)(mips3.cpr[0][COP0_EntryLo0] >> 32), (UINT32)mips3.cpr[0][COP0_EntryLo0]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_ENTRYLO1:		sprintf(info->s = cpuintrf_temp_str(), "EntryLo1:%08X%08X", (UINT32)(mips3.cpr[0][COP0_EntryLo1] >> 32), (UINT32)mips3.cpr[0][COP0_EntryLo1]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_PAGEMASK:		sprintf(info->s = cpuintrf_temp_str(), "PageMask:%08X%08X", (UINT32)(mips3.cpr[0][COP0_PageMask] >> 32), (UINT32)mips3.cpr[0][COP0_PageMask]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_WIRED:		sprintf(info->s = cpuintrf_temp_str(), "Wired:%08X", (UINT32)mips3.cpr[0][COP0_Wired]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_BADVADDR:		sprintf(info->s = cpuintrf_temp_str(), "BadVAddr:%08X", (UINT32)mips3.cpr[0][COP0_BadVAddr]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_PC:			sprintf(info->s, "PC: %08X", mips3.pc); break;
+		case CPUINFO_STR_REGISTER + MIPS3_SR:			sprintf(info->s, "SR: %08X", (UINT32)mips3.cpr[0][COP0_Status]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_EPC:			sprintf(info->s, "EPC:%08X", (UINT32)mips3.cpr[0][COP0_EPC]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_CAUSE: 		sprintf(info->s, "Cause:%08X", (UINT32)mips3.cpr[0][COP0_Cause]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_COUNT: 		sprintf(info->s, "Count:%08X", (UINT32)((activecpu_gettotalcycles64() - mips3.count_zero_time) / 2)); break;
+		case CPUINFO_STR_REGISTER + MIPS3_COMPARE:		sprintf(info->s, "Compare:%08X", (UINT32)mips3.cpr[0][COP0_Compare]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_INDEX:		sprintf(info->s, "Index:%08X", (UINT32)mips3.cpr[0][COP0_Index]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_RANDOM:		sprintf(info->s, "Random:%08X", (UINT32)mips3.cpr[0][COP0_Random]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_ENTRYHI:		sprintf(info->s, "EntryHi:%08X%08X", (UINT32)(mips3.cpr[0][COP0_EntryHi] >> 32), (UINT32)mips3.cpr[0][COP0_EntryHi]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_ENTRYLO0:		sprintf(info->s, "EntryLo0:%08X%08X", (UINT32)(mips3.cpr[0][COP0_EntryLo0] >> 32), (UINT32)mips3.cpr[0][COP0_EntryLo0]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_ENTRYLO1:		sprintf(info->s, "EntryLo1:%08X%08X", (UINT32)(mips3.cpr[0][COP0_EntryLo1] >> 32), (UINT32)mips3.cpr[0][COP0_EntryLo1]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_PAGEMASK:		sprintf(info->s, "PageMask:%08X%08X", (UINT32)(mips3.cpr[0][COP0_PageMask] >> 32), (UINT32)mips3.cpr[0][COP0_PageMask]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_WIRED:		sprintf(info->s, "Wired:%08X", (UINT32)mips3.cpr[0][COP0_Wired]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_BADVADDR:		sprintf(info->s, "BadVAddr:%08X", (UINT32)mips3.cpr[0][COP0_BadVAddr]); break;
 
-		case CPUINFO_STR_REGISTER + MIPS3_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0: %08X%08X", (UINT32)(mips3.r[0] >> 32), (UINT32)mips3.r[0]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1: %08X%08X", (UINT32)(mips3.r[1] >> 32), (UINT32)mips3.r[1]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R2:			sprintf(info->s = cpuintrf_temp_str(), "R2: %08X%08X", (UINT32)(mips3.r[2] >> 32), (UINT32)mips3.r[2]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R3:			sprintf(info->s = cpuintrf_temp_str(), "R3: %08X%08X", (UINT32)(mips3.r[3] >> 32), (UINT32)mips3.r[3]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R4:			sprintf(info->s = cpuintrf_temp_str(), "R4: %08X%08X", (UINT32)(mips3.r[4] >> 32), (UINT32)mips3.r[4]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R5:			sprintf(info->s = cpuintrf_temp_str(), "R5: %08X%08X", (UINT32)(mips3.r[5] >> 32), (UINT32)mips3.r[5]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R6:			sprintf(info->s = cpuintrf_temp_str(), "R6: %08X%08X", (UINT32)(mips3.r[6] >> 32), (UINT32)mips3.r[6]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R7:			sprintf(info->s = cpuintrf_temp_str(), "R7: %08X%08X", (UINT32)(mips3.r[7] >> 32), (UINT32)mips3.r[7]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R8:			sprintf(info->s = cpuintrf_temp_str(), "R8: %08X%08X", (UINT32)(mips3.r[8] >> 32), (UINT32)mips3.r[8]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R9:			sprintf(info->s = cpuintrf_temp_str(), "R9: %08X%08X", (UINT32)(mips3.r[9] >> 32), (UINT32)mips3.r[9]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R10:			sprintf(info->s = cpuintrf_temp_str(), "R10:%08X%08X", (UINT32)(mips3.r[10] >> 32), (UINT32)mips3.r[10]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R11:			sprintf(info->s = cpuintrf_temp_str(), "R11:%08X%08X", (UINT32)(mips3.r[11] >> 32), (UINT32)mips3.r[11]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R12:			sprintf(info->s = cpuintrf_temp_str(), "R12:%08X%08X", (UINT32)(mips3.r[12] >> 32), (UINT32)mips3.r[12]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R13:			sprintf(info->s = cpuintrf_temp_str(), "R13:%08X%08X", (UINT32)(mips3.r[13] >> 32), (UINT32)mips3.r[13]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R14:			sprintf(info->s = cpuintrf_temp_str(), "R14:%08X%08X", (UINT32)(mips3.r[14] >> 32), (UINT32)mips3.r[14]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R15:			sprintf(info->s = cpuintrf_temp_str(), "R15:%08X%08X", (UINT32)(mips3.r[15] >> 32), (UINT32)mips3.r[15]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R16:			sprintf(info->s = cpuintrf_temp_str(), "R16:%08X%08X", (UINT32)(mips3.r[16] >> 32), (UINT32)mips3.r[16]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R17:			sprintf(info->s = cpuintrf_temp_str(), "R17:%08X%08X", (UINT32)(mips3.r[17] >> 32), (UINT32)mips3.r[17]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R18:			sprintf(info->s = cpuintrf_temp_str(), "R18:%08X%08X", (UINT32)(mips3.r[18] >> 32), (UINT32)mips3.r[18]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R19:			sprintf(info->s = cpuintrf_temp_str(), "R19:%08X%08X", (UINT32)(mips3.r[19] >> 32), (UINT32)mips3.r[19]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R20:			sprintf(info->s = cpuintrf_temp_str(), "R20:%08X%08X", (UINT32)(mips3.r[20] >> 32), (UINT32)mips3.r[20]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R21:			sprintf(info->s = cpuintrf_temp_str(), "R21:%08X%08X", (UINT32)(mips3.r[21] >> 32), (UINT32)mips3.r[21]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R22:			sprintf(info->s = cpuintrf_temp_str(), "R22:%08X%08X", (UINT32)(mips3.r[22] >> 32), (UINT32)mips3.r[22]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R23:			sprintf(info->s = cpuintrf_temp_str(), "R23:%08X%08X", (UINT32)(mips3.r[23] >> 32), (UINT32)mips3.r[23]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R24:			sprintf(info->s = cpuintrf_temp_str(), "R24:%08X%08X", (UINT32)(mips3.r[24] >> 32), (UINT32)mips3.r[24]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R25:			sprintf(info->s = cpuintrf_temp_str(), "R25:%08X%08X", (UINT32)(mips3.r[25] >> 32), (UINT32)mips3.r[25]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R26:			sprintf(info->s = cpuintrf_temp_str(), "R26:%08X%08X", (UINT32)(mips3.r[26] >> 32), (UINT32)mips3.r[26]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R27:			sprintf(info->s = cpuintrf_temp_str(), "R27:%08X%08X", (UINT32)(mips3.r[27] >> 32), (UINT32)mips3.r[27]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R28:			sprintf(info->s = cpuintrf_temp_str(), "R28:%08X%08X", (UINT32)(mips3.r[28] >> 32), (UINT32)mips3.r[28]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R29:			sprintf(info->s = cpuintrf_temp_str(), "R29:%08X%08X", (UINT32)(mips3.r[29] >> 32), (UINT32)mips3.r[29]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R30:			sprintf(info->s = cpuintrf_temp_str(), "R30:%08X%08X", (UINT32)(mips3.r[30] >> 32), (UINT32)mips3.r[30]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_R31:			sprintf(info->s = cpuintrf_temp_str(), "R31:%08X%08X", (UINT32)(mips3.r[31] >> 32), (UINT32)mips3.r[31]); break;
-		case CPUINFO_STR_REGISTER + MIPS3_HI:			sprintf(info->s = cpuintrf_temp_str(), "HI: %08X%08X", (UINT32)(mips3.hi >> 32), (UINT32)mips3.hi); break;
-		case CPUINFO_STR_REGISTER + MIPS3_LO:			sprintf(info->s = cpuintrf_temp_str(), "LO: %08X%08X", (UINT32)(mips3.lo >> 32), (UINT32)mips3.lo); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R0:			sprintf(info->s, "R0: %08X%08X", (UINT32)(mips3.r[0] >> 32), (UINT32)mips3.r[0]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R1:			sprintf(info->s, "R1: %08X%08X", (UINT32)(mips3.r[1] >> 32), (UINT32)mips3.r[1]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R2:			sprintf(info->s, "R2: %08X%08X", (UINT32)(mips3.r[2] >> 32), (UINT32)mips3.r[2]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R3:			sprintf(info->s, "R3: %08X%08X", (UINT32)(mips3.r[3] >> 32), (UINT32)mips3.r[3]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R4:			sprintf(info->s, "R4: %08X%08X", (UINT32)(mips3.r[4] >> 32), (UINT32)mips3.r[4]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R5:			sprintf(info->s, "R5: %08X%08X", (UINT32)(mips3.r[5] >> 32), (UINT32)mips3.r[5]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R6:			sprintf(info->s, "R6: %08X%08X", (UINT32)(mips3.r[6] >> 32), (UINT32)mips3.r[6]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R7:			sprintf(info->s, "R7: %08X%08X", (UINT32)(mips3.r[7] >> 32), (UINT32)mips3.r[7]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R8:			sprintf(info->s, "R8: %08X%08X", (UINT32)(mips3.r[8] >> 32), (UINT32)mips3.r[8]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R9:			sprintf(info->s, "R9: %08X%08X", (UINT32)(mips3.r[9] >> 32), (UINT32)mips3.r[9]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R10:			sprintf(info->s, "R10:%08X%08X", (UINT32)(mips3.r[10] >> 32), (UINT32)mips3.r[10]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R11:			sprintf(info->s, "R11:%08X%08X", (UINT32)(mips3.r[11] >> 32), (UINT32)mips3.r[11]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R12:			sprintf(info->s, "R12:%08X%08X", (UINT32)(mips3.r[12] >> 32), (UINT32)mips3.r[12]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R13:			sprintf(info->s, "R13:%08X%08X", (UINT32)(mips3.r[13] >> 32), (UINT32)mips3.r[13]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R14:			sprintf(info->s, "R14:%08X%08X", (UINT32)(mips3.r[14] >> 32), (UINT32)mips3.r[14]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R15:			sprintf(info->s, "R15:%08X%08X", (UINT32)(mips3.r[15] >> 32), (UINT32)mips3.r[15]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R16:			sprintf(info->s, "R16:%08X%08X", (UINT32)(mips3.r[16] >> 32), (UINT32)mips3.r[16]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R17:			sprintf(info->s, "R17:%08X%08X", (UINT32)(mips3.r[17] >> 32), (UINT32)mips3.r[17]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R18:			sprintf(info->s, "R18:%08X%08X", (UINT32)(mips3.r[18] >> 32), (UINT32)mips3.r[18]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R19:			sprintf(info->s, "R19:%08X%08X", (UINT32)(mips3.r[19] >> 32), (UINT32)mips3.r[19]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R20:			sprintf(info->s, "R20:%08X%08X", (UINT32)(mips3.r[20] >> 32), (UINT32)mips3.r[20]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R21:			sprintf(info->s, "R21:%08X%08X", (UINT32)(mips3.r[21] >> 32), (UINT32)mips3.r[21]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R22:			sprintf(info->s, "R22:%08X%08X", (UINT32)(mips3.r[22] >> 32), (UINT32)mips3.r[22]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R23:			sprintf(info->s, "R23:%08X%08X", (UINT32)(mips3.r[23] >> 32), (UINT32)mips3.r[23]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R24:			sprintf(info->s, "R24:%08X%08X", (UINT32)(mips3.r[24] >> 32), (UINT32)mips3.r[24]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R25:			sprintf(info->s, "R25:%08X%08X", (UINT32)(mips3.r[25] >> 32), (UINT32)mips3.r[25]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R26:			sprintf(info->s, "R26:%08X%08X", (UINT32)(mips3.r[26] >> 32), (UINT32)mips3.r[26]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R27:			sprintf(info->s, "R27:%08X%08X", (UINT32)(mips3.r[27] >> 32), (UINT32)mips3.r[27]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R28:			sprintf(info->s, "R28:%08X%08X", (UINT32)(mips3.r[28] >> 32), (UINT32)mips3.r[28]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R29:			sprintf(info->s, "R29:%08X%08X", (UINT32)(mips3.r[29] >> 32), (UINT32)mips3.r[29]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R30:			sprintf(info->s, "R30:%08X%08X", (UINT32)(mips3.r[30] >> 32), (UINT32)mips3.r[30]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_R31:			sprintf(info->s, "R31:%08X%08X", (UINT32)(mips3.r[31] >> 32), (UINT32)mips3.r[31]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_HI:			sprintf(info->s, "HI: %08X%08X", (UINT32)(mips3.hi >> 32), (UINT32)mips3.hi); break;
+		case CPUINFO_STR_REGISTER + MIPS3_LO:			sprintf(info->s, "LO: %08X%08X", (UINT32)(mips3.lo >> 32), (UINT32)mips3.lo); break;
 	}
 }
 
@@ -1160,7 +1160,7 @@ void mips3_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void r4600be_get_info(UINT32 state, union cpuinfo *info)
+void r4600be_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1171,16 +1171,14 @@ void r4600be_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = r4600be_reset;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "R4600 (big)"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "R4600 (big)");			break;
 
-		default:
-			mips3_get_info(state, info);
-			break;
+		default:										mips3_get_info(state, info);			break;
 	}
 }
 
 
-void r4600le_get_info(UINT32 state, union cpuinfo *info)
+void r4600le_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1191,11 +1189,9 @@ void r4600le_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = r4600le_reset;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "R4600 (little)"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "R4600 (little)");		break;
 
-		default:
-			mips3_get_info(state, info);
-			break;
+		default:										mips3_get_info(state, info);			break;
 	}
 }
 #endif
@@ -1205,7 +1201,7 @@ void r4600le_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void r4650be_get_info(UINT32 state, union cpuinfo *info)
+void r4650be_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1216,16 +1212,14 @@ void r4650be_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = r4600be_reset;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "IDT R4650 (big)"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "IDT R4650 (big)");		break;
 
-		default:
-			mips3_get_info(state, info);
-			break;
+		default:										mips3_get_info(state, info);			break;
 	}
 }
 
 
-void r4650le_get_info(UINT32 state, union cpuinfo *info)
+void r4650le_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1236,11 +1230,9 @@ void r4650le_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = r4600le_reset;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "IDT R4650 (little)"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "IDT R4650 (little)");	break;
 
-		default:
-			mips3_get_info(state, info);
-			break;
+		default:										mips3_get_info(state, info);			break;
 	}
 }
 #endif
@@ -1250,7 +1242,7 @@ void r4650le_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void r4700be_get_info(UINT32 state, union cpuinfo *info)
+void r4700be_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1261,16 +1253,14 @@ void r4700be_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = r4700be_reset;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "R4700 (big)"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "R4700 (big)");			break;
 
-		default:
-			mips3_get_info(state, info);
-			break;
+		default:										mips3_get_info(state, info);			break;
 	}
 }
 
 
-void r4700le_get_info(UINT32 state, union cpuinfo *info)
+void r4700le_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1281,11 +1271,9 @@ void r4700le_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = r4700le_reset;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "R4700 (little)"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "R4700 (little)");		break;
 
-		default:
-			mips3_get_info(state, info);
-			break;
+		default:										mips3_get_info(state, info);			break;
 	}
 }
 #endif
@@ -1296,7 +1284,7 @@ void r4700le_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void r5000be_get_info(UINT32 state, union cpuinfo *info)
+void r5000be_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1307,16 +1295,14 @@ void r5000be_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = r5000be_reset;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "R5000 (big)"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "R5000 (big)");			break;
 
-		default:
-			mips3_get_info(state, info);
-			break;
+		default:										mips3_get_info(state, info);			break;
 	}
 }
 
 
-void r5000le_get_info(UINT32 state, union cpuinfo *info)
+void r5000le_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1327,11 +1313,9 @@ void r5000le_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = r5000le_reset;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "R5000 (little)"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "R5000 (little)");		break;
 
-		default:
-			mips3_get_info(state, info);
-			break;
+		default:										mips3_get_info(state, info);			break;
 	}
 }
 #endif
@@ -1342,7 +1326,7 @@ void r5000le_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void qed5271be_get_info(UINT32 state, union cpuinfo *info)
+void qed5271be_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1353,16 +1337,14 @@ void qed5271be_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = qed5271be_reset;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "QED5271 (big)"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "QED5271 (big)");		break;
 
-		default:
-			mips3_get_info(state, info);
-			break;
+		default:										mips3_get_info(state, info);			break;
 	}
 }
 
 
-void qed5271le_get_info(UINT32 state, union cpuinfo *info)
+void qed5271le_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1373,11 +1355,9 @@ void qed5271le_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = qed5271le_reset;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "QED5271 (little)"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "QED5271 (little)");	break;
 
-		default:
-			mips3_get_info(state, info);
-			break;
+		default:										mips3_get_info(state, info);			break;
 	}
 }
 #endif
@@ -1388,7 +1368,7 @@ void qed5271le_get_info(UINT32 state, union cpuinfo *info)
  * CPU-specific set_info
  **************************************************************************/
 
-void rm7000be_get_info(UINT32 state, union cpuinfo *info)
+void rm7000be_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1399,16 +1379,14 @@ void rm7000be_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = rm7000be_reset;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "RM7000 (big)"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "RM7000 (big)");		break;
 
-		default:
-			mips3_get_info(state, info);
-			break;
+		default:										mips3_get_info(state, info);			break;
 	}
 }
 
 
-void rm7000le_get_info(UINT32 state, union cpuinfo *info)
+void rm7000le_get_info(UINT32 state, cpuinfo *info)
 {
 	switch (state)
 	{
@@ -1419,11 +1397,9 @@ void rm7000le_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = rm7000le_reset;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "RM7000 (little)"); break;
+		case CPUINFO_STR_NAME:							strcpy(info->s, "RM7000 (little)");		break;
 
-		default:
-			mips3_get_info(state, info);
-			break;
+		default:										mips3_get_info(state, info);			break;
 	}
 }
 #endif

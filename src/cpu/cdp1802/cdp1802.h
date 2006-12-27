@@ -87,7 +87,7 @@ int cdp1802_dma_read(void);
 
 extern int cdp1802_icount;				// cycle count
 
-void cdp1802_get_info(UINT32 state, union cpuinfo *info);
+void cdp1802_get_info(UINT32 state, cpuinfo *info);
 
 #ifdef MAME_DEBUG
 offs_t cdp1802_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);

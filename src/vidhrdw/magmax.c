@@ -11,7 +11,7 @@ Additional tweaking by Jarek Burczynski
 
 UINT16 *magmax_scroll_x;
 UINT16 *magmax_scroll_y;
-unsigned short magmax_vreg;
+UINT16 magmax_vreg;
 static int flipscreen = 0;
 
 static UINT32 pens_line_tab[256];
@@ -91,6 +91,9 @@ VIDEO_START( magmax )
 {
 	int i,v;
 	unsigned char * prom14D = memory_region(REGION_USER2);
+
+	/* Set up save state */
+	state_save_register_global(magmax_vreg);
 
 	prom_tab = auto_malloc(256 * sizeof(UINT32));
 

@@ -437,7 +437,7 @@ static int validate_cpu(int drivnum, const machine_config *drv, const UINT32 *re
 	/* loop over all the CPUs */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 	{
-		extern void dummy_get_info(UINT32 state, union cpuinfo *info);
+		extern void dummy_get_info(UINT32 state, cpuinfo *info);
 		const cpu_config *cpu = &drv->cpu[cpunum];
 		int spacenum;
 
@@ -609,6 +609,13 @@ static int validate_display(int drivnum, const machine_config *drv)
 			mame_printf_error("%s: %s has an invalid display area\n", driver->source_file, driver->name);
 			error = TRUE;
 		}
+	}
+
+	/* check for zero frame rate */
+	if (drv->screen[0].defstate.refresh == 0)
+	{
+		mame_printf_error("%s: %s has a zero refresh rate\n", driver->source_file, driver->name);
+		error = TRUE;
 	}
 
 	return error;

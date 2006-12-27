@@ -331,31 +331,28 @@ void m65ce02_state_load(void *file)
  ****************************************************************************/
 const char *m65ce02_info(void *context, int regnum)
 {
-	static char buffer[16][47+1];
-	static int which = 0;
+	char *buffer = cpuintrf_temp_str();
 	m65ce02_Regs *r = context;
 
-	which = (which+1) % 16;
-	buffer[which][0] = '\0';
 	if( !context )
 		r = &m65ce02;
 
 	switch( regnum )
 	{
-		case CPU_INFO_REG+M65CE02_PC: sprintf(buffer[which], "PC:%04X", r->pc.w.l); break;
-		case CPU_INFO_REG+M65CE02_S: sprintf(buffer[which], "S:%04X", r->sp.w.l); break;
-		case CPU_INFO_REG+M65CE02_P: sprintf(buffer[which], "P:%02X", r->p); break;
-		case CPU_INFO_REG+M65CE02_A: sprintf(buffer[which], "A:%02X", r->a); break;
-		case CPU_INFO_REG+M65CE02_X: sprintf(buffer[which], "X:%02X", r->x); break;
-		case CPU_INFO_REG+M65CE02_Y: sprintf(buffer[which], "Y:%02X", r->y); break;
-		case CPU_INFO_REG+M65CE02_Z: sprintf(buffer[which], "Z:%02X", r->z); break;
-		case CPU_INFO_REG+M65CE02_B: sprintf(buffer[which], "B:%02X", r->zp.b.h); break;
-		case CPU_INFO_REG+M65CE02_EA: sprintf(buffer[which], "EA:%04X", r->ea.w.l); break;
-		case CPU_INFO_REG+M65CE02_ZP: sprintf(buffer[which], "ZP:%04X", r->zp.w.l); break;
-		case CPU_INFO_REG+M65CE02_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
-		case CPU_INFO_REG+M65CE02_IRQ_STATE: sprintf(buffer[which], "IRQ:%X", r->irq_state); break;
+		case CPU_INFO_REG+M65CE02_PC: sprintf(buffer, "PC:%04X", r->pc.w.l); break;
+		case CPU_INFO_REG+M65CE02_S: sprintf(buffer, "S:%04X", r->sp.w.l); break;
+		case CPU_INFO_REG+M65CE02_P: sprintf(buffer, "P:%02X", r->p); break;
+		case CPU_INFO_REG+M65CE02_A: sprintf(buffer, "A:%02X", r->a); break;
+		case CPU_INFO_REG+M65CE02_X: sprintf(buffer, "X:%02X", r->x); break;
+		case CPU_INFO_REG+M65CE02_Y: sprintf(buffer, "Y:%02X", r->y); break;
+		case CPU_INFO_REG+M65CE02_Z: sprintf(buffer, "Z:%02X", r->z); break;
+		case CPU_INFO_REG+M65CE02_B: sprintf(buffer, "B:%02X", r->zp.b.h); break;
+		case CPU_INFO_REG+M65CE02_EA: sprintf(buffer, "EA:%04X", r->ea.w.l); break;
+		case CPU_INFO_REG+M65CE02_ZP: sprintf(buffer, "ZP:%04X", r->zp.w.l); break;
+		case CPU_INFO_REG+M65CE02_NMI_STATE: sprintf(buffer, "NMI:%X", r->nmi_state); break;
+		case CPU_INFO_REG+M65CE02_IRQ_STATE: sprintf(buffer, "IRQ:%X", r->irq_state); break;
 		case CPU_INFO_FLAGS:
-			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
+			sprintf(buffer, "%c%c%c%c%c%c%c%c",
 				r->p & 0x80 ? 'N':'.',
 				r->p & 0x40 ? 'V':'.',
 				r->p & 0x20 ? 'E':'.',
@@ -376,7 +373,7 @@ const char *m65ce02_info(void *context, int regnum)
 		case CPU_INFO_REG_LAYOUT: return (const char*)m65ce02_reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char*)m65ce02_win_layout;
 	}
-	return buffer[which];
+	return buffer;
 }
 
 unsigned int m65ce02_dasm(char *buffer, unsigned pc)

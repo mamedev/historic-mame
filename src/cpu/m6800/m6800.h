@@ -20,7 +20,7 @@ enum {
 									/* fall  eddge : ASSERT_LINE -> CLEAR_LINE      */
 									/* it is usuali to use PULSE_LINE state         */
 
-extern void m6800_get_info(UINT32 state, union cpuinfo *info);
+extern void m6800_get_info(UINT32 state, cpuinfo *info);
 
 /****************************************************************************
  * For now make the 6801 using the m6800 variables and functions
@@ -39,7 +39,7 @@ extern void m6800_get_info(UINT32 state, union cpuinfo *info);
 #define M6801_WAI					M6800_WAI
 #define M6801_IRQ_LINE				M6800_IRQ_LINE
 
-extern void m6801_get_info(UINT32 state, union cpuinfo *info);
+extern void m6801_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 /****************************************************************************
@@ -59,7 +59,7 @@ extern void m6801_get_info(UINT32 state, union cpuinfo *info);
 #define M6802_WAI					M6800_WAI
 #define M6802_IRQ_LINE				M6800_IRQ_LINE
 
-extern void m6802_get_info(UINT32 state, union cpuinfo *info);
+extern void m6802_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 /****************************************************************************
@@ -80,7 +80,7 @@ extern void m6802_get_info(UINT32 state, union cpuinfo *info);
 #define M6803_IRQ_LINE				M6800_IRQ_LINE
 #define M6803_TIN_LINE				M6800_TIN_LINE
 
-extern void m6803_get_info(UINT32 state, union cpuinfo *info);
+extern void m6803_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 #if (HAS_M6803||HAS_HD63701)
@@ -112,7 +112,7 @@ extern void m6803_get_info(UINT32 state, union cpuinfo *info);
 #define M6808_WAI                   M6800_WAI
 #define M6808_IRQ_LINE              M6800_IRQ_LINE
 
-extern void m6808_get_info(UINT32 state, union cpuinfo *info);
+extern void m6808_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 /****************************************************************************
@@ -134,7 +134,7 @@ extern void m6808_get_info(UINT32 state, union cpuinfo *info);
 #define HD63701_IRQ_LINE			 M6800_IRQ_LINE
 #define HD63701_TIN_LINE			 M6800_TIN_LINE
 
-extern void hd63701_get_info(UINT32 state, union cpuinfo *info);
+extern void hd63701_get_info(UINT32 state, cpuinfo *info);
 
 void hd63701_trap_pc(void);
 
@@ -167,7 +167,7 @@ WRITE8_HANDLER( hd63701_internal_registers_w );
 #define NSC8105_IRQ_LINE			 M6800_IRQ_LINE
 #define NSC8105_TIN_LINE			 M6800_TIN_LINE
 
-extern void nsc8105_get_info(UINT32 state, union cpuinfo *info);
+extern void nsc8105_get_info(UINT32 state, cpuinfo *info);
 #endif
 
 /****************************************************************************/
