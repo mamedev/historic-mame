@@ -426,6 +426,12 @@ static INTERRUPT_GEN( start_of_vblank_int )
  *
  *************************************/
 
+static UINT32 eeprom_bit_r(void *param)
+{
+	return EEPROM_read_bit();
+}
+
+
 static UINT16 common_io_chip_r(int which, offs_t offset, UINT16 mem_mask)
 {
 	offset &= 0x1f/2;
@@ -438,6 +444,7 @@ static UINT16 common_io_chip_r(int which, offs_t offset, UINT16 mem_mask)
 		case 0x04/2:
 		case 0x06/2:
 		case 0x08/2:
+		case 0x0a/2:
 		case 0x0c/2:
 		case 0x0e/2:
 			/* if the port is configured as an output, return the last thing written */
@@ -446,15 +453,6 @@ static UINT16 common_io_chip_r(int which, offs_t offset, UINT16 mem_mask)
 
 			/* otherwise, return an input port */
 			return readinputport(which*8 + offset);
-
-		/* I/O port with EEPROM data bit */
-		case 0x0a/2:
-			/* if the port is configured as an output, return the last thing written */
-			if (misc_io_data[which][0x1e/2] & (1 << offset))
-				return misc_io_data[which][offset];
-
-			/* otherwise, return an input port */
-			return readinputport(which*8 + offset) | (EEPROM_read_bit() << 7);
 
 		/* 'SEGA' protection */
 		case 0x10/2:
@@ -1181,7 +1179,7 @@ static INPUT_PORTS_START( system32_generic )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE3 )	/* sometimes mirrors SERVICE1 */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE4 )	/* tends to also work as a test switch */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM(eeprom_bit_r, NULL)
 
 	PORT_START_TAG("PORTG")
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1217,7 +1215,7 @@ static INPUT_PORTS_START( multi32_generic )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE3 )	/* sometimes mirrors SERVICE1 */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE4 )	/* tends to also work as a test switch */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("PORTG_A")
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1246,7 +1244,8 @@ static INPUT_PORTS_START( multi32_generic )
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("SERVICE34_B")
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM(eeprom_bit_r, NULL)
 
 	PORT_START_TAG("PORTG_B")
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )

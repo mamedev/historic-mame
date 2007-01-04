@@ -4,7 +4,7 @@
 
     Debugger help engine.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 *********************************************************************/
@@ -1012,7 +1012,7 @@ const char *debug_get_help(const char *tag)
 	static char ambig_message[1024];
 	help_item *found = NULL;
 	int i, msglen, foundcount = 0;
-	int taglen = strlen(tag);
+	int taglen = (int)strlen(tag);
 	char tagcopy[256];
 
 	/* make a lowercase copy of the tag */

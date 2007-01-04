@@ -4,7 +4,7 @@
 
     Debugger view engine.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 *********************************************************************/
@@ -767,7 +767,7 @@ static void textbuf_update(debug_view *view)
 		/* if this visible row is valid, add it to the buffer */
 		if (line != NULL)
 		{
-			UINT32 len = strlen(line);
+			size_t len = strlen(line);
 			UINT32 effcol = view->left_col;
 
 			/* copy data */
@@ -921,7 +921,7 @@ static void add_register(debug_view *view, int regnum, const char *str)
 	if (!colon)
 	{
 		tagstart = 0;
-		taglen = strlen(str);
+		taglen = (int)strlen(str);
 		valstart = 0;
 		vallen = 0;
 	}
@@ -932,7 +932,7 @@ static void add_register(debug_view *view, int regnum, const char *str)
 		tagstart = 0;
 		taglen = colon - str;
 		valstart = (colon + 1) - str;
-		vallen = strlen(colon + 1);
+		vallen = (int)strlen(colon + 1);
 	}
 
 	/* now trim spaces */
@@ -1022,7 +1022,7 @@ static void registers_recompute(debug_view *view)
 	regdata->reg[view->total_rows].tagstart = 0;
 	regdata->reg[view->total_rows].taglen   = 5;
 	regdata->reg[view->total_rows].valstart = 6;
-	regdata->reg[view->total_rows].vallen   = strlen(cpunum_flags(regdata->cpunum));
+	regdata->reg[view->total_rows].vallen   = (UINT32)strlen(cpunum_flags(regdata->cpunum));
 	maxtaglen = MAX(maxtaglen, regdata->reg[view->total_rows].taglen);
 	maxvallen = MAX(maxvallen, regdata->reg[view->total_rows].vallen);
 	view->total_rows++;
@@ -1765,7 +1765,7 @@ recompute:
 			}
 
 			/* get the effective string */
-			len = strlen(data);
+			len = (UINT32)strlen(data);
 
 			/* copy data */
 			while (col < view->visible_cols && effcol < len)
@@ -2604,7 +2604,7 @@ static void memory_update(debug_view *view)
 	{
 		maxaddr = memdata->raw_length - 1;
 		sprintf(addrformat, "%X", maxaddr);
-		addrchars = strlen(addrformat);
+		addrchars = (UINT8)strlen(addrformat);
 		addrmask = maxaddr;
 		for (row = 0; row < 32; row++)
 			addrmask |= addrmask >> row;

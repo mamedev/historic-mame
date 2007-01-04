@@ -269,6 +269,8 @@ WRITE8_HANDLER( r6532_1_PA7_w ) { r6532_PA7_write(1, offset, data); }
 
 void r6532_init(int n, const struct R6532interface* intf)
 {
+	assert_always(mame_get_phase(Machine) == MAME_PHASE_INIT, "Can only call r6532_init at init time!");
+
 	r6532[n] = auto_malloc(sizeof(struct R6532));
 
 	r6532[n]->intf = *intf;

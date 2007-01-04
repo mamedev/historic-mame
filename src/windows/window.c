@@ -2,7 +2,7 @@
 //
 //  window.c - Win32 window handling
 //
-//  Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+//  Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
 //  Visit http://mamedev.org for licensing and usage restrictions.
 //
 //============================================================
@@ -33,6 +33,7 @@
 #include "input.h"
 #include "options.h"
 #include "debugwin.h"
+#include "strconv.h"
 
 #ifdef MESS
 #include "menu.h"
@@ -1077,6 +1078,7 @@ static unsigned __stdcall thread_entry(void *param)
 
 static int complete_create(win_window_info *window)
 {
+	TCHAR *t_title;
 	RECT monitorbounds, client;
 	int tempwidth, tempheight;
 	HMENU menu = NULL;
@@ -1094,10 +1096,11 @@ static int complete_create(win_window_info *window)
 #endif
 
 	// create the window, but don't show it yet
+	t_title = tstring_from_utf8(window->title);
 	window->hwnd = CreateWindowEx(
 						window->fullscreen ? FULLSCREEN_STYLE_EX : WINDOW_STYLE_EX,
 						TEXT("MAME"),
-						window->title,
+						t_title,
 						window->fullscreen ? FULLSCREEN_STYLE : WINDOW_STYLE,
 						monitorbounds.left + 20, monitorbounds.top + 20,
 						monitorbounds.left + 100, monitorbounds.top + 100,
@@ -1105,6 +1108,7 @@ static int complete_create(win_window_info *window)
 						menu,
 						GetModuleHandle(NULL),
 						NULL);
+	free(t_title);
 	if (window->hwnd == NULL)
 		return 1;
 

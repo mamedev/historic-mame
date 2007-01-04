@@ -2,7 +2,7 @@
 //
 //  fronthlp.c - Win32 frontend management functions
 //
-//  Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+//  Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
 //  Visit http://mamedev.org for licensing and usage restrictions.
 //
 //============================================================
@@ -22,6 +22,7 @@
 #include "jedparse.h"
 #include "sound/samples.h"
 #include "options.h"
+#include "strconv.h"
 
 /*
     Current Win32 dependencies:
@@ -170,21 +171,23 @@ void identify_data(const char *name, const UINT8 *data, int length, FILE *output
     files
 -------------------------------------------------*/
 
-void identify_file(const char *name, FILE *output)
+void identify_file(const TCHAR *name, FILE *output)
 {
-	int namelen = strlen(name);
+	int namelen = _tcslen(name);
 	int length;
 	FILE *f;
 
 	/* if the file has a 3-character extension, check it */
 	if (namelen > 4 && name[namelen - 4] == '.' &&
-		tolower(name[namelen - 3]) == 'z' &&
-		tolower(name[namelen - 2]) == 'i' &&
-		tolower(name[namelen - 1]) == 'p')
+		_totlower(name[namelen - 3]) == 'z' &&
+		_totlower(name[namelen - 2]) == 'i' &&
+		_totlower(name[namelen - 1]) == 'p')
 	{
 		/* first attempt to examine it as a valid ZIP file */
 		zip_file *zip;
-		zip_error ziperr = zip_file_open(name, &zip);
+		char *utf8_name = utf8_from_tstring(name);
+		zip_error ziperr = zip_file_open(utf8_name, &zip);
+		free(utf8_name);
 		if (ziperr == ZIPERR_NONE)
 		{
 			const zip_file_header *entry;
@@ -210,7 +213,7 @@ void identify_file(const char *name, FILE *output)
 	}
 
 	/* open the file directly */
-	f = fopen(name, "rb");
+	f = _tfopen(name, TEXT("rb"));
 	if (f)
 	{
 		/* determine the length of the file */
@@ -224,9 +227,11 @@ void identify_file(const char *name, FILE *output)
 			UINT8 *data = (UINT8 *)malloc(length);
 			if (data != NULL)
 			{
+				char *utf8_name = utf8_from_tstring(name);
 				fread(data, 1, length, f);
-				identify_data(name, data, length, output);
+				identify_data(utf8_name, data, length, output);
 				free(data);
+				free(utf8_name);
 			}
 		}
 		fclose(f);
@@ -239,18 +244,20 @@ void identify_file(const char *name, FILE *output)
     all the files in it
 -------------------------------------------------*/
 
-void identify_dir(const char *dirname, FILE *output)
+void identify_dir(const TCHAR *dirname, FILE *output)
 {
 	WIN32_FIND_DATA entry;
-	char *dirfilter;
+	TCHAR *dirfilter;
+	size_t dirfilter_size;
 	HANDLE dir;
 	int more;
 
 	/* create the search name */
-	dirfilter = malloc(strlen(dirname) + 5);
+	dirfilter_size = _tcslen(dirname) + 5;
+	dirfilter = (TCHAR *) malloc(dirfilter_size * sizeof(TCHAR));
 	if (dirfilter == NULL)
 		return;
-	sprintf(dirfilter, "%s\\*", dirname);
+	_sntprintf(dirfilter, dirfilter_size, TEXT("%s\\*"), dirname);
 
 	/* find the first file */
 	memset(&entry, 0, sizeof(WIN32_FIND_DATA));
@@ -268,14 +275,15 @@ void identify_dir(const char *dirname, FILE *output)
 		if (!(entry.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 		{
 			/* create a full path to the file and identify it */
-			char *buf = (char *)malloc(strlen(dirname) + 1 + strlen(entry.cFileName) + 1);
-			sprintf(buf, "%s\\%s", dirname, entry.cFileName);
+			size_t buf_size = _tcslen(dirname) + 1 + _tcslen(entry.cFileName) + 1;
+			TCHAR *buf = (TCHAR *)malloc(buf_size * sizeof(TCHAR));
+			_sntprintf(buf, buf_size, TEXT("%s\\%s"), dirname, entry.cFileName);
 			identify_file(buf, output);
 			free(buf);
 		}
 
 		/* find the next entry */
-		more = FindNextFileA(dir, &entry);
+		more = FindNextFile(dir, &entry);
 	} while (more);
 
 	/* stop the search */
@@ -289,29 +297,37 @@ void identify_dir(const char *dirname, FILE *output)
 
 void romident(const char *name, FILE *output)
 {
+	TCHAR *tname;
 	TCHAR error[256];
+	char *utf8_error;
 	DWORD attr;
+
+	tname = tstring_from_utf8(name);
 
 	/* reset the globals */
 	knownstatus = KNOWN_START;
 	identfiles = identmatches = identnonroms = 0;
 
 	/* see what kind of file we're looking at */
-	attr = GetFileAttributes(name);
+	attr = GetFileAttributes(tname);
 
 	/* invalid -- nothing to see here */
 	if (attr == INVALID_FILE_ATTRIBUTES)
 	{
 		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), 0, error, ARRAY_LENGTH(error), NULL);
-		mame_printf_error("%s: %s\n",name, error);
-		return;
+		utf8_error = utf8_from_tstring(error);
+		mame_printf_error("%s: %s\n", name, utf8_error);
+		free(utf8_error);
 	}
-
-	/* directory -- scan it */
-	if (attr & FILE_ATTRIBUTE_DIRECTORY)
-		identify_dir(name, output);
 	else
-		identify_file(name, output);
+	{
+		/* directory -- scan it */
+		if (attr & FILE_ATTRIBUTE_DIRECTORY)
+			identify_dir(tname, output);
+		else
+			identify_file(tname, output);
+	}
+	free(tname);
 }
 
 

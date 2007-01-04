@@ -4,7 +4,7 @@
 
     PNG reading functions.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 
@@ -633,7 +633,7 @@ static png_error add_text(png_info *pnginfo, const char *keyword, const char *te
 		return PNGERR_OUT_OF_MEMORY;
 
 	/* allocate a string long enough to hold both */
-	keylen = strlen(keyword);
+	keylen = (int)strlen(keyword);
 	textdata = malloc(keylen + 1 + strlen(text) + 1);
 	if (textdata == NULL)
 	{
@@ -961,7 +961,7 @@ static png_error write_png_stream(void *fp, png_info *pnginfo, const mame_bitmap
 	/* write TEXT chunks */
 	for (text = pnginfo->textlist; text != NULL; text = text->next)
 	{
-		error = write_chunk(fp, (UINT8 *)text->keyword, PNG_CN_tEXt, strlen(text->keyword) + 1 + strlen(text->text));
+		error = write_chunk(fp, (UINT8 *)text->keyword, PNG_CN_tEXt, (UINT32)strlen(text->keyword) + 1 + (UINT32)strlen(text->text));
 		if (error != PNGERR_NONE)
 			goto handle_error;
 	}

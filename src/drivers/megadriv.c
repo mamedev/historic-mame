@@ -1686,10 +1686,10 @@ void megadrive_init_io(void)
 	megadrive_io_tx_regs[1] = 0xff;
 	megadrive_io_tx_regs[2] = 0xff;
 
-	if (Machine->gamedrv->construct_ipt==construct_ipt_megadri6)
+	if (Machine->gamedrv->ipt==ipt_megadri6)
 		init_megadri6_io();
 
-	if (Machine->gamedrv->construct_ipt==construct_ipt_ssf2ghw)
+	if (Machine->gamedrv->ipt==ipt_ssf2ghw)
 		init_megadri6_io();
 }
 
@@ -4597,7 +4597,7 @@ void megadriv_init_common(void)
 
 	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_TAS_CALLBACK, (void *)megadriv_tas_callback);
 
-	if ((Machine->gamedrv->construct_ipt==construct_ipt_megadri6) || (Machine->gamedrv->construct_ipt==construct_ipt_ssf2ghw))
+	if ((Machine->gamedrv->ipt==ipt_megadri6) || (Machine->gamedrv->ipt==ipt_ssf2ghw))
 	{
 		megadrive_io_read_data_port_ptr	= megadrive_io_read_data_port_6button;
 		megadrive_io_write_data_port_ptr = megadrive_io_write_data_port_6button;

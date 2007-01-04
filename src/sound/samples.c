@@ -29,6 +29,7 @@ struct samples_info
 #define FRAC_BITS		24
 #define FRAC_ONE		(1 << FRAC_BITS)
 #define FRAC_MASK		(FRAC_ONE - 1)
+#define MAX_CHANNELS    100
 
 
 /*-------------------------------------------------
@@ -233,24 +234,17 @@ struct loaded_samples *readsamples(const char **samplenames, const char *basenam
 /* Start one of the samples loaded from disk. Note: channel must be in the range */
 /* 0 .. Samplesinterface->channels-1. It is NOT the discrete channel to pass to */
 /* mixer_play_sample() */
-void sample_start(int channel,int samplenum,int loop)
+void sample_start_n(int num,int channel,int samplenum,int loop)
 {
-	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
-	struct sample_channel *chan = &info->channel[channel];
-	struct loaded_sample *sample;
+    struct samples_info *info = sndti_token(SOUND_SAMPLES, num);
+    struct sample_channel *chan;
+    struct loaded_sample *sample;
 
-	if (info->samples == NULL)
-		return;
-	if (channel >= info->numchannels)
-	{
-		logerror("error: sample_start() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
-		return;
-	}
-	if (samplenum >= info->samples->total)
-	{
-		logerror("error: sample_start() called with samplenum = %d, but only %d samples available\n",samplenum,info->samples->total);
-		return;
-	}
+    assert( info->samples != NULL );
+    assert( samplenum < info->samples->total );
+    assert( channel < info->numchannels );
+
+    chan = &info->channel[channel];
 
 	/* force an update before we start */
 	stream_update(chan->stream);
@@ -267,16 +261,20 @@ void sample_start(int channel,int samplenum,int loop)
 	chan->loop = loop;
 }
 
-void sample_start_raw(int channel,INT16 *sampledata,int samples,int frequency,int loop)
+void sample_start(int channel,int samplenum,int loop)
 {
-	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
-	struct sample_channel *chan = &info->channel[channel];
+    sample_start_n(0,channel,samplenum,loop);
+}
 
-	if (channel >= info->numchannels)
-	{
-		logerror("error: sample_start() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
-		return;
-	}
+
+void sample_start_raw_n(int num,int channel,INT16 *sampledata,int samples,int frequency,int loop)
+{
+    struct samples_info *info = sndti_token(SOUND_SAMPLES, num);
+    struct sample_channel *chan;
+
+    assert( channel < info->numchannels );
+
+    chan = &info->channel[channel];
 
 	/* force an update before we start */
 	stream_update(chan->stream);
@@ -292,16 +290,20 @@ void sample_start_raw(int channel,INT16 *sampledata,int samples,int frequency,in
 	chan->loop = loop;
 }
 
-void sample_set_freq(int channel,int freq)
+void sample_start_raw(int channel,INT16 *sampledata,int samples,int frequency,int loop)
 {
-	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
-	struct sample_channel *chan = &info->channel[channel];
+    sample_start_raw_n(0,channel,sampledata,samples,frequency,loop);
+}
 
-	if (channel >= info->numchannels)
-	{
-		logerror("error: sample_set_freq() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
-		return;
-	}
+
+void sample_set_freq_n(int num,int channel,int freq)
+{
+    struct samples_info *info = sndti_token(SOUND_SAMPLES, num);
+    struct sample_channel *chan;
+
+    assert( channel < info->numchannels );
+
+    chan = &info->channel[channel];
 
 	/* force an update before we start */
 	stream_update(chan->stream);
@@ -309,30 +311,38 @@ void sample_set_freq(int channel,int freq)
 	chan->step = ((INT64)freq << FRAC_BITS) / Machine->sample_rate;
 }
 
-void sample_set_volume(int channel,float volume)
+void sample_set_freq(int channel,int freq)
 {
-	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
-	struct sample_channel *chan = &info->channel[channel];
+    sample_set_freq_n(0,channel,freq);
+}
 
-	if (channel >= info->numchannels)
-	{
-		logerror("error: sample_set_volume() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
-		return;
-	}
+
+void sample_set_volume_n(int num,int channel,float volume)
+{
+    struct samples_info *info = sndti_token(SOUND_SAMPLES, num);
+    struct sample_channel *chan;
+
+    assert( channel < info->numchannels );
+
+    chan = &info->channel[channel];
 
 	stream_set_output_gain(chan->stream, 0, volume);
 }
 
-void sample_set_pause(int channel,int pause)
+void sample_set_volume(int channel,float volume)
 {
-	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
-	struct sample_channel *chan = &info->channel[channel];
+    sample_set_volume_n(0,channel,volume);
+}
 
-	if (channel >= info->numchannels)
-	{
-		logerror("error: sample_set_pause() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
-		return;
-	}
+
+void sample_set_pause_n(int num,int channel,int pause)
+{
+    struct samples_info *info = sndti_token(SOUND_SAMPLES, num);
+    struct sample_channel *chan;
+
+    assert( channel < info->numchannels );
+
+    chan = &info->channel[channel];
 
 	/* force an update before we start */
 	stream_update(chan->stream);
@@ -340,70 +350,92 @@ void sample_set_pause(int channel,int pause)
 	chan->paused = pause;
 }
 
-void sample_stop(int channel)
+void sample_set_pause(int channel,int pause)
 {
-	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
-	struct sample_channel *chan = &info->channel[channel];
-
-	if (channel >= info->numchannels)
-	{
-		logerror("error: sample_stop() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
-		return;
-	}
-
-	/* force an update before we start */
-	stream_update(chan->stream);
-	chan->source = NULL;
-	chan->source_num = -1;
+    sample_set_pause_n(0,channel,pause);
 }
 
-int sample_get_base_freq(int channel)
-{
-	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
-	struct sample_channel *chan = &info->channel[channel];
 
-	if (channel >= info->numchannels)
-	{
-		logerror("error: sample_playing() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
-		return 0;
-	}
+void sample_stop_n(int num,int channel)
+{
+    struct samples_info *info = sndti_token(SOUND_SAMPLES, num);
+    struct sample_channel *chan;
+
+    assert( channel < info->numchannels );
+
+    chan = &info->channel[channel];
+
+    /* force an update before we start */
+    stream_update(chan->stream);
+    chan->source = NULL;
+    chan->source_num = -1;
+}
+
+void sample_stop(int channel)
+{
+    sample_stop_n(0,channel);
+}
+
+
+int sample_get_base_freq_n(int num,int channel)
+{
+    struct samples_info *info = sndti_token(SOUND_SAMPLES, num);
+    struct sample_channel *chan;
+
+    assert( channel < info->numchannels );
+
+    chan = &info->channel[channel];
 
 	/* force an update before we start */
 	stream_update(chan->stream);
 	return chan->basefreq;
 }
 
-int sample_playing(int channel)
+int sample_get_base_freq(int channel)
 {
-	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
-	struct sample_channel *chan = &info->channel[channel];
+    return sample_get_base_freq_n(0,channel);
+}
 
-	if (channel >= info->numchannels)
-	{
-		logerror("error: sample_playing() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
-		return 0;
-	}
+
+int sample_playing_n(int num,int channel)
+{
+    struct samples_info *info = sndti_token(SOUND_SAMPLES, num);
+    struct sample_channel *chan;
+
+    assert( channel < info->numchannels );
+
+    chan = &info->channel[channel];
 
 	/* force an update before we start */
 	stream_update(chan->stream);
 	return (chan->source != NULL);
 }
 
+int sample_playing(int channel)
+{
+    return sample_playing_n(0,channel);
+}
+
+
+int sample_loaded_n(int num,int samplenum)
+{
+    int ret = 0;
+    struct samples_info *info = sndti_token(SOUND_SAMPLES, num);
+
+    if (info->samples != NULL)
+    {
+        assert( samplenum < info->samples->total );
+
+        ret = (info->samples->sample[samplenum].data != NULL);
+    }
+
+    return ret;
+}
 
 int sample_loaded(int samplenum)
 {
-	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
-
-	if (info->samples == NULL)
-		return 0;
-	if (samplenum >= info->samples->total)
-	{
-		logerror("error: sample_loaded() called with samplenum = %d, but only %d samples available\n",samplenum,info->samples->total);
-		return 0;
-	}
-	return (info->samples->sample[samplenum].data != NULL);
+    return sample_loaded_n(0,samplenum);
 }
-
 
 
 static void sample_update_sound(void *param, stream_sample_t **inputs, stream_sample_t **_buffer, int length)
@@ -509,6 +541,7 @@ static void *samples_start(int sndindex, int clock, const void *config)
 
 	/* allocate channels */
 	info->numchannels = intf->channels;
+    assert(info->numchannels < MAX_CHANNELS);
 	info->channel = auto_malloc(sizeof(*info->channel) * info->numchannels);
 	for (i = 0; i < info->numchannels; i++)
 	{
@@ -521,13 +554,13 @@ static void *samples_start(int sndindex, int clock, const void *config)
 		info->channel[i].paused = 0;
 
 		/* register with the save state system */
-		state_save_register_item("samples", i, info->channel[i].source_length);
-		state_save_register_item("samples", i, info->channel[i].source_num);
-		state_save_register_item("samples", i, info->channel[i].pos);
-		state_save_register_item("samples", i, info->channel[i].frac);
-		state_save_register_item("samples", i, info->channel[i].step);
-		state_save_register_item("samples", i, info->channel[i].loop);
-		state_save_register_item("samples", i, info->channel[i].paused);
+        state_save_register_item("samples", sndindex * MAX_CHANNELS + i, info->channel[i].source_length);
+        state_save_register_item("samples", sndindex * MAX_CHANNELS + i, info->channel[i].source_num);
+        state_save_register_item("samples", sndindex * MAX_CHANNELS + i, info->channel[i].pos);
+        state_save_register_item("samples", sndindex * MAX_CHANNELS + i, info->channel[i].frac);
+        state_save_register_item("samples", sndindex * MAX_CHANNELS + i, info->channel[i].step);
+        state_save_register_item("samples", sndindex * MAX_CHANNELS + i, info->channel[i].loop);
+        state_save_register_item("samples", sndindex * MAX_CHANNELS + i, info->channel[i].paused);
 	}
 	state_save_register_func_postload_ptr(samples_postload, info);
 
@@ -560,17 +593,17 @@ void samples_get_info(void *token, UINT32 state, sndinfo *info)
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case SNDINFO_PTR_SET_INFO:						info->set_info = samples_set_info;		break;
-		case SNDINFO_PTR_START:							info->start = samples_start;			break;
-		case SNDINFO_PTR_STOP:							/* Nothing */							break;
-		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+        case SNDINFO_PTR_SET_INFO:                      info->set_info = samples_set_info;      break;
+        case SNDINFO_PTR_START:                         info->start = samples_start;            break;
+        case SNDINFO_PTR_STOP:                          /* Nothing */                           break;
+        case SNDINFO_PTR_RESET:                         /* Nothing */                           break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case SNDINFO_STR_NAME:							info->s = "Samples";					break;
-		case SNDINFO_STR_CORE_FAMILY:					info->s = "Big Hack";					break;
-		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
-		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
-		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+        case SNDINFO_STR_NAME:                          info->s = "Samples";                    break;
+        case SNDINFO_STR_CORE_FAMILY:                   info->s = "Big Hack";                   break;
+        case SNDINFO_STR_CORE_VERSION:                  info->s = "1.1";                        break;
+        case SNDINFO_STR_CORE_FILE:                     info->s = __FILE__;                     break;
+        case SNDINFO_STR_CORE_CREDITS:                  info->s = "Copyright (c) 2007, The MAME Team"; break;
 	}
 }
 

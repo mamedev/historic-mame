@@ -116,6 +116,10 @@ typedef struct {
 	UINT16 rpt_start, rpt_end;
 
 	UINT16 cbcr;
+	UINT16 cbsr1;
+	UINT16 cber1;
+	UINT16 cbsr2;
+	UINT16 cber2;
 
 	struct
 	{
@@ -242,7 +246,7 @@ static void tms_reset(void)
 	tms.pmst.trm	= 0;
 	tms.ifr			= 0;
 	tms.cbcr		= 0;
-	tms.rptc		= 0;
+	tms.rptc		= -1;
 }
 
 static void check_interrupts(void)
@@ -256,7 +260,7 @@ static void check_interrupts(void)
 			if (tms.ifr & (1 << i))
 			{
 				tms.st0.intm = 1;
-				PUSH_PC(tms.pc);
+				PUSH_STACK(tms.pc);
 
 				tms.pc = (tms.pmst.iptr << 11) | ((i+1) << 1);
 				tms.ifr &= ~(1 << i);
@@ -335,6 +339,27 @@ static int tms_execute(int num_cycles)
 
 	while(tms_icount > 0)
 	{
+		UINT16 ppc;
+
+		// handle block repeat
+		if (tms.pmst.braf)
+		{
+			if (tms.pc == tms.paer)
+			{
+				if (tms.brcr > 0)
+				{
+					CHANGE_PC(tms.pasr);
+				}
+
+				tms.brcr--;
+				if (tms.brcr <= 0)
+				{
+					tms.pmst.braf = 0;
+				}
+			}
+		}
+
+		ppc = tms.pc;
 		CALL_MAME_DEBUG;
 
 		tms.op = ROPCODE();
@@ -343,7 +368,7 @@ static int tms_execute(int num_cycles)
 		// handle single repeat
 		if (tms.rptc > 0)
 		{
-			if (tms.pc == tms.rpt_end)
+			if (ppc == tms.rpt_end)
 			{
 				CHANGE_PC(tms.rpt_start);
 				tms.rptc--;
@@ -354,22 +379,6 @@ static int tms_execute(int num_cycles)
 			tms.rptc = 0;
 		}
 
-		// handle block repeat
-		if (tms.pmst.braf)
-		{
-			if (tms.pc == tms.paer)
-			{
-				CHANGE_PC(tms.pasr);
-				tms.brcr--;
-				if (tms.brcr <= 0)
-				{
-					tms.pmst.braf = 0;
-				}
-			}
-		}
-
-		tms_icount--;
-
 		tms.timer.psc--;
 		if (tms.timer.psc <= 0)
 		{
@@ -379,7 +388,6 @@ static int tms_execute(int num_cycles)
 			{
 				// reset timer
 				tms.timer.tim = tms.timer.prd;
-				tms.timer.psc = tms.timer.tddr;
 
 				tms_interrupt(INTERRUPT_TINT);
 			}
@@ -413,6 +421,14 @@ static READ16_HANDLER( cpuregs_r )
 		}
 
 		case 0x09:	return tms.brcr;
+		case 0x10:	return tms.ar[0];
+		case 0x11:	return tms.ar[1];
+		case 0x12:	return tms.ar[2];
+		case 0x13:	return tms.ar[3];
+		case 0x14:	return tms.ar[4];
+		case 0x15:	return tms.ar[5];
+		case 0x16:	return tms.ar[6];
+		case 0x17:	return tms.ar[7];
 		case 0x1e:	return tms.cbcr;
 		case 0x1f:	return tms.bmar;
 		case 0x24:	return tms.timer.tim;
@@ -466,9 +482,22 @@ static WRITE16_HANDLER( cpuregs_w )
 		}
 
 		case 0x09:	tms.brcr = data; break;
+		case 0x0e:	tms.treg2 = data; break;
 		case 0x0f:	tms.dbmr = data; break;
+		case 0x10:	tms.ar[0] = data; break;
+		case 0x11:	tms.ar[1] = data; break;
+		case 0x12:	tms.ar[2] = data; break;
+		case 0x13:	tms.ar[3] = data; break;
+		case 0x14:	tms.ar[4] = data; break;
+		case 0x15:	tms.ar[5] = data; break;
+		case 0x16:	tms.ar[6] = data; break;
+		case 0x17:	tms.ar[7] = data; break;
 		case 0x18:	tms.indx = data; break;
 		case 0x19:	tms.arcr = data; break;
+		case 0x1a:	tms.cbsr1 = data; break;
+		case 0x1b:	tms.cber1 = data; break;
+		case 0x1c:	tms.cbsr2 = data; break;
+		case 0x1d:	tms.cber2 = data; break;
 		case 0x1e:	tms.cbcr = data; break;
 		case 0x1f:	tms.bmar = data; break;
 		case 0x24:	tms.timer.tim = data; break;
@@ -519,6 +548,19 @@ static void tms_set_info(UINT32 state, cpuinfo *info)
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + TMS32051_PC:		tms.pc = info->i;						break;
 	}
+}
+
+static int tms_debug_read(int space, UINT32 offset, int size, UINT64 *value)
+{
+	if (space == ADDRESS_SPACE_PROGRAM)
+	{
+		*value = (PM_READ16(offset>>1) >> ((offset & 1) ? 0 : 8)) & 0xff;
+	}
+	else if (space == ADDRESS_SPACE_DATA)
+	{
+		*value = (DM_READ16(offset>>1) >> ((offset & 1) ? 0 : 8)) & 0xff;
+	}
+	return 1;
 }
 
 void tms_get_info(UINT32 state, cpuinfo *info)
@@ -587,6 +629,7 @@ void tms_get_info(UINT32 state, cpuinfo *info)
 #ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms32051_dasm;		break;
 #endif /* MAME_DEBUG */
+		case CPUINFO_PTR_READ:							info->read = tms_debug_read;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms_icount;				break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = construct_map_internal_pgm; break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA: info->internal_map = construct_map_internal_data; break;

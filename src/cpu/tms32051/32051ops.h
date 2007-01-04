@@ -74,12 +74,12 @@ static void (* tms32051_opcode_table[256])(void) =
 	op_bcnd,		op_bcnd,		op_bcnd,		op_bcnd,
 	op_xc,			op_xc,			op_xc,			op_xc,
 	op_cc,			op_cc,			op_cc,			op_cc,
-	op_retc,		op_retc,		op_retc,		op_ret,
+	op_retc,		op_retc,		op_retc,		op_retc,
 	/* 0xf0 - 0xff */
 	op_bcndd,		op_bcndd,		op_bcndd,		op_bcndd,
 	op_xc,			op_xc,			op_xc,			op_xc,
 	op_ccd,			op_ccd,			op_ccd,			op_ccd,
-	op_retcd,		op_retcd,		op_retcd,		op_retd
+	op_retcd,		op_retcd,		op_retcd,		op_retcd
 };
 
 static void (* tms32051_opcode_table_be[256])(void) =

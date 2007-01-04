@@ -482,7 +482,7 @@ static void print_tokens(FILE *out, parsed_expression *expr)
 
 static int parse_memory_operator(const char *buffer, UINT16 *flags)
 {
-	int length = strlen(buffer);
+	int length = (int)strlen(buffer);
 	int space = 'p', size;
 
 	*flags = 0;

@@ -4,7 +4,7 @@
 
     Internal MAME menus for the user interface.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -44,6 +44,15 @@ struct _ui_menu_item
 };
 
 
+typedef struct _menu_augment_routines menu_augment_routines;
+struct _menu_augment_routines
+{
+	void (*render_augmentation_menu)(float x, float y, float x2, float y2);
+	float (*get_augmentation_menu_height)(void);
+	float (*get_augmentation_menu_width)(void);
+};
+
+
 
 /***************************************************************************
     FUNCTION PROTOTYPES
@@ -53,7 +62,7 @@ struct _ui_menu_item
 void ui_menu_init(running_machine *machine);
 
 /* draw a menu */
-void ui_menu_draw(const ui_menu_item *items, int numitems, int selected);
+void ui_menu_draw(const ui_menu_item *items, int numitems, int selected, menu_augment_routines *augmentation_routines);
 
 /* master handler */
 UINT32 ui_menu_ui_handler(UINT32 state);

@@ -222,6 +222,7 @@ void tms5220_reset_chip(void *chip)
 
 	/* initialize the sample generators */
 	tms->interp_count = tms->sample_count = tms->pitch_count = 0;
+	tms->RNG = 0xFFFFFFFF;
 	memset(tms->u, 0, sizeof(tms->u));
 	memset(tms->x, 0, sizeof(tms->x));
 

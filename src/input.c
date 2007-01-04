@@ -4,7 +4,7 @@
 
     Handle input from the user.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -1141,7 +1141,7 @@ char *seq_name(const input_seq *seq, char *buffer, unsigned max)
 		{
 			strcpy(dest, name);
 			dest += strlen(name);
-			max -= strlen(name);
+			max -= (UINT32)strlen(name);
 		}
 	}
 

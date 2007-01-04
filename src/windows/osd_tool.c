@@ -4,7 +4,7 @@
 
     OS-dependent code interface for tools
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -13,9 +13,11 @@
 #include <windows.h>
 #include <winioctl.h>
 #include <stdio.h>
-#include <stdlib.h>
+#include <tchar.h>
 
 #include "osd_tool.h"
+#include "strconv.h"
+#include "restrack.h"
 
 /* Older versions of Platform SDK don't define these */
 #ifndef INVALID_FILE_ATTRIBUTES
@@ -33,6 +35,27 @@ struct _osd_tool_dir
 	osd_tool_dirent ent;
 	WIN32_FIND_DATA data;
 };
+
+
+
+/*-------------------------------------------------
+    create_file_utf8 - UTF-8 wrapper for
+    CreateFile()
+-------------------------------------------------*/
+
+static HANDLE create_file_utf8(const char *filename, DWORD desired_access,
+	DWORD share_mode, LPSECURITY_ATTRIBUTES security_attributes,
+	DWORD disposition, DWORD flags, HANDLE template_file)
+{
+	HANDLE result;
+	TCHAR *t_filename;
+
+	t_filename = tstring_from_utf8(filename);
+	result = CreateFile(t_filename, desired_access, share_mode,
+		security_attributes, disposition, flags, template_file);
+	free(t_filename);
+	return result;
+}
 
 
 
@@ -60,7 +83,7 @@ int osd_get_physical_drive_geometry(const char *filename, UINT32 *cylinders, UIN
 	DWORD bytesRead;
 	HANDLE file;
 
-	file = CreateFile(filename, GENERIC_READ, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING, NULL);
+	file = create_file_utf8(filename, GENERIC_READ, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING, NULL);
 	if (file != INVALID_HANDLE_VALUE)
 	{
 		if (DeviceIoControl(file, IOCTL_DISK_GET_DRIVE_GEOMETRY, NULL, 0, &dg, sizeof(dg), &bytesRead, NULL))
@@ -97,7 +120,7 @@ UINT64 osd_get_file_size(const char *file)
 	UINT64 filesize;
 
 	/* attempt to open the file */
-	handle = CreateFile(file, GENERIC_READ, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+	handle = create_file_utf8(file, GENERIC_READ, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 	if (handle == INVALID_HANDLE_VALUE)
 		return 0;
 
@@ -129,7 +152,10 @@ static osd_tool_enttype get_attributes_enttype(DWORD attributes)
 osd_tool_enttype osd_get_file_type(const char *filename)
 {
 	DWORD attributes;
-	attributes = GetFileAttributes(filename);
+	TCHAR *t_filename;
+	t_filename = tstring_from_utf8(filename);
+	attributes = GetFileAttributes(t_filename);
+	free(t_filename);
 	return get_attributes_enttype(attributes);
 }
 
@@ -160,7 +186,7 @@ osd_tool_file *osd_tool_fopen(const char *filename, const char *mode)
 	}
 
 	/* attempt to open the file */
-	handle = CreateFile(filename, access, share, NULL, disposition, 0, NULL);
+	handle = create_file_utf8(filename, access, share, NULL, disposition, 0, NULL);
 	if (handle == INVALID_HANDLE_VALUE)
 		return NULL;
 	return (osd_tool_file *)handle;
@@ -231,7 +257,9 @@ UINT64 osd_tool_flength(osd_tool_file *file)
 osd_tool_dir *osd_tool_opendir(const char *dirname)
 {
 	osd_tool_dir *dir = NULL;
-	char *dirfilter = NULL;
+	TCHAR *t_dirname;
+	TCHAR *dirfilter = NULL;
+	size_t dirfilter_size;
 
 	dir = malloc(sizeof(*dir));
 	if (!dir)
@@ -240,10 +268,13 @@ osd_tool_dir *osd_tool_opendir(const char *dirname)
 	dir->find = INVALID_HANDLE_VALUE;
 	dir->is_first = TRUE;
 
-	dirfilter = malloc(strlen(dirname) + 5);
+	t_dirname = tstring_from_utf8(dirname);
+	dirfilter_size = _tcslen(t_dirname) + 5;
+	dirfilter = (TCHAR *) malloc(dirfilter_size * sizeof(*dirfilter));
+	free(t_dirname);
 	if (!dirfilter)
 		goto done;
-	sprintf(dirfilter, "%s\\*.*", dirname);
+	_sntprintf(dirfilter, dirfilter_size, TEXT("%s\\*.*"), t_dirname);
 
 	dir->find = FindFirstFile(dirfilter, &dir->data);
 
@@ -263,6 +294,12 @@ done:
 
 const osd_tool_dirent *osd_tool_readdir(osd_tool_dir *dir)
 {
+	if (dir->ent.name)
+	{
+		free(dir->ent.name);
+		dir->ent.name = NULL;
+	}
+
 	if (!dir->is_first)
 	{
 		if (!FindNextFile(dir->find, &dir->data))
@@ -272,7 +309,7 @@ const osd_tool_dirent *osd_tool_readdir(osd_tool_dir *dir)
 	{
 		dir->is_first = FALSE;
 	}
-	dir->ent.name = dir->data.cFileName;
+	dir->ent.name = utf8_from_tstring(dir->data.cFileName);
 	dir->ent.type = get_attributes_enttype(dir->data.dwFileAttributes);
 	dir->ent.size = dir->data.nFileSizeLow | ((UINT64) dir->data.nFileSizeHigh << 32);
 	return &dir->ent;
@@ -282,7 +319,22 @@ const osd_tool_dirent *osd_tool_readdir(osd_tool_dir *dir)
 
 void osd_tool_closedir(osd_tool_dir *dir)
 {
+	if (dir->ent.name)
+		free(dir->ent.name);
 	if (dir->find != INVALID_HANDLE_VALUE)
 		CloseHandle(dir->find);
 	free(dir);
+}
+
+
+
+void *_malloc_or_die(size_t size, const char *file, int line)
+{
+	void *mem = malloc(size);
+	if (!mem)
+	{
+		fprintf(stderr, "Out of memory\n");
+		exit(1);
+	}
+	return mem;
 }

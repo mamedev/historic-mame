@@ -59,6 +59,7 @@ COREOBJS = \
 	$(OBJ)/uigfx.o \
 	$(OBJ)/uimenu.o \
 	$(OBJ)/uitext.o \
+	$(OBJ)/unicode.o \
 	$(OBJ)/unzip.o \
 	$(OBJ)/validity.o \
 	$(OBJ)/version.o \

@@ -100,6 +100,22 @@ endif
 
 
 #-------------------------------------------------
+# APEXC
+#-------------------------------------------------
+
+ifneq ($(filter APEXC,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/apexc
+CPUDEFS += -DHAS_APEXC=1
+CPUOBJS += $(OBJ)/cpu/apexc/apexc.o
+DBGOBJS += $(OBJ)/cpu/apexc/apexcdsm.o
+$(OBJ)/cpu/apexc/apexc.o: apexc.c apexc.h
+else
+CPUDEFS += -DHAS_APEXC=0
+endif
+
+
+
+#-------------------------------------------------
 # AT&T DSP32C
 #-------------------------------------------------
 
@@ -205,6 +221,22 @@ endif
 
 
 #-------------------------------------------------
+# CP1610
+#-------------------------------------------------
+
+ifneq ($(filter CP1610,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/cp1610
+CPUDEFS += -DHAS_CP1610=1
+CPUOBJS += $(OBJ)/cpu/cp1610/cp1610.o
+DBGOBJS += $(OBJ)/cpu/cp1610/1610dasm.o
+$(OBJ)/cpu/cp1610/cp1610.o: cp1610.c cp1610.h
+else
+CPUDEFS += -DHAS_CP1610=0
+endif
+
+
+
+#-------------------------------------------------
 # Cinematronics vector "CPU"
 #-------------------------------------------------
 
@@ -230,6 +262,22 @@ OBJDIRS += $(OBJ)/cpu/t11
 CPUOBJS += $(OBJ)/cpu/t11/t11.o
 DBGOBJS += $(OBJ)/cpu/t11/t11dasm.o
 $(OBJ)/cpu/t11/t11.o: t11.c t11.h t11ops.c t11table.c
+endif
+
+
+
+#-------------------------------------------------
+# F8
+#-------------------------------------------------
+
+ifneq ($(filter F8,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/f8
+CPUDEFS += -DHAS_F8=1
+CPUOBJS += $(OBJ)/cpu/f8/f8.o
+DBGOBJS += $(OBJ)/cpu/f8/f8dasm.o
+$(OBJ)/cpu/f8/f8.o: f8.c f8.h
+else
+CPUDEFS += -DHAS_F8=0
 endif
 
 
@@ -479,6 +527,22 @@ OBJDIRS += $(OBJ)/cpu/konami
 CPUOBJS += $(OBJ)/cpu/konami/konami.o
 DBGOBJS += $(OBJ)/cpu/konami/knmidasm.o
 $(OBJ)/cpu/konami/konami.o: konami.c konami.h konamops.c konamtbl.c
+endif
+
+
+
+#-------------------------------------------------
+# LH5801
+#-------------------------------------------------
+
+ifneq ($(filter LH5801,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/lh5801
+CPUDEFS += -DHAS_LH5801=1
+CPUOBJS += $(OBJ)/cpu/lh5801/lh5801.o
+DBGOBJS += $(OBJ)/cpu/lh5801/5801dasm.o
+$(OBJ)/cpu/lh5801/lh5801.o: lh5801.c 5801tbl.c lh5801.h
+else
+CPUDEFS += -DHAS_LH5801=0
 endif
 
 
@@ -741,6 +805,22 @@ endif
 
 
 #-------------------------------------------------
+# PDP-1
+#-------------------------------------------------
+
+ifneq ($(filter PDP1,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/pdp1
+CPUDEFS += -DHAS_PDP1=1
+CPUOBJS += $(OBJ)/cpu/pdp1/pdp1.o
+DBGOBJS += $(OBJ)/cpu/pdp1/pdp1dasm.o
+$(OBJ)/cpu/pdp1/pdp1.o: pdp1.c pdp1.h
+else
+CPUDEFS += -DHAS_PDP1=0
+endif
+
+
+
+#-------------------------------------------------
 # Motorola PowerPC series
 #-------------------------------------------------
 
@@ -842,6 +922,22 @@ endif
 
 
 #-------------------------------------------------
+# Saturn
+#-------------------------------------------------
+
+ifneq ($(filter SATURN,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/saturn
+CPUDEFS += -DHAS_SATURN=1
+CPUOBJS += $(OBJ)/cpu/saturn/saturn.o
+DBGOBJS += $(OBJ)/cpu/saturn/saturnds.o
+$(OBJ)/cpu/saturn/saturn.o: saturn.c sattable.c satops.c saturn.h sat.h
+else
+CPUDEFS += -DHAS_SATURN=0
+endif
+
+
+
+#-------------------------------------------------
 # Signetics 2650
 #-------------------------------------------------
 
@@ -852,6 +948,38 @@ OBJDIRS += $(OBJ)/cpu/s2650
 CPUOBJS += $(OBJ)/cpu/s2650/s2650.o
 DBGOBJS += $(OBJ)/cpu/s2650/2650dasm.o
 $(OBJ)/cpu/s2650/s2650.o: s2650.c s2650.h s2650cpu.h
+endif
+
+
+
+#-------------------------------------------------
+# SC61860
+#-------------------------------------------------
+
+ifneq ($(filter SC61860,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/sc61860
+CPUDEFS += -DHAS_SC61860=1
+CPUOBJS += $(OBJ)/cpu/sc61860/sc61860.o
+DBGOBJS += $(OBJ)/cpu/sc61860/scdasm.o
+$(OBJ)/cpu/sc61860/sc61860.o: sc61860.h sc.h scops.c sctable.c
+else
+CPUDEFS += -DHAS_SC61860=0
+endif
+
+
+
+#-------------------------------------------------
+# SM8500
+#-------------------------------------------------
+
+ifneq ($(filter SM8500,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/sm8500
+CPUDEFS += -DHAS_SM8500=1
+CPUOBJS += $(OBJ)/cpu/sm8500/sm8500.o
+DBGOBJS += $(OBJ)/cpu/sm8500/sm8500d.o
+$(OBJ)/cpu/sm8500/sm8500.o: sm8500.c sm8500.h sm85ops.h
+else
+CPUDEFS += -DHAS_SM8500=0
 endif
 
 
@@ -883,6 +1011,34 @@ OBJDIRS += $(OBJ)/cpu/mips
 CPUOBJS += $(OBJ)/cpu/mips/psx.o
 DBGOBJS += $(OBJ)/cpu/mips/mipsdasm.o
 $(OBJ)/cpu/mips/psx.o: psx.c psx.h
+endif
+
+
+
+#-------------------------------------------------
+# Texas Instruments TMS7000 series
+#-------------------------------------------------
+
+ifneq ($(filter TMS7000,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/tms7000
+CPUDEFS += -DHAS_TMS7000=1
+CPUOBJS += $(OBJ)/cpu/tms7000/tms7000.o
+DBGOBJS += $(OBJ)/cpu/tms7000/7000dasm.o
+$(OBJ)/cpu/tms7000/tms7000.o:	tms7000.h tms7000.c
+$(OBJ)/cpu/tms7000/7000dasm.o:	tms7000.h 7000dasm.c
+else
+CPUDEFS += -DHAS_TMS7000=0
+endif
+
+ifneq ($(filter TMS7000_EXL,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/tms7000
+CPUDEFS += -DHAS_TMS7000_EXL=1
+CPUOBJS += $(OBJ)/cpu/tms7000/tms7000.o
+DBGOBJS += $(OBJ)/cpu/tms7000/7000dasm.o
+$(OBJ)/cpu/tms7000/tms7000.o:	tms7000.h tms7000.c
+$(OBJ)/cpu/tms7000/7000dasm.o:	tms7000.h 7000dasm.c
+else
+CPUDEFS += -DHAS_TMS7000_EXL=0
 endif
 
 
@@ -1024,6 +1180,39 @@ endif
 
 
 #-------------------------------------------------
+# TX0
+#-------------------------------------------------
+
+ifneq ($(filter TX0,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/pdp1
+CPUDEFS += -DHAS_TX0_64KW=1 -DHAS_TX0_8KW=1
+CPUOBJS += $(OBJ)/cpu/pdp1/tx0.o
+DBGOBJS += $(OBJ)/cpu/pdp1/tx0dasm.o
+$(OBJ)/cpu/pdp1/tx0.o:		tx0.h tx0.c
+$(OBJ)/cpu/pdp1/tx0dasm.o:	tx0.h tx0dasm.c
+else
+CPUDEFS += -DHAS_TX0_64KW=0 -DHAS_TX0_8KW=0
+endif
+
+
+
+#-------------------------------------------------
+# V30MZ
+#-------------------------------------------------
+
+ifneq ($(filter V30MZ,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/v30mz
+CPUDEFS += -DHAS_V30MZ=1
+CPUOBJS += $(OBJ)/cpu/v30mz/v30mz.o
+DBGOBJS += $(OBJ)/cpu/i386/i386dasm.o
+$(OBJ)/cpu/v30mz/v30mz.o:	v30mz.c v30mz.h necmodrm.h necinstr.h necea.h nechost.h necintrf.h
+else
+CPUDEFS += -DHAS_V30MZ=0
+endif
+
+
+
+#-------------------------------------------------
 # Zilog Z80
 #-------------------------------------------------
 
@@ -1063,4 +1252,20 @@ OBJDIRS += $(OBJ)/cpu/z8000
 CPUOBJS += $(OBJ)/cpu/z8000/z8000.o
 DBGOBJS += $(OBJ)/cpu/z8000/8000dasm.o
 $(OBJ)/cpu/z8000/z8000.o: z8000.c z8000.h z8000cpu.h z8000dab.h z8000ops.c z8000tbl.c
+endif
+
+
+
+#-------------------------------------------------
+# Game Boy Z-80
+#-------------------------------------------------
+
+ifneq ($(filter Z80GB,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/z80gb
+CPUDEFS += -DHAS_Z80GB=1
+CPUOBJS += $(OBJ)/cpu/z80gb/z80gb.o
+DBGOBJS += $(OBJ)/cpu/z80gb/z80gbd.o
+$(OBJ)/cpu/z80gb/z80gb.o: z80gb.c z80gb.h daa_tab.h opc_cb.h opc_main.h
+else
+CPUDEFS += -DHAS_Z80GB=0
 endif

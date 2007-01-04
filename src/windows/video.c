@@ -2,7 +2,7 @@
 //
 //  video.c - Win32 video handling
 //
-//  Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+//  Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
 //  Visit http://mamedev.org for licensing and usage restrictions.
 //
 //============================================================
@@ -39,6 +39,7 @@
 #include "input.h"
 #include "options.h"
 #include "debugwin.h"
+#include "strconv.h"
 
 #ifdef MESS
 #include "menu.h"
@@ -436,7 +437,11 @@ static void init_monitors(void)
 	{
 		win_monitor_info *monitor;
 		for (monitor = win_monitor_list; monitor != NULL; monitor = monitor->next)
-			verbose_printf("Video: Monitor %p = \"%s\" %s\n", monitor->handle, monitor->info.szDevice, (monitor == primary_monitor) ? "(primary)" : "");
+		{
+			char *utf8_device = utf8_from_tstring(monitor->info.szDevice);
+			verbose_printf("Video: Monitor %p = \"%s\" %s\n", monitor->handle, utf8_device, (monitor == primary_monitor) ? "(primary)" : "");
+			free(utf8_device);
+		}
 	}
 }
 
@@ -512,8 +517,15 @@ static win_monitor_info *pick_monitor(int index)
 	if (scrname != NULL)
 		for (monitor = win_monitor_list; monitor != NULL; monitor = monitor->next)
 		{
+			char *utf8_device;
+			int rc;
+
 			moncount++;
-			if (strcmp(scrname, monitor->info.szDevice) == 0)
+
+			utf8_device = utf8_from_tstring(monitor->info.szDevice);
+			rc = strcmp(scrname, utf8_device);
+			free(utf8_device);
+			if (rc == 0)
 				goto finishit;
 		}
 

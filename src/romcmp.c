@@ -4,7 +4,7 @@
 
     ROM comparison utility program.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -50,20 +50,18 @@ void CLIB_DECL logerror(const char *text,...)
 mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 *filesize)
 {
 	const char *mode;
-	FILE *fp;
+	osd_tool_file *fp;
 
 	if (openflags & OPEN_FLAG_READ)
 		mode = "rb";
 	else
 		return FILERR_FAILURE;
 
-	fp = fopen(path, mode);
+	fp = osd_tool_fopen(path, mode);
 	if (fp == NULL)
 		return FILERR_NOT_FOUND;
 
-	fseek(fp, 0, SEEK_END);
-	*filesize = ftell(fp);
-	fseek(fp, 0, SEEK_SET);
+	*filesize = osd_tool_flength(fp);
 
 	*file = (osd_file *)fp;
 	return FILERR_NONE;
@@ -71,21 +69,19 @@ mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UI
 
 mame_file_error osd_close(osd_file *file)
 {
-	fclose((FILE *)file);
+	osd_tool_fclose((osd_tool_file *)file);
 	return FILERR_NONE;
 }
 
 mame_file_error osd_read(osd_file *file, void *buffer, UINT64 offset, UINT32 length, UINT32 *actual)
 {
-	fseek((FILE *)file, offset, SEEK_SET);
-	*actual = fread(buffer, 1, length, (FILE *)file);
+	*actual = osd_tool_fread((osd_tool_file *) file, offset, length, buffer);
 	return FILERR_NONE;
 }
 
 mame_file_error osd_write(osd_file *file, const void *buffer, UINT64 offset, UINT32 length, UINT32 *actual)
 {
-	fseek((FILE *)file, offset, SEEK_SET);
-	*actual = fwrite(buffer, 1, length, (FILE *)file);
+	*actual = osd_tool_fwrite((osd_tool_file *) file, offset, length, buffer);
 	return FILERR_NONE;
 }
 
@@ -454,7 +450,7 @@ static float filecompare(const fileinfo *file1,const fileinfo *file2,int mode1,i
 static void readfile(const char *path,fileinfo *file)
 {
 	char fullname[256];
-	FILE *f = 0;
+	osd_tool_file *f = 0;
 
 
 	if (path)
@@ -472,20 +468,20 @@ static void readfile(const char *path,fileinfo *file)
 		return;
 	}
 
-	if ((f = fopen(fullname,"rb")) == 0)
+	if ((f = osd_tool_fopen(fullname,"rb")) == 0)
 	{
 		printf("%s: %s\n",fullname,strerror(errno));
 		return;
 	}
 
-	if (fread(file->buf,1,file->size,f) != file->size)
+	if (osd_tool_fread(f, 0, file->size, file->buf) != file->size)
 	{
 		printf("%s: %s\n",fullname,strerror(errno));
-		fclose(f);
+		osd_tool_fclose(f);
 		return;
 	}
 
-	fclose(f);
+	osd_tool_fclose(f);
 
 	return;
 }
@@ -509,115 +505,124 @@ static void printname(const fileinfo *file1,const fileinfo *file2,float score,in
 
 static int load_files(int i, int *found, const char *path)
 {
-	struct stat st;
+	osd_tool_enttype type;
 
-
-	if (stat(path,&st) != 0)
+	/* check the file type */
+	type = osd_get_file_type(path);
+	switch(type)
 	{
-		printf("%s: %s\n",path,strerror(errno));
-		return 10;
-	}
-
-	if (S_ISDIR(st.st_mode))
-	{
-		osd_tool_dir *dir;
-		const osd_tool_dirent *d;
-
-        /* load all files in directory */
-		dir = osd_tool_opendir(path);
-		if (dir)
+		case ENTTYPE_DIR:
 		{
-			while((d = osd_tool_readdir(dir)) != NULL)
-			{
-				char *d_name = d->name;
-				char buf[255+1];
+			osd_tool_dir *dir;
+			const osd_tool_dirent *d;
 
-				sprintf(buf, "%s%c%s", path, PATH_DELIM, d_name);
-				if (d->type == ENTTYPE_FILE)
+			/* load all files in directory */
+			dir = osd_tool_opendir(path);
+			if (dir)
+			{
+				while((d = osd_tool_readdir(dir)) != NULL)
 				{
-					UINT64 size = d->size;
-					while (size && (size & 1) == 0) size >>= 1;
-					if (size & ~1)
-						printf("%-23s %-23s ignored (not a ROM)\n",i ? "" : d_name,i ? d_name : "");
+					char *d_name = d->name;
+					char buf[255+1];
+
+					sprintf(buf, "%s%c%s", path, PATH_DELIM, d_name);
+					if (d->type == ENTTYPE_FILE)
+					{
+						UINT64 size = d->size;
+						while (size && (size & 1) == 0) size >>= 1;
+						if (size & ~1)
+							printf("%-23s %-23s ignored (not a ROM)\n",i ? "" : d_name,i ? d_name : "");
+						else
+						{
+							strcpy(files[i][found[i]].name,d_name);
+							files[i][found[i]].size = d->size;
+							readfile(path,&files[i][found[i]]);
+							files[i][found[i]].listed = 0;
+							if (found[i] >= MAX_FILES)
+							{
+								printf("%s: max of %d files exceeded\n",path,MAX_FILES);
+								break;
+							}
+							found[i]++;
+						}
+					}
+				}
+				osd_tool_closedir(dir);
+			}
+			break;
+		}
+
+		case ENTTYPE_FILE:
+		{
+			zip_file *zip;
+			const zip_file_header* zipent;
+			zip_error ziperr;
+
+			/* wasn't a directory, so try to open it as a zip file */
+			ziperr = zip_file_open(path, &zip);
+			if (ziperr != ZIPERR_NONE)
+			{
+				printf("Error, cannot open zip file '%s' !\n", path);
+				return 1;
+			}
+
+			/* load all files in zip file */
+			for (zipent = zip_file_first_file(zip); zipent != NULL; zipent = zip_file_next_file(zip))
+			{
+				int size;
+
+				size = zipent->uncompressed_length;
+				while (size && (size & 1) == 0) size >>= 1;
+				if (zipent->uncompressed_length == 0 || (size & ~1))
+					printf("%-23s %-23s ignored (not a ROM)\n",
+						i ? "" : zipent->filename, i ? zipent->filename : "");
+				else
+				{
+					fileinfo *file = &files[i][found[i]];
+					const char *delim = strrchr(zipent->filename,'/');
+
+					if (delim)
+						strcpy (file->name,delim+1);
+					else
+						strcpy(file->name,zipent->filename);
+					file->size = zipent->uncompressed_length;
+					if ((file->buf = malloc(file->size)) == 0)
+						printf("%s: out of memory!\n",file->name);
 					else
 					{
-						strcpy(files[i][found[i]].name,d_name);
-						files[i][found[i]].size = d->size;
-						readfile(path,&files[i][found[i]]);
-						files[i][found[i]].listed = 0;
-						if (found[i] >= MAX_FILES)
+						if (zip_file_decompress(zip, (char *)file->buf, file->size) != ZIPERR_NONE)
 						{
-							printf("%s: max of %d files exceeded\n",path,MAX_FILES);
-							break;
+							free(file->buf);
+							file->buf = 0;
 						}
-						found[i]++;
 					}
-				}
-			}
-			osd_tool_closedir(dir);
-		}
-	}
-	else
-	{
-		zip_file *zip;
-		const zip_file_header* zipent;
-		zip_error ziperr;
 
-		/* wasn't a directory, so try to open it as a zip file */
-		ziperr = zip_file_open(path, &zip);
-		if (ziperr != ZIPERR_NONE)
-		{
-			printf("Error, cannot open zip file '%s' !\n", path);
-			return 1;
-		}
-
-		/* load all files in zip file */
-		for (zipent = zip_file_first_file(zip); zipent != NULL; zipent = zip_file_next_file(zip))
-		{
-			int size;
-
-			size = zipent->uncompressed_length;
-			while (size && (size & 1) == 0) size >>= 1;
-			if (zipent->uncompressed_length == 0 || (size & ~1))
-				printf("%-23s %-23s ignored (not a ROM)\n",
-					i ? "" : zipent->filename, i ? zipent->filename : "");
-			else
-			{
-				fileinfo *file = &files[i][found[i]];
-				const char *delim = strrchr(zipent->filename,'/');
-
-				if (delim)
-					strcpy (file->name,delim+1);
-				else
-					strcpy(file->name,zipent->filename);
-				file->size = zipent->uncompressed_length;
-				if ((file->buf = malloc(file->size)) == 0)
-					printf("%s: out of memory!\n",file->name);
-				else
-				{
-					if (zip_file_decompress(zip, (char *)file->buf, file->size) != ZIPERR_NONE)
+					file->listed = 0;
+					if (found[i] >= MAX_FILES)
 					{
-						free(file->buf);
-						file->buf = 0;
+						printf("%s: max of %d files exceeded\n",path,MAX_FILES);
+						break;
 					}
+					found[i]++;
 				}
-
-				file->listed = 0;
-				if (found[i] >= MAX_FILES)
-				{
-					printf("%s: max of %d files exceeded\n",path,MAX_FILES);
-					break;
-				}
-				found[i]++;
 			}
+			zip_file_close(zip);
+			break;
 		}
-		zip_file_close(zip);
+
+		default:
+			printf("%s: Can not access\n", path);
+			return 10;
 	}
 	return 0;
 }
 
 
+#ifdef WIN32
+int CLIB_DECL utf8_main(int argc,char **argv)
+#else
 int CLIB_DECL main(int argc,char **argv)
+#endif
 {
 	int	err;
 	int total_modes = MODE_NIB2;	/* by default, use only MODE_A, MODE_NIB1 and MODE_NIB2 */

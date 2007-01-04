@@ -108,6 +108,10 @@
  * - INR r, DCR r, ADD r, SUB r, CMP r instructions should affect parity flag.
  *   Fixed only for non x86 asm version (#define i8080_EXACT 1).
  *
+ * 23-Dec-2006 Tomasz Slanina
+ *
+ * - SIM fixed
+ *
  *****************************************************************************/
 
 /*int survival_prot = 0; */
@@ -391,10 +395,16 @@ INLINE void execute_one(int opcode)
 			break;
 
 		case 0x30:
-			if( I.cputype ) {
+			if( I.cputype )
+			{
 				i8085_ICount -= 7;		/* SIM  */
-				if ((I.IM ^ I.AF.b.h) & 0x80)
-					if (I.sod_callback) (*I.sod_callback)(I.AF.b.h >> 7);
+
+				if (I.AF.b.h & 0x40) //SOE - only when bit 0x40 is set!
+				{
+					I.IM &=~IM_SOD;
+					if (I.AF.b.h & 0x80) I.IM |= IM_SOD; //is it needed ?
+					if (I.sod_callback) (*I.sod_callback)(I.AF.b.h >> 7); //SOD - data = bit 0x80
+				}
 //AT
 				//I.IM &= (IM_SID + IM_IEN + IM_TRAP);
 				//I.IM |= (I.AF.b.h & ~(IM_SID + IM_SOD + IM_IEN + IM_TRAP));
@@ -402,12 +412,12 @@ INLINE void execute_one(int opcode)
 				// overwrite RST5.5-7.5 interrupt masks only when bit 0x08 of the accumulator is set
 				if (I.AF.b.h & 0x08)
 					I.IM = (I.IM & ~(IM_RST55+IM_RST65+IM_RST75)) | (I.AF.b.h & (IM_RST55+IM_RST65+IM_RST75));
-//ZT
-				if (I.AF.b.h & 0x80) I.IM |= IM_SOD;
+
 			} else {
 				i8085_ICount -= 4;		/* NOP undocumented */
 			}
 			break;
+
 		case 0x31: i8085_ICount -= 10;	/* LXI SP,nnnn */
 			I.SP.w.l = ARG16();
 			break;

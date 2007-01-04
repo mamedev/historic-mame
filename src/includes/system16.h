@@ -245,6 +245,7 @@ extern int sys16_bg_priority_value;
 extern int sys16_fg_priority_value;
 extern int sys16_tilebank_switch;
 extern int sys16_rowscroll_scroll;
+extern int shinobl_kludge;
 
 /* video driver registers */
 extern int sys16_refreshenable;

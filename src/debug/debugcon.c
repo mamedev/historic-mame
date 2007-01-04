@@ -4,7 +4,7 @@
 
     Debugger console engine.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 *********************************************************************/
@@ -136,7 +136,7 @@ void debug_console_exit(running_machine *machine)
 static void trim_parameter(char **paramptr, int keep_quotes)
 {
 	char *param = *paramptr;
-	int len = strlen(param);
+	size_t len = strlen(param);
 	int repeat;
 
 	/* loop until all adornments are gone */
@@ -193,8 +193,9 @@ static void trim_parameter(char **paramptr, int keep_quotes)
 static CMDERR internal_execute_command(int execute, int params, char **param)
 {
 	debug_command *cmd, *found = NULL;
-	int len, i, foundcount = 0;
+	int i, foundcount = 0;
 	char *p, *command;
+	size_t len;
 
 	/* no params is an error */
 	if (params == 0)

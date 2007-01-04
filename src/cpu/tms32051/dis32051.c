@@ -117,7 +117,7 @@ static char *GET_SHIFT(int shift)
 
 	if (shift > 0)
 	{
-		sprintf(buffer, "<< %d", shift);
+		sprintf(buffer, ", %d", shift);
 	}
 	else
 	{
@@ -171,12 +171,12 @@ void dasm_group_be(UINT16 opcode)
 		case 0x3d:	print("calad"); break;
 		case 0x40:	print("clrc    intm"); break;
 		case 0x41:	print("setc    intm"); break;
-		case 0x42:	print("clrc    overflow"); break;
-		case 0x43:	print("setc    overflow"); break;
+		case 0x42:	print("clrc    ovm"); break;
+		case 0x43:	print("setc    ovm"); break;
 		case 0x44:	print("clrc    cnf"); break;
 		case 0x45:	print("setc    cnf"); break;
-		case 0x46:	print("clrc    sign extend"); break;
-		case 0x47:	print("setc    sign extend"); break;
+		case 0x46:	print("clrc    sxm"); break;
+		case 0x47:	print("setc    sxm"); break;
 		case 0x48:	print("clrc    hold"); break;
 		case 0x49:	print("setc    hold"); break;
 		case 0x4a:	print("clrc    tc"); break;
@@ -251,7 +251,7 @@ static void dasm_group_bf(UINT16 opcode)
 		case 0xb:	print("and     #%04X", FETCH() << shift); break;
 		case 0xc:	print("or      #%04X", FETCH() << shift); break;
 		case 0xd:	print("xor     #%04X", FETCH() << shift); break;
-		case 0xe:	print("bsar    %d", shift); break;
+		case 0xe:	print("bsar    %d", shift+1); break;
 
 		default:	print("???     (group bf)"); break;
 	}

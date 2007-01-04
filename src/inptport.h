@@ -4,7 +4,7 @@
 
     Handle input ports and mappings.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -281,118 +281,164 @@ enum
 };
 
 
+/* token types */
+enum
+{
+	INPUT_TOKEN_INVALID,
+	INPUT_TOKEN_END,
+	INPUT_TOKEN_INCLUDE,
+	INPUT_TOKEN_START,
+	INPUT_TOKEN_START_TAG,
+	INPUT_TOKEN_MODIFY,
+	INPUT_TOKEN_BIT,
+	INPUT_TOKEN_CODE,
+	INPUT_TOKEN_CODE_DEC,
+	INPUT_TOKEN_CODE_INC,
+	INPUT_TOKEN_2WAY,
+	INPUT_TOKEN_4WAY,
+	INPUT_TOKEN_8WAY,
+	INPUT_TOKEN_16WAY,
+	INPUT_TOKEN_PLAYER1,
+	INPUT_TOKEN_PLAYER2,
+	INPUT_TOKEN_PLAYER3,
+	INPUT_TOKEN_PLAYER4,
+	INPUT_TOKEN_PLAYER5,
+	INPUT_TOKEN_PLAYER6,
+	INPUT_TOKEN_PLAYER7,
+	INPUT_TOKEN_PLAYER8,
+	INPUT_TOKEN_COCKTAIL,
+	INPUT_TOKEN_TOGGLE,
+	INPUT_TOKEN_NAME,
+	INPUT_TOKEN_IMPULSE,
+	INPUT_TOKEN_REVERSE,
+	INPUT_TOKEN_RESET,
+	INPUT_TOKEN_MINMAX,
+	INPUT_TOKEN_SENSITIVITY,
+	INPUT_TOKEN_KEYDELTA,
+	INPUT_TOKEN_CENTERDELTA,
+	INPUT_TOKEN_UNUSED,
+	INPUT_TOKEN_CUSTOM,
+	INPUT_TOKEN_DIPNAME,
+	INPUT_TOKEN_DIPSETTING,
+	INPUT_TOKEN_DIPLOCATION,
+	INPUT_TOKEN_CONDITION,
+	INPUT_TOKEN_ADJUSTER
+};
+
+
 /* default strings used in port definitions */
 enum
 {
-	STR_Off = 0,
-	STR_On,
-	STR_No,
-	STR_Yes,
-	STR_Lives,
-	STR_Bonus_Life,
-	STR_Difficulty,
-	STR_Demo_Sounds,
-	STR_Coinage,
-	STR_Coin_A,
-	STR_Coin_B,
-	STR_9C_1C,
-	STR_8C_1C,
-	STR_7C_1C,
-	STR_6C_1C,
-	STR_5C_1C,
-	STR_4C_1C,
-	STR_3C_1C,
-	STR_8C_3C,
-	STR_4C_2C,
-	STR_2C_1C,
-	STR_5C_3C,
-	STR_3C_2C,
-	STR_4C_3C,
-	STR_4C_4C,
-	STR_3C_3C,
-	STR_2C_2C,
-	STR_1C_1C,
-	STR_4C_5C,
-	STR_3C_4C,
-	STR_2C_3C,
-	STR_4C_7C,
-	STR_2C_4C,
-	STR_1C_2C,
-	STR_2C_5C,
-	STR_2C_6C,
-	STR_1C_3C,
-	STR_2C_7C,
-	STR_2C_8C,
-	STR_1C_4C,
-	STR_1C_5C,
-	STR_1C_6C,
-	STR_1C_7C,
-	STR_1C_8C,
-	STR_1C_9C,
-	STR_Free_Play,
-	STR_Cabinet,
-	STR_Upright,
-	STR_Cocktail,
-	STR_Flip_Screen,
-	STR_Service_Mode,
-	STR_Pause,
-	STR_Test,
-	STR_Tilt,
-	STR_Version,
-	STR_Region,
-	STR_International,
-	STR_Japan,
-	STR_USA,
-	STR_Europe,
-	STR_Asia,
-	STR_World,
-	STR_Hispanic,
-	STR_Language,
-	STR_English,
-	STR_Japanese,
-	STR_German,
-	STR_French,
-	STR_Italian,
-	STR_Spanish,
-	STR_Very_Easy,
-	STR_Easiest,
-	STR_Easier,
-	STR_Easy,
-	STR_Normal,
-	STR_Medium,
-	STR_Hard,
-	STR_Harder,
-	STR_Hardest,
-	STR_Very_Hard,
-	STR_Very_Low,
-	STR_Low,
-	STR_High,
-	STR_Higher,
-	STR_Highest,
-	STR_Very_High,
-	STR_Players,
-	STR_Controls,
-	STR_Dual,
-	STR_Single,
-	STR_Game_Time,
-	STR_Continue_Price,
-	STR_Controller,
-	STR_Light_Gun,
-	STR_Joystick,
-	STR_Trackball,
-	STR_Continues,
-	STR_Allow_Continue,
-	STR_Level_Select,
-	STR_Infinite,
-	STR_Stereo,
-	STR_Mono,
-	STR_Unused,
-	STR_Unknown,
-	STR_Standard,
-	STR_Reverse,
-	STR_Alternate,
-	STR_None,
-	STR_TOTAL
+	INPUT_STRING_Off = 1,
+	INPUT_STRING_On,
+	INPUT_STRING_No,
+	INPUT_STRING_Yes,
+	INPUT_STRING_Lives,
+	INPUT_STRING_Bonus_Life,
+	INPUT_STRING_Difficulty,
+	INPUT_STRING_Demo_Sounds,
+	INPUT_STRING_Coinage,
+	INPUT_STRING_Coin_A,
+	INPUT_STRING_Coin_B,
+	INPUT_STRING_9C_1C,
+	INPUT_STRING_8C_1C,
+	INPUT_STRING_7C_1C,
+	INPUT_STRING_6C_1C,
+	INPUT_STRING_5C_1C,
+	INPUT_STRING_4C_1C,
+	INPUT_STRING_3C_1C,
+	INPUT_STRING_8C_3C,
+	INPUT_STRING_4C_2C,
+	INPUT_STRING_2C_1C,
+	INPUT_STRING_5C_3C,
+	INPUT_STRING_3C_2C,
+	INPUT_STRING_4C_3C,
+	INPUT_STRING_4C_4C,
+	INPUT_STRING_3C_3C,
+	INPUT_STRING_2C_2C,
+	INPUT_STRING_1C_1C,
+	INPUT_STRING_4C_5C,
+	INPUT_STRING_3C_4C,
+	INPUT_STRING_2C_3C,
+	INPUT_STRING_4C_7C,
+	INPUT_STRING_2C_4C,
+	INPUT_STRING_1C_2C,
+	INPUT_STRING_2C_5C,
+	INPUT_STRING_2C_6C,
+	INPUT_STRING_1C_3C,
+	INPUT_STRING_2C_7C,
+	INPUT_STRING_2C_8C,
+	INPUT_STRING_1C_4C,
+	INPUT_STRING_1C_5C,
+	INPUT_STRING_1C_6C,
+	INPUT_STRING_1C_7C,
+	INPUT_STRING_1C_8C,
+	INPUT_STRING_1C_9C,
+	INPUT_STRING_Free_Play,
+	INPUT_STRING_Cabinet,
+	INPUT_STRING_Upright,
+	INPUT_STRING_Cocktail,
+	INPUT_STRING_Flip_Screen,
+	INPUT_STRING_Service_Mode,
+	INPUT_STRING_Pause,
+	INPUT_STRING_Test,
+	INPUT_STRING_Tilt,
+	INPUT_STRING_Version,
+	INPUT_STRING_Region,
+	INPUT_STRING_International,
+	INPUT_STRING_Japan,
+	INPUT_STRING_USA,
+	INPUT_STRING_Europe,
+	INPUT_STRING_Asia,
+	INPUT_STRING_World,
+	INPUT_STRING_Hispanic,
+	INPUT_STRING_Language,
+	INPUT_STRING_English,
+	INPUT_STRING_Japanese,
+	INPUT_STRING_German,
+	INPUT_STRING_French,
+	INPUT_STRING_Italian,
+	INPUT_STRING_Spanish,
+	INPUT_STRING_Very_Easy,
+	INPUT_STRING_Easiest,
+	INPUT_STRING_Easier,
+	INPUT_STRING_Easy,
+	INPUT_STRING_Normal,
+	INPUT_STRING_Medium,
+	INPUT_STRING_Hard,
+	INPUT_STRING_Harder,
+	INPUT_STRING_Hardest,
+	INPUT_STRING_Very_Hard,
+	INPUT_STRING_Very_Low,
+	INPUT_STRING_Low,
+	INPUT_STRING_High,
+	INPUT_STRING_Higher,
+	INPUT_STRING_Highest,
+	INPUT_STRING_Very_High,
+	INPUT_STRING_Players,
+	INPUT_STRING_Controls,
+	INPUT_STRING_Dual,
+	INPUT_STRING_Single,
+	INPUT_STRING_Game_Time,
+	INPUT_STRING_Continue_Price,
+	INPUT_STRING_Controller,
+	INPUT_STRING_Light_Gun,
+	INPUT_STRING_Joystick,
+	INPUT_STRING_Trackball,
+	INPUT_STRING_Continues,
+	INPUT_STRING_Allow_Continue,
+	INPUT_STRING_Level_Select,
+	INPUT_STRING_Infinite,
+	INPUT_STRING_Stereo,
+	INPUT_STRING_Mono,
+	INPUT_STRING_Unused,
+	INPUT_STRING_Unknown,
+	INPUT_STRING_Standard,
+	INPUT_STRING_Reverse,
+	INPUT_STRING_Alternate,
+	INPUT_STRING_None,
+
+	INPUT_STRING_COUNT
 };
 
 
@@ -403,6 +449,10 @@ enum
 
 /* this is an opaque type */
 typedef struct _input_port_init_params input_port_init_params;
+
+
+/* this type is used to encode input port definitions */
+typedef struct _input_port_token *input_port_token;
 
 
 /* In mamecore.h: typedef struct _input_port_default_entry input_port_default_entry; */
@@ -506,148 +556,141 @@ struct _input_port_entry
     MACROS FOR BUILDING INPUT PORTS
 ***************************************************************************/
 
-#define IP_NAME_DEFAULT 	NULL
+#define IP_NAME_DEFAULT 				NULL
+
+/* single pointers and UINT32s are just encoded straight */
+#define INPUT_PORT_PTR(x)				((input_port_token)(x))
+#define INPUT_PORT_UINT32(x)			((input_port_token)(UINT32)(x))
+
+#ifdef PTR64
+/* on 64-bit platforms, pairs of UINT32s are encoded into a single 64-bit pointer */
+#define INPUT_PORT_UINT32_PAIR(x,y)		((input_port_token)((UINT32)(x) | ((UINT64)(y) << 32)))
+#define INPUT_PORT_PAIR_ITEM(vptr,x)	((UINT32)((FPTR)*(vptr) >> (32 * (x))))
+#define INPUT_PORT_PAIR_TOKENS			1
+#else
+/* on 32-bit platforms, pairs of UINT32s are encoded in two consecutive 32-bit pointers */
+#define INPUT_PORT_UINT32_PAIR(x,y)		INPUT_PORT_UINT32(x), INPUT_PORT_UINT32(y)
+#define INPUT_PORT_PAIR_ITEM(vptr,x)	((UINT32)((vptr)[x]))
+#define INPUT_PORT_PAIR_TOKENS			2
+#endif
 
 /* start of table */
-#define INPUT_PORTS_START(name)										\
- 	void construct_ipt_##name(input_port_init_params *param)		\
-	{																\
- 		const char *modify_tag = NULL;								\
- 		input_port_entry *port;										\
-		int seq_index[3];											\
-		int key;													\
-		(void) port; (void) seq_index; (void) key; (void)modify_tag;\
+#define INPUT_PORTS_START(name) \
+	const input_port_token ipt_##name[] = {
 
 /* end of table */
-#define INPUT_PORTS_END												\
-	}																\
+#define INPUT_PORTS_END \
+	INPUT_PORT_UINT32(INPUT_TOKEN_END) };
 
 /* aliasing */
-#define INPUT_PORTS_ALIAS(name, base)								\
- 	void construct_ipt_##name(input_port_init_params *param)		\
-	{																\
- 		construct_ipt_##base(param);								\
-	}																\
-
-#define INPUT_PORTS_EXTERN(name)									\
-	extern void construct_ipt_##name(input_port_init_params *param)	\
+#define INPUT_PORTS_EXTERN(name) \
+	extern const input_port_token ipt_##name[]
 
 /* including */
-#define PORT_INCLUDE(name)											\
- 	construct_ipt_##name(param);									\
+#define PORT_INCLUDE(name) \
+	INPUT_PORT_UINT32(INPUT_TOKEN_INCLUDE), INPUT_PORT_PTR(&ipt_##name[0]),
 
 /* start of a new input port */
-#define PORT_START_TAG(tag_)										\
-	modify_tag = NULL;												\
-	port = input_port_initialize(param, IPT_PORT, NULL, 0);			\
-	port->start.tag = (tag_);										\
+#define PORT_START \
+	INPUT_PORT_UINT32(INPUT_TOKEN_START),
 
-/* start of a new input port */
-#define PORT_START													\
-	PORT_START_TAG(NULL)											\
+/* start of a new input port (with included tag) */
+#define PORT_START_TAG(tag_) \
+	INPUT_PORT_UINT32(INPUT_TOKEN_START_TAG), INPUT_PORT_PTR(tag_),
 
 /* modify an existing port */
-#define PORT_MODIFY(tag_)											\
-	modify_tag = (tag_);											\
+#define PORT_MODIFY(tag_) \
+	INPUT_PORT_UINT32(INPUT_TOKEN_MODIFY), INPUT_PORT_PTR(tag_),
 
 /* input bit definition */
-#define PORT_BIT(mask_,default_,type_) 								\
-	port = input_port_initialize(param, (type_), modify_tag, (mask_));\
-	port->mask = (mask_);											\
-	port->default_value = (default_);								\
-	seq_index[0] = seq_index[1] = seq_index[2] = key = 0;			\
+#define PORT_BIT(mask_,default_,type_) \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_BIT, type_), INPUT_PORT_UINT32_PAIR(mask_, default_),
 
-/* new technique to append a code */
-#define PORT_CODE_SEQ(code_,seq_,si_)								\
-	if ((code_) < __code_max)										\
-	{																\
-		if (seq_index[si_] > 0)										\
-			port->seq_.code[seq_index[si_]++] = CODE_OR;			\
-		port->seq_.code[seq_index[si_]++] = (code_);				\
-	}																\
+/* append a code */
+#define PORT_CODE(code) \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CODE, code),
 
-#define PORT_CODE(code) PORT_CODE_SEQ(code,seq,0)
-#define PORT_CODE_DEC(code)	PORT_CODE_SEQ(code,analog.decseq,1)
-#define PORT_CODE_INC(code)	PORT_CODE_SEQ(code,analog.incseq,2)
+#define PORT_CODE_DEC(code) \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CODE_DEC, code),
 
-#define PORT_2WAY													\
-	port->way = 2;													\
+#define PORT_CODE_INC(code) \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CODE_INC, code),
 
-#define PORT_4WAY													\
-	port->way = 4;													\
+/* joystick flags */
+#define PORT_2WAY \
+	INPUT_PORT_UINT32(INPUT_TOKEN_2WAY),
 
-#define PORT_8WAY													\
-	port->way = 8;													\
+#define PORT_4WAY \
+	INPUT_PORT_UINT32(INPUT_TOKEN_4WAY),
 
-#define PORT_16WAY													\
-	port->way = 16;													\
+#define PORT_8WAY \
+	INPUT_PORT_UINT32(INPUT_TOKEN_8WAY),
 
-#define PORT_PLAYER(player_)										\
-	port->player = (player_) - 1;									\
+#define PORT_16WAY \
+	INPUT_PORT_UINT32(INPUT_TOKEN_16WAY),
 
-#define PORT_COCKTAIL												\
-	port->cocktail = TRUE;											\
-	port->player = TRUE;											\
+/* general flags */
+#define PORT_NAME(name_) \
+	INPUT_PORT_UINT32(INPUT_TOKEN_NAME), INPUT_PORT_PTR(name_),
 
-#define PORT_TOGGLE													\
-	port->toggle = TRUE;											\
+#define PORT_PLAYER(player_) \
+	INPUT_PORT_UINT32(INPUT_TOKEN_PLAYER1 + (((player_) - 1) % MAX_PLAYERS)),
 
-#define PORT_NAME(name_)											\
-	port->name = (name_);											\
+#define PORT_COCKTAIL \
+	INPUT_PORT_UINT32(INPUT_TOKEN_COCKTAIL),
 
-#define PORT_IMPULSE(duration_)										\
-	port->impulse = (duration_);									\
+#define PORT_TOGGLE \
+	INPUT_PORT_UINT32(INPUT_TOKEN_TOGGLE),
 
-#define PORT_REVERSE												\
-	port->analog.reverse = TRUE;									\
+#define PORT_IMPULSE(duration_) \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_IMPULSE, duration_),
 
-#define PORT_RESET													\
-	port->analog.reset = TRUE;										\
+#define PORT_REVERSE \
+	INPUT_PORT_UINT32(INPUT_TOKEN_REVERSE),
 
-#define PORT_MINMAX(min_,max_)										\
-	port->analog.min = (min_);										\
-	port->analog.max = (max_);										\
+#define PORT_RESET \
+	INPUT_PORT_UINT32(INPUT_TOKEN_RESET),
 
-#define PORT_SENSITIVITY(sensitivity_)								\
-	port->analog.sensitivity = (sensitivity_);						\
+#define PORT_UNUSED \
+	INPUT_PORT_UINT32(INPUT_TOKEN_UNUSED),
 
-#define PORT_KEYDELTA(delta_)										\
-	port->analog.delta = port->analog.centerdelta = (delta_);		\
+/* analog settings */
+#define PORT_MINMAX(min_,max_) \
+	INPUT_PORT_UINT32(INPUT_TOKEN_MINMAX), INPUT_PORT_UINT32_PAIR(min_, max_),
+
+#define PORT_SENSITIVITY(sensitivity_) \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_SENSITIVITY, sensitivity_),
+
+#define PORT_KEYDELTA(delta_) \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_KEYDELTA, delta_),
 
 /* note that PORT_CENTERDELTA must appear after PORT_KEYDELTA */
-#define PORT_CENTERDELTA(delta_)									\
-	port->analog.centerdelta = (delta_);							\
+#define PORT_CENTERDELTA(delta_) \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CENTERDELTA, delta_),
 
-#define PORT_UNUSED													\
-	port->unused = TRUE;											\
-
-#define PORT_CUSTOM(callback_, param_)								\
-	port->custom = callback_;										\
-	port->custom_param = (void *)(param_);							\
-
+/* custom callbacks */
+#define PORT_CUSTOM(callback_, param_) \
+	INPUT_PORT_UINT32(INPUT_TOKEN_CUSTOM), INPUT_PORT_PTR(callback_), INPUT_PORT_PTR(param_),
 
 /* dip switch definition */
-#define PORT_DIPNAME(mask,default,name)								\
-	PORT_BIT(mask, default, IPT_DIPSWITCH_NAME) PORT_NAME(name)		\
+#define PORT_DIPNAME(mask,default,name) \
+	INPUT_PORT_UINT32(INPUT_TOKEN_DIPNAME), INPUT_PORT_UINT32_PAIR(mask, default), INPUT_PORT_PTR(name),
 
-#define PORT_DIPSETTING(default,name)								\
-	PORT_BIT(0, default, IPT_DIPSWITCH_SETTING) PORT_NAME(name)		\
+#define PORT_DIPSETTING(default,name) \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_DIPSETTING, default), INPUT_PORT_PTR(name),
 
 /* physical location, of the form: name:sw,[name:]sw,... */
 /* note that these are specified LSB-first */
-#define PORT_DIPLOCATION(location_)									\
-	input_port_parse_diplocation(port, location_);					\
+#define PORT_DIPLOCATION(location_) \
+	INPUT_PORT_UINT32(INPUT_TOKEN_DIPLOCATION), INPUT_PORT_PTR(location_),
 
 /* conditionals for dip switch settings */
-#define PORT_CONDITION(tag_,mask_,condition_,value_)				\
-	port->condition.tag = (tag_);									\
-	port->condition.mask = (mask_);									\
-	port->condition.condition = (condition_);						\
-	port->condition.value = (value_);								\
+#define PORT_CONDITION(tag_,mask_,condition_,value_) \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CONDITION, condition_), INPUT_PORT_UINT32_PAIR(mask_, value_), INPUT_PORT_PTR(tag_),
 
 /* analog adjuster definition */
-#define PORT_ADJUSTER(default,name)									\
-	PORT_BIT(0x00ff, (default & 0xff) | (default << 8), IPT_ADJUSTER) PORT_NAME(name)
+#define PORT_ADJUSTER(default,name) \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_ADJUSTER, default), INPUT_PORT_PTR(name),
 
 
 
@@ -674,9 +717,7 @@ struct _input_port_entry
     GLOBAL VARIABLES
 ***************************************************************************/
 
-extern const char *input_port_default_strings[];
-
-#define DEF_STR(str_num) (input_port_default_strings[STR_##str_num])
+#define DEF_STR(str_num) ((const char *)INPUT_STRING_##str_num)
 
 
 
@@ -684,10 +725,11 @@ extern const char *input_port_default_strings[];
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-int input_port_init(running_machine *machine, void (*construct_ipt)(input_port_init_params *));
+int input_port_init(running_machine *machine, const input_port_token *ipt);
+const char *input_port_string_from_token(const input_port_token token);
 
-input_port_entry *input_port_initialize(input_port_init_params *params, UINT32 type, const char *tag, UINT32 mask);
-input_port_entry *input_port_allocate(void (*construct_ipt)(input_port_init_params *), input_port_entry *memory);
+input_port_entry *input_port_initialize(input_port_init_params *params, UINT32 type, const char *tag, UINT32 mask, UINT32 defval);
+input_port_entry *input_port_allocate(const input_port_token *ipt, input_port_entry *memory);
 void input_port_parse_diplocation(input_port_entry *in, const char *location);
 
 input_port_default_entry *get_input_port_list(void);

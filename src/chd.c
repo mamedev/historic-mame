@@ -2,7 +2,7 @@
 
     MAME Compressed Hunks of Data file format
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -930,7 +930,7 @@ chd_error chd_get_metadata(chd_file *chd, UINT32 searchtag, UINT32 searchindex, 
 
 			/* fill in the faux metadata */
 			sprintf(faux_metadata, HARD_DISK_METADATA_FORMAT, chd->header.obsolete_cylinders, chd->header.obsolete_heads, chd->header.obsolete_sectors, chd->header.hunkbytes / chd->header.obsolete_hunksize);
-			faux_length = strlen(faux_metadata) + 1;
+			faux_length = (UINT32)strlen(faux_metadata) + 1;
 
 			/* copy the metadata itself */
 			memcpy(output, faux_metadata, MIN(outputlen, faux_length));

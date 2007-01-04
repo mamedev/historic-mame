@@ -238,6 +238,7 @@ Notes:
 static UINT32 *deco32_ram;
 static int raster_enable,raster_offset;
 static void *raster_irq_timer;
+static UINT8 nslasher_sound_irq;
 
 extern void decrypt156(void);
 
@@ -646,7 +647,10 @@ static WRITE32_HANDLER( nslasher_prot_w )
 	/* Only sound port of chip is used - no protection */
 	if (offset==0x700/4) {
 
+		/* bit 1 of nslasher_sound_irq specifies IRQ command writes */
 		soundlatch_w(0,(data>>16)&0xff);
+		nslasher_sound_irq |= 0x02;
+		cpunum_set_input_line(1, 0, (nslasher_sound_irq != 0) ? ASSERT_LINE : CLEAR_LINE);
 	}
 }
 
@@ -1159,9 +1163,10 @@ ADDRESS_MAP_END
 
 static READ8_HANDLER(latch_r)
 {
-	UINT8 latch=soundlatch_r(0);
-	soundlatch_clear_w (0,0);
-	return latch;
+	/* bit 1 of nslasher_sound_irq specifies IRQ command writes */
+	nslasher_sound_irq &= ~0x02;
+	cpunum_set_input_line(1, 0, (nslasher_sound_irq != 0) ? ASSERT_LINE : CLEAR_LINE);
+	return soundlatch_r(0);
 }
 
 static ADDRESS_MAP_START( nslasher_sound, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1790,8 +1795,12 @@ static void sound_irq(int state)
 
 static void sound_irq_nslasher(int state)
 {
-	if (state != 0)
-		cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, 0x38);
+	/* bit 0 of nslasher_sound_irq specifies IRQ from sound chip */
+	if (state)
+		nslasher_sound_irq |= 0x01;
+	else
+		nslasher_sound_irq &= ~0x01;
+	cpunum_set_input_line(1, 0, (nslasher_sound_irq != 0) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static WRITE8_HANDLER( sound_bankswitch_w )
@@ -1883,7 +1892,7 @@ static INTERRUPT_GEN( tattass_snd_interrupt )
 static MACHINE_DRIVER_START( captaven )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(ARM, 28000000/3)
+	MDRV_CPU_ADD(ARM, 28000000/4)
 	MDRV_CPU_PROGRAM_MAP(captaven_readmem,captaven_writemem)
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
 
@@ -1928,7 +1937,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( fghthist )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(ARM, 28000000/3)
+	MDRV_CPU_ADD(ARM, 28000000/4)
 	MDRV_CPU_PROGRAM_MAP(fghthist_readmem,fghthist_writemem)
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
 
@@ -1972,7 +1981,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( fghthsta )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(ARM, 28000000/3)
+	MDRV_CPU_ADD(ARM, 28000000/4)
 	MDRV_CPU_PROGRAM_MAP(fghthsta_memmap,0)
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
 
@@ -2015,7 +2024,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( dragngun )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(ARM, 28000000/2)
+	MDRV_CPU_ADD(ARM, 28000000/4)
 	MDRV_CPU_PROGRAM_MAP(dragngun_readmem,dragngun_writemem)
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
 
@@ -2066,7 +2075,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( lockload )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(ARM, 28000000/2)
+	MDRV_CPU_ADD(ARM, 28000000/4)
 	MDRV_CPU_PROGRAM_MAP(lockload_readmem,lockload_writemem)
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,2) // From 2
 
@@ -2117,7 +2126,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( tattass )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(ARM, 28000000/2) /* Unconfirmed */
+	MDRV_CPU_ADD(ARM, 28000000/4) /* Unconfirmed */
 	MDRV_CPU_PROGRAM_MAP(tattass_readmem,tattass_writemem)
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
 
@@ -2153,11 +2162,11 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( nslasher )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(ARM, 28000000 / 2) /* Unconfirmed */
+	MDRV_CPU_ADD(ARM, 28322000/4)
 	MDRV_CPU_PROGRAM_MAP(nslasher_readmem,nslasher_writemem)
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
 
-	MDRV_CPU_ADD(Z80, 28000000/4)
+	MDRV_CPU_ADD(Z80, 32220000/9)
 	MDRV_CPU_PROGRAM_MAP(nslasher_sound,0)
 	MDRV_CPU_IO_MAP(nslasher_io_sound,0)
 

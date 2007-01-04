@@ -714,11 +714,7 @@ static MACHINE_RESET( bayroute )
 
 static DRIVER_INIT( bayrtbl1 )
 {
-	int i;
 	machine_reset_sys16_onetime(machine);
-	/* invert the graphics bits on the tiles */
-	for (i = 0; i < 0x30000; i++)
-		memory_region(REGION_GFX1)[i] ^= 0xff;
 }
 /***************************************************************************/
 
@@ -883,12 +879,10 @@ static DRIVER_INIT( dduxbl )
 /***************************************************************************/
 
 INPUT_PORTS_START( ddux )
-	SYS16_SERVICE
 	SYS16_JOY1
-
-	PORT_START
-
 	SYS16_JOY2
+	SYS16_SERVICE
+	SYS16_COINAGE
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
@@ -913,7 +907,6 @@ INPUT_PORTS_START( ddux )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	SYS16_COINAGE
 INPUT_PORTS_END
 
 /***************************************************************************/
@@ -951,7 +944,7 @@ static int eswat_tilebank0;
 static WRITE16_HANDLER( eswat_tilebank0_w )
 {
 	if( ACCESSING_LSB )
-{
+	{
 		eswat_tilebank0 = data&0xff;
 	}
 }
@@ -1365,13 +1358,7 @@ static MACHINE_RESET( goldnaxe )
 
 static DRIVER_INIT( goldnabl )
 {
-	int i;
-
 	machine_reset_sys16_onetime(machine);
-
-	/* invert the graphics bits on the tiles */
-	for (i = 0; i < 0x60000; i++)
-		memory_region(REGION_GFX1)[i] ^= 0xff;
 }
 
 /***************************************************************************/
@@ -1589,13 +1576,7 @@ static DRIVER_INIT( passsht )
 
 static DRIVER_INIT( passht4b )
 {
-	int i;
-
 	machine_reset_sys16_onetime(machine);
-
-	/* invert the graphics bits on the tiles */
-	for (i = 0; i < 0x30000; i++)
-		memory_region(REGION_GFX1)[i] ^= 0xff;
 }
 
 /***************************************************************************/
@@ -1760,11 +1741,6 @@ MACHINE_DRIVER_END
 /***************************************************************************/
 
 
-static DRIVER_INIT( shinobi )
-{
-	machine_reset_sys16_onetime(machine);
-}
-
 /***************************************************************************/
 
 INPUT_PORTS_START( shinobi )
@@ -1856,6 +1832,11 @@ static MACHINE_RESET( shinobl )
 	sys16_update_proc = shinobl_update_proc;
 }
 
+static DRIVER_INIT( shinobl )
+{
+	shinobl_kludge = 1;
+	machine_reset_sys16_onetime(machine);
+}
 
 
 /***************************************************************************/
@@ -2139,13 +2120,8 @@ static MACHINE_RESET( tturfbl )
 static DRIVER_INIT( tturfbl )
 {
 	UINT8 *mem;
-	int i;
 
 	machine_reset_sys16_onetime(machine);
-
-	/* invert the graphics bits on the tiles */
-	for (i = 0; i < 0x30000; i++)
-		memory_region(REGION_GFX1)[i] ^= 0xff;
 
 	mem = memory_region(REGION_CPU2);
 	memcpy(mem, mem+0x10000, 0x8000);
@@ -2307,13 +2283,7 @@ static MACHINE_RESET( wb3bbl )
 
 static DRIVER_INIT( wb3bbl )
 {
-	int i;
-
 	machine_reset_sys16_onetime(machine);
-
-	/* invert the graphics bits on the tiles */
-	for (i = 0; i < 0x30000; i++)
-		memory_region(REGION_GFX1)[i] ^= 0xff;
 }
 
 /***************************************************************************/
@@ -2343,7 +2313,7 @@ ROM_START( bayrtbl1 )
 	ROM_LOAD16_BYTE( "b8.bin", 0x0a0000, 0x10000, CRC(e7ca0331) SHA1(b255939576a84f4d266f31a7fde818e04ff35b24) )
 	ROM_LOAD16_BYTE( "b6.bin", 0x0a0001, 0x10000, CRC(2bc748a6) SHA1(9ab760377fde24cecb703726ee3e59ee23d60a3a) )
 
-	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT ) /* tiles */
 	ROM_LOAD( "bs16.bin", 0x00000, 0x10000, CRC(a8a5b310) SHA1(8883e1ed48a3e0f7b4c36d83579f93e84e28568c) )
 	ROM_LOAD( "bs14.bin", 0x10000, 0x10000, CRC(6bc4d0a8) SHA1(90b9a61c7a140291d72554857ce26d54ebf03fc2) )
 	ROM_LOAD( "bs12.bin", 0x20000, 0x10000, CRC(c1f967a6) SHA1(8eb6bbd9e17dc531830bc798b8485c8ea999e56e) )
@@ -2372,7 +2342,7 @@ ROM_START( bayrtbl2 )
 	ROM_LOAD16_BYTE( "br_03", 0x080000, 0x20000, CRC(285d256b) SHA1(73eac0131d14f0d7fe2a06cb2e0e57dcf4779cf9) )
 	ROM_LOAD16_BYTE( "br_05", 0x080001, 0x20000, CRC(552e6384) SHA1(2770b0c9d961671576e09ada2ebd7bb486f24547) )
 
-	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT ) /* tiles */
 	ROM_LOAD( "br_15",    0x00000, 0x10000, CRC(050079a9) SHA1(4b356eddec2f500fb0dcc20af6b7aed2f9ef0c02) )
 	ROM_LOAD( "br_16",    0x10000, 0x10000, CRC(fc371928) SHA1(b36866c95bdc440aae999a90ecf3bbaed11d4351) )
 	ROM_LOAD( "bs12.bin", 0x20000, 0x10000, CRC(c1f967a6) SHA1(8eb6bbd9e17dc531830bc798b8485c8ea999e56e) )
@@ -2513,7 +2483,7 @@ ROM_START( goldnabl )
 	ROM_LOAD16_BYTE( "epr12521.a8", 0x80000, 0x20000, CRC(5001d713) SHA1(68cf3f48d6e440e5b800503a211adda02107d956) )
 	ROM_LOAD16_BYTE( "epr12519.a6", 0x80001, 0x20000, CRC(4438ca8e) SHA1(0af53d64f06abf41f4c46540d28d5f008a4835a3) )
 
-	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT ) /* tiles */
 	ROM_LOAD( "ga33.b16", 0x00000, 0x10000, CRC(84587263) SHA1(3a88c8578a477a487a0a214a367042b9739f39eb) )
 	ROM_LOAD( "ga32.b15", 0x10000, 0x10000, CRC(63d72388) SHA1(ba0a582b1daf3a1e316237efbad17fcc0381643f) )
 	ROM_LOAD( "ga31.b14", 0x20000, 0x10000, CRC(f8b6ae4f) SHA1(55132c98955107e4b247992f7917a6ce588460a7) )
@@ -2586,7 +2556,7 @@ ROM_START( passht4b )
 	ROM_LOAD16_BYTE( "pas4p.3", 0x000000, 0x10000, CRC(2d8bc946) SHA1(35d3e529d4815543d9876fd0545c3d686467abaa) )
 	ROM_LOAD16_BYTE( "pas4p.4", 0x000001, 0x10000, CRC(e759e831) SHA1(dd5727dc28010cb988e4951723171171eb645ce8) )
 
-	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT ) /* tiles */
 	ROM_LOAD( "pas4p.11", 0x00000, 0x10000, CRC(da20fbc9) SHA1(21dc8143f4d1cebae4f86e83495fa84e5293ba48) )
 	ROM_LOAD( "pas4p.12", 0x10000, 0x10000, CRC(bebb9211) SHA1(4f56048f6f70b63f74a4c0d64456213d36ce5b26) )
 	ROM_LOAD( "pas4p.13", 0x20000, 0x10000, CRC(e37506c3) SHA1(e6fbf15d58f321a3d052fefbe5a1901e4a1734ae) )
@@ -2706,7 +2676,7 @@ ROM_START( tturfbl )
 	ROM_LOAD16_BYTE( "tt030be3.rom", 0x20000, 0x10000, CRC(100264a2) SHA1(d1ea4bf93f5472901ce95200f546ce9b58936aea) )
 	ROM_LOAD16_BYTE( "tt05ef8a.rom", 0x20001, 0x10000, CRC(f787a948) SHA1(512b8cb2f5e9795171951e02c07cae957db41334) )
 
-	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT ) /* tiles */
 	ROM_LOAD( "tt1574b3.rom", 0x00000, 0x10000, CRC(e9e630da) SHA1(e8471dedbb25475e4814d78b56f579fe9110461e) )
 	ROM_LOAD( "tt16cf44.rom", 0x10000, 0x10000, CRC(4c467735) SHA1(8338b6605cbe2e076da0b3e3a47630409a79f002) )
 	ROM_LOAD( "tt17d59e.rom", 0x20000, 0x10000, CRC(60c0f2fe) SHA1(3fea4ed757d47628f59ff940e40cb86b3b5b443b) )
@@ -2735,7 +2705,7 @@ ROM_START( wb3bbl )
 	ROM_LOAD16_BYTE( "wb3_02", 0x020000, 0x10000, CRC(c87350cb) SHA1(55a8cb68d70b6060dd9a55e281e216ce3917ea5b) )
 	ROM_LOAD16_BYTE( "wb3_04", 0x020001, 0x10000, CRC(565d5035) SHA1(e28a132f1a4ce9466945e231c54502178748af98) )
 
-	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT ) /* tiles */
 	ROM_LOAD( "wb3_14", 0x00000, 0x10000, CRC(d3f20bca) SHA1(0a87f709f8e2a913473512ede408e2cbc535443f) )
 	ROM_LOAD( "wb3_15", 0x10000, 0x10000, CRC(96ff9d52) SHA1(791a9da4860e0d42fba98f80a3c6725ad8c73e33) )
 	ROM_LOAD( "wb3_16", 0x20000, 0x10000, CRC(afaf0d31) SHA1(d4309329a0a543250788146b63b27ff058c02fc3) )
@@ -2761,22 +2731,22 @@ ROM_END
 
 /* System16A */
 /*          rom       parent    machine   inp       init */
-GAME( 1987, shinobl,  shinobi,  shinobl,  shinobi,  shinobi,  ROT0,   "bootleg", "Shinobi (bootleg)", 0 )
+GAME( 1987, shinobl,  shinobi,  shinobl,  shinobi,  shinobl,  ROT0,   "bootleg", "Shinobi (bootleg)", 0 )
 
 /* System16B */
 /*          rom       parent    machine   inp       init */
 
 GAME( 1989, bayrtbl1, bayroute, bayroute, bayroute, bayrtbl1, ROT0,   "bootleg", "Bay Route (bootleg set 1)", GAME_NOT_WORKING )
 GAME( 1989, bayrtbl2, bayroute, bayroute, bayroute, bayrtbl1, ROT0,   "bootleg", "Bay Route (bootleg set 2)", GAME_NOT_WORKING )
-GAME( 1989, dduxbl,   ddux,     dduxbl,   ddux,     dduxbl,   ROT0,   "bootleg", "Dynamite Dux (bootleg)", 0 )
-GAME( 1989, eswatbl,  eswat,    eswatbl,  eswat,    eswatbl,  ROT0,   "bootleg", "E-Swat - Cyber Police (bootleg)", 0 )
-GAME( 1989, fpointbl, fpoint,   fpointbl, fpoint,   fpointbl, ROT0,   "bootleg", "Flash Point (World, bootleg)", 0 )
-GAME( 1989, fpointbj, fpoint,   fpointbl, fpointbj, fpointbl, ROT0,   "bootleg", "Flash Point (Japan, bootleg)", GAME_WRONG_COLORS )
+GAME( 1989, dduxbl,   ddux,     dduxbl,   ddux,     dduxbl,   ROT0,   "bootleg", "Dynamite Dux (bootleg)", GAME_NOT_WORKING )
+GAME( 1989, eswatbl,  eswat,    eswatbl,  eswat,    eswatbl,  ROT0,   "bootleg", "E-Swat - Cyber Police (bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAME( 1989, fpointbl, fpoint,   fpointbl, fpoint,   fpointbl, ROT0,   "bootleg", "Flash Point (World, bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAME( 1989, fpointbj, fpoint,   fpointbl, fpointbj, fpointbl, ROT0,   "bootleg", "Flash Point (Japan, bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 
 GAME( 1989, goldnabl, goldnaxe, goldnaxe, goldnaxe, goldnabl, ROT0,   "bootleg", "Golden Axe (bootleg)", GAME_NOT_WORKING )
 
-GAME( 1988, passshtb, passsht,  passsht,  passsht,  passsht,  ROT270, "bootleg", "Passing Shot (2 Players) (bootleg)", 0 )
-GAME( 1988, passht4b, passsht,  passht4b, passht4b, passht4b, ROT270, "bootleg", "Passing Shot (4 Players) (bootleg)", GAME_NO_SOUND )
-GAME( 1988, tetrisbl, tetris,   tetrisbl, tetris,   tetrisbl, ROT0,   "bootleg", "Tetris (bootleg)", 0 )
-GAME( 1989, tturfbl,  tturf,    tturfbl,  tturf,    tturfbl,  ROT0,   "bootleg", "Tough Turf (bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND)
-GAME( 1988, wb3bbl,   wb3,     wb3bbl,   wb3b,     wb3bbl, ROT0,   "bootleg", "Wonder Boy III - Monster Lair (bootleg)", 0 )
+GAME( 1988, passshtb, passsht,  passsht,  passsht,  passsht,  ROT270, "bootleg", "Passing Shot (2 Players) (bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAME( 1988, passht4b, passsht,  passht4b, passht4b, passht4b, ROT270, "bootleg", "Passing Shot (4 Players) (bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAME( 1988, tetrisbl, tetris,   tetrisbl, tetris,   tetrisbl, ROT0,   "bootleg", "Tetris (bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAME( 1989, tturfbl,  tturf,    tturfbl,  tturf,    tturfbl,  ROT0,   "bootleg", "Tough Turf (bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAME( 1988, wb3bbl,   wb3,      wb3bbl,   wb3b,     wb3bbl,   ROT0,   "bootleg", "Wonder Boy III - Monster Lair (bootleg)", GAME_IMPERFECT_GRAPHICS )

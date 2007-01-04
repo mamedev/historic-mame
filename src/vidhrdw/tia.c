@@ -1066,6 +1066,8 @@ static void tia_reset(running_machine *machine)
 
 void tia_init(void)
 {
+	assert_always(mame_get_phase(Machine) == MAME_PHASE_INIT, "Can only call tia_init at init time!");
+
 	timer_pulse(TIME_IN_HZ(60), 0, button_callback);
 
 	INPT4 = 0x80;

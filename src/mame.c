@@ -4,7 +4,7 @@
 
     Controls execution of the core MAME system.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ****************************************************************************
@@ -108,7 +108,7 @@ typedef struct _region_info region_info;
 struct _region_info
 {
 	UINT8 *			base;
-	size_t			length;
+	UINT32			length;
 	UINT32			type;
 	UINT32			flags;
 };
@@ -633,7 +633,7 @@ static int memory_region_to_index(mame_private *mame, int num)
     region
 -------------------------------------------------*/
 
-UINT8 *new_memory_region(running_machine *machine, int type, size_t length, UINT32 flags)
+UINT8 *new_memory_region(running_machine *machine, int type, UINT32 length, UINT32 flags)
 {
 	mame_private *mame = machine->mame_data;
     int num;
@@ -697,7 +697,7 @@ UINT8 *memory_region(int num)
     memory region
 -------------------------------------------------*/
 
-size_t memory_region_length(int num)
+UINT32 memory_region_length(int num)
 {
 	running_machine *machine = Machine;
 	mame_private *mame = machine->mame_data;
@@ -1213,7 +1213,7 @@ static void init_machine(running_machine *machine)
 	/* initialize the input ports for the game */
 	/* this must be done before memory_init in order to allow specifying */
 	/* callbacks based on input port tags */
-	if (input_port_init(machine, machine->gamedrv->construct_ipt) != 0)
+	if (input_port_init(machine, machine->gamedrv->ipt) != 0)
 		fatalerror("input_port_init failed");
 
 	/* load the ROMs if we have some */

@@ -4,7 +4,7 @@
 
     Include this with all MAME files. Includes all the core system pieces.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -233,7 +233,7 @@ struct _game_driver
 	const char *		year;						/* year the game was released */
 	const char *		manufacturer;				/* manufacturer of the game */
 	void 				(*drv)(machine_config *);	/* machine driver constructor */
-	void 				(*construct_ipt)(input_port_init_params *param); /* input port constructor */
+	const input_port_token *ipt;					/* pointer to array of input port tokens */
 	void				(*driver_init)(running_machine *machine); /* DRIVER_INIT callback */
 	const rom_entry *	rom;						/* pointer to list of ROMs for the game */
 
@@ -536,7 +536,7 @@ game_driver driver_##NAME =					\
 	#YEAR,									\
 	COMPANY,								\
 	construct_##MACHINE,					\
-	construct_ipt_##INPUT,					\
+	ipt_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
 	(MONITOR)|(FLAGS),						\
@@ -554,7 +554,7 @@ game_driver driver_##NAME =					\
 	#YEAR,									\
 	COMPANY,								\
 	construct_##MACHINE,					\
-	construct_ipt_##INPUT,					\
+	ipt_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
 	(MONITOR)|(FLAGS),						\
@@ -572,7 +572,7 @@ game_driver driver_##NAME =					\
 	#YEAR,									\
 	COMPANY,								\
 	construct_##MACHINE,					\
-	construct_ipt_##INPUT,					\
+	ipt_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
 	(MONITOR)|(FLAGS),						\

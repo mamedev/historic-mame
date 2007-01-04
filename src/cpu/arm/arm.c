@@ -172,7 +172,7 @@ static const int sRegisterTable[kNumModes][16] =
 #define INSN_COND_SHIFT				28
 
 #define S_CYCLE 1
-#define N_CYCLE 2
+#define N_CYCLE 1
 #define I_CYCLE 1
 
 enum
@@ -320,12 +320,11 @@ static int arm_execute( int cycles )
 	arm_icount = cycles;
 	do
 	{
-
 		CALL_MAME_DEBUG;
 
 		/* load instruction */
 		pc = R15;
-		insn = READ32( pc & ADDRESS_MASK );
+		insn = cpu_readop32( pc & ADDRESS_MASK );
 
 		switch (insn >> INSN_COND_SHIFT)
 		{
@@ -409,6 +408,7 @@ static int arm_execute( int cycles )
 			R15 = eARM_MODE_SVC;	/* Set SVC mode so PC is saved to correct R14 bank */
 			SetRegister( 14, pc );	/* save PC */
 			R15 = (pc&PSR_MASK)|(pc&IRQ_MASK)|0x8|eARM_MODE_SVC|I_MASK|(pc&MODE_MASK);
+			arm_icount -= 2 * S_CYCLE + N_CYCLE;
 		}
 		else /* Undefined */
 		{
@@ -420,7 +420,6 @@ static int arm_execute( int cycles )
 
 		arm_check_irq_state();
 
-		arm_icount -= 3;
 	} while( arm_icount > 0 );
 
 	return cycles - arm_icount;
@@ -440,6 +439,7 @@ static void arm_set_context(void *src)
 	if (src)
 	{
 		memcpy( &arm, src, sizeof(arm) );
+		change_pc(R15 & ADDRESS_MASK);
 	}
 }
 
@@ -461,6 +461,7 @@ static void arm_check_irq_state(void)
 		R15 = eARM_MODE_FIQ;	/* Set FIQ mode so PC is saved to correct R14 bank */
 		SetRegister( 14, pc );	/* save PC */
 		R15 = (pc&PSR_MASK)|(pc&IRQ_MASK)|0x1c|eARM_MODE_FIQ|I_MASK|F_MASK; /* Mask both IRQ & FIRQ, set PC=0x1c */
+		change_pc(R15 & ADDRESS_MASK);
 		arm.pendingFiq=0;
 		return;
 	}
@@ -469,6 +470,7 @@ static void arm_check_irq_state(void)
 		R15 = eARM_MODE_IRQ;	/* Set IRQ mode so PC is saved to correct R14 bank */
 		SetRegister( 14, pc );	/* save PC */
 		R15 = (pc&PSR_MASK)|(pc&IRQ_MASK)|0x18|eARM_MODE_IRQ|I_MASK|(pc&F_MASK); /* Mask only IRQ, set PC=0x18 */
+		change_pc(R15 & ADDRESS_MASK);
 		arm.pendingIrq=0;
 		return;
 	}
@@ -535,6 +537,7 @@ static void HandleBranch(  UINT32 insn )
 	{
 		R15 += off + 8;
 	}
+	arm_icount -= 2 * S_CYCLE + N_CYCLE;
 }
 
 static void HandleMemSingle( UINT32 insn )
@@ -597,6 +600,7 @@ static void HandleMemSingle( UINT32 insn )
 	if (insn & INSN_SDT_L)
 	{
 		/* Load */
+		arm_icount -= S_CYCLE + I_CYCLE + N_CYCLE;
 		if (insn & INSN_SDT_B)
 		{
 			if (ARM_DEBUG_CORE && rd == eR15)
@@ -619,6 +623,8 @@ static void HandleMemSingle( UINT32 insn )
                 */
 				if ((READ32(rnv)&3)==0)
 					R15 -= 4;
+
+				arm_icount -= S_CYCLE + N_CYCLE;
 			}
 			else
 			{
@@ -629,6 +635,7 @@ static void HandleMemSingle( UINT32 insn )
 	else
 	{
 		/* Store */
+		arm_icount -= 2 * N_CYCLE;
 		if (insn & INSN_SDT_B)
 		{
 			if (ARM_DEBUG_CORE && rd==eR15)
@@ -722,6 +729,7 @@ static void HandleALU( UINT32 insn )
 	UINT32 by, rdn;
 
 	opcode = (insn & INSN_OPCODE) >> INSN_OPCODE_SHIFT;
+	arm_icount -= S_CYCLE;
 
 	rd = 0;
 	rn = 0;
@@ -836,6 +844,7 @@ static void HandleALU( UINT32 insn )
 		{
 			/* Merge the old NZCV flags into the new PC value */
 			R15 = (rd & ADDRESS_MASK) | (R15 & PSR_MASK) | (R15 & IRQ_MASK) | (R15&MODE_MASK);
+			arm_icount -= S_CYCLE + N_CYCLE;
 		}
 		else
 		{
@@ -850,6 +859,7 @@ static void HandleALU( UINT32 insn )
 				{
 					SetRegister(rdn,(rd&ADDRESS_MASK) | (rd&PSR_MASK) | (R15&IRQ_MASK) | (R15&MODE_MASK));
 				}
+				arm_icount -= S_CYCLE + N_CYCLE;
 			}
 			else
 			{
@@ -874,6 +884,7 @@ static void HandleALU( UINT32 insn )
 			if (insn==0xe33ff003)
 				rd-=4;
 
+			arm_icount -= S_CYCLE + N_CYCLE;
 			if ((R15&MODE_MASK)!=0)
 			{
 				SetRegister(15, rd);
@@ -892,6 +903,28 @@ static void HandleALU( UINT32 insn )
 static void HandleMul( UINT32 insn)
 {
 	UINT32 r;
+
+	arm_icount -= S_CYCLE + I_CYCLE;
+	/* should be:
+            Range of Rs            Number of cycles
+
+               &0 -- &1            1S + 1I
+               &2 -- &7            1S + 2I
+               &8 -- &1F           1S + 3I
+              &20 -- &7F           1S + 4I
+              &80 -- &1FF          1S + 5I
+             &200 -- &7FF          1S + 6I
+             &800 -- &1FFF         1S + 7I
+            &2000 -- &7FFF         1S + 8I
+            &8000 -- &1FFFF        1S + 9I
+           &20000 -- &7FFFF        1S + 10I
+           &80000 -- &1FFFFF       1S + 11I
+          &200000 -- &7FFFFF       1S + 12I
+          &800000 -- &1FFFFFF      1S + 13I
+         &2000000 -- &7FFFFFF      1S + 14I
+         &8000000 -- &1FFFFFFF     1S + 15I
+        &20000000 -- &FFFFFFFF     1S + 16I
+  */
 
 	/* Do the basic multiply of Rm and Rs */
 	r =	GetRegister( insn&INSN_MUL_RM ) *
@@ -1025,6 +1058,7 @@ static void HandleMemBlock( UINT32 insn)
 
 			if (insn & 0x8000) {
 				R15-=4;
+				arm_icount -= S_CYCLE + N_CYCLE;
 			}
 
 			if (insn & INSN_BDT_W)
@@ -1076,9 +1110,11 @@ static void HandleMemBlock( UINT32 insn)
 				SetRegister(15, deferredR15);
 
 			if (insn & 0x8000) {
+				arm_icount -= S_CYCLE + N_CYCLE;
 				R15-=4;
 			}
 		}
+		arm_icount -= result * S_CYCLE + N_CYCLE + I_CYCLE;
 	} /* Loading */
 	else
 	{
@@ -1125,6 +1161,8 @@ static void HandleMemBlock( UINT32 insn)
 		}
 		if( insn & (1<<eR15) )
 			R15 -= 12;
+
+		arm_icount -= (result - 1) * S_CYCLE + 2 * N_CYCLE;
 	}
 } /* HandleMemBlock */
 
@@ -1155,6 +1193,7 @@ static UINT32 decodeShift( UINT32 insn, UINT32 *pCarry)
 
 		//see p35 for check on this
 		k = GetRegister(k >> 1)&0x1f;
+		arm_icount -= S_CYCLE;
 		if( k == 0 ) /* Register shift by 0 is a no-op */
 		{
 //          logerror("%08x:  NO-OP Regshift\n",R15);
@@ -1269,6 +1308,8 @@ static void HandleCoPro( UINT32 insn)
 {
 	UINT32 rn=(insn>>12)&0xf;
 	UINT32 crn=(insn>>16)&0xf;
+
+	arm_icount -= S_CYCLE;
 
 	/* MRC - transfer copro register to main register */
 	if( (insn&0x0f100010)==0x0e100010 )

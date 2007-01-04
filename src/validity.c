@@ -4,7 +4,7 @@
 
     Validity checks on internal data structures.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -118,7 +118,7 @@ static quark_table *allocate_quark_table(UINT32 entries, UINT32 hashsize)
 
 INLINE UINT32 quark_string_crc(const char *string)
 {
-	return crc32(0, (UINT8 *)string, strlen(string));
+	return crc32(0, (UINT8 *)string, (UINT32)strlen(string));
 }
 
 
@@ -193,11 +193,15 @@ static void build_quarks(void)
 	}
 
 	/* allocate memory for a quark table of strings */
-	defstr_table = allocate_quark_table(STR_TOTAL, 97);
+	defstr_table = allocate_quark_table(INPUT_STRING_COUNT, 97);
 
 	/* add all the default strings */
-	for (strnum = 0; strnum < STR_TOTAL; strnum++)
-		add_quark(defstr_table, strnum, quark_string_crc(input_port_default_strings[strnum]));
+	for (strnum = 1; strnum < INPUT_STRING_COUNT; strnum++)
+	{
+		const char *string = input_port_string_from_token(INPUT_PORT_UINT32(strnum));
+		if (string != NULL)
+			add_quark(defstr_table, strnum, quark_string_crc(string));
+	}
 }
 
 
@@ -685,35 +689,38 @@ static int validate_gfx(int drivnum, const machine_config *drv, const UINT32 *re
 
 static int validate_inputs(int drivnum, const machine_config *drv, input_port_entry **memory)
 {
+	const char *cabinet = input_port_string_from_token(INPUT_PORT_UINT32(INPUT_STRING_Cabinet));
+	const char *demo_sounds = input_port_string_from_token(INPUT_PORT_UINT32(INPUT_STRING_Demo_Sounds));
+	const char *flip_screen = input_port_string_from_token(INPUT_PORT_UINT32(INPUT_STRING_Flip_Screen));
 	const input_port_entry *inp, *last_dipname_entry = NULL;
 	const game_driver *driver = drivers[drivnum];
 	int empty_string_found = FALSE;
-	int last_strindex = -1;
+	int last_strindex = 0;
 	quark_entry *entry;
 	int error = FALSE;
 	UINT32 crc;
 
 	/* skip if no ports */
-	if (!driver->construct_ipt)
+	if (!driver->ipt)
 		return FALSE;
 
 	/* skip if we already validated these ports */
-	crc = (UINT32)driver->construct_ipt;
+	crc = (UINT32)driver->ipt;
 	for (entry = first_hash_entry(inputs_table, crc); entry; entry = entry->next)
-		if (entry->crc == crc && driver->construct_ipt == drivers[entry - inputs_table->entry]->construct_ipt)
+		if (entry->crc == crc && driver->ipt == drivers[entry - inputs_table->entry]->ipt)
 			return FALSE;
 
 	/* otherwise, add ourself to the list */
 	add_quark(inputs_table, drivnum, crc);
 
 	/* allocate the input ports */
-	*memory = input_port_allocate(driver->construct_ipt, *memory);
+	*memory = input_port_allocate(driver->ipt, *memory);
 
 	/* iterate over the results */
 	for (inp = *memory; inp->type != IPT_END; inp++)
 	{
 		quark_entry *entry;
-		int strindex = -1;
+		int strindex = 0;
 		UINT32 crc;
 
 		/* clear the DIP switch tracking when we hit the first non-DIP entry */
@@ -736,7 +743,7 @@ static int validate_inputs(int drivnum, const machine_config *drv, input_port_en
 				mame_printf_error("%s: %s has a DIP switch name or setting with no name\n", driver->source_file, driver->name);
 				error = TRUE;
 			}
-			last_strindex = -1;
+			last_strindex = 0;
 			continue;
 		}
 
@@ -758,14 +765,14 @@ static int validate_inputs(int drivnum, const machine_config *drv, input_port_en
 		/* hash the string and look it up in the string table */
 		crc = quark_string_crc(inp->name);
 		for (entry = first_hash_entry(defstr_table, crc); entry; entry = entry->next)
-			if (entry->crc == crc && !strcmp(inp->name, input_port_default_strings[entry - defstr_table->entry]))
+			if (entry->crc == crc && !strcmp(inp->name, input_port_string_from_token(INPUT_PORT_UINT32(entry - defstr_table->entry))))
 			{
 				strindex = entry - defstr_table->entry;
 				break;
 			}
 
 		/* check for strings that should be DEF_STR */
-		if (strindex != -1 && inp->name != input_port_default_strings[strindex])
+		if (strindex != 0 && inp->name != input_port_string_from_token(INPUT_PORT_UINT32(strindex)))
 		{
 			mame_printf_error("%s: %s must use DEF_STR( %s )\n", driver->source_file, driver->name, inp->name);
 			error = TRUE;
@@ -776,31 +783,31 @@ static int validate_inputs(int drivnum, const machine_config *drv, input_port_en
 			last_dipname_entry = inp;
 
 		/* check for dipswitch ordering against the last entry */
-		if (inp[0].type == IPT_DIPSWITCH_SETTING && inp[-1].type == IPT_DIPSWITCH_SETTING && last_strindex != -1 && strindex != -1)
+		if (inp[0].type == IPT_DIPSWITCH_SETTING && inp[-1].type == IPT_DIPSWITCH_SETTING && last_strindex != 0 && strindex != 0)
 		{
 			/* check for inverted off/on dispswitch order */
-			if (last_strindex == STR_On && strindex == STR_Off)
+			if (last_strindex == INPUT_STRING_On && strindex == INPUT_STRING_Off)
 			{
 				mame_printf_error("%s: %s has inverted Off/On dipswitch order\n", driver->source_file, driver->name);
 				error = TRUE;
 			}
 
 			/* check for inverted yes/no dispswitch order */
-			else if (last_strindex == STR_Yes && strindex == STR_No)
+			else if (last_strindex == INPUT_STRING_Yes && strindex == INPUT_STRING_No)
 			{
 				mame_printf_error("%s: %s has inverted No/Yes dipswitch order\n", driver->source_file, driver->name);
 				error = TRUE;
 			}
 
 			/* check for inverted upright/cocktail dispswitch order */
-			else if (last_strindex == STR_Cocktail && strindex == STR_Upright)
+			else if (last_strindex == INPUT_STRING_Cocktail && strindex == INPUT_STRING_Upright)
 			{
 				mame_printf_error("%s: %s has inverted Upright/Cocktail dipswitch order\n", driver->source_file, driver->name);
 				error = TRUE;
 			}
 
 			/* check for proper coin ordering */
-			else if (last_strindex >= STR_9C_1C && last_strindex <= STR_1C_9C && strindex >= STR_9C_1C && strindex <= STR_1C_9C &&
+			else if (last_strindex >= INPUT_STRING_9C_1C && last_strindex <= INPUT_STRING_1C_9C && strindex >= INPUT_STRING_9C_1C && strindex <= INPUT_STRING_1C_9C &&
 					 last_strindex >= strindex && !memcmp(&inp[-1].condition, &inp[0].condition, sizeof(inp[-1].condition)))
 			{
 				mame_printf_error("%s: %s has unsorted coinage %s > %s\n", driver->source_file, driver->name, inp[-1].name, inp[0].name);
@@ -812,7 +819,7 @@ static int validate_inputs(int drivnum, const machine_config *drv, input_port_en
 		if (last_dipname_entry && inp->type == IPT_DIPSWITCH_SETTING)
 		{
 			/* make sure cabinet selections default to upright */
-			if (last_dipname_entry->name == DEF_STR( Cabinet ) && strindex == STR_Upright &&
+			if (last_dipname_entry->name == cabinet && strindex == INPUT_STRING_Upright &&
 				last_dipname_entry->default_value != inp->default_value)
 			{
 				mame_printf_error("%s: %s Cabinet must default to Upright\n", driver->source_file, driver->name);
@@ -820,7 +827,7 @@ static int validate_inputs(int drivnum, const machine_config *drv, input_port_en
 			}
 
 			/* make sure demo sounds default to on */
-			if (last_dipname_entry->name == DEF_STR( Demo_Sounds ) && strindex == STR_On &&
+			if (last_dipname_entry->name == demo_sounds && strindex == INPUT_STRING_On &&
 				last_dipname_entry->default_value != inp->default_value)
 			{
 				mame_printf_error("%s: %s Demo Sounds must default to On\n", driver->source_file, driver->name);
@@ -828,14 +835,14 @@ static int validate_inputs(int drivnum, const machine_config *drv, input_port_en
 			}
 
 			/* check for bad flip screen options */
-			if (last_dipname_entry->name == DEF_STR( Flip_Screen ) && (strindex == STR_Yes || strindex == STR_No))
+			if (last_dipname_entry->name == flip_screen && (strindex == INPUT_STRING_Yes || strindex == INPUT_STRING_No))
 			{
 				mame_printf_error("%s: %s has wrong Flip Screen option %s (must be Off/On)\n", driver->source_file, driver->name, inp->name);
 				error = TRUE;
 			}
 
 			/* check for bad demo sounds options */
-			if (last_dipname_entry->name == DEF_STR( Demo_Sounds ) && (strindex == STR_Yes || strindex == STR_No))
+			if (last_dipname_entry->name == demo_sounds && (strindex == INPUT_STRING_Yes || strindex == INPUT_STRING_No))
 			{
 				mame_printf_error("%s: %s has wrong Demo Sounds option %s (must be Off/On)\n", driver->source_file, driver->name, inp->name);
 				error = TRUE;

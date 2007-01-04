@@ -2,7 +2,7 @@
 //
 //  winmain.c - Win32 main program
 //
-//  Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+//  Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
 //  Visit http://mamedev.org for licensing and usage restrictions.
 //
 //============================================================
@@ -28,6 +28,7 @@
 #include "output.h"
 #include "config.h"
 #include "osdepend.h"
+#include "strconv.h"
 
 #ifdef MESS
 #include "parallel.h"
@@ -93,18 +94,10 @@ static void stop_profiler(void);
 
 
 //============================================================
-//  main
+//  utf8_main
 //============================================================
 
-#ifdef WINUI
-#define main main_
-#endif
-
-#ifdef MESS
-int __declspec(dllexport) DECL_SPEC main_(int argc, char **argv)
-#else
-int main(int argc, char **argv)
-#endif
+int utf8_main(int argc, char **argv)
 {
 	int game_index;
 	char *ext;
@@ -190,7 +183,11 @@ static void output_oslog(running_machine *machine, const char *buffer)
 {
 	extern int win_erroroslog;
 	if (win_erroroslog)
-		OutputDebugString(buffer);
+	{
+		TCHAR *t_buffer = tstring_from_utf8(buffer);
+		OutputDebugString(t_buffer);
+		free(t_buffer);
+	}
 }
 
 
@@ -267,7 +264,9 @@ void osd_break_into_debugger(const char *message)
 {
 	if (IsDebuggerPresent())
 	{
-		OutputDebugString(message);
+		TCHAR *t_message = tstring_from_utf8(message);
+		OutputDebugString(t_message);
+		free(t_message);
 		DebugBreak();
 	}
 }
@@ -404,7 +403,13 @@ static int check_for_double_click_start(int argc)
 #endif
 
 		// pop up a messagebox with some information
-		button = MessageBox(NULL, message_text, APPLONGNAME " usage information...", MB_YESNO | MB_ICONASTERISK);
+		{
+			TCHAR *t_message_text = tstring_from_utf8(message_text);
+			TCHAR *t_message_caption = tstring_from_utf8(APPLONGNAME " usage information...");
+			button = MessageBox(NULL, t_message_text, t_message_caption, MB_YESNO | MB_ICONASTERISK);
+			free(t_message_text);
+			free(t_message_caption);
+		}
 
 		if (button == IDYES)
 		{

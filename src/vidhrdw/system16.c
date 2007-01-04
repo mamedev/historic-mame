@@ -135,6 +135,7 @@ int sys16_fg_priority_value;
 int sys16_18_mode;
 int sys16_tilebank_switch;
 int sys16_rowscroll_scroll;
+int shinobl_kludge;
 
 /* video registers */
 int sys16_tile_bank1;
@@ -585,6 +586,15 @@ static void get_bg_tile_info( int offset ){
 	int data = source[offset%(64*32)];
 	int tile_number = (data&0xfff) + 0x1000*((data&sys16_tilebank_switch)?sys16_tile_bank1:sys16_tile_bank0);
 
+	if (!shinobl_kludge)
+	{
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				(data>>6)&0x7f,
+				0)
+	}
+	else
 	{
 		SET_TILE_INFO(
 				0,
@@ -616,6 +626,15 @@ static void get_fg_tile_info( int offset ){
 	int data = source[offset%(64*32)];
 	int tile_number = (data&0xfff) + 0x1000*((data&sys16_tilebank_switch)?sys16_tile_bank1:sys16_tile_bank0);
 
+	if (!shinobl_kludge)
+	{
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				(data>>6)&0x7f,
+				0)
+	}
+	else
 	{
 		SET_TILE_INFO(
 				0,
@@ -623,6 +642,7 @@ static void get_fg_tile_info( int offset ){
 				(data>>5)&0x7f,
 				0)
 	}
+
 	switch(sys16_fg_priority_mode){
 	case 1: // alien syndrome
 		tile_info.priority = (data&0x8000)?1:0;
@@ -645,13 +665,12 @@ static void get_bg2_tile_info( int offset ){
 	int data = source[offset%(64*32)];
 	int tile_number = (data&0xfff) + 0x1000*((data&0x1000)?sys16_tile_bank1:sys16_tile_bank0);
 
-	{
-		SET_TILE_INFO(
-				0,
-				tile_number,
-				(data>>5)&0x7f,
-				0)
-	}
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			(data>>6)&0x7f,
+			0)
+
 	tile_info.priority = 0;
 }
 
@@ -660,13 +679,12 @@ static void get_fg2_tile_info( int offset ){
 	int data = source[offset%(64*32)];
 	int tile_number = (data&0xfff) + 0x1000*((data&0x1000)?sys16_tile_bank1:sys16_tile_bank0);
 
-	{
-		SET_TILE_INFO(
-				0,
-				tile_number,
-				(data>>5)&0x7f,
-				0)
-	}
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			(data>>6)&0x7f,
+			0)
+
 	if((data&0xff00) >= sys16_fg_priority_value) tile_info.priority = 1;
 	else tile_info.priority = 0;
 }
@@ -708,6 +726,16 @@ static void get_text_tile_info( int offset ){
 	const UINT16 *source = sys16_textram;
 	int tile_number = source[offset];
 	int pri = tile_number >> 8;
+
+	if (!shinobl_kludge)
+	{
+		SET_TILE_INFO(
+				0,
+				(tile_number&0x1ff) + sys16_tile_bank0 * 0x1000,
+				(tile_number>>9)%8,
+				0)
+	}
+	else
 	{
 		SET_TILE_INFO(
 				0,
@@ -715,6 +743,7 @@ static void get_text_tile_info( int offset ){
 				(tile_number>>8)%8,
 				0)
 	}
+
 	if(pri>=sys16_textlayer_lo_min && pri<=sys16_textlayer_lo_max)
 		tile_info.priority = 1;
 	if(pri>=sys16_textlayer_hi_min && pri<=sys16_textlayer_hi_max)

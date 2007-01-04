@@ -2,7 +2,7 @@
 //
 //  fileio.c - Win32 file access functions
 //
-//  Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+//  Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
 //  Visit http://mamedev.org for licensing and usage restrictions.
 //
 //============================================================
@@ -15,6 +15,7 @@
 
 // MAME headers
 #include "osdepend.h"
+#include "strconv.h"
 
 
 static DWORD create_path_recursive(TCHAR *path);
@@ -79,16 +80,20 @@ static mame_file_error error_to_mame_file_error(DWORD error)
 mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 *filesize)
 {
 	DWORD disposition, access, sharemode;
-	const char *src;
+	const TCHAR *src;
 	DWORD upper;
+	TCHAR *t_path;
 	TCHAR *dst;
 
+	// convert path to TCHAR
+	t_path = tstring_from_utf8(path);
+
 	// allocate a file object, plus space for the converted filename
-	*file = malloc_or_die(sizeof(**file) + sizeof(TCHAR) * strlen(path));
+	*file = malloc_or_die(sizeof(**file) + sizeof(TCHAR) * _tcslen(t_path));
 
 	// convert the path into something Windows compatible
 	dst = (*file)->filename;
-	for (src = path; *src != 0; src++)
+	for (src = t_path; *src != 0; src++)
 		*dst++ = *src;//(*src == '/') ? '\\' : *src;
 	*dst++ = 0;
 
@@ -136,6 +141,7 @@ mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UI
 		{
 			free(*file);
 			*file = NULL;
+			free(t_path);
 			return error_to_mame_file_error(error);
 		}
 	}
@@ -143,6 +149,7 @@ mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UI
 	// get the file size
 	*filesize = GetFileSize((*file)->handle, &upper);
 	*filesize |= (UINT64)upper << 32;
+	free(t_path);
 	return FILERR_NONE;
 }
 

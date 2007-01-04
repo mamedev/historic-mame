@@ -4,7 +4,7 @@
 
     File access functions.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -15,6 +15,7 @@
 #include "hash.h"
 #include "unzip.h"
 #include "options.h"
+#include "unicode.h"
 
 
 /***************************************************************************
@@ -49,33 +50,48 @@
     TYPE DEFINITIONS
 ***************************************************************************/
 
+enum _text_file_type
+{
+	TFT_LATIN1,
+	TFT_UTF8,
+	TFT_UTF16BE,
+	TFT_UTF16LE,
+	TFT_UTF32BE,
+	TFT_UTF32LE
+};
+typedef enum _text_file_type text_file_type;
+
+
 /* typedef struct _mame_file mame_file -- declared in fileio.h */
 struct _mame_file
 {
 #ifdef DEBUG_COOKIE
-	UINT32		debug_cookie;
+	UINT32			debug_cookie;
 #endif
-	osd_file *	file;
-	zip_file *	zipfile;
-	UINT8 *		data;
-	UINT64		offset;
-	UINT64		length;
-	UINT8		eof;
-	UINT8		type;
-	char		hash[HASH_BUF_SIZE];
-	int			back_char; /* Buffered char for unget. EOF for empty. */
-	UINT64		bufferbase;
-	UINT32		bufferbytes;
-	UINT8		buffer[FILE_BUFFER_SIZE];
+	osd_file *		file;
+	zip_file *		zipfile;
+	UINT8 *			data;
+	UINT64			offset;
+	UINT64			length;
+	UINT8			eof;
+	UINT8			type;
+	char			hash[HASH_BUF_SIZE];
+	text_file_type	text_type;
+	char			back_chars[UTF8_CHAR_MAX];
+	int				back_char_head;
+	int				back_char_tail;
+	UINT64			bufferbase;
+	UINT32			bufferbytes;
+	UINT8			buffer[FILE_BUFFER_SIZE];
 };
 
 
 typedef struct _path_iterator path_iterator;
 struct _path_iterator
 {
-	const char *base;
-	const char *cur;
-	int			index;
+	const char *	base;
+	const char *	cur;
+	int				index;
 };
 
 
@@ -200,13 +216,12 @@ static mame_file_error fopen_internal(const char *searchpath, const char *filena
 
 	/* reset the file handle */
 	memset(*file, 0, sizeof(**file));
-	(*file)->back_char = EOF;
 #ifdef DEBUG_COOKIE
 	(*file)->debug_cookie = DEBUG_COOKIE;
 #endif
 
 	/* determine the maximum length of a composed filename, plus some extra space for .zip extensions */
-	maxlen = strlen(filename) + 5 + path_iterator_init(&iterator, searchpath) + 1;
+	maxlen = (UINT32)strlen(filename) + 5 + path_iterator_init(&iterator, searchpath) + 1;
 
 	/* allocate a temporary buffer to hold it */
 	fullname = malloc(maxlen);
@@ -325,7 +340,7 @@ static mame_file_error fopen_attempt_zipped(char *fullname, const char *filename
 			continue;
 
 		/* precompute the filename length */
-		filenamelen = strlen(dirsep + 1);
+		filenamelen = (UINT32)strlen(dirsep + 1);
 
 		/* see if we can find the file */
 		for (header = zip_file_first_file(zip); header != NULL; header = zip_file_next_file(zip))
@@ -403,7 +418,8 @@ int mame_fseek(mame_file *file, INT64 offset, int whence)
 	int err = 0;
 
 	/* flush any buffered char */
-	file->back_char = EOF;
+	file->back_char_head = 0;
+	file->back_char_tail = 0;
 
 	/* switch off the relative location */
 	switch (whence)
@@ -443,7 +459,7 @@ UINT64 mame_ftell(mame_file *file)
 int mame_feof(mame_file *file)
 {
 	/* check for buffered chars */
-	if (file->back_char != EOF)
+	if (file->back_char_head != file->back_char_tail)
 		return 0;
 
 	/* if the offset == length, we're at EOF */
@@ -476,7 +492,8 @@ UINT32 mame_fread(mame_file *file, void *buffer, UINT32 length)
 	UINT32 bytes_read = 0;
 
 	/* flush any buffered char */
-	file->back_char = EOF;
+	file->back_char_head = 0;
+	file->back_char_tail = 0;
 
 	/* switch off the file type */
 	switch (file->type)
@@ -539,20 +556,114 @@ UINT32 mame_fread(mame_file *file, void *buffer, UINT32 length)
 
 int mame_fgetc(mame_file *file)
 {
-	UINT8 buffer;
+	int result;
 
-	/* handle ungetc */
-	if (file->back_char != EOF)
+	/* refresh buffer, if necessary */
+	if (file->back_char_head == file->back_char_tail)
 	{
-		buffer = file->back_char;
-		file->back_char = EOF;
-		return buffer;
+		utf16_char utf16_buffer[UTF16_CHAR_MAX];
+		char utf8_buffer[UTF8_CHAR_MAX];
+		unicode_char uchar = (unicode_char) ~0;
+		int readlen, charlen;
+		char c;
+
+		/* do we need to check the byte order marks? */
+		if (file->offset == 0)
+		{
+			UINT8 bom[4];
+			int pos = 0;
+			if (mame_fread(file, bom, 4) == 4)
+			{
+				if ((bom[0] == 0xEF) && (bom[1] == 0xBB) && (bom[2] == 0xBF))
+				{
+					file->text_type = TFT_UTF8;
+					pos = 3;
+				}
+				else if ((bom[0] == 0x00) && (bom[1] == 0x00) && (bom[2] == 0xFE) && (bom[3] == 0xFF))
+				{
+					file->text_type = TFT_UTF32BE;
+					pos = 4;
+				}
+				else if ((bom[0] == 0xFF) && (bom[1] == 0xFE) && (bom[2] == 0x00) && (bom[3] == 0x00))
+				{
+					file->text_type = TFT_UTF32LE;
+					pos = 4;
+				}
+				else if ((bom[0] == 0xFE) && (bom[1] == 0xFF))
+				{
+					file->text_type = TFT_UTF16BE;
+					pos = 2;
+				}
+				else if ((bom[0] == 0xFF) && (bom[1] == 0xFE))
+				{
+					file->text_type = TFT_UTF16LE;
+					pos = 2;
+				}
+			}
+			mame_fseek(file, pos, SEEK_SET);
+		}
+
+		/* fetch the next character */
+		switch (file->text_type)
+		{
+			case TFT_LATIN1:
+				if (mame_fread(file, &c, 1) == 1)
+					uchar = c;
+				break;
+
+			case TFT_UTF8:
+				readlen = mame_fread(file, utf8_buffer, sizeof(utf8_buffer));
+				charlen = uchar_from_utf8(&uchar, utf8_buffer, readlen / sizeof(utf8_buffer[0]));
+				mame_fseek(file, (charlen * sizeof(utf8_buffer[0])) - readlen, SEEK_CUR);
+				break;
+
+			case TFT_UTF16BE:
+				readlen = mame_fread(file, utf16_buffer, sizeof(utf16_buffer));
+				charlen = uchar_from_utf16be(&uchar, utf16_buffer, readlen / sizeof(utf16_buffer[0]));
+				mame_fseek(file, (charlen * sizeof(utf16_buffer[0])) - readlen, SEEK_CUR);
+				break;
+
+			case TFT_UTF16LE:
+				readlen = mame_fread(file, utf16_buffer, sizeof(utf16_buffer));
+				charlen = uchar_from_utf16le(&uchar, utf16_buffer, readlen / sizeof(utf16_buffer[0]));
+				mame_fseek(file, (charlen * sizeof(utf16_buffer[0])) - readlen, SEEK_CUR);
+				break;
+
+			case TFT_UTF32BE:
+				if (mame_fread(file, &uchar, sizeof(uchar)) != sizeof(uchar))
+					uchar = ~0;
+				uchar = BIG_ENDIANIZE_INT32(uchar);
+				break;
+
+			case TFT_UTF32LE:
+				if (mame_fread(file, &uchar, sizeof(uchar)) != sizeof(uchar))
+					uchar = ~0;
+				uchar = LITTLE_ENDIANIZE_INT32(uchar);
+				break;
+
+			default:
+				fatalerror("Invalid text format");
+				break;
+		}
+
+		if (uchar != ~0)
+		{
+			/* place the new character in the ring buffer */
+			file->back_char_head = 0;
+			file->back_char_tail = utf8_from_uchar(file->back_chars, ARRAY_LENGTH(file->back_chars), uchar);
+		}
 	}
 
-	/* otherwise, fetch the next byte */
-	if (mame_fread(file, &buffer, 1) == 1)
-		return buffer;
-	return EOF;
+	/* now read from the ring buffer */
+	if (file->back_char_head != file->back_char_tail)
+	{
+		result = file->back_chars[file->back_char_head++];
+		file->back_char_head %= ARRAY_LENGTH(file->back_chars);
+	}
+	else
+		result = EOF;
+
+	return result;
 }
 
 
@@ -563,7 +674,8 @@ int mame_fgetc(mame_file *file)
 
 int mame_ungetc(int c, mame_file *file)
 {
-	file->back_char = c;
+	file->back_chars[file->back_char_tail++] = (char) c;
+	file->back_char_tail %= ARRAY_LENGTH(file->back_chars);
 	return c;
 }
 
@@ -633,7 +745,8 @@ UINT32 mame_fwrite(mame_file *file, const void *buffer, UINT32 length)
 	mame_file_error filerr;
 
 	/* flush any buffered char */
-	file->back_char = EOF;
+	file->back_char_head = 0;
+	file->back_char_tail = 0;
 
 	/* invalidate any buffered data */
 	file->bufferbytes = 0;
@@ -667,9 +780,18 @@ UINT32 mame_fwrite(mame_file *file, const void *buffer, UINT32 length)
 int mame_fputs(mame_file *f, const char *s)
 {
 	char convbuf[1024];
-	char *pconvbuf;
+	char *pconvbuf = convbuf;
 
-	for (pconvbuf = convbuf; *s; s++)
+	/* is this the beginning of the file?  if so, write a byte order mark */
+	if (f->offset == 0)
+	{
+		*(pconvbuf++) = 0xEF;
+		*(pconvbuf++) = 0xBB;
+		*(pconvbuf++) = 0xBF;
+	}
+
+	/* convert '\n' to platform dependant line endings */
+	while(*s)
 	{
 		if (*s == '\n')
 		{
@@ -685,10 +807,11 @@ int mame_fputs(mame_file *f, const char *s)
 		}
 		else
 			*pconvbuf++ = *s;
+		s++;
 	}
 	*pconvbuf++ = 0;
 
-	return mame_fwrite(f, convbuf, strlen(convbuf));
+	return mame_fwrite(f, convbuf, (UINT32)strlen(convbuf));
 }
 
 

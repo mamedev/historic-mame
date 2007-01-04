@@ -5,7 +5,7 @@
     Simple core functions that are defined in mamecore.h and which may
     need to be accessed by other MAME-related tools.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ****************************************************************************/
@@ -82,14 +82,14 @@ int mame_strwildcmp(const char *sp1, const char *sp2)
 		s2[8] = 0;
 	}
 
-	l1 = strlen(s1);
+	l1 = (int)strlen(s1);
 	if (l1 < 8)
 	{
 		for (i = l1 + 1; i < 8; i++) s1[i] = ' ';
 		s1[8] = 0;
 	}
 
-	l2 = strlen(s2);
+	l2 = (int)strlen(s2);
 	if (l2 < 8)
 	{
 		for (i = l2 + 1; i < 8; i++) s2[i] = ' ';

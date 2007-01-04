@@ -2,6 +2,7 @@
 
   Bellfruit Adder2 video board driver, (under heavy construction !!!)
 
+  30-12-2006: State save support added (J. Wallace)
   16-08-2005: Decoupled from AGEMAME by El Condor
   19-08-2005: Re-Animator
 
@@ -218,6 +219,18 @@ VIDEO_RESET( adder2 )
 
 VIDEO_START( adder2 )
 {
+	state_save_register_global(adder2_screen_page_reg);
+	state_save_register_global(adder2_c101);
+	state_save_register_global(adder2_rx);
+	state_save_register_global(adder_vbl_triggered);
+	state_save_register_global(adder_acia_triggered);
+
+	state_save_register_global(adder2_data_from_sc2);
+	state_save_register_global(sc2_data_from_adder);
+
+	state_save_register_item_array("Adder", 0, adder_ram);
+	state_save_register_item_2d_array("Adder", 0, adder_screen_ram);
+
 	tilemap0 = tilemap_create(get_tile0_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 50, 35);
 
 	if ( !tilemap0 ) return 1;

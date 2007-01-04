@@ -43,9 +43,14 @@ mame_timer *schaser_effect_555_timer;
 static double schaser_effect_555_time_remain;
 static int schaser_effect_555_is_low;
 static int explosion;
+static UINT8 bw_bits;
+static UINT8 bw_last_a = 0;
+static UINT8 bw_last_b = 0;
+static UINT8 bw_last_c = 0;
+static UINT8 bw_last_d = 0;
 int schaser_sx10;
 
-static void sn76477_setup ( int chip )
+static void bw_sn76477_setup ( int chip )
 {
 	SN76477_envelope_1_w(chip, 1);
 	SN76477_envelope_2_w(chip, 0);
@@ -113,70 +118,45 @@ struct Samplesinterface invaders_samples_interface =
 	invaders_sample_names
 };
 
-static void invaders_port3_w(int data, UINT8 *last)
+static WRITE8_HANDLER( invaders_sh_port3_w )
 {
+	bw_bits = data & ~bw_last_a;
+
 	SN76477_enable_w(0, !(data & 0x01));				/* Saucer Sound */
 
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (0, 0, 0);					/* Shot Sound */
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (1, 1, 0);					/* Base Hit */
-
-	if (data & 0x08 && ~*last & 0x08)
-		sample_start (2, 2, 0);					/* Invader Hit */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (5, 8, 0);					/* Bonus Base */
+	if (bw_bits & 0x02) sample_start (0, 0, 0);			/* Shot Sound */
+	if (bw_bits & 0x04) sample_start (1, 1, 0);			/* Base Hit */
+	if (bw_bits & 0x08) sample_start (2, 2, 0);			/* Invader Hit */
+	if (bw_bits & 0x10) sample_start (5, 8, 0);			/* Bonus Base */
 
 	sound_global_enable(data & 0x20);
 
 	c8080bw_screen_red_w(data & 0x04);
 
-	*last = data;
-}
-
-static void invaders_port5_w(int data, UINT8 *last)
-{
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (4, 3, 0);					/* Fleet 1 */
-
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (4, 4, 0);					/* Fleet 2 */
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (4, 5, 0);					/* Fleet 3 */
-
-	if (data & 0x08 && ~*last & 0x08)
-		sample_start (4, 6, 0);					/* Fleet 4 */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (3, 7, 0);					/* Saucer Hit */
-
-	c8080bw_flip_screen_w(data & 0x20);
-
-	*last = data;
-}
-
-static WRITE8_HANDLER( invaders_sh_port3_w )
-{
-	static UINT8 last = 0;
-
-	invaders_port3_w(data, &last);
+	bw_last_a = data;
 }
 
 static WRITE8_HANDLER( invaders_sh_port5_w )
 {
-	static UINT8 last = 0;
+	bw_bits = data & ~bw_last_b;
 
-	invaders_port5_w(data, &last);
+	if (bw_bits & 0x01) sample_start (4, 3, 0);			/* Fleet 1 */
+	if (bw_bits & 0x02) sample_start (4, 4, 0);			/* Fleet 2 */
+	if (bw_bits & 0x04) sample_start (4, 5, 0);			/* Fleet 3 */
+	if (bw_bits & 0x08) sample_start (4, 6, 0);			/* Fleet 4 */
+	if (bw_bits & 0x10) sample_start (3, 7, 0);			/* Saucer Hit */
+
+	c8080bw_flip_screen_w(data & 0x20);
+
+	bw_last_b = data;
 }
 
 MACHINE_RESET( invaders )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, invaders_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, invaders_sh_port5_w);
-	sn76477_setup( 0 );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, watchdog_reset_w);
+	bw_sn76477_setup( 0 );
 }
 
 
@@ -190,7 +170,7 @@ MACHINE_RESET( sstrangr )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x42, 0x42, 0, 0, invaders_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x44, 0x44, 0, 0, invaders_sh_port5_w);
-	sn76477_setup( 0 );
+	bw_sn76477_setup( 0 );
 }
 
 
@@ -226,68 +206,41 @@ struct Samplesinterface invad2ct_samples_interface =
 	invaders_sample_names
 };
 
-static void invad2ct_port1_w(int data, UINT8 *last)
+static WRITE8_HANDLER( invad2ct_sh_port1_w )
 {
+	bw_bits = data & ~bw_last_c;
+
 	SN76477_enable_w(1, !(data & 0x01));				/* Saucer Sound */
 
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (6, 9, 0);					/* Shot Sound */
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (7, 10, 0);				/* Base Hit */
-
-	if (data & 0x08 && ~*last & 0x08)
-		sample_start (8, 11, 0);				/* Invader Hit */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (11, 8, 0);				/* Bonus Missle Base */
+	if (bw_bits & 0x02) sample_start (6, 9, 0);			/* Shot Sound */
+	if (bw_bits & 0x04) sample_start (7, 10, 0);			/* Base Hit */
+	if (bw_bits & 0x08) sample_start (8, 11, 0);			/* Invader Hit */
+	if (bw_bits & 0x10) sample_start (11, 8, 0);			/* Bonus Base */
 
 	c8080bw_screen_red_w(data & 0x04);
 
-	*last = data;
-}
-
-static void invad2ct_port7_w(int data, UINT8 *last)
-{
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (10, 12, 0);				/* Fleet 1 */
-
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (10, 13, 0);				/* Fleet 2 */
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (10, 14, 0);				/* Fleet 3 */
-
-	if (data & 0x08 && ~*last & 0x08)
-		sample_start (10, 15, 0);				/* Fleet 4 */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (9, 16, 0);				/* Saucer Hit */
-
-	*last = data;
-}
-
-static WRITE8_HANDLER( invad2ct_sh_port1_w )
-{
-	static UINT8 last = 0;
-
-	invad2ct_port1_w(data, &last);
+	bw_last_c = data;
 }
 
 static WRITE8_HANDLER( invad2ct_sh_port7_w )
 {
-	static UINT8 last = 0;
+	bw_bits = data & ~bw_last_d;
 
-	invad2ct_port7_w(data, &last);
+	if (bw_bits & 0x01) sample_start (10, 12, 0);			/* Fleet 1 */
+	if (bw_bits & 0x02) sample_start (10, 13, 0);			/* Fleet 2 */
+	if (bw_bits & 0x04) sample_start (10, 14, 0);			/* Fleet 3 */
+	if (bw_bits & 0x08) sample_start (10, 15, 0);			/* Fleet 4 */
+	if (bw_bits & 0x10) sample_start (9, 16, 0);			/* Saucer Hit */
+
+	bw_last_d = data;
 }
 
 MACHINE_RESET( invad2ct )
 {
 	machine_reset_invaders(machine);
-
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, invad2ct_sh_port1_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x07, 0x07, 0, 0, invad2ct_sh_port7_w);
-	sn76477_setup( 1 );
+	bw_sn76477_setup( 1 );
 }
 
 
@@ -297,38 +250,26 @@ MACHINE_RESET( invad2ct )
 /*                                                     */
 /*******************************************************/
 
-static void spcewars_port3_w(int data, UINT8 *last)
+static WRITE8_HANDLER( spcewars_sh_port3_w )
 {
+	bw_bits = data & ~bw_last_a;
+
 	SN76477_enable_w(0, !(data & 0x01));			/* Saucer Sound */
 
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (0, 0, 0);				/* Shot Sound */
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (1, 1, 0);				/* Base Hit */
-
-	if (data & 0x08 && ~*last & 0x08)
-		sample_start (2, 2, 0);				/* Invader Hit */
+	if (bw_bits & 0x02) sample_start (0, 0, 0);		/* Shot Sound */
+	if (bw_bits & 0x04) sample_start (1, 1, 0);		/* Base Hit */
+	if (bw_bits & 0x08) sample_start (2, 2, 0);		/* Invader Hit */
 
 	speaker_level_w(0, (data & 0x10) ? 1 : 0);		/* Various bitstream tunes */
 
-	c8080bw_screen_red_w(data & 0x04);
-
-	*last = data;
-}
-
-static WRITE8_HANDLER( spcewars_sh_port3_w )
-{
-	static UINT8 last = 0;
-
-	spcewars_port3_w(data, &last);
+	bw_last_a = data;
 }
 
 MACHINE_RESET( spcewars )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, spcewars_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, invaders_sh_port5_w);
-	sn76477_setup( 0 );
+	bw_sn76477_setup( 0 );
 }
 
 
@@ -359,68 +300,39 @@ struct Samplesinterface lrescue_samples_interface =
 	lrescue_sample_names
 };
 
-static void lrescue_port3_w(int data, UINT8 *last)
+static WRITE8_HANDLER( lrescue_sh_port3_w )
 {
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (0, 3, 0);		/* Thrust */
+	bw_bits = data & ~bw_last_a;
 
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (1, 2, 0);		/* Shot Sound */
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (0, 1, 0);		/* Death */
-
-	if (data & 0x08 && ~*last & 0x08)
-		sample_start (1, 0, 0);		/* Alien Hit */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (2, 5, 0);		/* Bonus Ship (not confirmed) */
+	if (bw_bits & 0x01) sample_start (0, 3, 0);		/* Thrust */
+	if (bw_bits & 0x02) sample_start (1, 2, 0);		/* Shot Sound */
+	if (bw_bits & 0x04) sample_start (0, 1, 0);		/* Death */
+	if (bw_bits & 0x08) sample_start (1, 0, 0);		/* Alien Hit */
+	if (bw_bits & 0x10) sample_start (2, 5, 0);		/* Bonus Ship (not confirmed) */
 
 	sound_global_enable(data & 0x20);
 
 	c8080bw_screen_red_w(data & 0x04);
 
-	*last = data;
-}
-
-static void lrescue_port5_w(int data, UINT8 *last)
-{
-
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (1, 8, 0);		/* Footstep high tone */
-
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (1, 7, 0);		/* Footstep low tone */
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (1, 4, 0);		/* Bonus when counting men saved */
-
-	speaker_level_w(0, (data & 0x08) ? 1 : 0);	/* Bitstream tunes - endlevel and bonus1 */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (3, 6, 0);		/* Shooting Star and Rescue Ship sounds */
-
-	if (~data & 0x10 && *last & 0x10)	/* This makes the rescue ship sound beep on and off */
-		sample_stop (3);
-
-	c8080bw_flip_screen_w(data & 0x20);
-
-	*last = data;
-}
-
-
-static WRITE8_HANDLER( lrescue_sh_port3_w )
-{
-	static UINT8 last = 0;
-
-	lrescue_port3_w(data, &last);
+	bw_last_a = data;
 }
 
 static WRITE8_HANDLER( lrescue_sh_port5_w )
 {
-	static UINT8 last = 0;
+	bw_bits = data & ~bw_last_b;
 
-	lrescue_port5_w(data, &last);
+	if (bw_bits & 0x01) sample_start (1, 8, 0);		/* Footstep high tone */
+	if (bw_bits & 0x02) sample_start (1, 7, 0);		/* Footstep low tone */
+	if (bw_bits & 0x04) sample_start (1, 4, 0);		/* Bonus when counting men saved */
+
+	speaker_level_w(0, (data & 0x08) ? 1 : 0);		/* Bitstream tunes - endlevel and bonus1 */
+
+	if (bw_bits & 0x10) sample_start (3, 6, 0);		/* Shooting Star and Rescue Ship sounds */
+	if (~data & 0x10 && bw_last_b & 0x10) sample_stop (3);	/* This makes the rescue ship sound beep on and off */
+
+	c8080bw_flip_screen_w(data & 0x20);
+
+	bw_last_b = data;
 }
 
 MACHINE_RESET( lrescue )
@@ -433,28 +345,25 @@ MACHINE_RESET( lrescue )
 /*******************************************************/
 /*                                                     */
 /* Midway "Gun Fight"                                  */
-/* Port 1 bits confirmed with rom disassembly          */
 /* Actual samples not known, using Boot Hill ones      */
 /*                                                     */
 /*******************************************************/
 
 static WRITE8_HANDLER( gunfight_sh_port1_w )
 {
-	switch (data)
-	{
-		case 0x04:
-			sample_start (0, 0, 0);		/* coin */
-			break;
+	coin_counter_w(0, data & 0x04);
 
-		case 0xb2:				/* right-player hit an object, or left player hit anything */
-		case 0xc2:				/* right-player shot left-player */
+	switch (data & 0xf0)
+	{
+		case 0xb0:	/* right hit */
+		case 0xc0:	/* left hit */
 			sample_start (2, 3, 0);
 			break;
 
-		case 0xd2:				/* right-player shoots */
-		case 0xe2:				/* left-player shoots */
+		case 0xd0:	/* right shot */
+		case 0xe0:	/* left shot */
 			sample_start (1, 2, 0);
-
+			break;
 	}
 }
 
@@ -541,58 +450,34 @@ MACHINE_RESET( boothill )
 /*                                                     */
 /*******************************************************/
 
-static void ballbomb_port3_w(int data, UINT8 *last)
+static WRITE8_HANDLER( ballbomb_sh_port3_w )
 {
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (1, 2, 0);				/* Hit a balloon */
+	bw_bits = data & ~bw_last_a;
 
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (2, 0, 0);				/* Shot Sound */
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (2, 1, 0);				/* Base Hit */
-
-	if (data & 0x08 && ~*last & 0x08)
-		sample_start (1, 7, 0);				/* Hit a Bomb */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (3, 8, 0);				/* Bonus Base at 1500 points */
+	if (bw_bits & 0x01) sample_start (1, 2, 0);		/* Hit a balloon */
+	if (bw_bits & 0x02) sample_start (2, 0, 0);		/* Shot Sound */
+	if (bw_bits & 0x04) sample_start (2, 1, 0);		/* Base Hit */
+	if (bw_bits & 0x08) sample_start (1, 7, 0);		/* Hit a Bomb */
+	if (bw_bits & 0x10) sample_start (3, 8, 0);		/* Bonus Base at 1500 points */
 
 	sound_global_enable(data & 0x20);
 
 	c8080bw_screen_red_w(data & 0x04);
 
-	*last = data;
-}
-
-static void ballbomb_port5_w(int data, UINT8 *last)
-{
-	if (data & 0x01)
-		sample_start (0, 7, 0);				/* Indicates plane will drop bombs */
-
-	if (data & 0x04)
-		sample_start (0, 4, 0);				/* Plane is dropping new balloons at start of level */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (2, 2, 0);				/* Balloon hit and bomb drops */
-
-	c8080bw_flip_screen_w(data & 0x20);
-
-	*last = data;
-}
-
-static WRITE8_HANDLER( ballbomb_sh_port3_w )
-{
-	static UINT8 last = 0;
-
-	ballbomb_port3_w(data, &last);
+	bw_last_a = data;
 }
 
 static WRITE8_HANDLER( ballbomb_sh_port5_w )
 {
-	static UINT8 last = 0;
+	bw_bits = data & ~bw_last_b;
 
-	ballbomb_port5_w(data, &last);
+	if (data & 0x01) sample_start (0, 7, 0);		/* Indicates plane will drop bombs */
+	if (data & 0x04) sample_start (0, 4, 0);		/* Plane is dropping new balloons at start of level */
+	if (bw_bits & 0x10) sample_start (2, 2, 0);		/* Balloon hit and bomb drops */
+
+	c8080bw_flip_screen_w(data & 0x20);
+
+	bw_last_b = data;
 }
 
 MACHINE_RESET( ballbomb )
@@ -644,59 +529,34 @@ DISCRETE_SOUND_START(indianbt_discrete_interface)
 
 DISCRETE_SOUND_END
 
-static void indianbt_port3_w(int data, UINT8 *last)
+static WRITE8_HANDLER( indianbt_sh_port3_w )
 {
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (1, 16, 0);			/* Death */
+	/* bit 4 occurs every 5.25 seconds during gameplay */
 
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (0, 1, 0);				/* Shot Sound */
+	bw_bits = data & ~bw_last_a;
 
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (2, 3, 0);				/* Move */
-
-	if (data & 0x08 && ~*last & 0x08)
-		sample_start (3, 2, 0);				/* Hit */
-
-//  if (data & 0x10 && ~*last & 0x10)
-//      sample_start (0, 8, 0);             /* unknown, occurs every 5.25 seconds during gameplay */
+	if (bw_bits & 0x01) sample_start (1, 16, 0);		/* Death */
+	if (bw_bits & 0x02) sample_start (0, 1, 0);		/* Shot Sound */
+	if (bw_bits & 0x04) sample_start (2, 3, 0);		/* Move */
+	if (bw_bits & 0x08) sample_start (3, 2, 0);		/* Hit */
 
 	sound_global_enable(data & 0x20);
 
 	c8080bw_screen_red_w(data & 0x01);
 
-	*last = data;
-}
-
-static void indianbt_port5_w(int data, UINT8 *last)
-{
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (4, 0, 0);				/* Bird dropped an egg, Lasso used */
-
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (4, 11, 0);			/* Egg hatches, egg shot */
-
-	if (data & 0x08 && ~*last & 0x08)
-		sample_start (5, 9, 0);				/* Grabber, Lasso caught something */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (3, 7, 0);				/* Lasso sound */
-
-	*last = data;
-}
-
-static WRITE8_HANDLER( indianbt_sh_port3_w )
-{
-	static UINT8 last = 0;
-
-	indianbt_port3_w(data, &last);
+	bw_last_a = data;
 }
 
 static WRITE8_HANDLER( indianbt_sh_port5_w )
 {
-	static UINT8 last = 0;
+	bw_bits = data & ~bw_last_b;
 
-	indianbt_port5_w(data, &last);
+	if (bw_bits & 0x01) sample_start (4, 0, 0);		/* Bird dropped an egg, Lasso used */
+	if (bw_bits & 0x02) sample_start (4, 11, 0);		/* Egg hatches, egg shot */
+	if (bw_bits & 0x08) sample_start (5, 9, 0);		/* Grabber, Lasso caught something */
+	if (bw_bits & 0x10) sample_start (3, 7, 0);		/* Lasso sound */
+
+	bw_last_b = data;
 }
 
 static WRITE8_HANDLER( indianbt_sh_port7_w )
@@ -712,13 +572,14 @@ MACHINE_RESET( indianbt )
 }
 
 
-/*******************************************************/
-/*                                                     */
-/* Taito "Polaris"                                     */
-/* D.R.                                                */
-/*******************************************************/
-// The R/C values in the schematic may have no bearing in reality.
-// I have noted some differences from a real board.
+/*******************************************************************/
+/*                                                                 */
+/* Taito "Polaris"                                                 */
+/* D.R.                                                            */
+/* The R/C values in the schematic may have no bearing in reality. */
+/* I have noted some differences from a real board.                */
+/*                                                                 */
+/*******************************************************************/
 
 static const discrete_lfsr_desc polaris_lfsr={
 	DISC_CLK_IS_FREQ,
@@ -1089,56 +950,37 @@ MACHINE_RESET( polaris )
 /* Sounds are not the correct ones                     */
 /*******************************************************/
 
-static void phantom2_port5_w(int data, UINT8 *last)
-{
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (0, 0, 0);				/* Shot */
-
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (1, 2, 0);				/* Enemy Shot */
-
-//  if (data & 0x04 && ~*last & 0x04)
-//      sample_start (2, 8, 0);             /* Start */
-
-//  if (data & 0x08 && ~*last & 0x08)
-//      sample_start (1, 8, 0);             /* Start */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (1, 7, 0);				/* Radar Scan */
-
-	*last = data;
-}
-
-static void phantom2_port6_w(int data, UINT8 *last)
-{
-
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (3, 6, 0);				/* Random if you fly near top of screen */
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (3, 8, 0);				/* End */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (1, 1, 0);				/* Hit */
-
-	if (data & 0x20 && ~*last & 0x20)
-		sample_start (2, 3, 0);				/* Move */
-
-	*last = data;
-}
-
 static WRITE8_HANDLER( phantom2_sh_port5_w )
 {
-	static UINT8 last = 0;
+	/* bit 3 = coin inserted */
 
-	phantom2_port5_w(data, &last);
+	bw_bits = data & ~bw_last_a;
+
+	if (bw_bits & 0x01) sample_start (0, 0, 0);		/* Shoot */
+	if (bw_bits & 0x02) sample_start (1, 2, 0);		/* Enemy Shooting */
+
+	sound_global_enable(data & 0x04);
+
+	if (bw_bits & 0x10) sample_start (2, 7, 0);		/* Radar Scan */
+
+	bw_last_a = data;
 }
 
 static WRITE8_HANDLER( phantom2_sh_port6_w )
 {
-	static UINT8 last = 0;
+	/* Bits 5,6,7 will appear in various combinations when moving your jet around the screen.
+            If you don't move, a continuous stream of 40's is produced. Perhaps these are meant
+        to produce various 'jet' sounds.
+       Hitting an enemy, or dying, produces the sequence 08, 18 (x9), 10 (x7) - not counting bits 5,6,7.
+       Bit 0 goes high if you fly to the top of the screen, between the second and third scores,
+        during the radar phase. */
 
-	phantom2_port6_w(data, &last);
+	bw_bits = data & ~bw_last_b;
+
+	if (bw_bits & 0x04) sample_start (3, 8, 0);		/* Time expired */
+	if (bw_bits & 0x08) sample_start (4, 1, 0);		/* You or enemy is killed */
+
+	bw_last_b = data;
 }
 
 MACHINE_RESET( phantom2 )
@@ -1253,35 +1095,23 @@ Port 2:
 /*                                                     */
 /*******************************************************/
 
-static void desertgu_port3_w(int data, UINT8 *last)
+static WRITE8_HANDLER( desertgu_sh_port3_w )
 {
-//  if (data & 0x04 && ~*last & 0x04)
-//      sample_start (1, 8, 0);             /* Coin */
+	/* bit 2 = coin inserted */
+
+	bw_bits = data & ~bw_last_a;
 
 	sound_global_enable(data & 0x08);
 
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (2, 0, 0);				/* Shot */
+	if (bw_bits & 0x10) sample_start (0, 0, 0);		/* Shot */
+	if (bw_bits & 0x20) sample_start (1, 1, 0);		/* Hit a bottle */
+	if (bw_bits & 0x80) sample_start (1, 2, 0);		/* Hit a creature */
 
-	if (data & 0x20 && ~*last & 0x20)
-		sample_start (3, 1, 0);				/* Hit a bottle */
-
-	if (data & 0x80 && ~*last & 0x80)
-		sample_start (3, 2, 0);				/* Hit a creature */
-
-	*last = data;
-}
-
-static WRITE8_HANDLER( desertgu_sh_port3_w )
-{
-	static UINT8 last = 0;
-
-	desertgu_port3_w(data, &last);
+	bw_last_a = data;
 }
 
 static WRITE8_HANDLER( desertgu_sh_port5_w )
 {
-//      printf("%X ",data);
 	sample_start (0, 3, 0);
 /*  This port (I assume) is a 6-bit dac. The values vary between 15 and 3f, with 0 signifying silence.
     It is only used at the start and end of a game.
@@ -1532,7 +1362,7 @@ MACHINE_RESET( schaser )
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, schaser_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, schaser_sh_port5_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, watchdog_reset_w);
-	sn76477_setup( 0 );
+	bw_sn76477_setup( 0 );
 
 	schaser_effect_555_is_low = 0;
 	timer_adjust(schaser_effect_555_timer, TIME_NEVER, 0, 0);
@@ -1743,38 +1573,24 @@ MACHINE_RESET( clowns )
 }
 
 
-//**********************************
-//* Blue Shark preliminary sound   *
-//* Correct samples not available  *
-//**********************************
-
-static void blueshrk_port3_w(int data, UINT8 *last)
-{
-	sound_global_enable(data & 0x01);		/* Sound Enable (P30) */
-
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (0, 0, 0);			/* Shot Sound (P31) */
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (1, 2, 0);			/* Speared a Creature (P32) */
-
-	if (data & 0x08 && ~*last & 0x08)
-		sample_start (2, 3, 0);			/* Shark Sound (P33) */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (3, 7, 0);			/* Speared a Man (P34 - not shown in schematic) */
-
-	if (data & 0x20 && ~*last & 0x20)
-		sample_start (4, 6, 0);			/* Octopus Sound (P35) */
-
-	*last = data;
-}
+/**********************************/
+/* Blue Shark preliminary sound   */
+/* Correct samples not available  */
+/**********************************/
 
 static WRITE8_HANDLER( blueshrk_sh_port3_w )
 {
-	static UINT8 last = 0;
+	bw_bits = data & ~bw_last_a;
 
-	blueshrk_port3_w(data, &last);
+	sound_global_enable(data & 0x01);		/* Sound Enable (P30) */
+
+	if (bw_bits & 0x02) sample_start (0, 0, 0);	/* Shot Sound (P31) */
+	if (bw_bits & 0x04) sample_start (1, 2, 0);	/* Speared a Creature (P32) */
+	if (data & 0x08) sample_start (2, 6, 0);	/* Shark Sound (P33) always on while shark is swimming */
+	if (bw_bits & 0x10) sample_start (3, 7, 0);	/* Speared a Man (P34) */
+	if (bw_bits & 0x20) sample_start (4, 3, 0);	/* Octopus Sound (P35) */
+
+	bw_last_a = data;
 }
 
 MACHINE_RESET( blueshrk )
@@ -1783,31 +1599,21 @@ MACHINE_RESET( blueshrk )
 }
 
 
-//****************************************************
-//* Rolling Crash / Moon Base                        *
-//* - Moon Base uses same ports and bits as invaders *
-//* - Press Left or Right to choose game to play     *
-//****************************************************
-
-static void rollingc_port0_w(int data, UINT8 *last)
-{
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (4, 0, 0);			/* Steering */
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (0, 1, 0);			/* Collision */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (1, 8, 0);			/* Computer car is starting to move */
-
-	*last = data;
-}
+/****************************************************/
+/* Rolling Crash / Moon Base                        */
+/* - Moon Base uses same ports and bits as invaders */
+/* - Press Left or Right to choose game to play     */
+/****************************************************/
 
 static WRITE8_HANDLER( rollingc_sh_port0_w )
 {
-	static UINT8 last = 0;
+	bw_bits = data & ~bw_last_c;
 
-	rollingc_port0_w(data, &last);
+	if (bw_bits & 0x02) sample_start (4, 0, 0);	/* Steering */
+	if (bw_bits & 0x04) sample_start (0, 1, 0);	/* Collision */
+	if (bw_bits & 0x10) sample_start (1, 8, 0);	/* Computer car is starting to move */
+
+	bw_last_c = data;
 }
 
 MACHINE_RESET( rollingc )
@@ -1817,44 +1623,31 @@ MACHINE_RESET( rollingc )
 }
 
 
-//***************************************
-//* Space Encounter preliminary sound   *
-//* Correct samples not available       *
-//***************************************
-
-static void spcenctr_port1_w(int data, UINT8 *last)
-{
-	sound_global_enable(data & 0x01);
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (1, 2, 0);			/* Hit */
-
-	*last = data;
-}
-
-static void spcenctr_port3_w(int data, UINT8 *last)
-{
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (2, 1, 0);			/* Crashed into an alien */
-
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (3, 7, 0);			/* Ready Sound */
-
-	*last = data;
-}
+/***************************************/
+/* Space Encounter preliminary sound   */
+/* Correct samples not available       */
+/* Much more work needs to be done     */
+/***************************************/
 
 static WRITE8_HANDLER( spcenctr_sh_port1_w )
 {
-	static UINT8 last = 0;
+	bw_bits = data & ~bw_last_a;
 
-	spcenctr_port1_w(data, &last);
+	sound_global_enable(data & 0x01);
+
+	if (bw_bits & 0x04) sample_start (1, 2, 0);	/* Hit */
+
+	bw_last_a = data;
 }
 
 static WRITE8_HANDLER( spcenctr_sh_port3_w )
 {
-	static UINT8 last = 0;
+	bw_bits = data & ~bw_last_b;
 
-	spcenctr_port3_w(data, &last);
+	if (bw_bits & 0x01) sample_start (2, 1, 0);	/* Crashed into an alien */
+	if (bw_bits & 0x02) sample_start (3, 7, 0);	/* Ready Sound */
+
+	bw_last_b = data;
 }
 
 MACHINE_RESET( spcenctr )
@@ -1864,31 +1657,21 @@ MACHINE_RESET( spcenctr )
 }
 
 
-//*****************************************
-//* Invader's Revenge preliminary sound   *
-//* Correct samples not available         *
-//*****************************************
+/*************************************************************************************/
+/* Invader's Revenge preliminary sound                                               */
+/* Correct samples not available                                                     */
+/* Notes:                                                                            */
+/* Init sequence: 0x01 (20 times), 0x40 (20 times), 0x4c, 0x40, 0x44, 0x40 (9 times).*/
+/* Player 1 start sequence: 0x0c, 0x20, 0x22.                                        */
+/* Start of Attract mode: 0x04.                                                      */
+/* Unknown codes: 0x28, 0x2a, 0x0c, 0x34, 0x2c, 0x2e, 0x1c.                          */
+/*************************************************************************************/
 
-/* suspect this port controls an unknown chip */
+
 static WRITE8_HANDLER( invrvnge_sh_port3_w )
 {
 	switch (data)
 	{
-//      case 0x02:                      /* Coin */
-//          break;
-
-//      case 0x0c, 0x20, 0x22:                  /* Player 1 start sequence */
-//          break;
-
-//      case 0x01 (20 times), 0x40 (20 times), 0x4c, 0x40, 0x44, 0x40 (9 times):    /* Init sequence */
-//          break;
-
-//      case 0x04:                      /* Start of Attract Mode */
-//          break;
-
-//      case 0x28, 0x2a, 0x0c, 0x34, 0x2c, 0x2e, 0x1c:      /* unknown */
-//          break;
-
 		case 0x06:
 			sample_start (1, 0, 0);				/* Shoot */
 			break;
@@ -1910,6 +1693,7 @@ static WRITE8_HANDLER( invrvnge_sh_port3_w )
 			sample_start (4, 7, 0);
 			break;
 
+		case 0x02:						/* Coin */
 		case 0x24:						/* Alien dropping to steal fuel */
 		case 0x26:						/* Alien lifting with fuel */
 		case 0x32:						/* UFO drops a bomb */
@@ -1927,101 +1711,67 @@ MACHINE_RESET( invrvnge )
 }
 
 
-//*****************************************
-//* Lupin III preliminary sound           *
-//* Correct samples not available         *
-//*****************************************
-
-static void lupin3_port3_w(int data, UINT8 *last)
-{
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (0, 6, 0);				/* Walking, get money */
-
-	SN76477_enable_w(0, data & 0x02 ? 0:1);			/* Helicopter */
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (0, 7, 0);				/* Translocate */
-
-	if (data & 0x08 && ~*last & 0x08)
-		sample_start (0, 1, 0);				/* Jail */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (3, 8, 0);				/* Bonus Man */
-
-	*last = data;
-}
-
-static void lupin3_port5_w(int data, UINT8 *last)
-{
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (0, 3, 0);				/* Lands on top of building, wife kicks man */
-
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (1, 2, 0);				/* deposit money, start intermission, end game */
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (2, 5, 0);				/* deposit money, start intermission, Slides down rope */
-
-	if (data & 0x08 && ~*last & 0x08)
-		sample_start (3, 0, 0);				/* start intermission, end game */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (3, 9, 0);				/* Dog barking */
-
-	c8080bw_flip_screen_w(data & 0x20);
-
-	*last = data;
-}
+/*****************************************/
+/* Lupin III preliminary sound           */
+/* Correct samples not available         */
+/*****************************************/
 
 static WRITE8_HANDLER( lupin3_sh_port3_w )
 {
-	static UINT8 last = 0;
+	bw_bits = data & ~bw_last_a;
 
-	lupin3_port3_w(data, &last);
+	if (bw_bits & 0x01) sample_start (0, 6, 0);		/* Walking, get money */
+
+	SN76477_enable_w(0, data & 0x02 ? 0:1);			/* Helicopter */
+
+	if (bw_bits & 0x04) sample_start (0, 7, 0);		/* Translocate */
+	if (bw_bits & 0x08) sample_start (0, 1, 0);		/* Jail */
+	if (bw_bits & 0x10) sample_start (3, 8, 0);		/* Bonus Man */
+
+	bw_last_a = data;
 }
 
 static WRITE8_HANDLER( lupin3_sh_port5_w )
 {
-	static UINT8 last = 0;
+	bw_bits = data & ~bw_last_b;
 
-	lupin3_port5_w(data, &last);
+	if (bw_bits & 0x01) sample_start (0, 3, 0);		/* Lands on top of building, wife kicks man */
+	if (bw_bits & 0x02) sample_start (1, 2, 0);		/* deposit money, start intermission, end game */
+	if (bw_bits & 0x04) sample_start (2, 5, 0);		/* deposit money, start intermission, Slides down rope */
+	if (bw_bits & 0x08) sample_start (3, 0, 0);		/* start intermission, end game */
+	if (bw_bits & 0x10) sample_start (3, 9, 0);		/* Dog barking */
+
+	c8080bw_flip_screen_w(data & 0x20);
+
+	bw_last_b = data;
 }
 
 MACHINE_RESET( lupin3 )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, lupin3_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, lupin3_sh_port5_w);
-	sn76477_setup( 0 );
+	bw_sn76477_setup( 0 );
 }
 
 
-//*****************************************
-//* Space Chaser (CV) preliminary sound   *
-//* Much more work needs to be done       *
-//*****************************************
-
-static void schasrcv_port3_w(int data, UINT8 *last)
-{
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (1, 6, 0);				/* Ran over a dot */
-
-//  if (data & 0x04 && ~*last & 0x04)
-//      sample_start (0, 4, 0);             /* 2nd Speedup sounds */
-
-//  if (data & 0x08 && ~*last & 0x08)
-//      sample_start (0, 5, 0);             /* 1st speedup sounds */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (0, 1, 0);				/* Death */
-	/* Death is a stream of ff's with some fe's thrown in */
-	*last = data;
-}
+/*****************************************/
+/* Space Chaser (CV) preliminary sound   */
+/* Much more work needs to be done       */
+/*****************************************/
 
 static WRITE8_HANDLER( schasrcv_sh_port3_w )
 {
-	static UINT8 last = 0;
 
-	schasrcv_port3_w(data, &last);
+	/* bit 2 = 2nd speedup
+       bit 3 = 1st speedup
+       Death is a stream of ff's with some fe's thrown in */
+
+	bw_bits = data & ~bw_last_a;
+
+	if (bw_bits & 0x02) sample_start (1, 6, 0);		/* Ran over a dot */
+	if (bw_bits & 0x10) sample_start (0, 1, 0);		/* Death */
+
+	bw_last_a = data;
 }
 
 static WRITE8_HANDLER( schasrcv_sh_port5_w )
@@ -2040,234 +1790,156 @@ MACHINE_RESET( schasrcv )
 }
 
 
-//*******************************************************************
-//* Yosakdon preliminary sound                                      *
-//* No information available as what the correct sounds are         *
-//*******************************************************************
-
-static void yosakdon_port3_w(int data, UINT8 *last)
-{
-
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (0, 3, 0);					/* Game Over */
-
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (2, 0, 0);					/* Bird dead */
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (0, 1, 0);					/* Rifle being fired */
-
-	if (data & 0x08 && ~*last & 0x08)
-		sample_start (1, 2, 0);					/* Man dead */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (5, 8, 0);					/* Bonus Man? */
-
-	sound_global_enable(data & 0x20);
-
-	*last = data;
-}
-
-static void yosakdon_port5_w(int data, UINT8 *last)
-{
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (1, 6, 0);					/* Ready? , Game Over */
-
-	if (data & 0x04 && ~*last & 0x04)
-		sample_start (3, 7, 0);					/* Big bird dead */
-
-	SN76477_enable_w(0, data & 0x08 ? 0:1);				/* Big bird */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (2, 7, 0);					/* Game Over */
-
-	c8080bw_flip_screen_w(data & 0x20);
-
-	*last = data;
-}
+/*******************************************************************/
+/* Yosakdon preliminary sound                                      */
+/* No information available as what the correct sounds are         */
+/*******************************************************************/
 
 static WRITE8_HANDLER( yosakdon_sh_port3_w )
 {
-	static UINT8 last = 0;
+	bw_bits = data & ~bw_last_a;
 
-	yosakdon_port3_w(data, &last);
+	if (bw_bits & 0x01) sample_start (0, 3, 0);			/* Game Over */
+	if (bw_bits & 0x02) sample_start (2, 0, 0);			/* Bird dead */
+	if (bw_bits & 0x04) sample_start (0, 1, 0);			/* Rifle being fired */
+	if (bw_bits & 0x08) sample_start (1, 2, 0);			/* Man dead */
+	if (bw_bits & 0x10) sample_start (5, 8, 0);			/* Bonus Man? */
+
+	sound_global_enable(data & 0x20);
+
+	bw_last_a = data;
 }
 
 static WRITE8_HANDLER( yosakdon_sh_port5_w )
 {
-	static UINT8 last = 0;
+	bw_bits = data & ~bw_last_b;
 
-	yosakdon_port5_w(data, &last);
+	if (bw_bits & 0x01) sample_start (1, 6, 0);			/* Ready? , Game Over */
+	if (bw_bits & 0x04) sample_start (3, 7, 0);			/* Big bird dead */
+
+	SN76477_enable_w(0, data & 0x08 ? 0:1);				/* Big bird */
+
+	if (bw_bits & 0x10) sample_start (2, 7, 0);			/* Game Over */
+
+	c8080bw_flip_screen_w(data & 0x20);
+
+	bw_last_b = data;
 }
 
 MACHINE_RESET( yosakdon )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, yosakdon_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, yosakdon_sh_port5_w);
-	sn76477_setup( 0 );
+	bw_sn76477_setup( 0 );
 }
 
 
-//*****************************************
-//* m4 preliminary sound                  *
-//* Proper samples are unavailable        *
-//*****************************************
-
-static void m4_port3_w(int data, UINT8 *last)
-{
-
-	/* bit 0 is high when player vs computer */
-	/* bit 1 appears to be the same as bit 3 */
-
-//  if (data & 0x04 && ~*last & 0x04)
-//      sample_start (2, 8, 0);                 /* Coin In */
-
-	sound_global_enable(data & 0x08);				/* Game Start */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (1, 9, 0);					/* Left-person shoots */
-
-	if (data & 0x20 && ~*last & 0x20)
-		sample_start (0, 0, 0);					/* Right-person shoots */
-
-	if (data & 0x40 && ~*last & 0x40)
-		sample_start (4, 10, 0);				/* Left-person dies */
-
-	if (data & 0x80 && ~*last & 0x80)
-		sample_start (4, 1, 0);					/* Right-person dies */
-
-	*last = data;
-}
-
-static void m4_port5_w(int data, UINT8 *last)
-{
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (0, 2, 0);					/* Right-person hits */
-
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (1, 11, 0);				/* Left-person hits */
-
-	if (data & 0x04)
-		sample_start (2, 3, 0);					/* Left-person moves */
-
-	if (data & 0x08)
-		sample_start (3, 6, 0);					/* Right-person moves */
-
-	SN76477_enable_w(1, data & 0x10 ? 0:1);				/* Right-side plane */
-
-	SN76477_enable_w(0, data & 0x20 ? 0:1);				/* Left-side plane */
-
-	*last = data;
-}
+/*****************************************/
+/* m4 preliminary sound                  */
+/* Proper samples are unavailable        */
+/*****************************************/
 
 static WRITE8_HANDLER( m4_sh_port3_w )
 {
-	static UINT8 last = 0;
 
-	m4_port3_w(data, &last);
+/* bit 0 is high when player vs computer, low for 2 players
+   bit 1 appears to be the same as bit 3
+   bit 2 = coin inserted */
+
+	bw_bits = data & ~bw_last_a;
+
+	sound_global_enable(data & 0x08);				/* Game Start */
+
+	if (bw_bits & 0x10) sample_start (1, 9, 0);			/* Left-person shoots */
+	if (bw_bits & 0x20) sample_start (0, 0, 0);			/* Right-person shoots */
+	if (bw_bits & 0x40) sample_start (4, 10, 0);			/* Left-person dies */
+	if (bw_bits & 0x80) sample_start (4, 1, 0);			/* Right-person dies */
+
+	bw_last_a = data;
 }
 
 static WRITE8_HANDLER( m4_sh_port5_w )
 {
-	static UINT8 last = 0;
+	bw_bits = data & ~bw_last_b;
 
-	m4_port5_w(data, &last);
+	if (bw_bits & 0x01) sample_start (0, 2, 0);			/* Right-person hits */
+	if (bw_bits & 0x02) sample_start (1, 11, 0);			/* Left-person hits */
+	if (data & 0x04) sample_start (2, 3, 0);			/* Left-person moves */
+	if (data & 0x08) sample_start (3, 6, 0);			/* Right-person moves */
+
+	SN76477_enable_w(1, data & 0x10 ? 0:1);				/* Right-side plane */
+	SN76477_enable_w(0, data & 0x20 ? 0:1);				/* Left-side plane */
+
+	bw_last_b = data;
 }
 
 MACHINE_RESET( m4 )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, m4_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, m4_sh_port5_w);
-	sn76477_setup( 0 );
-	sn76477_setup( 1 );
+	bw_sn76477_setup( 0 );
+	bw_sn76477_setup( 1 );
 }
 
 
-//*****************************************
-//* gmissile preliminary sound            *
-//* Proper samples are unavailable        *
-//*****************************************
-
-static void gmissile_port3_w(int data, UINT8 *last)
-{
-//  if (data & 0x04 && ~*last & 0x04)
-//      sample_start (4, 8, 0);                 /* Coin In */
-
-	sound_global_enable(data & 0x08);				/* Game Start */
-
-	if (data & 0x10 && ~*last & 0x10)
-		sample_start (0, 0, 0);					/* Right-player shot */
-
-	if (data & 0x40 && ~*last & 0x40)
-		sample_start (2, 9, 0);					/* Left-player shot */
-
-	if (data & 0x20 && ~*last & 0x20)
-		sample_start (3, 10, 0);				/* Left-player missile lands */
-
-	if (data & 0x80 && ~*last & 0x80)
-		sample_start (1, 1, 0);					/* Right-player missile lands */
-
-	*last = data;
-}
-
-static void gmissile_port7_w(int data, UINT8 *last)
-{
-
-	/* each sound is continuously called while vehicle crosses the screen */
-	if (data & 0x01)
-		sample_start (5, 3, 0);					/* Plane */
-
-	if (data & 0x02)
-		sample_start (6, 4, 0);					/* Tank */
-
-	if (data & 0x04)
-		sample_start (7, 5, 0);					/* Helicopter */
-
-	SN76477_enable_w(0, data & 0x20 ? 0:1);				/* Fighter planes */
-
-	*last = data;
-}
+/*****************************************/
+/* gmissile preliminary sound            */
+/* Proper samples are unavailable        */
+/*****************************************/
 
 static WRITE8_HANDLER( gmissile_sh_port3_w )
 {
-	static UINT8 last = 0;
+	/* bit 2 = coin inserted */
 
-	gmissile_port3_w(data, &last);
+	bw_bits = data & ~bw_last_a;
+
+	sound_global_enable(data & 0x08);				/* Game Start */
+
+	if (bw_bits & 0x10) sample_start (0, 0, 0);			/* Right-player shot */
+	if (bw_bits & 0x20) sample_start (3, 10, 0);			/* Left-player missile lands */
+	if (bw_bits & 0x40) sample_start (2, 9, 0);			/* Left-player shot */
+	if (bw_bits & 0x80) sample_start (1, 1, 0);			/* Right-player missile lands */
+
+	bw_last_a = data;
 }
 
 static WRITE8_HANDLER( gmissile_sh_port7_w )
 {
-	static UINT8 last = 0;
 
-	gmissile_port7_w(data, &last);
+	/* each sound is continuously called while vehicle crosses the screen */
+
+	if (data & 0x01) sample_start (5, 3, 0);			/* Plane */
+	if (data & 0x02) sample_start (6, 4, 0);			/* Tank */
+	if (data & 0x04) sample_start (7, 5, 0);			/* Helicopter */
+
+	SN76477_enable_w(0, data & 0x20 ? 0:1);				/* Fighter planes */
 }
 
 MACHINE_RESET( gmissile )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, gmissile_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x07, 0x07, 0, 0, gmissile_sh_port7_w);
-	sn76477_setup( 0 );
+	bw_sn76477_setup( 0 );
 }
 
 
-//*****************************************
-//* shuttlei preliminary sound            *
-//* Proper samples are unavailable        *
-//*****************************************
+/*****************************************/
+/* shuttlei preliminary sound            */
+/* Proper samples are unavailable        */
+/*****************************************/
 
-static void shuttlei_portfd_w(int data, UINT8 *last)
+static WRITE8_HANDLER( shuttlei_sh_portfd_w )
 {
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (4, 4, 0);					/* Fleet move */
+	/* bit 3 is high while you are alive and playing */
 
-	if (data & 0x02 && ~*last & 0x02)
-		sample_start (5, 8, 0);					/* Extra Tank */
+	bw_bits = data & ~bw_last_a;
+
+	if (bw_bits & 0x01) sample_start (4, 4, 0);			/* Fleet move */
+	if (bw_bits & 0x02) sample_start (5, 8, 0);			/* Extra Tank */
 
 	SN76477_enable_w(0, data & 0x04 ? 0:1);				/* UFO */
 
-	/* bit 3 is high while you are alive and playing */
-
-	*last = data;
+	bw_last_a = data;
 }
 
 static WRITE8_HANDLER( shuttlei_sh_portfe_w )
@@ -2292,51 +1964,30 @@ static WRITE8_HANDLER( shuttlei_sh_portfe_w )
 	}
 }
 
-static WRITE8_HANDLER( shuttlei_sh_portfd_w )
-{
-	static UINT8 last = 0;
-
-	shuttlei_portfd_w(data, &last);
-}
-
 MACHINE_RESET( shuttlei )
 {
-	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xfe, 0xfe, 0, 0, shuttlei_sh_portfe_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xfd, 0xfd, 0, 0, shuttlei_sh_portfd_w);
-	sn76477_setup( 0 );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xfe, 0xfe, 0, 0, shuttlei_sh_portfe_w);
+	bw_sn76477_setup( 0 );
 }
 
 
-//********************************************
-//* 280zzzap and lagunar preliminary sound   *
-//* Proper samples are unavailable           *
-//********************************************
-
-static void zzzap_port5_w(int data, UINT8 *last)
-{
-	if (data & 0x01 && ~*last & 0x01)
-		sample_start (0, 1, 0);					/* Crash */
-
-	if (~data & 0x02)
-		sample_start (1, 4, 0);					/* Rev sound */
-
-	if (data & 0x04)
-		sample_start (2, 6, 0);					/* Driving at edge of road */
-
-	if (data & 0x08 && ~*last & 0x08)
-		sample_start (3, 3, 0);					/* Run off track after a crash (lagunar) */
-
-	if (data & 0x20 && ~*last & 0x20)
-		sample_start (4, 8, 0);					/* Coin */
-
-	*last = data;
-}
+/********************************************/
+/* 280zzzap and lagunar preliminary sound   */
+/* Proper samples are unavailable           */
+/********************************************/
 
 static WRITE8_HANDLER( zzzap_sh_port5_w )
 {
-	static UINT8 last = 0;
+	bw_bits = data & ~bw_last_a;
 
-	zzzap_port5_w(data, &last);
+	if (bw_bits & 0x01) sample_start (0, 1, 0);			/* Crash */
+	if (~data & 0x02) sample_start (1, 4, 0);			/* Rev sound */
+	if (data & 0x04) sample_start (2, 6, 0);			/* Driving at edge of road */
+	if (bw_bits & 0x08) sample_start (3, 3, 0);			/* Run off track after a crash (lagunar) */
+	if (bw_bits & 0x20) sample_start (4, 8, 0);			/* Coin */
+
+	bw_last_a = data;
 }
 
 MACHINE_RESET( 280zzzap )

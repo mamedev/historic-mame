@@ -4,7 +4,7 @@
 
     Functions used to handle MAME's user interface.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 *********************************************************************/
@@ -697,7 +697,7 @@ void CLIB_DECL ui_popup(const char *text, ...)
 	va_end(arg);
 
 	/* set a timer */
-	seconds = strlen(messagebox_text) / 40 + 2;
+	seconds = (int)strlen(messagebox_text) / 40 + 2;
 	popup_text_end = osd_cycles() + osd_cycles_per_second() * seconds;
 }
 

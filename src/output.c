@@ -4,7 +4,7 @@
 
     General purpose output routines.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -89,7 +89,7 @@ INLINE const char *copy_string(const char *string)
 
 INLINE UINT32 get_hash(const char *string)
 {
-	return crc32(0, (UINT8 *)string, strlen(string));
+	return crc32(0, (UINT8 *)string, (UINT32)strlen(string));
 }
 
 

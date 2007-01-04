@@ -792,11 +792,6 @@ INPUT_PORTS_START( triviag1 )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_ALIAS(triviag2, triviag1)
-INPUT_PORTS_ALIAS(triviasp, triviag1)
-INPUT_PORTS_ALIAS(triviayp, triviag1)
-INPUT_PORTS_ALIAS(triviabb, triviag1)
-
 INPUT_PORTS_START( triviaes )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
@@ -2458,10 +2453,10 @@ GAME( 1984, snakepit, 0,        balsente, snakepit, snakepit, ROT0, "Bally/Sente
 GAME( 1984, snakjack, 0,        balsente, snakjack, snakjack, ROT0, "Bally/Sente", "Snacks'n Jaxson", GAME_SUPPORTS_SAVE )
 GAME( 1984, stocker,  0,        balsente, stocker,  stocker,  ROT0, "Bally/Sente", "Stocker", GAME_SUPPORTS_SAVE )
 GAME( 1984, triviag1, 0,        balsente, triviag1, triviag1, ROT0, "Bally/Sente", "Trivial Pursuit (Genus I)", GAME_SUPPORTS_SAVE )
-GAME( 1984, triviag2, 0,        balsente, triviag2, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (Genus II)", GAME_SUPPORTS_SAVE )
-GAME( 1984, triviasp, 0,        balsente, triviasp, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (All Star Sports Edition)", GAME_SUPPORTS_SAVE )
-GAME( 1984, triviayp, 0,        balsente, triviayp, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (Young Players Edition)", GAME_SUPPORTS_SAVE )
-GAME( 1984, triviabb, 0,        balsente, triviabb, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (Baby Boomer Edition)", GAME_SUPPORTS_SAVE )
+GAME( 1984, triviag2, 0,        balsente, triviag1, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (Genus II)", GAME_SUPPORTS_SAVE )
+GAME( 1984, triviasp, 0,        balsente, triviag1, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (All Star Sports Edition)", GAME_SUPPORTS_SAVE )
+GAME( 1984, triviayp, 0,        balsente, triviag1, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (Young Players Edition)", GAME_SUPPORTS_SAVE )
+GAME( 1984, triviabb, 0,        balsente, triviag1, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (Baby Boomer Edition)", GAME_SUPPORTS_SAVE )
 GAME( 1987, triviaes, 0,        balsente, triviaes, triviaes, ROT0, "Bally/Sente", "Trivial Pursuit (Spanish Edition)", GAME_SUPPORTS_SAVE )
 GAME( 1985, gimeabrk, 0,        balsente, gimeabrk, gimeabrk, ROT0, "Bally/Sente", "Gimme A Break", GAME_SUPPORTS_SAVE )
 GAME( 1985, minigolf, 0,        balsente, minigolf, minigolf, ROT0, "Bally/Sente", "Mini Golf (set 1)", GAME_SUPPORTS_SAVE )

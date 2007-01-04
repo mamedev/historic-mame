@@ -4,7 +4,7 @@
 
     XML file parsing code.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -191,7 +191,7 @@ xml_data_node *xml_file_read(mame_file *file, xml_parse_options *opts)
 xml_data_node *xml_string_read(const char *string, xml_parse_options *opts)
 {
 	xml_parse_info parse_info;
-	int length = strlen(string);
+	int length = (int)strlen(string);
 
 	/* set up the parser */
 	if (!expat_setup_parser(&parse_info, opts))
@@ -621,7 +621,7 @@ static void expat_data(void *data, const XML_Char *s, int len)
 
 	/* determine how much data we currently have */
 	if ((*curnode)->value != NULL)
-		oldlen = strlen((*curnode)->value);
+		oldlen = (int)strlen((*curnode)->value);
 
 	/* realloc */
 	newdata = realloc((void *)(*curnode)->value, oldlen + len + 1);

@@ -4,7 +4,7 @@
 
     Core CPU interface functions and definitions.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -174,8 +174,6 @@ void tmp90840_get_info(UINT32 state, cpuinfo *info);
 void tmp90841_get_info(UINT32 state, cpuinfo *info);
 void tmp91640_get_info(UINT32 state, cpuinfo *info);
 void tmp91641_get_info(UINT32 state, cpuinfo *info);
-
-#ifdef MESS
 void apexc_get_info(UINT32 state, cpuinfo *info);
 void cp1610_get_info(UINT32 state, cpuinfo *info);
 void f8_get_info(UINT32 state, cpuinfo *info);
@@ -190,7 +188,6 @@ void tms7000_get_info(UINT32 state, cpuinfo *info);
 void tms7000_exl_get_info(UINT32 state, cpuinfo *info);
 void sm8500_get_info(UINT32 state, cpuinfo *info);
 void v30mz_get_info(UINT32 state, cpuinfo *info);
-#endif /* MESS */
 
 
 
@@ -699,8 +696,6 @@ static const struct
 	{ CPU_TMP91640, tmp91640_get_info },
 	{ CPU_TMP91641, tmp91641_get_info },
 #endif
-
-#ifdef MESS
 #if (HAS_APEXC)
 	{ CPU_APEXC, apexc_get_info },
 #endif
@@ -743,7 +738,6 @@ static const struct
 #if (HAS_V30MZ)
 	{ CPU_V30MZ, v30mz_get_info },
 #endif
-#endif /* MESS */
 };
 
 

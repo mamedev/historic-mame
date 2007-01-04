@@ -4,7 +4,7 @@
 
     Input port handling.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ****************************************************************************
@@ -299,116 +299,120 @@ static const read32_handler port_handler32[] =
     COMMON SHARED STRINGS
 ***************************************************************************/
 
-const char *input_port_default_strings[] =
+static const struct
 {
-	"Off",
-	"On",
-	"No",
-	"Yes",
-	"Lives",
-	"Bonus Life",
-	"Difficulty",
-	"Demo Sounds",
-	"Coinage",
-	"Coin A",
-	"Coin B",
-	"9 Coins/1 Credit",
-	"8 Coins/1 Credit",
-	"7 Coins/1 Credit",
-	"6 Coins/1 Credit",
-	"5 Coins/1 Credit",
-	"4 Coins/1 Credit",
-	"3 Coins/1 Credit",
-	"8 Coins/3 Credits",
-	"4 Coins/2 Credits",
-	"2 Coins/1 Credit",
-	"5 Coins/3 Credits",
-	"3 Coins/2 Credits",
-	"4 Coins/3 Credits",
-	"4 Coins/4 Credits",
-	"3 Coins/3 Credits",
-	"2 Coins/2 Credits",
-	"1 Coin/1 Credit",
-	"4 Coins/5 Credits",
-	"3 Coins/4 Credits",
-	"2 Coins/3 Credits",
-	"4 Coins/7 Credits",
-	"2 Coins/4 Credits",
-	"1 Coin/2 Credits",
-	"2 Coins/5 Credits",
-	"2 Coins/6 Credits",
-	"1 Coin/3 Credits",
-	"2 Coins/7 Credits",
-	"2 Coins/8 Credits",
-	"1 Coin/4 Credits",
-	"1 Coin/5 Credits",
-	"1 Coin/6 Credits",
-	"1 Coin/7 Credits",
-	"1 Coin/8 Credits",
-	"1 Coin/9 Credits",
-	"Free Play",
-	"Cabinet",
-	"Upright",
-	"Cocktail",
-	"Flip Screen",
-	"Service Mode",
-	"Pause",
-	"Test",
-	"Tilt",
-	"Version",
-	"Region",
-	"International",
-	"Japan",
-	"USA",
-	"Europe",
-	"Asia",
-	"World",
-	"Hispanic",
-	"Language",
-	"English",
-	"Japanese",
-	"German",
-	"French",
-	"Italian",
-	"Spanish",
-	"Very Easy",
-	"Easiest",
-	"Easier",
-	"Easy",
-	"Normal",
-	"Medium",
-	"Hard",
-	"Harder",
-	"Hardest",
-	"Very Hard",
-	"Very Low",
-	"Low",
-	"High",
-	"Higher",
-	"Highest",
-	"Very High",
-	"Players",
-	"Controls",
-	"Dual",
-	"Single",
-	"Game Time",
-	"Continue Price",
-	"Controller",
-	"Light Gun",
-	"Joystick",
-	"Trackball",
-	"Continues",
-	"Allow Continue",
-	"Level Select",
-	"Infinite",
-	"Stereo",
-	"Mono",
-	"Unused",
-	"Unknown",
-	"Standard",
-	"Reverse",
-	"Alternate",
-	"None"
+	UINT32 id;
+	const char *string;
+} input_port_default_strings[] =
+{
+	{ INPUT_STRING_Off, "Off" },
+	{ INPUT_STRING_On, "On" },
+	{ INPUT_STRING_No, "No" },
+	{ INPUT_STRING_Yes, "Yes" },
+	{ INPUT_STRING_Lives, "Lives" },
+	{ INPUT_STRING_Bonus_Life, "Bonus Life" },
+	{ INPUT_STRING_Difficulty, "Difficulty" },
+	{ INPUT_STRING_Demo_Sounds, "Demo Sounds" },
+	{ INPUT_STRING_Coinage, "Coinage" },
+	{ INPUT_STRING_Coin_A, "Coin A" },
+	{ INPUT_STRING_Coin_B, "Coin B" },
+	{ INPUT_STRING_9C_1C, "9 Coins/1 Credit" },
+	{ INPUT_STRING_8C_1C, "8 Coins/1 Credit" },
+	{ INPUT_STRING_7C_1C, "7 Coins/1 Credit" },
+	{ INPUT_STRING_6C_1C, "6 Coins/1 Credit" },
+	{ INPUT_STRING_5C_1C, "5 Coins/1 Credit" },
+	{ INPUT_STRING_4C_1C, "4 Coins/1 Credit" },
+	{ INPUT_STRING_3C_1C, "3 Coins/1 Credit" },
+	{ INPUT_STRING_8C_3C, "8 Coins/3 Credits" },
+	{ INPUT_STRING_4C_2C, "4 Coins/2 Credits" },
+	{ INPUT_STRING_2C_1C, "2 Coins/1 Credit" },
+	{ INPUT_STRING_5C_3C, "5 Coins/3 Credits" },
+	{ INPUT_STRING_3C_2C, "3 Coins/2 Credits" },
+	{ INPUT_STRING_4C_3C, "4 Coins/3 Credits" },
+	{ INPUT_STRING_4C_4C, "4 Coins/4 Credits" },
+	{ INPUT_STRING_3C_3C, "3 Coins/3 Credits" },
+	{ INPUT_STRING_2C_2C, "2 Coins/2 Credits" },
+	{ INPUT_STRING_1C_1C, "1 Coin/1 Credit" },
+	{ INPUT_STRING_4C_5C, "4 Coins/5 Credits" },
+	{ INPUT_STRING_3C_4C, "3 Coins/4 Credits" },
+	{ INPUT_STRING_2C_3C, "2 Coins/3 Credits" },
+	{ INPUT_STRING_4C_7C, "4 Coins/7 Credits" },
+	{ INPUT_STRING_2C_4C, "2 Coins/4 Credits" },
+	{ INPUT_STRING_1C_2C, "1 Coin/2 Credits" },
+	{ INPUT_STRING_2C_5C, "2 Coins/5 Credits" },
+	{ INPUT_STRING_2C_6C, "2 Coins/6 Credits" },
+	{ INPUT_STRING_1C_3C, "1 Coin/3 Credits" },
+	{ INPUT_STRING_2C_7C, "2 Coins/7 Credits" },
+	{ INPUT_STRING_2C_8C, "2 Coins/8 Credits" },
+	{ INPUT_STRING_1C_4C, "1 Coin/4 Credits" },
+	{ INPUT_STRING_1C_5C, "1 Coin/5 Credits" },
+	{ INPUT_STRING_1C_6C, "1 Coin/6 Credits" },
+	{ INPUT_STRING_1C_7C, "1 Coin/7 Credits" },
+	{ INPUT_STRING_1C_8C, "1 Coin/8 Credits" },
+	{ INPUT_STRING_1C_9C, "1 Coin/9 Credits" },
+	{ INPUT_STRING_Free_Play, "Free Play" },
+	{ INPUT_STRING_Cabinet, "Cabinet" },
+	{ INPUT_STRING_Upright, "Upright" },
+	{ INPUT_STRING_Cocktail, "Cocktail" },
+	{ INPUT_STRING_Flip_Screen, "Flip Screen" },
+	{ INPUT_STRING_Service_Mode, "Service Mode" },
+	{ INPUT_STRING_Pause, "Pause" },
+	{ INPUT_STRING_Test, "Test" },
+	{ INPUT_STRING_Tilt, "Tilt" },
+	{ INPUT_STRING_Version, "Version" },
+	{ INPUT_STRING_Region, "Region" },
+	{ INPUT_STRING_International, "International" },
+	{ INPUT_STRING_Japan, "Japan" },
+	{ INPUT_STRING_USA, "USA" },
+	{ INPUT_STRING_Europe, "Europe" },
+	{ INPUT_STRING_Asia, "Asia" },
+	{ INPUT_STRING_World, "World" },
+	{ INPUT_STRING_Hispanic, "Hispanic" },
+	{ INPUT_STRING_Language, "Language" },
+	{ INPUT_STRING_English, "English" },
+	{ INPUT_STRING_Japanese, "Japanese" },
+	{ INPUT_STRING_German, "German" },
+	{ INPUT_STRING_French, "French" },
+	{ INPUT_STRING_Italian, "Italian" },
+	{ INPUT_STRING_Spanish, "Spanish" },
+	{ INPUT_STRING_Very_Easy, "Very Easy" },
+	{ INPUT_STRING_Easiest, "Easiest" },
+	{ INPUT_STRING_Easier, "Easier" },
+	{ INPUT_STRING_Easy, "Easy" },
+	{ INPUT_STRING_Normal, "Normal" },
+	{ INPUT_STRING_Medium, "Medium" },
+	{ INPUT_STRING_Hard, "Hard" },
+	{ INPUT_STRING_Harder, "Harder" },
+	{ INPUT_STRING_Hardest, "Hardest" },
+	{ INPUT_STRING_Very_Hard, "Very Hard" },
+	{ INPUT_STRING_Very_Low, "Very Low" },
+	{ INPUT_STRING_Low, "Low" },
+	{ INPUT_STRING_High, "High" },
+	{ INPUT_STRING_Higher, "Higher" },
+	{ INPUT_STRING_Highest, "Highest" },
+	{ INPUT_STRING_Very_High, "Very High" },
+	{ INPUT_STRING_Players, "Players" },
+	{ INPUT_STRING_Controls, "Controls" },
+	{ INPUT_STRING_Dual, "Dual" },
+	{ INPUT_STRING_Single, "Single" },
+	{ INPUT_STRING_Game_Time, "Game Time" },
+	{ INPUT_STRING_Continue_Price, "Continue Price" },
+	{ INPUT_STRING_Controller, "Controller" },
+	{ INPUT_STRING_Light_Gun, "Light Gun" },
+	{ INPUT_STRING_Joystick, "Joystick" },
+	{ INPUT_STRING_Trackball, "Trackball" },
+	{ INPUT_STRING_Continues, "Continues" },
+	{ INPUT_STRING_Allow_Continue, "Allow Continue" },
+	{ INPUT_STRING_Level_Select, "Level Select" },
+	{ INPUT_STRING_Infinite, "Infinite" },
+	{ INPUT_STRING_Stereo, "Stereo" },
+	{ INPUT_STRING_Mono, "Mono" },
+	{ INPUT_STRING_Unused, "Unused" },
+	{ INPUT_STRING_Unknown, "Unknown" },
+	{ INPUT_STRING_Standard, "Standard" },
+	{ INPUT_STRING_Reverse, "Reverse" },
+	{ INPUT_STRING_Alternate, "Alternate" },
+	{ INPUT_STRING_None, "None" }
 };
 
 
@@ -958,7 +962,7 @@ static void interpolate_analog_port(int port);
  *
  *************************************/
 
-int input_port_init(running_machine *machine, void (*construct_ipt)(input_port_init_params *))
+int input_port_init(running_machine *machine, const input_port_token *ipt)
 {
 	int ipnum, player;
 
@@ -980,18 +984,18 @@ int input_port_init(running_machine *machine, void (*construct_ipt)(input_port_i
 	memset(port_info, 0, sizeof(port_info));
 
 	/* if we have inputs, process them now */
-	if (construct_ipt)
+	if (ipt)
 	{
 		input_port_entry *port;
 		int portnum;
 
 		/* allocate input ports */
-		Machine->input_ports = input_port_allocate(construct_ipt, NULL);
+		Machine->input_ports = input_port_allocate(ipt, NULL);
 		if (!Machine->input_ports)
 			return 1;
 
 		/* allocate default input ports */
-		input_ports_default = input_port_allocate(construct_ipt, NULL);
+		input_ports_default = input_port_allocate(ipt, NULL);
 		if (!input_ports_default)
 			return 1;
 
@@ -1569,11 +1573,257 @@ static void input_port_save(int config_type, xml_data_node *parentnode)
 
 /*************************************
  *
+ *  Token to default string
+ *
+ *************************************/
+
+const char *input_port_string_from_token(const input_port_token token)
+{
+	int index;
+
+	if (token == 0)
+		return NULL;
+	if ((FPTR)token >= INPUT_STRING_COUNT)
+		return (const char *)token;
+	for (index = 0; index < ARRAY_LENGTH(input_port_default_strings); index++)
+		if (input_port_default_strings[index].id == (FPTR)token)
+			return input_port_default_strings[index].string;
+	return "(Unknown Default)";
+}
+
+
+
+/*************************************
+ *
+ *  Input port detokenizer
+ *
+ *************************************/
+
+static void input_port_detokenize(input_port_init_params *param, const input_port_token *ipt)
+{
+	UINT32 entrytype = INPUT_TOKEN_INVALID;
+	input_port_entry *port = NULL;
+	const char *modify_tag = NULL;
+	int seq_index[3];
+
+	/* loop over tokens until we hit the end */
+	while (entrytype != INPUT_TOKEN_END)
+	{
+		UINT32 mask, defval, type, val;
+
+		/* the entry is the first of a UINT32 pair */
+		/* note that we advance IPT assuming that there is no second half */
+		entrytype = INPUT_PORT_PAIR_ITEM(ipt++, 0);
+		switch (entrytype)
+		{
+			/* end */
+			case INPUT_TOKEN_END:
+				break;
+
+			/* including */
+			case INPUT_TOKEN_INCLUDE:
+				input_port_detokenize(param, (const input_port_token *)*ipt++);
+				break;
+
+			/* start of a new input port */
+			case INPUT_TOKEN_START:
+			case INPUT_TOKEN_START_TAG:
+				modify_tag = NULL;
+				port = input_port_initialize(param, IPT_PORT, NULL, 0, 0);
+				if (entrytype == INPUT_TOKEN_START_TAG)
+					port->start.tag = (const char *)*ipt++;
+				break;
+
+			/* modify an existing port */
+			case INPUT_TOKEN_MODIFY:
+				modify_tag = (const char *)*ipt++;
+				break;
+
+			/* input bit definition */
+			case INPUT_TOKEN_BIT:
+				type = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+				mask = INPUT_PORT_PAIR_ITEM(ipt, 0);
+				defval = INPUT_PORT_PAIR_ITEM(ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+
+				port = input_port_initialize(param, type, modify_tag, mask, defval);
+				seq_index[0] = seq_index[1] = seq_index[2] = 0;
+				break;
+
+			/* append a code */
+			case INPUT_TOKEN_CODE:
+				val = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+				if (val < __code_max)
+				{
+					if (seq_index[0] > 0)
+						port->seq.code[seq_index[0]++] = CODE_OR;
+					port->seq.code[seq_index[0]++] = val;
+				}
+				break;
+
+			case INPUT_TOKEN_CODE_DEC:
+				val = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+				if (val < __code_max)
+				{
+					if (seq_index[1] > 0)
+						port->analog.decseq.code[seq_index[1]++] = CODE_OR;
+					port->analog.decseq.code[seq_index[1]++] = val;
+				}
+				break;
+
+			case INPUT_TOKEN_CODE_INC:
+				val = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+				if (val < __code_max)
+				{
+					if (seq_index[2] > 0)
+						port->analog.incseq.code[seq_index[2]++] = CODE_OR;
+					port->analog.incseq.code[seq_index[2]++] = val;
+				}
+				break;
+
+			/* joystick flags */
+			case INPUT_TOKEN_2WAY:
+			case INPUT_TOKEN_4WAY:
+			case INPUT_TOKEN_8WAY:
+			case INPUT_TOKEN_16WAY:
+				port->way = 2 << (entrytype - INPUT_TOKEN_2WAY);
+				break;
+
+			/* general flags */
+			case INPUT_TOKEN_NAME:
+				port->name = input_port_string_from_token(*ipt++);
+				break;
+
+			case INPUT_TOKEN_PLAYER1:
+			case INPUT_TOKEN_PLAYER2:
+			case INPUT_TOKEN_PLAYER3:
+			case INPUT_TOKEN_PLAYER4:
+			case INPUT_TOKEN_PLAYER5:
+			case INPUT_TOKEN_PLAYER6:
+			case INPUT_TOKEN_PLAYER7:
+			case INPUT_TOKEN_PLAYER8:
+				port->player = entrytype - INPUT_TOKEN_PLAYER1;
+				break;
+
+			case INPUT_TOKEN_COCKTAIL:
+				port->cocktail = TRUE;
+				port->player = 1;
+				break;
+
+			case INPUT_TOKEN_TOGGLE:
+				port->toggle = TRUE;
+				break;
+
+			case INPUT_TOKEN_IMPULSE:
+				port->impulse = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+				break;
+
+			case INPUT_TOKEN_REVERSE:
+				port->analog.reverse = TRUE;
+				break;
+
+			case INPUT_TOKEN_RESET:
+				port->analog.reset = TRUE;
+				break;
+
+			case INPUT_TOKEN_UNUSED:
+				port->unused = TRUE;
+				break;
+
+			/* analog settings */
+			case INPUT_TOKEN_MINMAX:
+				port->analog.min = INPUT_PORT_PAIR_ITEM(ipt, 0);
+				port->analog.max = INPUT_PORT_PAIR_ITEM(ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+				break;
+
+			case INPUT_TOKEN_SENSITIVITY:
+				port->analog.sensitivity = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+				break;
+
+			case INPUT_TOKEN_KEYDELTA:
+				port->analog.delta = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+				break;
+
+			case INPUT_TOKEN_CENTERDELTA:
+				port->analog.centerdelta = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+				break;
+
+			/* custom callbacks */
+			case INPUT_TOKEN_CUSTOM:
+				port->custom = (UINT32 (*)(void *))*ipt++;
+				port->custom_param = (void *)*ipt++;
+				break;
+
+			/* dip switch definition */
+			case INPUT_TOKEN_DIPNAME:
+				mask = INPUT_PORT_PAIR_ITEM(ipt, 0);
+				defval = INPUT_PORT_PAIR_ITEM(ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+
+				port = input_port_initialize(param, IPT_DIPSWITCH_NAME, modify_tag, mask, defval);
+				seq_index[0] = seq_index[1] = seq_index[2] = 0;
+				port->name = input_port_string_from_token(*ipt++);
+				break;
+
+			case INPUT_TOKEN_DIPSETTING:
+				defval = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+
+				port = input_port_initialize(param, IPT_DIPSWITCH_SETTING, modify_tag, 0, defval);
+				seq_index[0] = seq_index[1] = seq_index[2] = 0;
+				port->name = input_port_string_from_token(*ipt++);
+				break;
+
+			/* physical location */
+			case INPUT_TOKEN_DIPLOCATION:
+				input_port_parse_diplocation(port, (const char *)*ipt++);
+				break;
+
+			/* conditionals for dip switch settings */
+			case INPUT_TOKEN_CONDITION:
+				port->condition.condition = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+				port->condition.mask = INPUT_PORT_PAIR_ITEM(ipt, 0);
+				port->condition.value = INPUT_PORT_PAIR_ITEM(ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+				port->condition.tag = (const char *)*ipt++;
+				break;
+
+			/* analog adjuster definition */
+			case INPUT_TOKEN_ADJUSTER:
+				defval = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+
+				port = input_port_initialize(param, IPT_DIPSWITCH_SETTING, modify_tag, 0xff, defval | (defval << 8));
+				seq_index[0] = seq_index[1] = seq_index[2] = 0;
+				port->name = input_port_string_from_token(*ipt++);
+				break;
+
+			default:
+				assert_always(0, "unknown port entry type");
+				break;
+		}
+	}
+}
+
+
+
+/*************************************
+ *
  *  Input port construction
  *
  *************************************/
 
-input_port_entry *input_port_initialize(input_port_init_params *iip, UINT32 type, const char *tag, UINT32 mask)
+input_port_entry *input_port_initialize(input_port_init_params *iip, UINT32 type, const char *tag, UINT32 mask, UINT32 defval)
 {
 	/* this function is used within an INPUT_PORT callback to set up a single port */
 	input_port_entry *port;
@@ -1628,6 +1878,8 @@ input_port_entry *input_port_initialize(input_port_init_params *iip, UINT32 type
 	memset(port, 0, sizeof(*port));
 	port->name = IP_NAME_DEFAULT;
 	port->type = type;
+	port->mask = mask;
+	port->default_value = defval;
 
 	/* sets up default port codes */
 	switch (port->type)
@@ -1652,7 +1904,7 @@ input_port_entry *input_port_initialize(input_port_init_params *iip, UINT32 type
 }
 
 
-input_port_entry *input_port_allocate(void (*construct_ipt)(input_port_init_params *param), input_port_entry *memory)
+input_port_entry *input_port_allocate(const input_port_token *ipt, input_port_entry *memory)
 {
 	input_port_init_params iip;
 
@@ -1661,17 +1913,17 @@ input_port_entry *input_port_allocate(void (*construct_ipt)(input_port_init_para
  	iip.current_port = 0;
 
 	/* allocate memory for the input ports */
-	if (!memory)
+	if (memory == NULL)
 		iip.ports = (input_port_entry *)auto_malloc(iip.max_ports * sizeof(*iip.ports));
 	else
 		iip.ports = memory;
 	memset(iip.ports, 0, iip.max_ports * sizeof(*iip.ports));
 
 	/* construct the ports */
- 	construct_ipt(&iip);
+ 	input_port_detokenize(&iip, ipt);
 
 	/* append final IPT_END */
-	input_port_initialize(&iip, IPT_END, NULL, 0);
+	input_port_initialize(&iip, IPT_END, NULL, 0, 0);
 
 #ifdef MESS
 	/* process MESS specific extensions to the port */
@@ -1715,7 +1967,7 @@ void input_port_parse_diplocation(input_port_entry *in, const char *location)
 		{
 			curname = auto_malloc(colon - tempbuf + 1);
 			strncpy(curname, tempbuf, colon - tempbuf);
-			tempbuf[colon - tempbuf] = 0;
+			curname[colon - tempbuf] = 0;
 			number = colon + 1;
 		}
 

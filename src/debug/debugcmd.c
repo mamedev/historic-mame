@@ -4,7 +4,7 @@
 
     Debugger command interface engine.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 *********************************************************************/
@@ -1809,7 +1809,7 @@ static void execute_dasm(int ref, int params, const char *param[])
 			if (strlen(output) < 60)
 			{
 				/* pad the comment space out to 60 characters and null-terminate */
-				for (outdex = strlen(output); outdex < 60; outdex++)
+				for (outdex = (int)strlen(output); outdex < 60; outdex++)
 					output[outdex] = ' ' ;
 				output[outdex] = 0 ;
 

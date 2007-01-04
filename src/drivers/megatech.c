@@ -69,10 +69,6 @@ unsigned int bios_ctrl_inputs;
 #define MASTER_CLOCK		53693100
 
 
-static INPUT_PORTS_START( genesis ) /* Genesis Input Ports */
-GENESIS_PORTS
-INPUT_PORTS_END
-
 INPUT_PORTS_START( megatech ) /* Genesis Input Ports */
 	PORT_START
 

@@ -4,7 +4,7 @@
 
     Controls execution of the core MAME system.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -347,7 +347,7 @@ int mame_is_paused(running_machine *machine);
 /* ----- memory region management ----- */
 
 /* allocate a new memory region */
-UINT8 *new_memory_region(running_machine *machine, int type, size_t length, UINT32 flags);
+UINT8 *new_memory_region(running_machine *machine, int type, UINT32 length, UINT32 flags);
 
 /* free an allocated memory region */
 void free_memory_region(running_machine *machine, int num);
@@ -356,7 +356,7 @@ void free_memory_region(running_machine *machine, int num);
 UINT8 *memory_region(int num);
 
 /* return the size (in bytes) of a specified memory region */
-size_t memory_region_length(int num);
+UINT32 memory_region_length(int num);
 
 /* return the type of a specified memory region */
 UINT32 memory_region_type(running_machine *machine, int num);

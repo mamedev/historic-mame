@@ -424,6 +424,28 @@ ROM_START( circus )
 	ROM_LOAD( "circus.14d",   0x0000, 0x0200, CRC(2fde3930) SHA1(a21e2d342f16a39a07edf4bea8d698a52216ecba) )  /* Clown */
 ROM_END
 
+ROM_START( circusse )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "93448.1a",    0x1000, 0x0200, CRC(44d65ccd) SHA1(0eb2515444486a4656a4accec555501e75b39a74) ) /* Code */
+	ROM_LOAD( "93448.2a",    0x1200, 0x0200, CRC(b8acdbc5) SHA1(634bb11089f7a57a316b6829954cc4da4523f267) )
+	ROM_LOAD( "93448.3a",    0x1400, 0x0200, CRC(f2e25f7a) SHA1(6441e39fc7f710442dd6a3a047826862b0481c58) )
+	ROM_LOAD( "93448.5a",    0x1600, 0x0200, CRC(9dfdae38) SHA1(dc59a5f90a5a49fa071aada67eda768d3ecef010) )
+	ROM_LOAD( "93448.6a",    0x1800, 0x0200, CRC(c8681cf6) SHA1(681cfea75bee8a86f9f4645e6c6b94b44762dae9) )
+	ROM_LOAD( "93448.7a",    0x1a00, 0x0200, CRC(585f633e) SHA1(46133409f42e8cbc095dde576ce07d97b235972d) )
+	ROM_LOAD( "93448.8a",    0x1c00, 0x0200, CRC(d7c0dc05) SHA1(cc6f7d16ca4be74370c305c34aa1a2e338d2c41f) )
+	ROM_LOAD( "93448.9a",    0x1e00, 0x0200, CRC(aff835eb) SHA1(d6d95510d4a046f48358fef01103bcc760eb71ed) )
+	ROM_RELOAD(               0xfe00, 0x0200 ) /* for the reset and interrupt vectors */
+
+	ROM_REGION( 0x0800, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "93448.4c",    0x0000, 0x0200, CRC(6efc315a) SHA1(d5a4a64a901853fff56df3c65512afea8336aad2) )  /* Character Set */
+	ROM_LOAD( "93448.3c",    0x0200, 0x0200, CRC(30d72ef5) SHA1(45fc8285e213bf3906a26205a8c0b22f311fd6c3) )
+	ROM_LOAD( "93448.2c",    0x0400, 0x0200, CRC(361da7ee) SHA1(6e6fe5b37ccb4c11aa4abbd9b7df772953abfe7e) )
+	ROM_LOAD( "93448.1c",    0x0600, 0x0200, CRC(1f954bb3) SHA1(62a958b48078caa639b96f62a690583a1c8e83f5) )
+
+	ROM_REGION( 0x0200, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "93448.14d",   0x0000, 0x0200, CRC(2fde3930) SHA1(a21e2d342f16a39a07edf4bea8d698a52216ecba) )  /* Clown */
+ROM_END
+
 ROM_START( robotbwl )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "robotbwl.1a",  0xf000, 0x0200, CRC(df387a0b) SHA1(97291f1a93cbbff987b0fbc16c2e87ad0db96e12) ) /* Code */
@@ -509,7 +531,8 @@ static DRIVER_INIT( ripcord )
 }
 
 
-GAMEL(1977, circus,   0, circus,   circus,   circus,   ROT0, "Exidy", "Circus", 0, layout_circus )
-GAME( 1977, robotbwl, 0, robotbwl, robotbwl, robotbwl, ROT0, "Exidy", "Robot Bowl", GAME_IMPERFECT_SOUND )
-GAME( 1979, crash,    0, crash,    crash,    crash,    ROT0, "Exidy", "Crash", GAME_IMPERFECT_SOUND )
-GAME( 1979, ripcord,  0, ripcord,  ripcord,  ripcord,  ROT0, "Exidy", "Rip Cord", GAME_IMPERFECT_SOUND )
+GAMEL(1977, circus,   0,      circus,   circus,   circus,   ROT0, "Exidy", "Circus", 0, layout_circus )
+GAMEL(1977, circusse, circus, circus,   circus,   circus,   ROT0, "[Exidy] (Sub-Electro bootleg)", "Circus (Sub-Electro bootleg)", 0, layout_circus ) // looks like a text hack, but we've seen 2 identical copies so it's worth supporting
+GAME( 1977, robotbwl, 0,      robotbwl, robotbwl, robotbwl, ROT0, "Exidy", "Robot Bowl", GAME_IMPERFECT_SOUND )
+GAME( 1979, crash,    0,      crash,    crash,    crash,    ROT0, "Exidy", "Crash", GAME_IMPERFECT_SOUND )
+GAME( 1979, ripcord,  0,      ripcord,  ripcord,  ripcord,  ROT0, "Exidy", "Rip Cord", GAME_IMPERFECT_SOUND )

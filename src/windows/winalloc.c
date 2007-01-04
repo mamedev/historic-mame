@@ -2,7 +2,7 @@
 //
 //  winalloc.c - Win32 memory allocation routines
 //
-//  Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+//  Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
 //  Visit http://mamedev.org for licensing and usage restrictions.
 //
 //============================================================
@@ -52,7 +52,7 @@ struct _memory_entry
 {
 	memory_entry *	next;
 	memory_entry *	prev;
-	UINT32			size;
+	size_t			size;
 	void *			base;
 	const char *	file;
 	int				line;

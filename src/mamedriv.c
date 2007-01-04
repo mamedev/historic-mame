@@ -2,7 +2,7 @@
 
     mamedriv.c
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
     The list of all available drivers. Drivers have to be included here to be
@@ -1295,6 +1295,7 @@ const game_driver * const drivers[] =
 	DRIVER( mpatrol )	/* M52 (c) 1982 */
 	DRIVER( mpatrolw )	/* M52 (c) 1982 + Williams license */
 	DRIVER( troangel )	/* (c) 1983 */
+	DRIVER( newtangl )	/* (c) 1983 */
 	DRIVER( 10yard )	/* (c) 1983 */
 	DRIVER( 10yardj )	/* (c) 1983 */
 	DRIVER( vs10yard )	/* (c) 1983/1984 */
@@ -4548,6 +4549,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( fax )		/* (c) 1983 */
 	DRIVER( faxa )		/* (c) 1983 */
 	DRIVER( circus )	/* no copyright notice [1977?] */
+	DRIVER( circusse )	/* bootleg */
 	DRIVER( robotbwl )	/* no copyright notice */
 	DRIVER( crash )		/* Exidy [1979?] */
 	DRIVER( ripcord )	/* Exidy [1977?] */
@@ -5595,7 +5597,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( quizdna )	/* (c) 1992 Face */
 	DRIVER( gekiretu )	/* (c) 1992 Face */
 
-	/* Williams/Midway games */
+	/* Williams/Midway TMS games */
 	DRIVER( narc )		/* (c) 1988 Williams */
 	DRIVER( narc3 )		/* (c) 1988 Williams */
 	DRIVER( trog )		/* (c) 1990 Midway */
@@ -5654,6 +5656,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( nbamht1 )	/* (c) 1996 Midway */
 	DRIVER( rmpgwt )	/* (c) 1997 Midway */
 	DRIVER( rmpgwt11 )	/* (c) 1997 Midway */
+
+	/* Midway V-unit games */
 	DRIVER( crusnusa )	/* (c) 1994 Midway */
 	DRIVER( crusnu40 )	/* (c) 1994 Midway */
 	DRIVER( crusnu21 )	/* (c) 1994 Midway */
@@ -5663,6 +5667,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( crusnw13 )	/* (c) 1996 Midway */
 	DRIVER( offroadc )	/* (c) 1997 Midway */
 	DRIVER( wargods )	/* (c) 1996 Midway */
+
+	/* Midway Zeus games */
 	DRIVER( mk4 )		/* (c) 1997 Midway */
 	DRIVER( invasn )	/* (c) 1999 Midway */
 	DRIVER( crusnexo )	/* (c) 1999 Midway */
@@ -5700,6 +5706,11 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( gauntdl )	/* (c) 1999 Midway Games */
 	DRIVER( gauntd24 )	/* (c) 1999 Midway Games */
 	DRIVER( cartfury )	/* (c) 2000 Midway Games */
+
+	/* Midway Touchmaster games */
+	DRIVER( tm )		/* (c) 1996 Midway Games */
+	DRIVER( tm3k )		/* (c) 1996 Midway Games */
+	DRIVER( tm4k )		/* (c) 1996 Midway Games */
 
 	/* Cinematronics raster games */
 	DRIVER( embargo )
@@ -5872,9 +5883,10 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( cabalbl )	/* bootleg */
 	DRIVER( toki )		/* (c) 1989 Tad (World) */
 	DRIVER( tokia )		/* (c) 1989 Tad (World) */
-	DRIVER( tokij )		/* (c) 1989 Tad (Japan) */
 	DRIVER( tokiu )		/* (c) 1989 Tad + Fabtek license (US) */
 	DRIVER( tokib )		/* bootleg */
+	DRIVER( juju )		/* (c) 1989 Tad (Japan) */
+	DRIVER( jujub )		/* (c) 1989 Tad (Japan) */
 	DRIVER( bloodbro )	/* (c) 1990 Tad */
 	DRIVER( bloodbra )	/* (c) 1990 Tad */
 	DRIVER( weststry )	/* bootleg */
@@ -6950,6 +6962,12 @@ Other Sun games
 	DRIVER( mating )	/* 199? */
 	DRIVER( matinga )	/* 199? */
 
+	/* ADP games */
+	DRIVER( backgamn )	/* (c) 1990 */
+	DRIVER( skattv )	/* (c) 1994 */
+	DRIVER( skattva )	/* (c) 1995 */
+	DRIVER( fashiong )	/* (c) 1997 */
+
 	/* Other Games */
 	DRIVER( astinvad )	/* (c) 1980 Stern */
 	DRIVER( kosmokil )	/* bootleg */
@@ -7207,6 +7225,11 @@ Other Sun games
 	DRIVER( couple )	/* (c) 1988 Merit */
 	DRIVER( couplep )	/* (c) 1988 Merit */
 	DRIVER( couplei )	/* (c) 1988 Merit */
+	DRIVER( pitboss2 )	/* (c) 1988 Merit */
+	DRIVER( spitboss )	/* (c) 198? Merit */
+	DRIVER( pitbossm )	/* (c) 1994 Merit */
+	DRIVER( megat3 )	/* (c) 1995 Merit */
+	DRIVER( megat5 )	/* (c) 1997 Merit */
 	DRIVER( suprgolf )	/* (c) 19?? Nasco */
 	DRIVER( hotblock )	/* (c) 1993 Nics? / Nix? */
 	DRIVER( pntnpuzl )	/* Century? */
@@ -7315,5 +7338,6 @@ Other Sun games
 	DRIVER( skylncr )	/* (c) 1995 Bordun International */
 	DRIVER( livequiz )	/* (c) 1999 Andamiro */
 	DRIVER( cowrace )	/* (c) 19?? unknown */
+	DRIVER( mjsiyoub )	/* (c) 1986 Visco */
 
 #endif	/* DRIVER_RECURSIVE */

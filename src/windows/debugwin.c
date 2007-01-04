@@ -2,7 +2,7 @@
 //
 //  debugwin.c - Win32 debug window handling
 //
-//  Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+//  Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
 //  Visit http://mamedev.org for licensing and usage restrictions.
 //
 //============================================================
@@ -27,6 +27,7 @@
 #include "window.h"
 #include "video.h"
 #include "config.h"
+#include "strconv.h"
 
 
 
@@ -1548,7 +1549,11 @@ static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, L
 
 						// process
 						if (info->process_string)
-							(*info->process_string)(info, buffer);
+						{
+							char *utf8_buffer = utf8_from_tstring(buffer);
+							(*info->process_string)(info, utf8_buffer);
+							free(utf8_buffer);
+						}
 						break;
 					}
 
@@ -1591,10 +1596,16 @@ static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, L
 static void generic_create_window(int type)
 {
 	debugwin_info *info;
+	TCHAR *t_name;
+	TCHAR *t_description;
 	TCHAR title[256];
 
 	// create the window
-	sprintf(title, "Debug: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
+	t_name = tstring_from_utf8(Machine->gamedrv->name);
+	t_description = tstring_from_utf8(Machine->gamedrv->description);
+	_sntprintf(title, ARRAY_LENGTH(title), TEXT("Debug: %s [%s]"), t_description, t_name);
+	free(t_name);
+	free(t_description);
 	info = debug_window_create(title, NULL);
 	if (!info || !debug_view_create(info, 0, type))
 		return;
@@ -1651,12 +1662,18 @@ static void generic_recompute_children(debugwin_info *info)
 static void log_create_window(void)
 {
 	debugwin_info *info;
+	TCHAR *t_name;
+	TCHAR *t_description;
 	TCHAR title[256];
 	UINT32 width;
 	RECT bounds;
 
 	// create the window
-	sprintf(title, "Errorlog: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
+	t_name = tstring_from_utf8(Machine->gamedrv->name);
+	t_description = tstring_from_utf8(Machine->gamedrv->description);
+	_sntprintf(title, ARRAY_LENGTH(title), TEXT("Errorlog: %s [%s]"), t_description, t_name);
+	free(t_name);
+	free(t_description);
 	info = debug_window_create(title, NULL);
 	if (!info || !debug_view_create(info, 0, DVT_LOG))
 		return;
@@ -1786,6 +1803,7 @@ static void memory_determine_combo_items(void)
 
 static void memory_update_selection(debugwin_info *info, memorycombo_item *ci)
 {
+	TCHAR *t_name;
 	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_CPUNUM, ci->cpunum);
 	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_SPACENUM, ci->spacenum);
 	debug_view_set_property_ptr(info->view[0].view, DVP_MEM_RAW_BASE, ci->base);
@@ -1793,7 +1811,9 @@ static void memory_update_selection(debugwin_info *info, memorycombo_item *ci)
 	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_RAW_OFFSET_XOR, ci->offset_xor);
 	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_RAW_LITTLE_ENDIAN, ci->little_endian);
 	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK, ci->prefsize);
-	SetWindowText(info->wnd, ci->name);
+	t_name = tstring_from_utf8(ci->name);
+	SetWindowText(info->wnd, t_name);
+	free(t_name);
 }
 
 
@@ -2458,13 +2478,16 @@ static void disasm_update_caption(HWND wnd)
 	debugwin_info *info = (debugwin_info *)(UINT32)GetWindowLongPtr(wnd, GWLP_USERDATA);
 	char title[100];
 	UINT32 cpunum;
+	TCHAR *t_title;
 
 	// get the properties
 	cpunum = debug_view_get_property_UINT32(info->view[0].view, DVP_DASM_CPUNUM);
 
 	// then update the caption
 	sprintf(title, "Disassembly: %s (%d)", cpunum_name(cpunum), cpunum);
-	SetWindowText(wnd, title);
+	t_title = tstring_from_utf8(title);
+	SetWindowText(wnd, t_title);
+	free(t_title);
 }
 
 
@@ -2679,6 +2702,8 @@ static void console_process_string(debugwin_info *info, const char *string)
 static void console_set_cpunum(int cpunum)
 {
 	TCHAR title[256], curtitle[256];
+	TCHAR *t_gamedrv_name;
+	TCHAR *t_cpu_name;
 
 	// first set all the views to the new cpu number
 	if (main_console->view[0].view)
@@ -2687,9 +2712,13 @@ static void console_set_cpunum(int cpunum)
 		debug_view_set_property_UINT32(main_console->view[1].view, DVP_REGS_CPUNUM, cpunum);
 
 	// then update the caption
-	sprintf(title, "Debug: %s - CPU %d (%s)", Machine->gamedrv->name, cpu_getactivecpu(), activecpu_name());
+	t_gamedrv_name = tstring_from_utf8(Machine->gamedrv->name);
+	t_cpu_name =  tstring_from_utf8(activecpu_name());
+	_sntprintf(title, ARRAY_LENGTH(title), TEXT("Debug: %s - CPU %d (%s)"), t_gamedrv_name, cpu_getactivecpu(), t_cpu_name);
+	free(t_gamedrv_name);
+	free(t_cpu_name);
 	GetWindowText(main_console->wnd, curtitle, sizeof(curtitle) / sizeof(curtitle[0]));
-	if (strcmp(title, curtitle))
+	if (_tcscmp(title, curtitle))
 		SetWindowText(main_console->wnd, title);
 }
 

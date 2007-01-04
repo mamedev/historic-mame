@@ -4,7 +4,7 @@
 
     Core CPU interface functions and definitions.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -183,7 +183,6 @@ enum
 	CPU_TMP90841,
 	CPU_TMP91640,
 	CPU_TMP91641,
-#ifdef MESS
 	CPU_APEXC,
 	CPU_CP1610,
 	CPU_F8,
@@ -198,7 +197,6 @@ enum
 	CPU_TMS7000_EXL,
 	CPU_SM8500,
 	CPU_V30MZ,
-#endif /* MESS */
     CPU_COUNT
 };
 

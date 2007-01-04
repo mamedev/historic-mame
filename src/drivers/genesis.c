@@ -176,11 +176,6 @@ MACHINE_RESET( genesis )
 }
 
 
-static INPUT_PORTS_START( genesis ) /* Genesis Input Ports */
-GENESIS_PORTS
-INPUT_PORTS_END
-
-
 /* from MESS */
 READ16_HANDLER(genesis_ctrl_r)
 {

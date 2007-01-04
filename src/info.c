@@ -4,7 +4,7 @@
 
     Dumps the MAME internal data as an XML file.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
@@ -39,7 +39,7 @@ static void print_game_switch(FILE* out, const game_driver* game)
 
 	begin_resource_tracking();
 
-	input = input_port_allocate(game->construct_ipt, NULL);
+	input = input_port_allocate(game->ipt, NULL);
 
 	while (input->type != IPT_END)
 	{
@@ -114,7 +114,7 @@ enum {cjoy, cdoublejoy, cAD_stick, cdial, ctrackball, cpaddle, clightgun, cpedal
 
 	begin_resource_tracking();
 
-	input = input_port_allocate(game->construct_ipt, NULL);
+	input = input_port_allocate(game->ipt, NULL);
 
 	while (input->type != IPT_END)
 	{

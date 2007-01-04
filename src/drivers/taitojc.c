@@ -336,10 +336,20 @@ Notes:
       ROM  .65 is 27C512, linked to 68HC11 MCU
       *    Unpopulated socket.
 
+
+
+    TODO:
+        - dendeg2 hangs on init step 10.
+        - The analog controls don't seem to work in landgear. They work in test mode though.
+        - landgear has some weird crashes (after playing one round, after a couple of loops in attract mode)
+        - dendeg2x usually crashes when starting the game (lots of read and writes to invalid addresses)
+        - All dendeg games have random wrong textures/palettes
+        - Train board (external sound board with OKI6295) is not emulated
 */
 
 #include "driver.h"
 #include "taito_f3.h"
+#include "cpu/mc68hc11/mc68hc11.h"
 #include "sound/es5506.h"
 #include "machine/eeprom.h"
 #include "sndhrdw/taito_en.h"
@@ -348,237 +358,36 @@ extern UINT32 *f3_shared_ram;
 
 static UINT32 *main_ram;
 static UINT16 *dsp_shared_ram;
-
-static UINT32 *vram;
 static UINT32 *palette_ram;
 
-static UINT8 *texture;
-
-static int taitojc_gfx_index;
-
-static UINT8 *taitojc_dirty_map;
-static UINT32 *taitojc_char_ram;
-static UINT32 *taitojc_tile_ram;
-static int taitojc_char_dirty = 1;
-static tilemap *taitojc_tilemap;
-
-#define TAITOJC_NUM_TILES		0x80
-
-static const gfx_layout taitojc_char_layout =
-{
-	16,16,
-	TAITOJC_NUM_TILES,
-	4,
-	{ 0,1,2,3 },
-	{ 24,28,16,20,8,12,0,4, 56,60,48,52,40,44,32,36 },
-	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,8*64,9*64,10*64,11*64,12*64,13*64,14*64,15*64 },
-	16*64
-};
-
-static void taitojc_tile_info(int tile_index)
-{
-	UINT32 val = taitojc_tile_ram[tile_index];
-	int color = (val >> 22) & 0xff;
-	int tile = (val >> 2) & 0x7f;
-	SET_TILE_INFO(taitojc_gfx_index, tile, color, 0);
-}
+#define POLYGON_FIFO_SIZE		100000
+static UINT16 *polygon_fifo;
+static int polygon_fifo_ptr;
 
 
-VIDEO_START( taitojc )
-{
- 	/* find first empty slot to decode gfx */
-	for (taitojc_gfx_index = 0; taitojc_gfx_index < MAX_GFX_ELEMENTS; taitojc_gfx_index++)
-		if (Machine->gfx[taitojc_gfx_index] == 0)
-			break;
-
-	if (taitojc_gfx_index == MAX_GFX_ELEMENTS)
-		return 1;
-
-	taitojc_tilemap = tilemap_create(taitojc_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 64, 64);
-	taitojc_dirty_map = auto_malloc(TAITOJC_NUM_TILES);
-
-	tilemap_set_transparent_pen(taitojc_tilemap, 0);
-
-	taitojc_char_ram = auto_malloc(0x4000);
-	taitojc_tile_ram = auto_malloc(0x4000);
-
-	memset(taitojc_char_ram, 0, 0x4000);
-	memset(taitojc_tile_ram, 0, 0x4000);
-
-	palette_ram = auto_malloc(65536*sizeof(UINT32));
-	memset(palette_ram, 0, 65536*sizeof(UINT32));
+static UINT8 mcu_comm_main = 0;
+static UINT8 mcu_comm_hc11 = 0;
+static UINT8 mcu_data_main = 0;
+static UINT8 mcu_data_hc11 = 0;
 
 
-	/* create the char set (gfx will then be updated dynamically from RAM) */
-	Machine->gfx[taitojc_gfx_index] = allocgfx(&taitojc_char_layout);
-	if (!Machine->gfx[taitojc_gfx_index])
-		return 1;
+UINT32 *taitojc_vram;
+UINT32 *taitojc_objlist;
 
-	/* set the color information */
-	if (Machine->drv->color_table_len)
-	{
-		Machine->gfx[taitojc_gfx_index]->colortable = Machine->remapped_colortable;
-		Machine->gfx[taitojc_gfx_index]->total_colors = Machine->drv->color_table_len / 16;
-	}
-	else
-	{
-		Machine->gfx[taitojc_gfx_index]->colortable = Machine->pens;
-		Machine->gfx[taitojc_gfx_index]->total_colors = Machine->drv->total_colors / 16;
-	}
+// defined in vidhrdw/taitojc.c
+extern READ32_HANDLER(taitojc_tile_r);
+extern WRITE32_HANDLER(taitojc_tile_w);
+extern READ32_HANDLER(taitojc_char_r);
+extern WRITE32_HANDLER(taitojc_char_w);
+extern void taitojc_clear_frame(void);
+extern void taitojc_render_polygons(UINT16 *polygon_fifo, int length);
 
-	texture = auto_malloc(0x400000);
+extern VIDEO_START(taitojc);
+extern VIDEO_UPDATE(taitojc);
 
-	return 0;
-}
+extern UINT8 *taitojc_texture;
 
-static void taitojc_tile_update(void)
-{
-	int i;
-	if (taitojc_char_dirty) {
-		for (i=0; i < TAITOJC_NUM_TILES; i++) {
-			if (taitojc_dirty_map[i]) {
-				taitojc_dirty_map[i] = 0;
-				decodechar(Machine->gfx[taitojc_gfx_index], i, (UINT8 *)taitojc_char_ram, &taitojc_char_layout);
-			}
-		}
-		tilemap_mark_all_tiles_dirty(taitojc_tilemap);
-		taitojc_char_dirty = 0;
-	}
-}
 
-static READ32_HANDLER(taitojc_tile_r)
-{
-	return taitojc_tile_ram[offset];
-}
-
-static READ32_HANDLER(taitojc_char_r)
-{
-	return taitojc_char_ram[offset];
-}
-
-static WRITE32_HANDLER(taitojc_tile_w)
-{
-	COMBINE_DATA(taitojc_tile_ram + offset);
-	tilemap_mark_tile_dirty(taitojc_tilemap, offset);
-}
-
-static WRITE32_HANDLER(taitojc_char_w)
-{
-	COMBINE_DATA(taitojc_char_ram + offset);
-	taitojc_dirty_map[offset/32] = 1;
-	taitojc_char_dirty = 1;
-}
-
-// Object data format:
-//         31       23       15       7        0
-// Word 0: |hhhhhhyy|yyyyyyyy|wwwwwwxx|xxxxxxxx|
-//
-//         31       23       15       7        0
-// Word 1: |???ppppp|pp??????|?aaaaaaa|aaaaaaaa|
-
-static void draw_object(mame_bitmap *bitmap, const rectangle *cliprect, UINT32 w1, UINT32 w2)
-{
-	int x, y, width, height, palette;
-	int i, j;
-	int x1, x2, y1, y2;
-	int ix, iy;
-	UINT32 address;
-	UINT8 *v;
-
-	address		= (w2 & 0x7fff) * 0x20;
-	if (w2 & 0x4000)
-		address |= 0x40000;
-
-	x			= ((w1 >>  0) & 0x3ff);
-	if (x & 0x200)
-		x |= ~0x1ff;		// sign-extend
-
-	y			= ((w1 >> 16) & 0x3ff);
-	if (y & 0x200)
-		y |= ~0x1ff;		// sign-extend
-
-	width		= ((w1 >>  8) & 0xfc) * 4;
-	height		= ((w1 >> 24) & 0xfc) * 4;
-	palette		= ((w2 >> 22) & 0x7f) << 8;
-
-	v = (UINT8*)&vram[address/4];
-
-	if (address >= 0xf8000 || width == 0 || height == 0)
-		return;
-
-	x1 = x;
-	x2 = x + width;
-	y1 = y;
-	y2 = y + height;
-
-	// trivial rejection
-	if (x1 > cliprect->max_x || x2 < cliprect->min_x || y1 > cliprect->max_y || y2 < cliprect->min_y)
-	{
-		return;
-	}
-
-//  mame_printf_debug("draw_object: %08X %08X, X: %d, Y: %d, W: %d, H: %d\n", w1, w2, x, y, width, height);
-
-	ix = 0;
-	iy = 0;
-
-	// clip
-	if (x1 < cliprect->min_x)
-	{
-		ix = abs(cliprect->min_x - x1);
-		x1 = cliprect->min_x;
-	}
-	if (x2 > cliprect->max_x)
-	{
-		x2 = cliprect->max_x;
-	}
-	if (y1 < cliprect->min_y)
-	{
-		iy = abs(cliprect->min_y - y1);
-		y1 = cliprect->min_y;
-	}
-	if (y2 > cliprect->max_y)
-	{
-		y2 = cliprect->max_y;
-	}
-
-	for (j=y1; j < y2; j++)
-	{
-		UINT32 *d = bitmap->line[j];
-		int index = (iy * width) + ix;
-
-		for (i=x1; i < x2; i++)
-		{
-			UINT8 pen = v[BYTE4_XOR_BE(index)];
-			if (pen != 0)
-			{
-				d[i] = Machine->remapped_colortable[palette + pen];
-			}
-			index++;
-		}
-
-		iy++;
-	}
-}
-
-VIDEO_UPDATE( taitojc )
-{
-	int i;
-	fillbitmap(bitmap, 0, cliprect);
-
-	//for (i=0; i < 0x400/4; i+=2)
-	for (i=(0xc00/4)-2; i >= 0; i-=2)
-	{
-		UINT32 w1 = vram[(0xff000/4) + i + 0];
-		UINT32 w2 = vram[(0xff000/4) + i + 1];
-
-		draw_object(bitmap, cliprect, w1, w2);
-	}
-
-	taitojc_tile_update();
-	tilemap_draw(bitmap, cliprect, taitojc_tilemap, 0,0);
-	return 0;
-}
 
 static READ32_HANDLER( taitojc_palette_r )
 {
@@ -617,7 +426,7 @@ static READ32_HANDLER ( jc_control_r )
 		{
 			if (!(mem_mask & 0xff000000))
 			{
-				UINT32 data = EEPROM_read_bit() | 0x00;		/* 0x02 enables memory test. Test switch ? */
+				UINT32 data = EEPROM_read_bit() & 1;
 				data |= readinputport(0) & 0xfe;
 				r |= data << 24;
 			}
@@ -673,9 +482,9 @@ static WRITE32_HANDLER ( jc_control_w )
 		{
 			if (!(mem_mask & 0xff000000))
 			{
-				EEPROM_set_clock_line((data & 0x08) ? ASSERT_LINE : CLEAR_LINE);
-				EEPROM_write_bit(data & 0x04);
-				EEPROM_set_cs_line((data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
+				EEPROM_set_clock_line(((data >> 24) & 0x08) ? ASSERT_LINE : CLEAR_LINE);
+				EEPROM_write_bit(((data >> 24) & 0x04) ? 1 : 0);
+				EEPROM_set_cs_line(((data >> 24) & 0x10) ? CLEAR_LINE : ASSERT_LINE);
 			}
 			return;
 		}
@@ -694,8 +503,9 @@ static WRITE32_HANDLER (jc_control1_w)
 	}
 }
 
-static UINT8 hc11_cmd;
-static UINT8 hc11_reg_r(int reg)
+
+
+static UINT8 mcu_comm_reg_r(int reg)
 {
 	UINT8 r = 0;
 
@@ -703,29 +513,17 @@ static UINT8 hc11_reg_r(int reg)
 	{
 		case 0x03:
 		{
-			//mame_printf_debug("hc11_reg_r: %02X at %08X\n", reg, activecpu_get_pc());
-			if (hc11_cmd == 0x00)
-			{
-				r = 0;
-			}
-			else if (hc11_cmd == 0xff)
-			{
-				r = 0xff;
-			}
-			else
-			{
-				r = 0;
-			}
+			r = mcu_data_main;
 			break;
 		}
 		case 0x04:
 		{
-			r = 0x10 | 0x20 | 0x04;
+			r = mcu_comm_main | 0x14;
 			break;
 		}
 		default:
 		{
-			mame_printf_debug("hc11_reg_r: %02X at %08X\n", reg, activecpu_get_pc());
+			//mame_printf_debug("hc11_reg_r: %02X at %08X\n", reg, activecpu_get_pc());
 			break;
 		}
 	}
@@ -733,13 +531,15 @@ static UINT8 hc11_reg_r(int reg)
 	return r;
 }
 
-static void hc11_reg_w(int reg, UINT8 data)
+static void mcu_comm_reg_w(int reg, UINT8 data)
 {
 	switch (reg)
 	{
 		case 0x00:
 		{
-			hc11_cmd = data;
+			mcu_data_hc11 = data;
+			mcu_comm_hc11 &= ~0x04;
+			mcu_comm_main &= ~0x20;
 			break;
 		}
 		case 0x04:
@@ -748,62 +548,62 @@ static void hc11_reg_w(int reg, UINT8 data)
 		}
 		default:
 		{
-			mame_printf_debug("hc11_reg_w: %02X, %02X at %08X\n", reg, data, activecpu_get_pc());
+			//mame_printf_debug("hc11_reg_w: %02X, %02X at %08X\n", reg, data, activecpu_get_pc());
 			break;
 		}
 	}
 }
 
-static READ32_HANDLER(hc11_r)
+static READ32_HANDLER(mcu_comm_r)
 {
 	UINT32 r = 0;
 	int reg = offset * 4;
 
 	if (!(mem_mask & 0xff000000))
 	{
-		r |= hc11_reg_r(reg + 0) << 24;
+		r |= mcu_comm_reg_r(reg + 0) << 24;
 	}
 	if (!(mem_mask & 0x00ff0000))
 	{
-		r |= hc11_reg_r(reg + 1) << 16;
+		r |= mcu_comm_reg_r(reg + 1) << 16;
 	}
 	if (!(mem_mask & 0x0000ff00))
 	{
-		r |= hc11_reg_r(reg + 2) << 8;
+		r |= mcu_comm_reg_r(reg + 2) << 8;
 	}
 	if (!(mem_mask & 0x000000ff))
 	{
-		r |= hc11_reg_r(reg + 3) << 0;
+		r |= mcu_comm_reg_r(reg + 3) << 0;
 	}
 
 	return r;
 }
 
-static WRITE32_HANDLER(hc11_w)
+static WRITE32_HANDLER(mcu_comm_w)
 {
 	int reg = offset * 4;
 
 	if (!(mem_mask & 0xff000000))
 	{
-		hc11_reg_w(reg + 0, (data >> 24) & 0xff);
+		mcu_comm_reg_w(reg + 0, (data >> 24) & 0xff);
 	}
 	if (!(mem_mask & 0x00ff0000))
 	{
-		hc11_reg_w(reg + 1, (data >> 16) & 0xff);
+		mcu_comm_reg_w(reg + 1, (data >> 16) & 0xff);
 	}
 	if (!(mem_mask & 0x0000ff00))
 	{
-		hc11_reg_w(reg + 2, (data >> 8) & 0xff);
+		mcu_comm_reg_w(reg + 2, (data >> 8) & 0xff);
 	}
 	if (!(mem_mask & 0x000000ff))
 	{
-		hc11_reg_w(reg + 3, (data >> 0) & 0xff);
+		mcu_comm_reg_w(reg + 3, (data >> 0) & 0xff);
 	}
 }
 
 static READ32_HANDLER(jc_unknown1_r)
 {
-	return 0x31323334;
+	return 0;
 }
 
 static READ32_HANDLER(dsp_shared_r)
@@ -811,20 +611,161 @@ static READ32_HANDLER(dsp_shared_r)
 	return dsp_shared_ram[offset] << 16;
 }
 
+#define DEBUG_DSP				0
+#define DEBUG_BLOCK_MOVES		0
+
+#if DEBUG_DSP
+static UINT16 debug_dsp_ram[0x8000];
+
+static void debug_dsp_command(void)
+{
+	UINT16 *cmd = &dsp_shared_ram[0x7f0];
+
+	switch (cmd[0])
+	{
+		case 0x00:
+		{
+			printf("DSP: NOP\n");
+			break;
+		}
+		case 0x01:
+		{
+			printf("DSP: Move to Shared RAM: %04X\n", cmd[1]);
+			break;
+		}
+		case 0x02:
+		{
+			printf("DSP: Move from Shared RAM: %04X\n", cmd[1]);
+			break;
+		}
+		case 0x03:
+		{
+			printf("DSP: Block move DM to DM: %04X, %04X, %04X\n", cmd[1], cmd[2], cmd[3]+1);
+			if (cmd[2] >= 0x7800 && cmd[2] < 0x8000)
+			{
+				int i, j;
+				int saddr = cmd[2] - 0x7800;
+				int daddr = cmd[1];
+				int length = cmd[3]+1;
+
+				for (j=0; j < length; j+=16)
+				{
+					int ll = (length - j);
+					if (ll > 16) ll = 16;
+
+#if DEBUG_BLOCK_MOVES
+					printf("   %04X: ", daddr);
+#endif
+					for (i=0; i < ll; i++)
+					{
+						UINT16 d = dsp_shared_ram[saddr++];
+						if (daddr >= 0x8000 && daddr < 0x10000)
+						{
+							debug_dsp_ram[daddr-0x8000] = d;
+						}
+						daddr++;
+
+#if DEBUG_BLOCK_MOVES
+						printf("%04X ", d);
+#endif
+					}
+#if DEBUG_BLOCK_MOVES
+					printf("\n");
+#endif
+				}
+			}
+			break;
+		}
+		case 0x04:
+		{
+			printf("DSP: Block move PM to DM: %04X, %04X, %04X\n", cmd[1], cmd[2], cmd[3]+1);
+			break;
+		}
+		case 0x05:
+		{
+			printf("DSP: Block move DM to PM: %04X, %04X, %04X\n", cmd[1], cmd[2], cmd[3]+1);
+			break;
+		}
+		case 0x08:
+		{
+			printf("DSP: Jump to address: %04X, %04X, %04X\n", cmd[1], cmd[3], cmd[4]);
+			break;
+		}
+		case 0x09:
+		{
+			printf("DSP: Call Sub operation: %04X\n", cmd[1]);
+			if (cmd[1] == 0x8000)
+			{
+				int addr = 0;
+				int end = 0;
+				while (!end)
+				{
+					int i;
+					UINT16 cmd = debug_dsp_ram[addr++];
+					int length = cmd & 0xff;
+
+					if ((cmd >> 11) == 6)
+						end = 1;
+
+					printf("   %04X (%02X): ", cmd, cmd >> 11);
+					for (i=0; i < length; i++)
+					{
+						printf("%04X ", debug_dsp_ram[addr+i]);
+					}
+					printf("\n");
+
+					addr += length;
+				};
+			}
+			break;
+		}
+		case 0x0d:
+		{
+			printf("DSP: Calculate ROM checksum\n");
+			break;
+		}
+		case 0x10:
+		{
+			printf("DSP: Test RAM\n");
+			break;
+		}
+		case 0x11:
+		{
+			printf("DSP: Test Program Checksum: %04X, %04X\n", cmd[1], cmd[2]+1);
+			break;
+		}
+		default:
+		{
+			printf("DSP: Unknown command %04X\n", cmd[0]);
+			break;
+		}
+	}
+
+	printf("\n");
+}
+#endif
+
 static int first_dsp_reset = 1;
 static WRITE32_HANDLER(dsp_shared_w)
 {
 	//mame_printf_debug("dsp_shared_ram: %08X, %04X at %08X\n", offset, data >> 16, activecpu_get_pc());
-	dsp_shared_ram[offset] = data >> 16;
-
-	if (offset >= 0x1fc0/4)
+	if (!(mem_mask & 0xff000000))
 	{
-		//mame_printf_debug("dsp_shared_ram: %08X, %04X at %08X\n", offset, data >> 16, activecpu_get_pc());
-		if (offset == 0x1fc0/4)
-		{
-			//mame_printf_debug("\n");
-		}
+		dsp_shared_ram[offset] &= 0x00ff;
+		dsp_shared_ram[offset] |= (data >> 16) & 0xff00;
 	}
+	if (!(mem_mask & 0x00ff0000))
+	{
+		dsp_shared_ram[offset] &= 0xff00;
+		dsp_shared_ram[offset] |= (data >> 16) & 0x00ff;
+	}
+
+#if DEBUG_DSP
+	if (offset == 0x1fc0/4)
+	{
+		debug_dsp_command();
+	}
+#endif
 
 	if (offset == 0x1ffc/4)
 	{
@@ -871,26 +812,27 @@ static WRITE32_HANDLER(f3_share_w)
 
 static WRITE32_HANDLER(jc_output_w)
 {
-	// acceleration and break meter outputs in Densya De Go!
+	// speed and brake meter outputs in Densya De Go!
 	//mame_printf_debug("jc_output_w: %d, %d\n", offset, (data >> 16) & 0xffff);
 }
 
 static ADDRESS_MAP_START( taitojc_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x001fffff) AM_ROM AM_MIRROR(0x200000)
 	AM_RANGE(0x00400000, 0x01bfffff) AM_ROM AM_REGION(REGION_GFX1, 0)
-	AM_RANGE(0x04000000, 0x040f7fff) AM_RAM AM_BASE(&vram)
+	AM_RANGE(0x04000000, 0x040f7fff) AM_RAM AM_BASE(&taitojc_vram)
 	AM_RANGE(0x040f8000, 0x040fbfff) AM_READWRITE(taitojc_tile_r, taitojc_tile_w)
 	AM_RANGE(0x040fc000, 0x040fefff) AM_READWRITE(taitojc_char_r, taitojc_char_w)
-	AM_RANGE(0x040ff000, 0x040fffff) AM_RAM
+	AM_RANGE(0x040ff000, 0x040fffff) AM_RAM AM_BASE(&taitojc_objlist)
 	AM_RANGE(0x05800000, 0x05801fff) AM_READ(jc_unknown1_r)
-	AM_RANGE(0x05900000, 0x05900007) AM_READWRITE(hc11_r, hc11_w)
+	AM_RANGE(0x05900000, 0x05900007) AM_READWRITE(mcu_comm_r, mcu_comm_w)
 	//AM_RANGE(0x05a00000, 0x05a01fff)
 	//AM_RANGE(0x05fc0000, 0x05fc3fff)
-	AM_RANGE(0x06400000, 0x0641ffff) AM_READWRITE(taitojc_palette_r, taitojc_palette_w)
+	AM_RANGE(0x06400000, 0x0641ffff) AM_READWRITE(taitojc_palette_r, taitojc_palette_w) AM_BASE(&palette_ram)
 	AM_RANGE(0x06600000, 0x0660001f) AM_READ(jc_control_r)
 	AM_RANGE(0x06600000, 0x06600003) AM_WRITE(jc_control1_w)
+	AM_RANGE(0x06600010, 0x06600013) AM_NOP		// unknown
 	AM_RANGE(0x06600040, 0x0660004f) AM_WRITE(jc_control_w)
-	//AM_RANGE(0x06800000, 0x06801fff) AM_RAM
+	AM_RANGE(0x06800000, 0x06801fff) AM_NOP		// unknown
 	AM_RANGE(0x06a00000, 0x06a01fff) AM_READWRITE(f3_share_r, f3_share_w)
 	//AM_RANGE(0x06c00000, 0x06c0ffff) AM_RAM
 	AM_RANGE(0x06e00000, 0x06e0ffff) AM_WRITE(jc_output_w)
@@ -899,9 +841,46 @@ static ADDRESS_MAP_START( taitojc_map, ADDRESS_SPACE_PROGRAM, 32 )
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( hc11_map, ADDRESS_SPACE_PROGRAM, 8 )
+/*****************************************************************************/
+
+static READ8_HANDLER(hc11_comm_r)
+{
+	return mcu_comm_hc11;
+}
+
+static WRITE8_HANDLER(hc11_comm_w)
+{
+}
+
+static READ8_HANDLER(hc11_data_r)
+{
+	mcu_comm_hc11 |= 0x04;
+	mcu_comm_main |= 0x20;
+	return mcu_data_hc11;
+}
+
+static WRITE8_HANDLER(hc11_data_w)
+{
+	mcu_data_main = data;
+}
+
+static READ8_HANDLER(hc11_analog_r)
+{
+	return readinputport(4 + offset);
+}
+
+
+static ADDRESS_MAP_START( hc11_pgm_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4000, 0x5fff) AM_RAM
 	AM_RANGE(0x8000, 0xffff) AM_ROM AM_REGION(REGION_USER1, 0)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( hc11_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(MC68HC11_IO_PORTA,     MC68HC11_IO_PORTA    ) AM_NOP
+	AM_RANGE(MC68HC11_IO_PORTG,     MC68HC11_IO_PORTG    ) AM_READWRITE(hc11_comm_r, hc11_comm_w)
+	AM_RANGE(MC68HC11_IO_PORTH,     MC68HC11_IO_PORTH    ) AM_NOP
+	AM_RANGE(MC68HC11_IO_SPI2_DATA, MC68HC11_IO_SPI2_DATA) AM_READWRITE(hc11_data_r, hc11_data_w)
+	AM_RANGE(MC68HC11_IO_AD0,       MC68HC11_IO_AD7      ) AM_READ(hc11_analog_r)
 ADDRESS_MAP_END
 
 /*****************************************************************************/
@@ -909,7 +888,9 @@ ADDRESS_MAP_END
 static int texture_x;
 static int texture_y;
 
-UINT32 dsp_rom_pos = 0;
+static UINT32 dsp_rom_pos = 0;
+static UINT16 dsp_tex_address = 0;
+static UINT16 dsp_tex_offset = 0;
 
 static READ16_HANDLER( dsp_rom_r )
 {
@@ -933,46 +914,144 @@ static WRITE16_HANDLER( dsp_rom_w )
 	}
 }
 
-static UINT16 dsp_addr1 = 0;
-static UINT16 dsp_texaddr;
-
 static WRITE16_HANDLER( dsp_texture_w )
 {
 	int index;
 	int x, y;
 	//mame_printf_debug("texture write %08X, %04X\n", dsp_addr1, data);
 
-	x = (dsp_addr1 >> 0) & 0x1f;
-	y = (dsp_addr1 >> 5) & 0x1f;
+	x = (dsp_tex_offset >> 0) & 0x1f;
+	y = (dsp_tex_offset >> 5) & 0x1f;
+
+	x += (dsp_tex_offset & 0x400) ? 0x20 : 0;
+	y += (dsp_tex_offset & 0x800) ? 0x20 : 0;
 
 	index = (((texture_y * 32) + y) * 2048) + ((texture_x * 32) + x);
-	texture[index] = data & 0xff;
+	taitojc_texture[index] = data & 0xff;
 
-	dsp_addr1++;
+	dsp_tex_offset++;
 }
 
 static READ16_HANDLER( dsp_texaddr_r )
 {
-	return dsp_texaddr;
+	return dsp_tex_address;
 }
 
 static WRITE16_HANDLER( dsp_texaddr_w )
 {
-	dsp_texaddr = data;
+	dsp_tex_address = data;
 //  mame_printf_debug("texaddr = %08X at %08X\n", data, activecpu_get_pc());
 
 	texture_x = (((data >> 0) & 0x1f) << 1) | ((data >> 12) & 0x1);
 	texture_y = (((data >> 5) & 0x1f) << 1) | ((data >> 13) & 0x1);
 
-	dsp_addr1 = 0;
+	dsp_tex_offset = 0;
 }
 
-static WRITE16_HANDLER( dsp_unk_w )
+static WRITE16_HANDLER( dsp_polygon_fifo_w )
 {
-//  mame_printf_debug("dsp_unk_w = %04X\n", data);
+	polygon_fifo[polygon_fifo_ptr++] = data;
+
+	if (polygon_fifo_ptr >= POLYGON_FIFO_SIZE)
+	{
+		fatalerror("dsp_polygon_fifo_w: fifo overflow!\n");
+	}
 }
 
 
+
+static int viewport_data[3];
+
+static INT32 projected_point_x;
+static INT32 projected_point_y;
+static INT32 projection_data[3];
+
+static INT32 intersection_data[3];
+
+static READ16_HANDLER(dsp_unk_r)
+{
+	return 0x7fff;
+}
+
+static WRITE16_HANDLER(dsp_viewport_w)
+{
+	viewport_data[offset] = (INT16)(data);
+}
+
+static WRITE16_HANDLER(dsp_projection_w)
+{
+	projection_data[offset] = (INT16)(data);
+
+	if (offset == 2)
+	{
+		if (projection_data[2] != 0)
+		{
+			projected_point_y = (projection_data[0] * viewport_data[0]) / (projection_data[2]);
+			projected_point_x = (projection_data[1] * viewport_data[1]) / (projection_data[2]);
+		}
+		else
+		{
+			projected_point_y = 0;
+			projected_point_x = 0;
+		}
+	}
+}
+
+static READ16_HANDLER(dsp_projection_r)
+{
+	if (offset == 0)
+	{
+		return projected_point_y;
+	}
+	else if (offset == 2)
+	{
+		return projected_point_x;
+	}
+
+	return 0;
+}
+
+static WRITE16_HANDLER(dsp_unk2_w)
+{
+	if (offset == 0)
+	{
+		taitojc_clear_frame();
+		taitojc_render_polygons(polygon_fifo, polygon_fifo_ptr);
+
+		polygon_fifo_ptr = 0;
+	}
+}
+
+static WRITE16_HANDLER(dsp_intersection_w)
+{
+	intersection_data[offset] = (INT32)(INT16)(data);
+}
+
+static READ16_HANDLER(dsp_intersection_r)
+{
+	return (INT16)((intersection_data[0] * intersection_data[1]) / intersection_data[2]);
+}
+
+/*
+    Math co-processor memory map
+
+    0x7000: Projection point Y
+    0x7001: Projection point X
+    0x7002: Projection point Z
+    0x7003: Frustum Min Z(?)
+    0x7004: Frustum Max Z(?)
+    0x7010: Line intersection, parameter length
+    0x7011: Line intersection, intersection point
+    0x7012: Line intersection, line length
+    0x7013: Viewport Width / 2
+    0x7014: Viewport Height / 2
+    0x7015: Viewport Z / 2 (?)
+    0x701b: Line intersection, parameter interpolation read
+    0x701d: Projected point Y read
+    0x701f: Projected point X read
+    0x7022: Unknown read
+    0x7030: Unknown write
+*/
 
 static ADDRESS_MAP_START( tms_program_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x4000, 0x7fff) AM_RAM
@@ -980,10 +1059,18 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tms_data_map, ADDRESS_SPACE_DATA, 16 )
 	//AM_RANGE(0x1400, 0x1401) AM_RAM
-	AM_RANGE(0x6b20, 0x6b20) AM_WRITE(dsp_unk_w)
+	AM_RANGE(0x6a01, 0x6a02) AM_WRITE(dsp_unk2_w)
+	AM_RANGE(0x6a11, 0x6a12) AM_NOP		// same as 0x6a01..02 for the second renderer chip?
+	AM_RANGE(0x6b20, 0x6b20) AM_WRITE(dsp_polygon_fifo_w)
 	AM_RANGE(0x6b22, 0x6b22) AM_WRITE(dsp_texture_w)
 	AM_RANGE(0x6b23, 0x6b23) AM_READWRITE(dsp_texaddr_r, dsp_texaddr_w)
 	AM_RANGE(0x6c00, 0x6c01) AM_READWRITE(dsp_rom_r, dsp_rom_w)
+	AM_RANGE(0x7000, 0x7002) AM_WRITE(dsp_projection_w)
+	AM_RANGE(0x7010, 0x7012) AM_WRITE(dsp_intersection_w)
+	AM_RANGE(0x7013, 0x7015) AM_WRITE(dsp_viewport_w)
+	AM_RANGE(0x701b, 0x701b) AM_READ(dsp_intersection_r)
+	AM_RANGE(0x701d, 0x701f) AM_READ(dsp_projection_r)
+	AM_RANGE(0x7022, 0x7022) AM_READ(dsp_unk_r)
 	AM_RANGE(0x7800, 0x7fff) AM_RAM AM_BASE(&dsp_shared_ram)
 	AM_RANGE(0x8000, 0xffff) AM_RAM
 ADDRESS_MAP_END
@@ -1051,6 +1138,9 @@ INPUT_PORTS_START( dendeg )
 		PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_BUTTON3)		// Mascon 2
 		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_BUTTON1)		// Mascon 0
 
+	PORT_START_TAG("ANALOG1")		// Brake
+		PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00, 0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(5)
+
 INPUT_PORTS_END
 
 INPUT_PORTS_START( landgear )
@@ -1060,17 +1150,26 @@ INPUT_PORTS_START( landgear )
 		PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 
 	PORT_START
-		PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_BUTTON1)		// View button
+		PORT_BIT(0xe0, IP_ACTIVE_LOW, IPT_UNUSED)
 		PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_START1)
 		PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_UNUSED)
 		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_TILT)
 
 	PORT_START
-		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_BUTTON2)		// View button
+		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_BUTTON1)		// View button
 		PORT_BIT(0xfe, IP_ACTIVE_LOW, IPT_UNUSED)
 
 	PORT_START
 		PORT_BIT(0xff, IP_ACTIVE_LOW, IPT_UNUSED)
+
+	PORT_START_TAG("ANALOG1")		// Lever X
+		PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0xff, 0x00) PORT_SENSITIVITY(35) PORT_KEYDELTA(5)
+
+	PORT_START_TAG("ANALOG2")		// Lever Y
+		PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y )  PORT_MINMAX(0xff, 0x00) PORT_SENSITIVITY(35) PORT_KEYDELTA(5)
+
+	PORT_START_TAG("ANALOG3")		// Throttle
+		PORT_BIT( 0xff, 0x00, IPT_PEDAL )  PORT_MINMAX(0x00, 0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(5)
 
 INPUT_PORTS_END
 
@@ -1079,7 +1178,6 @@ INPUT_PORTS_START( sidebs )
 		PORT_BIT(0xe0, IP_ACTIVE_LOW, IPT_UNUSED)
 		PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_COIN1)
 		PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-		//PORT_SERVICE(0x02, 0x00)
 
 	PORT_START
 		PORT_BIT(0xe0, IP_ACTIVE_LOW, IPT_UNUSED)
@@ -1098,16 +1196,18 @@ INPUT_PORTS_START( sidebs )
 		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_BUTTON3)		// Shift up
 		PORT_BIT(0xfc, IP_ACTIVE_LOW, IPT_UNUSED)
 
+	PORT_START_TAG("ANALOG1")		// Steering
+		PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x00, 0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(5)
+
+	PORT_START_TAG("ANALOG2")		// Acceleration
+		PORT_BIT( 0xff, 0x00, IPT_PEDAL )  PORT_MINMAX(0x00, 0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(5)
+
+	PORT_START_TAG("ANALOG3")		// Brake
+		PORT_BIT( 0xff, 0x00, IPT_PEDAL2 )  PORT_MINMAX(0x00, 0xff) PORT_SENSITIVITY(35) PORT_KEYDELTA(5)
+
 INPUT_PORTS_END
 
 
-
-
-
-static const gfx_decode gfxdecodeinfo[] =
-{
-	{ -1 } /* end of array */
-};
 
 static MACHINE_RESET( taitojc )
 {
@@ -1121,35 +1221,39 @@ static MACHINE_RESET( taitojc )
 
 static INTERRUPT_GEN( taitojc_vblank )
 {
-	cpunum_set_input_line_and_vector(0, 2, ASSERT_LINE, 130);
-	cpunum_set_input_line(0, 6, PULSE_LINE);
+	cpunum_set_input_line_and_vector(0, 2, HOLD_LINE, 130);
+}
+
+static INTERRUPT_GEN( taitojc_int6 )
+{
+	cpunum_set_input_line(0, 6, HOLD_LINE);
 }
 
 static MACHINE_DRIVER_START( taitojc )
 	MDRV_CPU_ADD(M68040, 25000000)
 	MDRV_CPU_PROGRAM_MAP(taitojc_map, 0)
 	MDRV_CPU_VBLANK_INT(taitojc_vblank, 1)
-
-	MDRV_MACHINE_RESET(taitojc)
-	MDRV_NVRAM_HANDLER(93C46)
+	MDRV_CPU_PERIODIC_INT(taitojc_int6, TIME_IN_MSEC(1))
 
 	TAITO_F3_SOUND_SYSTEM_CPU(16000000)
 
 	MDRV_CPU_ADD(MC68HC11, 4000000)
-	MDRV_CPU_PROGRAM_MAP(hc11_map, 0)
+	MDRV_CPU_PROGRAM_MAP(hc11_pgm_map, 0)
+	MDRV_CPU_IO_MAP(hc11_io_map, 0)
 
 	MDRV_CPU_ADD(TMS32051, 50000000)
 	MDRV_CPU_PROGRAM_MAP(tms_program_map, 0)
 	MDRV_CPU_DATA_MAP(tms_data_map, 0)
 
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
 	MDRV_INTERLEAVE(100)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_RESET(taitojc)
+	MDRV_NVRAM_HANDLER(93C46)
 
-	MDRV_GFXDECODE(gfxdecodeinfo)
-
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
 	MDRV_SCREEN_SIZE(512, 400)
 	MDRV_VISIBLE_AREA(0, 511, 0, 399)
 	MDRV_PALETTE_LENGTH(32768)
@@ -1164,6 +1268,8 @@ MACHINE_DRIVER_END
 static DRIVER_INIT( taitojc )
 {
 	f3_shared_ram = auto_malloc(0x800);
+
+	polygon_fifo = auto_malloc(POLYGON_FIFO_SIZE * sizeof(UINT16));
 }
 
 static DRIVER_INIT( dendeg )
@@ -1220,23 +1326,23 @@ static DRIVER_INIT( landgear )
 }
 
 ROM_START( sidebs )
-	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68040 code */
+	ROM_REGION(0x200000, REGION_CPU1, 0)		/* 68040 code */
  	ROM_LOAD32_BYTE("e23-19.036", 0x000000, 0x80000, CRC(7b75481b) SHA1(47332e045f92b31e4f35c38e6880a7287b9a5c2c) )
 	ROM_LOAD32_BYTE("e23-20.037", 0x000001, 0x80000, CRC(cbd857dd) SHA1(ae33ad8b0c3559a3a9096351e9aa07782d3cb841) )
 	ROM_LOAD32_BYTE("e23-21.038", 0x000002, 0x80000, CRC(357f2e10) SHA1(226922f2649d9ac78d253200f5bbff4fb3ac74c8) )
 	ROM_LOAD32_BYTE("e23-22.039", 0x000003, 0x80000, CRC(c793ba43) SHA1(0ddbf625320968b4e18309d8e732ce4a2b9f4bce) )
 
-	ROM_REGION( 0x180000, REGION_CPU2, 0 ) /* 68000 Code? */
+	ROM_REGION( 0x180000, REGION_CPU2, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "e23-23.030",  0x100001, 0x040000, CRC(cffbffe5) SHA1(c01ac44390dacab4b49bb066a46d81a184b07a1e) )
 	ROM_LOAD16_BYTE( "e23-24.031",  0x100000, 0x040000, CRC(64bae246) SHA1(f929f664881487615b1259db43a0721135830274) )
 
-	ROM_REGION( 0x010000, REGION_USER1, 0 ) /* MC68HC11M0 related? */
+	ROM_REGION( 0x010000, REGION_USER1, 0 )		/* MC68HC11M0 code */
 	ROM_LOAD( "e17-23.065",  0x000000, 0x010000, CRC(80ac1428) SHA1(5a2a1e60a11ecdb8743c20ddacfb61f9fd00f01c) )
 
-	ROM_REGION( 0x00080, REGION_USER2, 0 ) /* eeprom */
+	ROM_REGION( 0x00080, REGION_USER2, 0 )		/* eeprom */
 	ROM_FILL( 0x0000, 0x0080, 0 )
 
-	ROM_REGION( 0x1800000, REGION_GFX1, 0 ) /* other roms, not sorted */
+	ROM_REGION( 0x1800000, REGION_GFX1, 0 )
 	ROM_LOAD32_WORD( "e23-05.009",  0x0800002, 0x200000, CRC(9aa0d956) SHA1(bd146e3db7c2a53701eca6b43f903899ed15623a) )
 	ROM_LOAD32_WORD( "e23-12.022",  0x0800000, 0x200000, CRC(c93fab09) SHA1(1ed292b11bf6bf09d1783d247f3de0c899e4df28) )
 	ROM_LOAD32_WORD( "e23-06.010",  0x0c00002, 0x200000, CRC(2077ac3a) SHA1(894e1bbfef8a693bda50aa8681e8f283c0d6b6cf) )
@@ -1244,7 +1350,7 @@ ROM_START( sidebs )
 	ROM_LOAD32_WORD( "e23-07.012",  0x1400002, 0x200000, CRC(bf1cd99d) SHA1(f98e1dacb485c7e40b0b2277a690d74ae020c9d9) )
 	ROM_LOAD32_WORD( "e23-14.025",  0x1400000, 0x200000, CRC(9d54eac7) SHA1(4f97b388a0fd0529d26e1cc31491a0e2ce6c381d) )
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 )		/* only accessible to the TMS */
 	ROM_LOAD( "e23-01.005",  0x0000000, 0x200000, CRC(c5018242) SHA1(d1a45aa6899d9a95b32aeba0f9a4520714d5f5a3) )
 	ROM_LOAD( "e23-02.006",  0x0200000, 0x200000, CRC(dbf24766) SHA1(2ee0bdb9f912f31bdf962a1af53ad1a6e3121a05) )
 	ROM_LOAD( "e23-03.007",  0x0400000, 0x200000, CRC(3ab59dd0) SHA1(39e93d306a59017bef0f2fdadc69f96aecbffca6) )
@@ -1262,23 +1368,23 @@ ROM_START( sidebs )
 ROM_END
 
 ROM_START( sidebs2 )
-	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68040 code */
+	ROM_REGION(0x200000, REGION_CPU1, 0)		/* 68040 code */
  	ROM_LOAD32_BYTE( "sbs2_p0.36", 0x000000, 0x80000, CRC(2dd78d09) SHA1(f0a0105c3f2827c8b55d1bc58ebeea0f71150fed) )
 	ROM_LOAD32_BYTE( "sbs2_p1.37", 0x000001, 0x80000, CRC(befeda1d) SHA1(3171c87b0872f3206653900e3dbd210ea9beba61) )
 	ROM_LOAD32_BYTE( "sbs2_p2.38", 0x000002, 0x80000, CRC(ade07d7e) SHA1(a5200ea3ddbfef37d302e7cb27015b6f6aa8a7c1) )
 	ROM_LOAD32_BYTE( "sbs2_p3.39", 0x000003, 0x80000, CRC(94e943d6) SHA1(2bc7332526b969e5084b9d73063f1c0d18ec5181) )
 
-	ROM_REGION( 0x180000, REGION_CPU2, 0 ) /* 68000 Code? */
+	ROM_REGION( 0x180000, REGION_CPU2, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "e38-19.30", 0x100001, 0x040000, CRC(3f50cb7b) SHA1(76af65c9b74ede843a3182f79cecda8c3e3febe6) )
 	ROM_LOAD16_BYTE( "e38-20.31", 0x100000, 0x040000, CRC(d01340e7) SHA1(76ee48d644dc1ec415d47e0df4864c64ac928b9d) )
 
-	ROM_REGION( 0x010000, REGION_USER1, 0 ) /* MC68HC11M0 related? */
+	ROM_REGION( 0x010000, REGION_USER1, 0 )		/* MC68HC11M0 code */
 	ROM_LOAD( "e17-23.65",  0x000000, 0x010000, CRC(80ac1428) SHA1(5a2a1e60a11ecdb8743c20ddacfb61f9fd00f01c) )
 
-	ROM_REGION( 0x00080, REGION_USER2, 0 ) /* eeprom */
+	ROM_REGION( 0x00080, REGION_USER2, 0 )		/* eeprom */
 	ROM_LOAD( "93c46.87",  0x000000, 0x000080, CRC(14e5526c) SHA1(ae02bd8f1eff41738043931642c652732fbe3801) )
 
-	ROM_REGION( 0x1800000, REGION_GFX1, 0 ) /* other roms, not sorted */
+	ROM_REGION( 0x1800000, REGION_GFX1, 0 )
 	ROM_LOAD32_WORD( "e38-05.9",  0x0800002, 0x200000, CRC(bda366bf) SHA1(a7558e6d5e4583a2d8e3d2bfa8cabcc459d3ee83) )
 	ROM_LOAD32_WORD( "e38-13.22", 0x0800000, 0x200000, CRC(1bd7582b) SHA1(35763b9489f995433f66ef72d4f6b6ac67df5480) )
 	ROM_LOAD32_WORD( "e38-06.10", 0x0c00002, 0x200000, CRC(308d2783) SHA1(22c309273444bc6c1df78069850958a739664998) )
@@ -1288,7 +1394,7 @@ ROM_START( sidebs2 )
 	ROM_LOAD32_WORD( "e38-08.12", 0x1400002, 0x200000, CRC(9c513b32) SHA1(fe26e39d3d65073d23d525bc17771f0c244a38c2) )
 	ROM_LOAD32_WORD( "e38-16.25", 0x1400000, 0x200000, CRC(fceafae2) SHA1(540ecd5d1aa64c0428a08ea1e4e634e00f7e6bd6) )
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 )		/* only accessible to the TMS */
 	ROM_LOAD( "e38-01.5",  0x0000000, 0x200000, CRC(a3c2e2c7) SHA1(538208534f996782167e4cf0d157ad93ce2937bd) )
 	ROM_LOAD( "e38-02.6",  0x0200000, 0x200000, CRC(ecdfb75a) SHA1(85e7afa321846816fa3bd9074ad9dec95abe23fe) )
 	ROM_LOAD( "e38-03.7",  0x0400000, 0x200000, CRC(28e9cb59) SHA1(a2651fd81a1263573f868864ee049f8fc4177ffa) )
@@ -1375,23 +1481,23 @@ ROM_START( dendeg )
 ROM_END
 
 ROM_START( dendegx )
-	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68040 code */
+	ROM_REGION(0x200000, REGION_CPU1, 0)		/* 68040 code */
  	ROM_LOAD32_BYTE( "e35-30.036", 0x000000, 0x80000, CRC(57ee0975) SHA1(c7741a7e0e9c1fdebc6b942587d7ac5a6f26f66d) )//ex
 	ROM_LOAD32_BYTE( "e35-31.037", 0x000001, 0x80000, CRC(bd5f2651) SHA1(73b760df351170ace019e4b61c82d8c6296a3632) )//ex
 	ROM_LOAD32_BYTE( "e35-32.038", 0x000002, 0x80000, CRC(66be29d5) SHA1(e73937f5bda709a606d5cdf7316b26051317c22f) )//ex
 	ROM_LOAD32_BYTE( "e35-33.039", 0x000003, 0x80000, CRC(76a6bde2) SHA1(ca456ec3f0410777362e3eb977ae156866271bd5) )//ex
 
-	ROM_REGION( 0x180000, REGION_CPU2, 0 ) /* 68000 Code? */
+	ROM_REGION( 0x180000, REGION_CPU2, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "e35-25.030",  0x100001, 0x040000, CRC(8104de13) SHA1(e518fbaf91704cf5cb8ffbb4833e3adba8c18658) )
 	ROM_LOAD16_BYTE( "e35-26.031",  0x100000, 0x040000, CRC(61821cc9) SHA1(87cd5bd3bb22c9f4ca4b6d96f75434d48418321b) )
 
-	ROM_REGION( 0x010000, REGION_USER1, 0 ) /* MC68HC11M0 related? */
+	ROM_REGION( 0x010000, REGION_USER1, 0 )		/* MC68HC11M0 code */
 	ROM_LOAD( "e17-23.065",  0x000000, 0x010000, CRC(80ac1428) SHA1(5a2a1e60a11ecdb8743c20ddacfb61f9fd00f01c) )
 
-	ROM_REGION( 0x00080, REGION_USER2, 0 ) /* eeprom */
+	ROM_REGION( 0x00080, REGION_USER2, 0 )		/* eeprom */
 	ROM_FILL( 0x0000, 0x0080, 0 )
 
-	ROM_REGION( 0x1800000, REGION_GFX1, 0 ) /* other roms, not sorted */
+	ROM_REGION( 0x1800000, REGION_GFX1, 0 )
 	ROM_LOAD32_WORD( "e35-05.009",  0x0800002, 0x200000, CRC(a94486c5) SHA1(c3f869aa0557411f747038a1e0ed6eedcf91fda5) )
 	ROM_LOAD32_WORD( "e35-13.022",  0x0800000, 0x200000, CRC(2dc9dff1) SHA1(bc7ad64bc359f18a065e36749cc29c75e52202e2) )
 	ROM_LOAD32_WORD( "e35-06.010",  0x0c00002, 0x200000, CRC(cf328021) SHA1(709ce80f9338637172dbf4e9adcacdb3e5b4ccdb) )
@@ -1401,7 +1507,7 @@ ROM_START( dendegx )
 	ROM_LOAD32_WORD( "e35-08.012",  0x1400002, 0x200000, CRC(99425ff6) SHA1(3bd6fe7204dece55459392170b42d4c6a9d3ef5b) )
 	ROM_LOAD32_WORD( "e35-16.025",  0x1400000, 0x200000, CRC(161481b6) SHA1(cc3c2939ac8911c197e9930580d316066f345772) )
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 )		/* only accessible to the TMS */
 	ROM_LOAD( "e35-01.005",  0x0000000, 0x200000, CRC(bd1975cb) SHA1(a08c6f4a84f9d4c2a5aa67cc2045aedd4580b8dc) )
 	ROM_LOAD( "e35-02.006",  0x0200000, 0x200000, CRC(e5caa459) SHA1(c38d795b96fff193223cd3df9f51ebdc2971b719) )
 	ROM_LOAD( "e35-03.007",  0x0400000, 0x200000, CRC(86ea5bcf) SHA1(1cee7f677b786b2fa9f50e723decd08cd69fbdef) )
@@ -1411,7 +1517,7 @@ ROM_START( dendegx )
 	ROM_LOAD( "e35-11.020",  0x0c00000, 0x200000, CRC(dc8f5e88) SHA1(e311252db8a7232a5325a3eff5c1890d20bd3f8f) )
 	ROM_LOAD( "e35-12.021",  0x0e00000, 0x200000, CRC(039b604c) SHA1(7e394e7cddc6bf42f3834d5331203e8496597a90) )
 
-	ROM_REGION( 0x40000, REGION_USER3, 0 )
+	ROM_REGION( 0x40000, REGION_USER3, 0 )		/* train board, OKI6295 sound samples */
 	ROM_LOAD( "e35-28.trn",  0x000000, 0x040000, CRC(d1b571c1) SHA1(cac7d3f0285544fe36b8b744edfbac0190cdecab) )
 
 	ROM_REGION16_BE( 0x1000000, REGION_SOUND1, ROMREGION_ERASE00  )
@@ -1422,23 +1528,23 @@ ROM_START( dendegx )
 ROM_END
 
 ROM_START( dendeg2 )
-	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68040 code */
+	ROM_REGION(0x200000, REGION_CPU1, 0)		/* 68040 code */
  	ROM_LOAD32_BYTE( "e52-25-1.036", 0x000000, 0x80000, CRC(fadf5b4c) SHA1(48f3e1425bb9552d472a2720e1c9a752db2b43ed) )
 	ROM_LOAD32_BYTE( "e52-26-1.037", 0x000001, 0x80000, CRC(7cf5230d) SHA1(b3416886d7cfc88520f6bf378529086bf0095db5) )
 	ROM_LOAD32_BYTE( "e52-27-1.038", 0x000002, 0x80000, CRC(25f0d81d) SHA1(c33c3e6b1ad49b63b31a2f1227d43141faef4eab) )
 	ROM_LOAD32_BYTE( "e52-28-1.039", 0x000003, 0x80000, CRC(e76ff6a1) SHA1(674c00f19df034de8134d48a8c2d2e42f7eb1be7) )
 
-	ROM_REGION( 0x180000, REGION_CPU2, 0 ) /* 68000 Code? */
+	ROM_REGION( 0x180000, REGION_CPU2, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "e52-29.030",  0x100001, 0x040000, CRC(6010162a) SHA1(f14920b26887f5387b3e261b63573d850195982a) )
 	ROM_LOAD16_BYTE( "e52-30.031",  0x100000, 0x040000, CRC(2881af4a) SHA1(5918f6508b3cd3bef3751e3bda2a48152569c1cd) )
 
-	ROM_REGION( 0x010000, REGION_USER1, 0 ) /* MC68HC11M0 related? */
+	ROM_REGION( 0x010000, REGION_USER1, 0 )		/* MC68HC11M0 code */
 	ROM_LOAD( "e17-23.065",  0x000000, 0x010000, CRC(80ac1428) SHA1(5a2a1e60a11ecdb8743c20ddacfb61f9fd00f01c) )
 
-	ROM_REGION( 0x00080, REGION_USER2, 0 ) /* eeprom */
+	ROM_REGION( 0x00080, REGION_USER2, 0 )		/* eeprom */
 	ROM_FILL( 0x0000, 0x0080, 0 )
 
-	ROM_REGION( 0x1800000, REGION_GFX1, 0 ) /* other roms, not sorted */
+	ROM_REGION( 0x1800000, REGION_GFX1, 0 )
 	ROM_LOAD32_WORD_SWAP( "e52-17.052",  0x0000002, 0x200000, CRC(4ac11921) SHA1(c4816e1d68bb52ee59e7a2e6de617c1093020944) )
 	ROM_LOAD32_WORD_SWAP( "e52-18.053",  0x0000000, 0x200000, CRC(7f3e4af7) SHA1(ab35744014175a802e73c8b70de4e7508f0a1cd1) )
 	ROM_LOAD32_WORD_SWAP( "e52-19.054",  0x0400002, 0x200000, CRC(2e5ff408) SHA1(91f95721b98198082e950c50f33324820719e9ed) )
@@ -1452,7 +1558,7 @@ ROM_START( dendeg2 )
 	ROM_LOAD32_WORD( "e52-08.012",  0x1400002, 0x200000, CRC(d52e6b9c) SHA1(382a5fd4533ab641a09321208464d83f72e161e3) )
 	ROM_LOAD32_WORD( "e52-16.025",  0x1400000, 0x200000, CRC(db6dd6e2) SHA1(d345dbd745514d4777d52c4360787ea8c462ffb1) )
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 )		/* only accessible to the TMS */
 	ROM_LOAD( "e52-01.005",  0x0000000, 0x200000, CRC(8db39c3c) SHA1(74b3305ebdf679ae274c73b7b32d2adea602bedc) )
 	ROM_LOAD( "e52-02.006",  0x0200000, 0x200000, CRC(b8d6f066) SHA1(99553ad66643ebf7fc71a9aee526d8f206b41dcc) )
 	ROM_LOAD( "e52-03.007",  0x0400000, 0x200000, CRC(a37d164b) SHA1(767a7d2de8b91a00c5fe74710937457e8568a422) )
@@ -1462,7 +1568,7 @@ ROM_START( dendeg2 )
 	ROM_LOAD( "e52-11.020",  0x0c00000, 0x200000, CRC(1bc22680) SHA1(1f71db88d6df3b4bdf090b77bc83a67906bb31da) )
 	ROM_LOAD( "e52-12.021",  0x0e00000, 0x200000, CRC(a8bb91c5) SHA1(959a9fedb7839e1e4e7658d920bd5da4fd8cae48) )
 
-	ROM_REGION( 0x40000, REGION_USER3, 0 )
+	ROM_REGION( 0x40000, REGION_USER3, 0 )		/* train board, OKI6295 sound samples */
 	ROM_LOAD( "e35-28.trn",  0x000000, 0x040000, CRC(d1b571c1) SHA1(cac7d3f0285544fe36b8b744edfbac0190cdecab) )
 
 	ROM_REGION16_BE( 0x1000000, REGION_SOUND1, ROMREGION_ERASE00  )
@@ -1473,23 +1579,23 @@ ROM_START( dendeg2 )
 ROM_END
 
 ROM_START( dendeg2x )
-	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68040 code */
+	ROM_REGION(0x200000, REGION_CPU1, 0)		/* 68040 code */
  	ROM_LOAD32_BYTE( "e52-35.036", 0x000000, 0x80000, CRC(d5b33eb8) SHA1(e05ad73986741827b7bbeac72af0a8324384bf6b) ) //2ex
 	ROM_LOAD32_BYTE( "e52-36.037", 0x000001, 0x80000, CRC(f3f3fabd) SHA1(4f88080091af2208d671c491284d992b5036908c) ) //2ex
 	ROM_LOAD32_BYTE( "e52-37.038", 0x000002, 0x80000, CRC(65b8ef31) SHA1(b61b391b160e81715ff355aeef65026d7e4dd9af) ) //2ex
 	ROM_LOAD32_BYTE( "e52-38.039", 0x000003, 0x80000, CRC(cf61f321) SHA1(c8493d2499afba673174b26044aca537e384916c) ) //2ex
 
-	ROM_REGION( 0x180000, REGION_CPU2, 0 ) /* 68000 Code? */
+	ROM_REGION( 0x180000, REGION_CPU2, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "e52-29.030",  0x100001, 0x040000, CRC(6010162a) SHA1(f14920b26887f5387b3e261b63573d850195982a) )
 	ROM_LOAD16_BYTE( "e52-30.031",  0x100000, 0x040000, CRC(2881af4a) SHA1(5918f6508b3cd3bef3751e3bda2a48152569c1cd) )
 
-	ROM_REGION( 0x010000, REGION_USER1, 0 ) /* MC68HC11M0 related? */
+	ROM_REGION( 0x010000, REGION_USER1, 0 )		/* MC68HC11M0 code */
 	ROM_LOAD( "e17-23.065",  0x000000, 0x010000, CRC(80ac1428) SHA1(5a2a1e60a11ecdb8743c20ddacfb61f9fd00f01c) )
 
-	ROM_REGION( 0x00080, REGION_USER2, 0 ) /* eeprom */
+	ROM_REGION( 0x00080, REGION_USER2, 0 )		/* eeprom */
 	ROM_FILL( 0x0000, 0x0080, 0 )
 
-	ROM_REGION( 0x1800000, REGION_GFX1, 0 ) /* other roms, not sorted */
+	ROM_REGION( 0x1800000, REGION_GFX1, 0 )
 	ROM_LOAD32_WORD( "e52-17.052",  0x0000002, 0x200000, CRC(4ac11921) SHA1(c4816e1d68bb52ee59e7a2e6de617c1093020944) )
 	ROM_LOAD32_WORD( "e52-18.053",  0x0000000, 0x200000, CRC(7f3e4af7) SHA1(ab35744014175a802e73c8b70de4e7508f0a1cd1) )
 	ROM_LOAD32_WORD( "e52-19.054",  0x0400002, 0x200000, CRC(2e5ff408) SHA1(91f95721b98198082e950c50f33324820719e9ed) )
@@ -1503,7 +1609,7 @@ ROM_START( dendeg2x )
 	ROM_LOAD32_WORD( "e52-08.012",  0x1400002, 0x200000, CRC(d52e6b9c) SHA1(382a5fd4533ab641a09321208464d83f72e161e3) )
 	ROM_LOAD32_WORD( "e52-16.025",  0x1400000, 0x200000, CRC(db6dd6e2) SHA1(d345dbd745514d4777d52c4360787ea8c462ffb1) )
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 )		/* only accessible to the TMS */
 	ROM_LOAD( "e52-01.005",  0x0000000, 0x200000, CRC(8db39c3c) SHA1(74b3305ebdf679ae274c73b7b32d2adea602bedc) )
 	ROM_LOAD( "e52-02.006",  0x0200000, 0x200000, CRC(b8d6f066) SHA1(99553ad66643ebf7fc71a9aee526d8f206b41dcc) )
 	ROM_LOAD( "e52-03.007",  0x0400000, 0x200000, CRC(a37d164b) SHA1(767a7d2de8b91a00c5fe74710937457e8568a422) )
@@ -1513,7 +1619,7 @@ ROM_START( dendeg2x )
 	ROM_LOAD( "e52-11.020",  0x0c00000, 0x200000, CRC(1bc22680) SHA1(1f71db88d6df3b4bdf090b77bc83a67906bb31da) )
 	ROM_LOAD( "e52-12.021",  0x0e00000, 0x200000, CRC(a8bb91c5) SHA1(959a9fedb7839e1e4e7658d920bd5da4fd8cae48) )
 
-	ROM_REGION( 0x40000, REGION_USER3, 0 )
+	ROM_REGION( 0x40000, REGION_USER3, 0 )		/* train board, OKI6295 sound samples */
 	ROM_LOAD( "e35-28.trn",  0x000000, 0x040000, CRC(d1b571c1) SHA1(cac7d3f0285544fe36b8b744edfbac0190cdecab) )
 
 	ROM_REGION16_BE( 0x1000000, REGION_SOUND1, ROMREGION_ERASE00  )
@@ -1524,23 +1630,23 @@ ROM_START( dendeg2x )
 ROM_END
 
 ROM_START( landgear )
-	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68040 code */
+	ROM_REGION(0x200000, REGION_CPU1, 0)		/* 68040 code */
  	ROM_LOAD32_BYTE( "e17-37.36", 0x000000, 0x80000, CRC(e6dda113) SHA1(786cbfae420b6ee820a93731e59da3442245b6b8) )
 	ROM_LOAD32_BYTE( "e17-38.37", 0x000001, 0x80000, CRC(86fa29bd) SHA1(f711528143c042cdc4a26d9e6965a882a73f397c) )
 	ROM_LOAD32_BYTE( "e17-39.38", 0x000002, 0x80000, CRC(ccbbcc7b) SHA1(52d91fcaa1683d2679ed4f14ebc11dc487527898) )
 	ROM_LOAD32_BYTE( "e17-40.39", 0x000003, 0x80000, CRC(ce9231d2) SHA1(d2c3955d910dbd0cac95862047c58791af626722) )
 
-	ROM_REGION( 0x180000, REGION_CPU2, 0 ) /* 68000 Code? */
+	ROM_REGION( 0x180000, REGION_CPU2, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "e17-21.30",  0x100001, 0x040000, CRC(8b54f46c) SHA1(c6d16197ab7768945becf9b49b6d286113b4d1cc) )
 	ROM_LOAD16_BYTE( "e17-22.31",  0x100000, 0x040000, CRC(b96f6cd7) SHA1(0bf086e5dc6d524cd00e33df3e3d2a8b9231eb72) )
 
-	ROM_REGION( 0x010000, REGION_USER1, 0 ) /* MC68HC11M0 related? */
+	ROM_REGION( 0x010000, REGION_USER1, 0 )		/* MC68HC11M0 code */
 	ROM_LOAD( "e17-23.065",  0x000000, 0x010000, CRC(80ac1428) SHA1(5a2a1e60a11ecdb8743c20ddacfb61f9fd00f01c) )
 
-	ROM_REGION( 0x00080, REGION_USER2, 0 ) /* eeprom */
+	ROM_REGION( 0x00080, REGION_USER2, 0 )		/* eeprom */
 	ROM_FILL( 0x0000, 0x0080, 0 )
 
-	ROM_REGION( 0x1800000, REGION_GFX1, 0 ) /* other roms, not sorted */
+	ROM_REGION( 0x1800000, REGION_GFX1, 0 )
 	ROM_LOAD32_WORD( "e17-03.9",   0x0800002, 0x200000, CRC(64820c4f) SHA1(ee18e4e2b01ec21c33ec1f0eb43f6d0cd48d7225) )
 	ROM_LOAD32_WORD( "e17-09.22",  0x0800000, 0x200000, CRC(19e9a1d1) SHA1(26f1a91e3757da510d685a11add08e3e00317796) )
 	ROM_LOAD32_WORD( "e17-04.10",  0x0c00002, 0x200000, CRC(7dc2cae3) SHA1(90638a1efc353428ce4155ca29f67accaf0499cd) )
@@ -1550,7 +1656,7 @@ ROM_START( landgear )
 	ROM_LOAD32_WORD( "e17-06.12",  0x1400002, 0x200000, CRC(107ff481) SHA1(2a48cedec9641ff08776e5d8b1bf1f5b250d4179) )
 	ROM_LOAD32_WORD( "e17-12.25",  0x1400000, 0x200000, CRC(0727ddfa) SHA1(68bf83a3c46cd042a7ad27a530c8bed6360d8492) )
 
-	ROM_REGION( 0x1000000, REGION_GFX2, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX2, 0 )		/* only accessible to the TMS */
 	ROM_LOAD( "e17-01.5",   0x0000000, 0x200000, CRC(42aa56a6) SHA1(945c338515ceb946c01480919546869bb8c3d323) )
 	ROM_LOAD( "e17-02.8",   0x0600000, 0x200000, CRC(df7e2405) SHA1(684d6fc398791c48101e6cb63acbf0d691ed863c) )
 	ROM_LOAD( "e17-07.18",  0x0800000, 0x200000, CRC(0f180eb0) SHA1(5e1dd920f110a62a029bace6f4cb80fee0fdaf03) )
@@ -1581,10 +1687,10 @@ ROM_END
 
 
 
-GAME( 1997, dendeg,   0,       taitojc, dendeg,   dendeg,   ROT0, "Taito", "Densya De Go", GAME_NOT_WORKING )
-GAME( 1997, dendegx,  dendeg,  taitojc, dendeg,   dendegx,  ROT0, "Taito", "Densya De Go Ex", GAME_NOT_WORKING )
+GAME( 1996, dendeg,   0,       taitojc, dendeg,   dendeg,   ROT0, "Taito", "Densya De Go", GAME_NOT_WORKING )
+GAME( 1996, dendegx,  dendeg,  taitojc, dendeg,   dendegx,  ROT0, "Taito", "Densya De Go Ex", GAME_NOT_WORKING )
 GAME( 1998, dendeg2,  0,       taitojc, dendeg,   dendeg2,  ROT0, "Taito", "Densya De Go 2", GAME_NOT_WORKING )
 GAME( 1998, dendeg2x, dendeg2, taitojc, dendeg,   dendeg2x, ROT0, "Taito", "Densya De Go 2 Ex", GAME_NOT_WORKING )
 GAME( 1996, sidebs,   0,       taitojc, sidebs,   sidebs,   ROT0, "Taito", "Side By Side", GAME_NOT_WORKING )
-GAME( 1997, sidebs2,  0,       taitojc, sidebs,   sidebs2,  ROT0, "Taito", "Side By Side 2", GAME_NOT_WORKING )
+GAME( 1997, sidebs2,  0,       taitojc, sidebs,   sidebs2,  ROT0, "Taito", "Side By Side 2", GAME_IMPERFECT_GRAPHICS )
 GAME( 1995, landgear, 0,       taitojc, landgear, landgear, ROT0, "Taito", "Landing Gear", GAME_NOT_WORKING )

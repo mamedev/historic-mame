@@ -47,6 +47,9 @@ typedef struct
 	UINT16 ppc;
 	UINT8 ccr;
 
+	UINT8 adctl;
+	int ad_channel;
+
 	int (*irq_callback)(int irqline);
 	int icount;
 	int ram_position;
@@ -62,8 +65,6 @@ static int internal_ram_size;
 /*****************************************************************************/
 /* Internal registers */
 
-static UINT8 spi_data2;
-
 static UINT8 hc11_regs_r(UINT32 address)
 {
 	int reg = address & 0xff;
@@ -71,7 +72,7 @@ static UINT8 hc11_regs_r(UINT32 address)
 	switch(reg)
 	{
 		case 0x00:		/* PORTA */
-			return 0;
+			return io_read_byte(MC68HC11_IO_PORTA);
 		case 0x01:		/* DDRA */
 			return 0;
 		case 0x09:		/* DDRD */
@@ -81,13 +82,53 @@ static UINT8 hc11_regs_r(UINT32 address)
 		case 0x30:		/* ADCTL */
 			return 0x80;
 		case 0x31:		/* ADR1 */
-			return 0;
+		{
+			if (hc11.adctl & 0x10)
+			{
+				return io_read_byte((hc11.adctl & 0x4) + MC68HC11_IO_AD0);
+			}
+			else
+			{
+				return io_read_byte((hc11.adctl & 0x7) + MC68HC11_IO_AD0);
+			}
+			break;
+		}
 		case 0x32:		/* ADR2 */
-			return 0;
+		{
+			if (hc11.adctl & 0x10)
+			{
+				return io_read_byte((hc11.adctl & 0x4) + MC68HC11_IO_AD1);
+			}
+			else
+			{
+				return io_read_byte((hc11.adctl & 0x7) + MC68HC11_IO_AD0);
+			}
+			break;
+		}
 		case 0x33:		/* ADR3 */
-			return 0;
+		{
+			if (hc11.adctl & 0x10)
+			{
+				return io_read_byte((hc11.adctl & 0x4) + MC68HC11_IO_AD2);
+			}
+			else
+			{
+				return io_read_byte((hc11.adctl & 0x7) + MC68HC11_IO_AD0);
+			}
+			break;
+		}
 		case 0x34:		/* ADR4 */
-			return 0;
+		{
+			if (hc11.adctl & 0x10)
+			{
+				return io_read_byte((hc11.adctl & 0x4) + MC68HC11_IO_AD3);
+			}
+			else
+			{
+				return io_read_byte((hc11.adctl & 0x7) + MC68HC11_IO_AD0);
+			}
+			break;
+		}
 		case 0x38:		/* OPT2 */
 			return 0;
 		case 0x70:		/* SCBDH */
@@ -98,10 +139,12 @@ static UINT8 hc11_regs_r(UINT32 address)
 			return 0;
 		case 0x73:		/* SCCR2 */
 			return 0;
+		case 0x74:		/* SCSR1 */
+			return 0x40;
 		case 0x7c:		/* PORTH */
-			return 0;
+			return io_read_byte(MC68HC11_IO_PORTH);
 		case 0x7e:		/* PORTG */
-			return 0;
+			return io_read_byte(MC68HC11_IO_PORTG);
 		case 0x7f:		/* DDRG */
 			return 0;
 
@@ -110,7 +153,7 @@ static UINT8 hc11_regs_r(UINT32 address)
 		case 0x89:		/* SPSR2 */
 			return 0x80;
 		case 0x8a:		/* SPDR2 */
-			return spi_data2;
+			return io_read_byte(MC68HC11_IO_SPI2_DATA);
 
 		case 0x8b:		/* OPT4 */
 			return 0;
@@ -127,13 +170,13 @@ static void hc11_regs_w(UINT32 address, UINT8 value)
 	switch(reg)
 	{
 		case 0x00:		/* PORTA */
-			//mame_printf_debug("HC11: porta = %02X\n", value);
+			io_write_byte(MC68HC11_IO_PORTA, value);
 			return;
 		case 0x01:		/* DDRA */
 			//mame_printf_debug("HC11: ddra = %02X\n", value);
 			return;
 		case 0x08:		/* PORTD */
-			//mame_printf_debug("HC11: portd = %02X\n", value);
+			io_write_byte(MC68HC11_IO_PORTD, value);
 			return;
 		case 0x09:		/* DDRD */
 			//mame_printf_debug("HC11: ddrd = %02X\n", value);
@@ -145,6 +188,7 @@ static void hc11_regs_w(UINT32 address, UINT8 value)
 		case 0x28:		/* SPCR1 */
 			return;
 		case 0x30:		/* ADCTL */
+			hc11.adctl = value;
 			return;
 		case 0x38:		/* OPT2 */
 			return;
@@ -177,17 +221,19 @@ static void hc11_regs_w(UINT32 address, UINT8 value)
 			return;
 		case 0x73:		/* SCCR2 */
 			return;
+		case 0x77:		/* SCDRL */
+			return;
 		case 0x7c:		/* PORTH */
-			//mame_printf_debug("HC11: porth = %02X\n", value);
+			io_write_byte(MC68HC11_IO_PORTH, value);
 			return;
 		case 0x7d:		/* DDRH */
-			//mame_printf_debug("HC11: ddrh = %02X\n", value);
+			//mame_printf_debug("HC11: ddrh = %02X at %04X\n", value, hc11.pc);
 			return;
 		case 0x7e:		/* PORTG */
-			//mame_printf_debug("HC11: portg = %02X\n", value);
+			io_write_byte(MC68HC11_IO_PORTG, value);
 			return;
 		case 0x7f:		/* DDRG */
-			//mame_printf_debug("HC11: ddrg = %02X\n", value);
+			//mame_printf_debug("HC11: ddrg = %02X at %04X\n", value, hc11.pc);
 			return;
 
 		case 0x88:		/* SPCR2 */
@@ -195,8 +241,7 @@ static void hc11_regs_w(UINT32 address, UINT8 value)
 		case 0x89:		/* SPSR2 */
 			return;
 		case 0x8a:		/* SPDR2 */
-			spi_data2 = value;
-			//mame_printf_debug("HC11: SPI data 2 = %02X\n", value);
+			io_write_byte(MC68HC11_IO_SPI2_DATA, value);
 			return;
 
 		case 0x8b:		/* OPT4 */
@@ -390,8 +435,8 @@ void mc68hc11_get_info(UINT32 state, cpuinfo *info)
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
 		case CPUINFO_INT_INPUT_STATE:					info->i = CLEAR_LINE;					break;

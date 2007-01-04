@@ -4,7 +4,7 @@
 
     Save state management functions.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ****************************************************************************
@@ -653,7 +653,7 @@ static UINT32 get_signature(void)
 		UINT32 temp[2];
 
 		/* add the entry name to the CRC */
-		crc = crc32(crc, (UINT8 *)entry->name, strlen(entry->name));
+		crc = crc32(crc, (UINT8 *)entry->name, (UINT32)strlen(entry->name));
 
 		/* add the type and size to the CRC */
 		temp[0] = LITTLE_ENDIANIZE_INT32(entry->typecount);

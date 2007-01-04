@@ -31,6 +31,9 @@
 # path in order to make this work
 # WIN95_MULTIMON = 1
 
+# uncomment next line to enable a Unicode build
+# UNICODE = 1
+
 
 
 ###########################################################################
@@ -178,8 +181,10 @@ OSOBJS = \
 	$(OBJ)/$(MAMEOS)/fileio.o \
 	$(OBJ)/$(MAMEOS)/fronthlp.o \
 	$(OBJ)/$(MAMEOS)/input.o \
+	$(OBJ)/$(MAMEOS)/main.o \
 	$(OBJ)/$(MAMEOS)/output.o \
 	$(OBJ)/$(MAMEOS)/sound.o \
+	$(OBJ)/$(MAMEOS)/strconv.o \
 	$(OBJ)/$(MAMEOS)/ticker.o \
 	$(OBJ)/$(MAMEOS)/video.o \
 	$(OBJ)/$(MAMEOS)/window.o \
@@ -191,7 +196,9 @@ $(OBJ)/$(MAMEOS)/drawgdi.o : rendersw.c
 
 
 OSTOOLOBJS = \
-	$(OBJ)/$(MAMEOS)/osd_tool.o
+	$(OBJ)/$(MAMEOS)/main.o	\
+	$(OBJ)/$(MAMEOS)/osd_tool.o	\
+	$(OBJ)/$(MAMEOS)/strconv.o	\
 
 # add debug-specific files
 ifdef DEBUG
@@ -222,6 +229,10 @@ ifdef DEBUG
 DEFS += -DMALLOC_DEBUG
 OSDBGOBJS += $(OBJ)/$(MAMEOS)/winalloc.o
 OSDBGLDFLAGS += -Wl,--allow-multiple-definition
+endif
+
+ifdef UNICODE
+DEFS += -DUNICODE -D_UNICODE
 endif
 
 

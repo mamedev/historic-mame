@@ -4,6 +4,39 @@ Tropical Angel
 
 driver by Phil Stroffolino
 
+IREM M57 board stack with a M52-SOUND-E sound PCB.
+
+M57-A-A:
+ TA-A-xx roms and proms
+ NEC D780C (Z80) CPU
+ NANAO KNA6032601 custom chip
+ NANAO KNA6032701 custom chip
+ 8-way dipswitch (x2)
+ M58725P RAM (x3)
+ CN1 - Ribbon cable connector
+ CN2 - Ribbon cable connector
+ Ribbon cable connector to sound PCB
+
+M57-B-A:
+ TA-B-xx roms and proms
+ 18.432 MHz OSC
+ CN1 - Ribbon cable connector
+ CN2 - Ribbon cable connector
+
+M52:
+ HD6803 CPU
+ AY-3-9810 (x2) sound chips
+ MSM5205 OKI sound chip (and an unpopulated socket for a second MSM5202)
+ 3.579545 MHz OSC
+ 2764 Program rom labeled "TA S-1A-"
+ Ribbon cable connector to M57-A-A PCB
+
+New Tropical Angel:
+ Roms where found on an official IREM board with genuine IREM Tropical Angel
+ license seal and genuine IREM serial number sticker.
+ The "new" roms have hand written labels, while those that match the current
+ Tropical Angel set look to be factory labeled chips.
+
 ****************************************************************************/
 #include "driver.h"
 #include "sndhrdw/irem.h"
@@ -199,34 +232,65 @@ MACHINE_DRIVER_END
 
 ROM_START( troangel )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* main CPU */
-	ROM_LOAD( "ta-a-3k",	0x0000, 0x2000, CRC(f21f8196) SHA1(7cbf74b77a559ee70312b799e707394d9b849f5b) )
-	ROM_LOAD( "ta-a-3m",	0x2000, 0x2000, CRC(58801e55) SHA1(91bdda778f2c4486001bc4ad26d6f21ba275ae08) )
-	ROM_LOAD( "ta-a-3n",	0x4000, 0x2000, CRC(de3dea44) SHA1(1290755ffc04dc3b3667e063118669a0eab6fb79) )
-	ROM_LOAD( "ta-a-3q",	0x6000, 0x2000, CRC(fff0fc2a) SHA1(82f3f5a8817e956192323eb555daa85b7766676d) )
+	ROM_LOAD( "ta-a-3k", 0x0000, 0x2000, CRC(f21f8196) SHA1(7cbf74b77a559ee70312b799e707394d9b849f5b) )
+	ROM_LOAD( "ta-a-3m", 0x2000, 0x2000, CRC(58801e55) SHA1(91bdda778f2c4486001bc4ad26d6f21ba275ae08) )
+	ROM_LOAD( "ta-a-3n", 0x4000, 0x2000, CRC(de3dea44) SHA1(1290755ffc04dc3b3667e063118669a0eab6fb79) )
+	ROM_LOAD( "ta-a-3q", 0x6000, 0x2000, CRC(fff0fc2a) SHA1(82f3f5a8817e956192323eb555daa85b7766676d) )
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 )	/* sound CPU */
-	ROM_LOAD( "ta-s-1a",	0xe000, 0x2000, CRC(15a83210) SHA1(8ada510db689ffa372b2f4dc4bd1b1c69a0c5307) )
+	ROM_LOAD( "ta-s-1a", 0xe000, 0x2000, CRC(15a83210) SHA1(8ada510db689ffa372b2f4dc4bd1b1c69a0c5307) )
 
 	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ta-a-3c",	0x00000, 0x2000, CRC(7ff5482f) SHA1(fe8c181fed113007d69d11e8aa467e86a6357ffb) )	/* characters */
-	ROM_LOAD( "ta-a-3d",	0x02000, 0x2000, CRC(06eef241) SHA1(4f327a54169046d8d84b5f5cf5d9f45e1df4dae6) )
-	ROM_LOAD( "ta-a-3e",	0x04000, 0x2000, CRC(e49f7ad8) SHA1(915de1084fd3c5fc81dd8c80107c28cc57b33226) )
+	ROM_LOAD( "ta-a-3c", 0x00000, 0x2000, CRC(7ff5482f) SHA1(fe8c181fed113007d69d11e8aa467e86a6357ffb) )	/* characters */
+	ROM_LOAD( "ta-a-3d", 0x02000, 0x2000, CRC(06eef241) SHA1(4f327a54169046d8d84b5f5cf5d9f45e1df4dae6) )
+	ROM_LOAD( "ta-a-3e", 0x04000, 0x2000, CRC(e49f7ad8) SHA1(915de1084fd3c5fc81dd8c80107c28cc57b33226) )
 
 	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ta-b-5j",	0x00000, 0x2000, CRC(86895c0c) SHA1(b42b041e3e20dadd8411805d492133d371426ebf) )	/* sprites */
-	ROM_LOAD( "ta-b-5h",	0x02000, 0x2000, CRC(f8cff29d) SHA1(dabf3bbf50f73a381056131c2239c84dd966b63e) )
-	ROM_LOAD( "ta-b-5e",	0x04000, 0x2000, CRC(8b21ee9a) SHA1(1272722211d22d5b153e9415cc189a5aa9028543) )
-	ROM_LOAD( "ta-b-5d",	0x06000, 0x2000, CRC(cd473d47) SHA1(854cb532bd62851a206da2affd66a1257b7085b6) )
-	ROM_LOAD( "ta-b-5c",	0x08000, 0x2000, CRC(c19134c9) SHA1(028660e66fd033473c468b694e870c633ca05ec6) )
-	ROM_LOAD( "ta-b-5a",	0x0a000, 0x2000, CRC(0012792a) SHA1(b4380f5fbe5e9ce9b44f87ce48a8b402bab58b52) )
+	ROM_LOAD( "ta-b-5j", 0x00000, 0x2000, CRC(86895c0c) SHA1(b42b041e3e20dadd8411805d492133d371426ebf) )	/* sprites */
+	ROM_LOAD( "ta-b-5h", 0x02000, 0x2000, CRC(f8cff29d) SHA1(dabf3bbf50f73a381056131c2239c84dd966b63e) )
+	ROM_LOAD( "ta-b-5e", 0x04000, 0x2000, CRC(8b21ee9a) SHA1(1272722211d22d5b153e9415cc189a5aa9028543) )
+	ROM_LOAD( "ta-b-5d", 0x06000, 0x2000, CRC(cd473d47) SHA1(854cb532bd62851a206da2affd66a1257b7085b6) )
+	ROM_LOAD( "ta-b-5c", 0x08000, 0x2000, CRC(c19134c9) SHA1(028660e66fd033473c468b694e870c633ca05ec6) )
+	ROM_LOAD( "ta-b-5a", 0x0a000, 0x2000, CRC(0012792a) SHA1(b4380f5fbe5e9ce9b44f87ce48a8b402bab58b52) )
 
 	ROM_REGION( 0x0320, REGION_PROMS, 0 )
-	ROM_LOAD( "ta-a-5a",	0x0000,	0x0100, CRC(01de1167) SHA1(b9070f8c70eb362fc4d6a0a92235ce0a5b2ab858) ) /* chars palette low 4 bits */
-	ROM_LOAD( "ta-a-5b",	0x0100,	0x0100, CRC(efd11d4b) SHA1(7c7c356063ab35e4ffb8d65cd20c27c2a4b36537) ) /* chars palette high 4 bits */
-	ROM_LOAD( "ta-b-1b",	0x0200, 0x0020, CRC(f94911ea) SHA1(ad61a323476a97156a255a72048a28477b421284) ) /* sprites palette */
-	ROM_LOAD( "ta-b-3d",	0x0220,	0x0100, CRC(ed3e2aa4) SHA1(cfdfc151803080d1ecdd04af1bfea3dbdce8dca0) ) /* sprites lookup table */
+	ROM_LOAD( "ta-a-5a", 0x0000, 0x0100, CRC(01de1167) SHA1(b9070f8c70eb362fc4d6a0a92235ce0a5b2ab858) ) /* chars palette low 4 bits */
+	ROM_LOAD( "ta-a-5b", 0x0100, 0x0100, CRC(efd11d4b) SHA1(7c7c356063ab35e4ffb8d65cd20c27c2a4b36537) ) /* chars palette high 4 bits */
+	ROM_LOAD( "ta-b-1b", 0x0200, 0x0020, CRC(f94911ea) SHA1(ad61a323476a97156a255a72048a28477b421284) ) /* sprites palette */
+	ROM_LOAD( "ta-b-3d", 0x0220, 0x0100, CRC(ed3e2aa4) SHA1(cfdfc151803080d1ecdd04af1bfea3dbdce8dca0) ) /* sprites lookup table */
+ROM_END
+
+ROM_START( newtangl ) /* Offical "upgrade" or hack? */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* main CPU */
+	ROM_LOAD( "3k",	0x0000, 0x2000, CRC(3c6299a8) SHA1(a21a8452b75ce6174076878128d4f20b39b6d69d) )
+	ROM_LOAD( "3m",	0x2000, 0x2000, CRC(8d09056c) SHA1(4d2585103cc6e6c04015501d3c9e1578a8f9c0f5) )
+	ROM_LOAD( "3n",	0x4000, 0x2000, CRC(17b5a775) SHA1(d85c3371080bea82f19ac96fa0f1b332e1c86e27) )
+	ROM_LOAD( "3q",	0x6000, 0x2000, CRC(2e5fa773) SHA1(9a34fa43bde021fc7b00d8c3762c248e7b96dbf1) )
+
+	ROM_REGION(  0x10000 , REGION_CPU2, 0 )	/* sound CPU */
+	ROM_LOAD( "ta-s-1a-", 0xe000, 0x2000, CRC(ea8a05cb) SHA1(5683e4dca93066ee788287ab73a766fa303ebe84) )
+
+	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ta-a-3c", 0x00000, 0x2000, CRC(7ff5482f) SHA1(fe8c181fed113007d69d11e8aa467e86a6357ffb) )	/* characters */
+	ROM_LOAD( "ta-a-3d", 0x02000, 0x2000, CRC(06eef241) SHA1(4f327a54169046d8d84b5f5cf5d9f45e1df4dae6) )
+	ROM_LOAD( "ta-a-3e", 0x04000, 0x2000, CRC(e49f7ad8) SHA1(915de1084fd3c5fc81dd8c80107c28cc57b33226) )
+
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "5j",	     0x00000, 0x2000, CRC(89409130) SHA1(3f37f820b1b86166cde7c039d657ebd036d490dd) )	/* sprites */
+	ROM_LOAD( "ta-b-5h", 0x02000, 0x2000, CRC(f8cff29d) SHA1(dabf3bbf50f73a381056131c2239c84dd966b63e) )
+	ROM_LOAD( "5e",	     0x04000, 0x2000, CRC(5460a467) SHA1(505c1d9e69c39a74369da17f354b90486ee6afcd) )
+	ROM_LOAD( "ta-b-5d", 0x06000, 0x2000, CRC(cd473d47) SHA1(854cb532bd62851a206da2affd66a1257b7085b6) )
+	ROM_LOAD( "5c",	     0x08000, 0x2000, CRC(4a20637a) SHA1(74099cb7f1727c2de2f066497097f1a9eeec0cea) )
+	ROM_LOAD( "ta-b-5a", 0x0a000, 0x2000, CRC(0012792a) SHA1(b4380f5fbe5e9ce9b44f87ce48a8b402bab58b52) )
+
+	ROM_REGION( 0x0320, REGION_PROMS, 0 )
+	ROM_LOAD( "ta-a-5a", 0x0000, 0x0100, CRC(01de1167) SHA1(b9070f8c70eb362fc4d6a0a92235ce0a5b2ab858) ) /* chars palette low 4 bits */
+	ROM_LOAD( "ta-a-5b", 0x0100, 0x0100, CRC(efd11d4b) SHA1(7c7c356063ab35e4ffb8d65cd20c27c2a4b36537) ) /* chars palette high 4 bits */
+	ROM_LOAD( "ta-b-1b", 0x0200, 0x0020, CRC(f94911ea) SHA1(ad61a323476a97156a255a72048a28477b421284) ) /* sprites palette */
+	ROM_LOAD( "ta-b-3d", 0x0220, 0x0100, CRC(ed3e2aa4) SHA1(cfdfc151803080d1ecdd04af1bfea3dbdce8dca0) ) /* sprites lookup table */
 ROM_END
 
 
 
-GAME( 1983, troangel, 0, troangel, troangel, 0, ROT0, "Irem", "Tropical Angel", 0 )
+GAME( 1983, troangel,        0, troangel, troangel, 0, ROT0, "Irem", "Tropical Angel", 0 )
+GAME( 1983, newtangl, troangel, troangel, troangel, 0, ROT0, "Irem", "New Tropical Angel", 0 )

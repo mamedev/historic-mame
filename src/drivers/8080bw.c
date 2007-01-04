@@ -214,6 +214,7 @@ static MACHINE_DRIVER_START( invaders )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
 	MDRV_MACHINE_RESET(invaders)
+	MDRV_WATCHDOG_VBLANK_INIT(255)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
@@ -790,8 +791,11 @@ static MACHINE_DRIVER_START( invad2ct )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
 	MDRV_MACHINE_RESET(invad2ct)
+	MDRV_WATCHDOG_VBLANK_INIT(255)
 
 	/* sound hardware */
+	/* Both player sounds come out of separate speakers, but samples do not
+     * support multiple interfaces.  This will have to wait for proper discrete emulation. */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(SAMPLES, 0)

@@ -4,7 +4,7 @@
 
     Debugger CPU/memory interface engine.
 
-    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
 *********************************************************************/
@@ -1013,7 +1013,7 @@ static void process_source_file(void)
 			*s = '\0';
 
 		/* strip whitespace */
-		i = strlen(buf);
+		i = (int)strlen(buf);
 		while((i > 0) && (isspace(buf[i-1])))
 			buf[--i] = '\0';
 
