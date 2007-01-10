@@ -11,7 +11,7 @@
 #include "md5.h"
 #include "sha1.h"
 #include "cdrom.h"
-#include "osd_tool.h"
+#include "osdcore.h"
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
@@ -79,6 +79,23 @@ static char linebuffer[512];
 ***************************************************************************/
 
 /*-------------------------------------------------
+    get_file_size - get the size of a file
+-------------------------------------------------*/
+
+static UINT64 get_file_size(const char *filename)
+{
+	osd_file *file;
+	UINT64 filesize = 0;
+	mame_file_error filerr;
+
+	filerr = osd_open(filename, OPEN_FLAG_READ, &file, &filesize);
+	if (filerr == FILERR_NONE)
+		osd_close(file);
+	return filesize;
+}
+
+
+/*-------------------------------------------------
     cdrom_parse_toc - parse a CDRDAO format TOC file
 -------------------------------------------------*/
 
@@ -88,7 +105,7 @@ static void show_raw_message(void)
 	printf("At least one track of this CDRDAO rip is not either RAW or AUDIO.\n");
 }
 
-int cdrom_parse_toc(char *tocfname, cdrom_toc *outtoc, cdrom_track_input_info *outinfo)
+chd_error cdrom_parse_toc(const char *tocfname, cdrom_toc *outtoc, cdrom_track_input_info *outinfo)
 {
 	FILE *infile;
 	int i, j, k, trknum, m, s, f, foundcolon;
@@ -250,7 +267,7 @@ trycolonagain:
 
 					printf("Warning: Estimating length of track %d.  If this is not the final or only track\n on the disc, the estimate may be wrong.\n", trknum+1);
 
-					tlen = osd_get_file_size(outinfo->fname[trknum]);
+					tlen = get_file_size(outinfo->fname[trknum]);
 
 					tlen /= (outtoc->tracks[trknum].datasize + outtoc->tracks[trknum].subsize);
 

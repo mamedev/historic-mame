@@ -206,6 +206,8 @@ static const char *mame_default_text[] =
 	"Flip X",
 	"Flip Y",
 
+	"Driver Configuration",
+
 	NULL
 };
 

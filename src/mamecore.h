@@ -98,21 +98,6 @@ typedef struct _mame_file mame_file;
 typedef struct _chd_file chd_file;
 
 
-/* These values are returned as error codes by osd_open() */
-enum _mame_file_error
-{
-	FILERR_NONE,
-	FILERR_FAILURE,
-	FILERR_OUT_OF_MEMORY,
-	FILERR_NOT_FOUND,
-	FILERR_ACCESS_DENIED,
-	FILERR_ALREADY_OPEN,
-	FILERR_TOO_MANY_FILES,
-	FILERR_INVALID_DATA
-};
-typedef enum _mame_file_error mame_file_error;
-
-
 /* pen_t is used to represent pixel values in mame_bitmaps */
 typedef UINT32 pen_t;
 
@@ -155,7 +140,6 @@ struct _rectangle
 };
 
 
-
 /***************************************************************************
  * Union of UINT8, UINT16 and UINT32 in native endianess of the target
  * This is used to access bytes and words in a machine independent manner.
@@ -174,8 +158,6 @@ typedef union
 #endif
 	UINT32 d;
 } PAIR;
-
-
 
 
 /***************************************************************************

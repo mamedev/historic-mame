@@ -259,6 +259,7 @@ const game_driver * const drivers[] =
 	DRIVER( cavelon )	/* (c) 1983 Jetsoft */
 	DRIVER( sfx )		/* (c) 1983 Nichibutsu */
 	DRIVER( skelagon )	/* (c) 1983 Nichibutsu USA */
+	DRIVER( monsterz )	/* (c) 198? Nihon */
 	DRIVER( mimonscr )
 	DRIVER( mimonkey )
 	DRIVER( mimonsco )
@@ -1438,6 +1439,7 @@ const game_driver * const drivers[] =
 	DRIVER( kngtmare )	/* GV-??? (c) 1983 Gottlieb - never released */
 	DRIVER( sqbert )	/* GV-??? (c) 1983 Mylstar - never released */
 	DRIVER( mach3 )		/* GV-109 (c) 1983 Mylstar */
+	DRIVER( cobram3 )   /* ...... (c) 1984 Data East */
 	DRIVER( usvsthem )	/* GV-??? (c) 198? Mylstar */
 	DRIVER( 3stooges )	/* GV-113 (c) 1984 Mylstar */
 	DRIVER( qbertqub )	/* GV-119 (c) 1983 Mylstar */
@@ -2115,6 +2117,7 @@ V-V                           TP-027
 	DRIVER( uopokoj )	/* (c) 1998 Cave + Jaleco license */
 	DRIVER( guwange )	/* (c) 1999 Atlus/Cave */
 	DRIVER( gaia )		/* (c) 1999 Noise Factory */
+	DRIVER( theroes )	/* (c) 2001 Primetek Investments */
 	DRIVER( korokoro )	/* (c) 1999 Takumi */
 
 	/* Kyugo games */
@@ -3926,6 +3929,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( midres )	/* (c) 1989 Data East Corporation (World) */
 	DRIVER( midresu )	/* (c) 1989 Data East USA (US) */
 	DRIVER( midresj )	/* (c) 1989 Data East Corporation (Japan) */
+	DRIVER( midresb )	/* (c) 1989 Data East Corporation (Japan) */
 	DRIVER( bouldash )	/* (c) 1990 Data East Corporation (World) */
 	DRIVER( bouldshj )	/* (c) 1990 Data East Corporation (Japan) */
 		/* end of similar hardware */
@@ -3990,9 +3994,10 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( cookbib )	/* (c) 1995 SemiCom */
 	DRIVER( chokchok )	/* (c) 1995 SemiCom */
 	DRIVER( metlsavr )	/* (c) 1994 */
-	DRIVER( bcstry )	/* (c) 199? SemiCom */
-	DRIVER( bcstrya )	/* (c) 199? SemiCom */
-	DRIVER( semibase )	/* (c) 199? SemiCom */
+	DRIVER( bcstry )	/* (c) 1997 SemiCom */
+	DRIVER( bcstrya )	/* (c) 1997 SemiCom */
+	DRIVER( semibase )	/* (c) 1997 SemiCom */
+	DRIVER( semiquiz )	/* (c) 1998 SemiCom */
 	DRIVER( suprtrio )	/* (c) 1994 GameAce */
 	DRIVER( lemmings )	/* prototype (c) 1991 Data East USA (US) */
 				/* MAQ ?? */
@@ -6192,7 +6197,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( galpani2 )	/* (c) 1993 Kaneko */
 	DRIVER( galpan2g )	/* (c) 1993 Kaneko */
 	DRIVER( galpan2t )	/* (c) 1993 Kaneko */
-	DRIVER( gpan2qiz )	/* (c) 1993 Kaneko */
+	DRIVER( galpan2j )	/* (c) 1993 Kaneko */
+	DRIVER( gp2quiz )	/* (c) 1993 Kaneko */
+	DRIVER( gp2se )		/* (c) 1994 Kaneko */
 	DRIVER( jchan )		/* (c) 1995 Kaneko */
 	DRIVER( jchan2 )	/* (c) 1995 Kaneko */
 	DRIVER( galpani3 )	/* (c) 1995 Kaneko */
@@ -6530,6 +6537,7 @@ Other Sun games
 	DRIVER( skyalert )	/* (c) 1992 */
 	DRIVER( poitto )	/* (c) 1993 Metro / Able Corp. */
 	DRIVER( dharma )	/* (c) 1994 */
+	DRIVER( dharmak )	/* (c) 1994 */
 	DRIVER( lastfort )	/* (c) 1994 */
 	DRIVER( lastfero )	/* (c) 1994 */
 	DRIVER( lastforg )	/* (c) 1994 */

@@ -163,13 +163,6 @@ int utf8_main(int argc, char **argv)
 	// close errorlog, input and playback
 	cli_frontend_exit();
 
-#ifdef MALLOC_DEBUG
-	{
-		void check_unfreed_mem(void);
-		check_unfreed_mem();
-	}
-#endif
-
 	return res;
 }
 
@@ -185,8 +178,11 @@ static void output_oslog(running_machine *machine, const char *buffer)
 	if (win_erroroslog)
 	{
 		TCHAR *t_buffer = tstring_from_utf8(buffer);
-		OutputDebugString(t_buffer);
-		free(t_buffer);
+		if (t_buffer != NULL)
+		{
+			OutputDebugString(t_buffer);
+			free(t_buffer);
+		}
 	}
 }
 
@@ -224,126 +220,6 @@ int osd_init(running_machine *machine)
 
 
 //============================================================
-//  osd_alloc_executable
-//============================================================
-
-void *osd_alloc_executable(size_t size)
-{
-	return VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-}
-
-
-
-//============================================================
-//  osd_free_executable
-//============================================================
-
-void osd_free_executable(void *ptr, size_t size)
-{
-	VirtualFree(ptr, 0, MEM_RELEASE);
-}
-
-
-
-//============================================================
-//  osd_is_bad_read_ptr
-//============================================================
-
-int osd_is_bad_read_ptr(const void *ptr, size_t size)
-{
-	return IsBadReadPtr(ptr, size);
-}
-
-
-
-//============================================================
-//  osd_break_into_debugger
-//============================================================
-
-void osd_break_into_debugger(const char *message)
-{
-	if (IsDebuggerPresent())
-	{
-		TCHAR *t_message = tstring_from_utf8(message);
-		OutputDebugString(t_message);
-		free(t_message);
-		DebugBreak();
-	}
-}
-
-
-
-//============================================================
-//  osd_lock_alloc
-//============================================================
-
-osd_lock *osd_lock_alloc(void)
-{
-	osd_lock *lock = malloc_or_die(sizeof(*lock));
-	InitializeCriticalSection(&lock->critsect);
-	return lock;
-}
-
-
-
-//============================================================
-//  osd_lock_acquire
-//============================================================
-
-void osd_lock_acquire(osd_lock *lock)
-{
-#if DEBUG_SLOW_LOCKS
-	cycles_t cycles = osd_cycles();
-#endif
-	EnterCriticalSection(&lock->critsect);
-#if DEBUG_SLOW_LOCKS
-	cycles = osd_cycles() - cycles;
-	if (cycles > 10000) mame_printf_warning("Blocked %d cycles on lock acquire\n", (int)cycles);
-#endif
-}
-
-
-
-//============================================================
-//  osd_lock_try
-//============================================================
-
-int osd_lock_try(osd_lock *lock)
-{
-	int result = TRUE;
-	if (try_enter_critical_section != NULL)
-		result = (*try_enter_critical_section)(&lock->critsect);
-	else
-		EnterCriticalSection(&lock->critsect);
-	return result;
-}
-
-
-
-//============================================================
-//  osd_lock_release
-//============================================================
-
-void osd_lock_release(osd_lock *lock)
-{
-	LeaveCriticalSection(&lock->critsect);
-}
-
-
-
-//============================================================
-//  osd_lock_free
-//============================================================
-
-void osd_lock_free(osd_lock *lock)
-{
-	DeleteCriticalSection(&lock->critsect);
-	free(lock);
-}
-
-
-
-//============================================================
 //  verbose_printf
 //============================================================
 
@@ -376,11 +252,11 @@ static int check_for_double_click_start(int argc)
 	if (argc <= 1 && startup_info.dwFlags && !(startup_info.dwFlags & STARTF_USESTDHANDLES))
 	{
 		char message_text[1024] = "";
-		int button;
+		int button = IDNO;
 
 #ifndef MESS
 		sprintf(message_text, APPLONGNAME " v%s - Multiple Arcade Machine Emulator\n"
-							  "Copyright (C) 1997-2006 by Nicola Salmoria and the MAME Team\n"
+							  "Copyright (C) 1997-2007 by Nicola Salmoria and the MAME Team\n"
 							  "\n"
 							  APPLONGNAME " is a console application, you should launch it from a command prompt.\n"
 							  "\n"
@@ -406,9 +282,12 @@ static int check_for_double_click_start(int argc)
 		{
 			TCHAR *t_message_text = tstring_from_utf8(message_text);
 			TCHAR *t_message_caption = tstring_from_utf8(APPLONGNAME " usage information...");
-			button = MessageBox(NULL, t_message_text, t_message_caption, MB_YESNO | MB_ICONASTERISK);
-			free(t_message_text);
-			free(t_message_caption);
+			if (t_message_text != NULL && t_message_caption != NULL)
+			{
+				button = MessageBox(NULL, t_message_text, t_message_caption, MB_YESNO | MB_ICONASTERISK);
+				free(t_message_text);
+				free(t_message_caption);
+			}
 		}
 
 		if (button == IDYES)
@@ -485,7 +364,9 @@ static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info)
 		{ 0,								"UNKNOWN EXCEPTION" }
 	};
 	static int already_hit = 0;
+#ifndef PTR64
 	UINT32 code_start, code_size;
+#endif
 	int i;
 
 	// if we're hitting this recursively, just exit

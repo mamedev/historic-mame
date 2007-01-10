@@ -181,7 +181,7 @@ void config_save_settings(void)
 		(*type->save)(CONFIG_TYPE_INIT, NULL);
 
 	/* save the defaults file */
-	filerr = mame_fopen(SEARCHPATH_CONFIG, "default.cfg", OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);
+	filerr = mame_fopen(SEARCHPATH_CONFIG, "default.cfg", OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, &file);
 	if (filerr == FILERR_NONE)
 	{
 		config_save_xml(file, CONFIG_TYPE_DEFAULT);
@@ -190,7 +190,7 @@ void config_save_settings(void)
 
 	/* finally, save the game-specific file */
 	fname = assemble_2_strings(Machine->basename, ".cfg");
-	filerr = mame_fopen(SEARCHPATH_CONFIG, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);
+	filerr = mame_fopen(SEARCHPATH_CONFIG, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, &file);
 	free(fname);
 
 	if (filerr == FILERR_NONE)

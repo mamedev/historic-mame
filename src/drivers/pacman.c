@@ -1223,10 +1223,10 @@ INPUT_PORTS_START( pacman )
 	/* This fake input port is used to get the status of the fire button */
 	/* and activate the speedup cheat if it is. */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME( "2x Speed (Cheat)" )
-	PORT_DIPNAME( 0x06, 0x00, "2x Speed Cheat" )
-	PORT_DIPSETTING(    0x00, "Disabled" )
-	PORT_DIPSETTING(    0x02, "Enabled Always" )
-	PORT_DIPSETTING(    0x04, "Enabled with Button" )
+	PORT_CONFNAME( 0x06, 0x00, "2x Speed Cheat" )
+	PORT_CONFSETTING(    0x00, "Disabled" )
+	PORT_CONFSETTING(    0x02, "Enabled Always" )
+	PORT_CONFSETTING(    0x04, "Enabled with Button" )
 INPUT_PORTS_END
 
 
@@ -1285,10 +1285,10 @@ INPUT_PORTS_START( mspacman )
 	/* This fake input port is used to get the status of the fire button */
 	/* and activate the speedup cheat if it is. */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME( "2x Speed (Cheat)" )
-	PORT_DIPNAME( 0x06, 0x00, "2x Speed Cheat" )
-	PORT_DIPSETTING(    0x00, "Disabled" )
-	PORT_DIPSETTING(    0x02, "Enabled Always" )
-	PORT_DIPSETTING(    0x04, "Enabled with Button" )
+	PORT_CONFNAME( 0x06, 0x00, "2x Speed Cheat" )
+	PORT_CONFSETTING(    0x00, "Disabled" )
+	PORT_CONFSETTING(    0x02, "Enabled Always" )
+	PORT_CONFSETTING(    0x04, "Enabled with Button" )
 INPUT_PORTS_END
 
 

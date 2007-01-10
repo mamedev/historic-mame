@@ -310,8 +310,8 @@ static void at_keyboard_queue_insert(UINT8 data);
 static int at_keyboard_queue_size(void);
 
 #ifdef MESS
-static int at_keyboard_queue_chars(const unicode_char_t *text, size_t text_len);
-static int at_keyboard_accept_char(unicode_char_t ch);
+static int at_keyboard_queue_chars(const unicode_char *text, size_t text_len);
+static int at_keyboard_accept_char(unicode_char ch);
 static int at_keyboard_charqueue_empty(void);
 #endif
 
@@ -837,7 +837,7 @@ void at_keyboard_write(UINT8 data)
   unicode_char_to_at_keycode
 ***************************************************************************/
 
-static UINT8 unicode_char_to_at_keycode(unicode_char_t ch)
+static UINT8 unicode_char_to_at_keycode(unicode_char ch)
 {
 	UINT8 b;
 	switch(ch)
@@ -978,7 +978,7 @@ static UINT8 unicode_char_to_at_keycode(unicode_char_t ch)
   at_keyboard_queue_chars
 ***************************************************************************/
 
-static int at_keyboard_queue_chars(const unicode_char_t *text, size_t text_len)
+static int at_keyboard_queue_chars(const unicode_char *text, size_t text_len)
 {
 	int i;
 	UINT8 b;
@@ -1253,7 +1253,7 @@ INPUT_PORTS_END
   Inputx stuff
 ***************************************************************************/
 
-static int at_keyboard_accept_char(unicode_char_t ch)
+static int at_keyboard_accept_char(unicode_char ch)
 {
 	return unicode_char_to_at_keycode(ch) != 0;
 }

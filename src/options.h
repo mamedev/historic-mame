@@ -39,7 +39,6 @@
 #define OPTION_ROMPATH				"rompath"
 #ifdef MESS
 #define OPTION_HASHPATH				"hashpath"
-#define OPTION_IMAGEPATH			"softwarepath"
 #endif
 #define OPTION_SAMPLEPATH			"samplepath"
 #define OPTION_ARTPATH				"artpath"

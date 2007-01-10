@@ -99,6 +99,7 @@
 
 #define MEM_DUMP		(0)
 #define VERBOSE			(0)
+#define ALLOW_ONLY_AUTO_MALLOC_BANKS	0
 
 
 #if VERBOSE
@@ -881,6 +882,8 @@ void memory_set_bankptr(int banknum, void *base)
 		fatalerror("memory_set_bankptr called with dynamic bank %d", banknum);
 	if (!base)
 		fatalerror("memory_set_bankptr called NULL base");
+	if (ALLOW_ONLY_AUTO_MALLOC_BANKS)
+		validate_auto_malloc_memory(base, bankdata[banknum].end - bankdata[banknum].base + 1);
 
 	/* set the base */
 	bank_ptr[banknum] = base;

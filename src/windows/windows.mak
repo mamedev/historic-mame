@@ -71,10 +71,10 @@ endif
 ifdef MSVC_BUILD
 
 # replace the various compilers with vconv.exe prefixes
-CC = @$(OBJ)/vconv.exe gcc -I.
-LD = @$(OBJ)/vconv.exe ld
-AR = @$(OBJ)/vconv.exe ar
-RC = @$(OBJ)/vconv.exe windres
+CC = @$(subst /,\,$(OBJ))\vconv.exe gcc -I.
+LD = @$(subst /,\,$(OBJ))\vconv.exe ld
+AR = @$(subst /,\,$(OBJ))\vconv.exe ar
+RC = @$(subst /,\,$(OBJ))\vconv.exe windres
 
 # make sure we use the multithreaded runtime
 CC += /MT
@@ -83,6 +83,10 @@ CC += /MT
 ifdef MAXOPT
 CC += /GL
 LD += /LTCG
+endif
+
+ifdef PTR64
+CC += /wd4267
 endif
 
 # filter X86_ASM define
@@ -123,7 +127,23 @@ CURPATH = ./
 
 
 #-------------------------------------------------
-# Windows-specific flags and libararies
+# OSD core library
+#-------------------------------------------------
+
+OSDCOREOBJS = \
+	$(OBJ)/$(MAMEOS)/main.o	\
+	$(OBJ)/$(MAMEOS)/strconv.o	\
+	$(OBJ)/$(MAMEOS)/windir.o \
+	$(OBJ)/$(MAMEOS)/winfile.o \
+	$(OBJ)/$(MAMEOS)/winmisc.o \
+	$(OBJ)/$(MAMEOS)/winsync.o \
+	$(OBJ)/$(MAMEOS)/wintime.o \
+	$(OBJ)/$(MAMEOS)/winwork.o \
+
+
+
+#-------------------------------------------------
+# Windows-specific flags and libraries
 #-------------------------------------------------
 
 # add our prefix files to the mix
@@ -145,7 +165,7 @@ endif
 ifdef VISTA_MINGW_ROOT
 
 ifndef MSVC_BUILD
-CFLAGS += -I$(subst \,/,$(VISTA_MINGW_ROOT))/include -I$(subst \,/,$(VISTA_MINGW_ROOT))/lib/gcc/mingw32/3.4.2/include
+CFLAGS += -Wno-unknown-pragmas -Wno-redundant-decls -I$(subst \,/,$(VISTA_MINGW_ROOT))/include -I$(subst \,/,$(VISTA_MINGW_ROOT))/lib/gcc/mingw32/3.4.2/include
 LDFLAGS += -Wl,-L,$(subst \,/,$(VISTA_MINGW_ROOT))/lib,-L,$(subst \,/,$(VISTA_MINGW_ROOT))/lib/gcc/mingw32/3.4.2
 
 OSPREBUILD = vistahack
@@ -178,14 +198,10 @@ OSOBJS = \
 	$(OBJ)/$(MAMEOS)/drawdd.o \
 	$(OBJ)/$(MAMEOS)/drawgdi.o \
 	$(OBJ)/$(MAMEOS)/drawnone.o \
-	$(OBJ)/$(MAMEOS)/fileio.o \
 	$(OBJ)/$(MAMEOS)/fronthlp.o \
 	$(OBJ)/$(MAMEOS)/input.o \
-	$(OBJ)/$(MAMEOS)/main.o \
 	$(OBJ)/$(MAMEOS)/output.o \
 	$(OBJ)/$(MAMEOS)/sound.o \
-	$(OBJ)/$(MAMEOS)/strconv.o \
-	$(OBJ)/$(MAMEOS)/ticker.o \
 	$(OBJ)/$(MAMEOS)/video.o \
 	$(OBJ)/$(MAMEOS)/window.o \
 	$(OBJ)/$(MAMEOS)/winmain.o
@@ -194,11 +210,6 @@ $(OBJ)/$(MAMEOS)/drawdd.o : rendersw.c
 
 $(OBJ)/$(MAMEOS)/drawgdi.o : rendersw.c
 
-
-OSTOOLOBJS = \
-	$(OBJ)/$(MAMEOS)/main.o	\
-	$(OBJ)/$(MAMEOS)/osd_tool.o	\
-	$(OBJ)/$(MAMEOS)/strconv.o	\
 
 # add debug-specific files
 ifdef DEBUG
@@ -221,14 +232,11 @@ endif
 # Windows-specific debug objects and flags
 #-------------------------------------------------
 
-OSDBGOBJS =
-OSDBGLDFLAGS =
-
 # debug build: enable guard pages on all memory allocations
 ifdef DEBUG
 DEFS += -DMALLOC_DEBUG
-OSDBGOBJS += $(OBJ)/$(MAMEOS)/winalloc.o
-OSDBGLDFLAGS += -Wl,--allow-multiple-definition
+LDFLAGS += -Wl,--allow-multiple-definition
+OSDCOREOBJS += $(OBJ)/$(MAMEOS)/winalloc.o
 endif
 
 ifdef UNICODE
@@ -253,7 +261,7 @@ endif
 # rule for making the ledutil sample
 #-------------------------------------------------
 
-ledutil$(EXE): $(OBJ)/windows/ledutil.o $(OSDBGOBJS)
+ledutil$(EXE): $(OBJ)/windows/ledutil.o $(OSDCORELIB)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) -mwindows $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 

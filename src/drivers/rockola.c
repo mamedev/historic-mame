@@ -755,7 +755,14 @@ static struct SN76477interface sasuke_sn76477_intf_1 =
 	RES_K(10),		/* 20  slf_res       */
 	0 /* NC */,		/* 21  slf_cap       */
 	CAP_U(2.2),		/* 23  oneshot_cap   */
-	RES_K(100)		/* 24  oneshot_res   */
+	RES_K(100),		/* 24  oneshot_res   */
+	0,			    /* 22  vco                    */
+	0,			    /* 26  mixer A           */
+	1,			    /* 25  mixer B           */
+	0,			    /* 27  mixer C           */
+	1,			    /* 1   envelope 1        */
+	0,			    /* 28  envelope 2        */
+	1			    /* 9   enable (variable)      */
 
 	// ic48     GND: 2,22,26,27,28  +5V: 1,15,25
 };
@@ -777,7 +784,14 @@ static struct SN76477interface sasuke_sn76477_intf_2 =
 	RES_K(220),		/* 20  slf_res       */
 	0 /* NC */,		/* 21  slf_cap       */
 	CAP_U(22),		/* 23  oneshot_cap   */
-	RES_K(47)		/* 24  oneshot_res   */
+	RES_K(47),		/* 24  oneshot_res   */
+	1,			    /* 22  vco                    */
+	0,			    /* 26  mixer A           */
+	1,			    /* 25  mixer B           */
+	0,			    /* 27  mixer C           */
+	1,			    /* 1   envelope 1        */
+	1,			    /* 28  envelope 2        */
+	1			    /* 9   enable (variable)      */
 
 	// ic51     GND: 2,26,27        +5V: 1,15,22,25,28
 };
@@ -799,7 +813,14 @@ static struct SN76477interface sasuke_sn76477_intf_3 =
 	RES_K(10),		/* 20  slf_res       */
 	CAP_U(1),		/* 21  slf_cap       */
 	CAP_U(2.2),		/* 23  oneshot_cap   */
-	RES_K(150)		/* 24  oneshot_res   */
+	RES_K(150),		/* 24  oneshot_res   */
+	0,			    /* 22  vco                    */
+	1,			    /* 26  mixer A           */
+	1,			    /* 25  mixer B           */
+	0,			    /* 27  mixer C           */
+	1,			    /* 1   envelope 1        */
+	0,			    /* 28  envelope 2        */
+	1			    /* 9   enable (variable)      */
 
 	// ic52     GND: 2,22,27,28     +5V: 1,15,25,26
 };
@@ -821,7 +842,14 @@ static struct SN76477interface satansat_sn76477_intf =
 	0,				/* 20  slf_res       */
 	0,				/* 21  slf_cap       */
 	0,				/* 23  oneshot_cap   */
-	0				/* 24  oneshot_res   */
+	0,				/* 24  oneshot_res   */
+	0,			    /* 22  vco                    */
+	0,			    /* 26  mixer A           */
+	1,			    /* 25  mixer B           */
+	0,			    /* 27  mixer C           */
+	1,			    /* 1   envelope 1        */
+	1,			    /* 28  envelope 2        */
+	1			    /* 9   enable (variable)      */
 
 	// ???      GND: 2,26,27        +5V: 15,25
 };
@@ -843,7 +871,14 @@ static struct SN76477interface vanguard_sn76477_intf_1 =
 	0,				/* 20  slf_res       */
 	0,				/* 21  slf_cap       */
 	0,				/* 23  oneshot_cap   */
-	0				/* 24  oneshot_res   */
+	0,				/* 24  oneshot_res   */
+	0,			    /* 22  vco                    */
+	0,				/* 26  mixer A           */
+	1,				/* 25  mixer B           */
+	0,				/* 27  mixer C           */
+	1,				/* 1   envelope 1        */
+	1,				/* 28  envelope 2        */
+	1			    /* 9   enable (variable)      */
 
 	// SHOT A   GND: 2,9,26,27  +5V: 15,25
 };
@@ -865,7 +900,14 @@ static struct SN76477interface vanguard_sn76477_intf_2 =
 	0,				/* 20  slf_res       */
 	0,				/* 21  slf_cap       */
 	0,				/* 23  oneshot_cap   */
-	0				/* 24  oneshot_res   */
+	0,				/* 24  oneshot_res   */
+	0,			    /* 22  vco                    */
+	0,				/* 26  mixer A           */
+	1,				/* 25  mixer B           */
+	0,				/* 27  mixer C           */
+	0,				/* 1   envelope 1        */
+	1,				/* 28  envelope 2        */
+	1			    /* 9   enable (variable)      */
 
 	// SHOT B   GND: 1,2,26,27  +5V: 15,25,28
 };
@@ -887,7 +929,14 @@ static struct SN76477interface fantasy_sn76477_intf =
 	0,				/* 20  slf_res       */
 	0,				/* 21  slf_cap       */
 	0,				/* 23  oneshot_cap   */
-	0				/* 24  oneshot_res   */
+	0,				/* 24  oneshot_res   */
+	0,			    /* 22  vco                    */
+	0,			    /* 26  mixer A           */
+	1,			    /* 25  mixer B           */
+	0,			    /* 27  mixer C           */
+	1,			    /* 1   envelope 1        */
+	1,			    /* 28  envelope 2        */
+	1			    /* 9   enable (variable)      */
 
 	// BOMB     GND:    2,9,26,27       +5V: 15,25
 };
@@ -938,30 +987,6 @@ static MACHINE_RESET( sasuke )
 	// adjusted
 	rockola_set_music_freq(38000);
 
-	// ic48
-	SN76477_envelope_1_w(0, 1);	// pin 1
-	SN76477_envelope_2_w(0, 0);	// pin 28
-	SN76477_vco_w(0, 0);		// pin 22
-	SN76477_mixer_a_w(0, 0);	// pin 26
-	SN76477_mixer_b_w(0, 1);	// pin 25
-	SN76477_mixer_c_w(0, 0);	// pin 27
-
-	// ic51
-	SN76477_envelope_1_w(1, 1);	// pin 1
-	SN76477_envelope_2_w(1, 1);	// pin 28
-	SN76477_vco_w(1, 1);		// pin 22
-	SN76477_mixer_a_w(1, 0);	// pin 26
-	SN76477_mixer_b_w(1, 1);	// pin 25
-	SN76477_mixer_c_w(1, 0);	// pin 27
-
-	// ic52
-	SN76477_envelope_1_w(2, 1);	// pin 1
-	SN76477_envelope_2_w(2, 0);	// pin 28
-	SN76477_vco_w(2, 0);		// pin 22
-	SN76477_mixer_a_w(2, 1);	// pin 26
-	SN76477_mixer_b_w(2, 1);	// pin 25
-	SN76477_mixer_c_w(2, 0);	// pin 27
-
 	sasuke_start_counter();
 }
 
@@ -970,11 +995,6 @@ static MACHINE_RESET( satansat )
 	// same as sasuke
 	rockola_set_music_freq(38000);
 
-	// ???
-	SN76477_mixer_a_w(0, 0);
-	SN76477_mixer_b_w(0, 1);
-	SN76477_mixer_c_w(0, 0);
-
 	sasuke_start_counter();
 }
 
@@ -982,34 +1002,16 @@ static MACHINE_RESET( vanguard )
 {
 	// 41.6 Hz update (measured)
 	rockola_set_music_clock(1 / 41.6);
-
-	// SHOT A
-	SN76477_mixer_a_w(0, 0);
-	SN76477_mixer_b_w(0, 1);
-	SN76477_mixer_c_w(0, 0);
-
-	// SHOT B
-	SN76477_envelope_1_w(1, 0);
-	SN76477_envelope_2_w(1, 1);
-	SN76477_mixer_a_w(1, 0);
-	SN76477_mixer_b_w(1, 1);
-	SN76477_mixer_c_w(1, 0);
 }
 
 static MACHINE_RESET( fantasy )
 {
-	// BOMB
-	SN76477_mixer_a_w(0, 0);
-	SN76477_mixer_b_w(0, 1);
-	SN76477_mixer_c_w(0, 0);
 }
 
 static MACHINE_RESET( pballoon )
 {
 	// 40.3 Hz update (measured)
 	rockola_set_music_clock(1 / 40.3);
-
-	machine_reset_fantasy(machine);
 }
 
 /* Machine Drivers */
@@ -1134,8 +1136,6 @@ static MACHINE_DRIVER_START( fantasy )
 	MDRV_IMPORT_FROM(vanguard)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(fantasy_map, 0)
-
-	MDRV_MACHINE_RESET(fantasy)
 
 	// sound hardware
 	MDRV_SOUND_REPLACE("samples", SAMPLES, 0)

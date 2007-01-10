@@ -299,7 +299,7 @@ void nvram_save(void)
 {
 	if (Machine->drv->nvram_handler != NULL)
 	{
-		mame_file *nvram_file = nvram_fopen(Machine, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE);
+		mame_file *nvram_file = nvram_fopen(Machine, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
 		if (nvram_file != NULL)
 		{
 			(*Machine->drv->nvram_handler)(Machine, nvram_file, 1);
@@ -408,7 +408,7 @@ int memcard_create(int index, int overwrite)
 	}
 
 	/* create a new file */
-	filerr = mame_fopen(SEARCHPATH_MEMCARD, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);
+	filerr = mame_fopen(SEARCHPATH_MEMCARD, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, &file);
 	free(fname);
 	if (filerr != FILERR_NONE)
 		return 1;
@@ -482,7 +482,7 @@ void memcard_eject(running_machine *machine)
 	fname = assemble_3_strings(Machine->basename, PATH_SEPARATOR, name);
 
 	/* open the file; if we can't, it's an error */
-	filerr = mame_fopen(SEARCHPATH_MEMCARD, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);
+	filerr = mame_fopen(SEARCHPATH_MEMCARD, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, &file);
 	free(fname);
 	if (filerr != FILERR_NONE)
 	{

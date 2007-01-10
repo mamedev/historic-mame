@@ -483,8 +483,8 @@ static MACHINE_DRIVER_START( quizdna )
 	MDRV_SOUND_ROUTE(2, "mono", 0.10)
 	MDRV_SOUND_ROUTE(3, "mono", 0.40)
 
-	MDRV_SOUND_ADD(OKIM6295, MCLK/1024)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, (MCLK/1024)*132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 

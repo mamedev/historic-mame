@@ -684,13 +684,13 @@ static MACHINE_DRIVER_START( system_A )
 	MDRV_SOUND_ROUTE(0, "left", 0.80)
 	MDRV_SOUND_ROUTE(1, "right", 0.80)
 
-	MDRV_SOUND_ADD(OKIM6295, 4000000/132)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 4000000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.30)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.30)
 
-	MDRV_SOUND_ADD(OKIM6295, 4000000/132)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ADD(OKIM6295, 4000000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.30)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.30)
 MACHINE_DRIVER_END
@@ -771,8 +771,8 @@ static MACHINE_DRIVER_START( system_D )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(OKIM6295, 12000)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1980000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7low) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
@@ -2697,7 +2697,7 @@ static WRITE16_HANDLER( protection_peekaboo_w )
 
 	if ((protection_val & 0x90) == 0x90)
 	{
-		unsigned char *RAM = memory_region(okim6295_interface_region_1.region);
+		unsigned char *RAM = memory_region(okim6295_interface_region_1_pin7high.region);
 		int new_bank = (protection_val & 0x7) % 7;
 
 		if (bank != new_bank)

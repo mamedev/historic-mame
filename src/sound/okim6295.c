@@ -51,6 +51,7 @@ struct okim6295
 	INT32 bank_offset;
 	UINT8 *region_base;		/* pointer to the base of the region */
 	sound_stream *stream;	/* which stream are we playing on? */
+	UINT32 master_clock;	/* master clock frequency */
 };
 
 /* step size index shift table */
@@ -66,11 +67,15 @@ static UINT32 volume_table[16];
 static int tables_computed = 0;
 
 /* useful interfaces */
-const struct OKIM6295interface okim6295_interface_region_1 = { REGION_SOUND1 };
-const struct OKIM6295interface okim6295_interface_region_2 = { REGION_SOUND2 };
-const struct OKIM6295interface okim6295_interface_region_3 = { REGION_SOUND3 };
-const struct OKIM6295interface okim6295_interface_region_4 = { REGION_SOUND4 };
+const struct OKIM6295interface okim6295_interface_region_1_pin7high = { REGION_SOUND1, 1 };
+const struct OKIM6295interface okim6295_interface_region_2_pin7high = { REGION_SOUND2, 1 };
+const struct OKIM6295interface okim6295_interface_region_3_pin7high = { REGION_SOUND3, 1 };
+const struct OKIM6295interface okim6295_interface_region_4_pin7high = { REGION_SOUND4, 1 };
 
+const struct OKIM6295interface okim6295_interface_region_1_pin7low = { REGION_SOUND1, 0 };
+const struct OKIM6295interface okim6295_interface_region_2_pin7low = { REGION_SOUND2, 0 };
+const struct OKIM6295interface okim6295_interface_region_3_pin7low = { REGION_SOUND3, 0 };
+const struct OKIM6295interface okim6295_interface_region_4_pin7low = { REGION_SOUND4, 0 };
 
 /**********************************************************************************************
 
@@ -320,6 +325,7 @@ static void *okim6295_start(int sndindex, int clock, const void *config)
 	const struct OKIM6295interface *intf = config;
 	struct okim6295 *info;
 	int voice;
+	int divisor = intf->pin7 ? 132 : 165;
 
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
@@ -330,8 +336,10 @@ static void *okim6295_start(int sndindex, int clock, const void *config)
 	info->bank_offset = 0;
 	info->region_base = memory_region(intf->region);
 
+	info->master_clock = clock;
+
 	/* generate the name and create the stream */
-	info->stream = stream_create(0, 1, clock, info, okim6295_update);
+	info->stream = stream_create(0, 1, clock/divisor, info, okim6295_update);
 
 	/* initialize the voices */
 	for (voice = 0; voice < OKIM6295_VOICES; voice++)
@@ -384,14 +392,16 @@ void OKIM6295_set_bank_base(int which, int base)
 
 /**********************************************************************************************
 
-     OKIM6295_set_frequency -- dynamically adjusts the frequency of a given ADPCM voice
+     OKIM6295_set_pin7 -- adjust pin 7, which controls the internal clock division
 
 ***********************************************************************************************/
 
-void OKIM6295_set_frequency(int which, int frequency)
+void OKIM6295_set_pin7(int which, int pin7)
 {
 	struct okim6295 *info = sndti_token(SOUND_OKIM6295, which);
-	stream_set_sample_rate(info->stream, frequency);
+	int divisor = pin7 ? 132 : 165;
+
+	stream_set_sample_rate(info->stream, info->master_clock/divisor);
 }
 
 

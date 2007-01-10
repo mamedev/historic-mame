@@ -82,12 +82,12 @@ static win_monitor_info *primary_monitor;
 static mame_bitmap *effect_bitmap;
 
 // average FPS calculation
-static cycles_t fps_start_time;
-static cycles_t fps_end_time;
+static osd_ticks_t fps_start_time;
+static osd_ticks_t fps_end_time;
 static int fps_frames_displayed;
 
 // throttling calculations
-static cycles_t throttle_last_cycles;
+static osd_ticks_t throttle_last_ticks;
 static mame_time throttle_realtime;
 static mame_time throttle_emutime;
 
@@ -254,8 +254,8 @@ static void video_exit(running_machine *machine)
 	// print a final result to the stdout
 	if (fps_frames_displayed != 0)
 	{
-		cycles_t cps = osd_cycles_per_second();
-		mame_printf_info("Average FPS: %f (%d frames)\n", (double)cps / (fps_end_time - fps_start_time) * fps_frames_displayed, fps_frames_displayed);
+		osd_ticks_t tps = osd_ticks_per_second();
+		mame_printf_info("Average FPS: %f (%d frames)\n", (double)tps / (fps_end_time - fps_start_time) * fps_frames_displayed, fps_frames_displayed);
 	}
 }
 
@@ -439,8 +439,11 @@ static void init_monitors(void)
 		for (monitor = win_monitor_list; monitor != NULL; monitor = monitor->next)
 		{
 			char *utf8_device = utf8_from_tstring(monitor->info.szDevice);
-			verbose_printf("Video: Monitor %p = \"%s\" %s\n", monitor->handle, utf8_device, (monitor == primary_monitor) ? "(primary)" : "");
-			free(utf8_device);
+			if (utf8_device != NULL)
+			{
+				verbose_printf("Video: Monitor %p = \"%s\" %s\n", monitor->handle, utf8_device, (monitor == primary_monitor) ? "(primary)" : "");
+				free(utf8_device);
+			}
 		}
 	}
 }
@@ -518,13 +521,16 @@ static win_monitor_info *pick_monitor(int index)
 		for (monitor = win_monitor_list; monitor != NULL; monitor = monitor->next)
 		{
 			char *utf8_device;
-			int rc;
+			int rc = 1;
 
 			moncount++;
 
 			utf8_device = utf8_from_tstring(monitor->info.szDevice);
-			rc = strcmp(scrname, utf8_device);
-			free(utf8_device);
+			if (utf8_device != NULL)
+			{
+				rc = strcmp(scrname, utf8_device);
+				free(utf8_device);
+			}
 			if (rc == 0)
 				goto finishit;
 		}
@@ -553,7 +559,7 @@ finishit:
 static void update_throttle(mame_time emutime)
 {
 	static double ticks_per_sleep_msec = 0;
-	cycles_t target, curr, cps, diffcycles;
+	osd_ticks_t target, curr, cps, diffticks;
 	int allowed_to_sleep;
 	subseconds_t subsecs_per_cycle;
 	int paused = mame_is_paused(Machine);
@@ -572,15 +578,15 @@ static void update_throttle(mame_time emutime)
 		goto resync;
 
 	// get the current realtime; if it's been more than 1 second realtime, just resync
-	cps = osd_cycles_per_second();
-	diffcycles = osd_cycles() - throttle_last_cycles;
-	throttle_last_cycles += diffcycles;
-	if (diffcycles >= cps)
+	cps = osd_ticks_per_second();
+	diffticks = osd_ticks() - throttle_last_ticks;
+	throttle_last_ticks += diffticks;
+	if (diffticks >= cps)
 		goto resync;
 
 	// add the time that has passed to the real time
 	subsecs_per_cycle = MAX_SUBSECONDS / cps;
-	throttle_realtime = add_subseconds_to_mame_time(throttle_realtime, diffcycles * subsecs_per_cycle);
+	throttle_realtime = add_subseconds_to_mame_time(throttle_realtime, diffticks * subsecs_per_cycle);
 
 	// update the emulated time
 	throttle_emutime = emutime;
@@ -589,8 +595,8 @@ static void update_throttle(mame_time emutime)
 	if (compare_mame_times(throttle_emutime, throttle_realtime) <= 0)
 		goto resync;
 
-	// determine our target cycles value
-	target = throttle_last_cycles + sub_mame_times(throttle_emutime, throttle_realtime).subseconds / subsecs_per_cycle;
+	// determine our target ticks value
+	target = throttle_last_ticks + sub_mame_times(throttle_emutime, throttle_realtime).subseconds / subsecs_per_cycle;
 
 	// initialize the ticks per sleep
 	if (ticks_per_sleep_msec == 0)
@@ -603,17 +609,17 @@ static void update_throttle(mame_time emutime)
 	allowed_to_sleep = video_config.sleep && (!effective_autoframeskip() || effective_frameskip() == 0);
 
 	// sync
-	for (curr = osd_cycles(); curr - target < 0; curr = osd_cycles())
+	for (curr = osd_ticks(); curr - target < 0; curr = osd_ticks())
 	{
 		// if we have enough time to sleep, do it
 		// ...but not if we're autoframeskipping and we're behind
-		if (paused || (allowed_to_sleep && (target - curr) > (cycles_t)(ticks_per_sleep_msec * 1.1)))
+		if (paused || (allowed_to_sleep && (target - curr) > (osd_ticks_t)(ticks_per_sleep_msec * 1.1)))
 		{
-			cycles_t next;
+			osd_ticks_t next;
 
 			// keep track of how long we actually slept
 			Sleep(1);
-			next = osd_cycles();
+			next = osd_ticks();
 			ticks_per_sleep_msec = (ticks_per_sleep_msec * 0.90) + ((double)(next - curr) * 0.10);
 		}
 	}
@@ -622,9 +628,9 @@ static void update_throttle(mame_time emutime)
 	profiler_mark(PROFILER_END);
 
 	// update realtime
-	diffcycles = osd_cycles() - throttle_last_cycles;
-	throttle_last_cycles += diffcycles;
-	throttle_realtime = add_subseconds_to_mame_time(throttle_realtime, diffcycles * subsecs_per_cycle);
+	diffticks = osd_ticks() - throttle_last_ticks;
+	throttle_last_ticks += diffticks;
+	throttle_realtime = add_subseconds_to_mame_time(throttle_realtime, diffticks * subsecs_per_cycle);
 	return;
 
 resync:
@@ -640,14 +646,14 @@ resync:
 
 static void update_fps(mame_time emutime)
 {
-	cycles_t curr = osd_cycles();
+	osd_ticks_t curr = osd_ticks();
 
 	// update stats for the FPS average calculation
 	if (fps_start_time == 0)
 	{
 		// start the timer going 1 second into the game
 		if (emutime.seconds > 1)
-			fps_start_time = osd_cycles();
+			fps_start_time = osd_ticks();
 	}
 	else
 	{
@@ -662,7 +668,7 @@ static void update_fps(mame_time emutime)
 			sprintf(name, "_%.8s.png", Machine->gamedrv->name);
 
 			// write out the screenshot
-			filerr = mame_fopen(SEARCHPATH_SCREENSHOT, name, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &fp);
+			filerr = mame_fopen(SEARCHPATH_SCREENSHOT, name, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, &fp);
 			if (filerr == FILERR_NONE)
 			{
 				video_screen_save_snapshot(fp, 0);

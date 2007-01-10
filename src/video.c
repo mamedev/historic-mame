@@ -70,7 +70,7 @@ static int skipping_this_frame;
 static internal_screen_info scrinfo[MAX_SCREENS];
 
 /* speed computation */
-static cycles_t last_fps_time;
+static osd_ticks_t last_fps_time;
 static int frames_since_last_fps;
 static int rendered_frames_since_last_fps;
 static int vfcount;
@@ -154,7 +154,7 @@ int video_init(running_machine *machine)
 		decode_graphics(machine->drv->gfxdecodeinfo);
 
 	/* reset performance data */
-	last_fps_time = osd_cycles();
+	last_fps_time = osd_ticks();
 	rendered_frames_since_last_fps = frames_since_last_fps = 0;
 	performance.game_speed_percent = 100;
 	performance.frames_per_second = machine->screen[0].refresh;
@@ -686,8 +686,8 @@ static void recompute_fps(int skipped_it)
 	/* if we didn't skip this frame, we may be able to compute a new FPS */
 	if (!skipped_it && frames_since_last_fps >= FRAMES_PER_FPS_UPDATE)
 	{
-		cycles_t cps = osd_cycles_per_second();
-		cycles_t curr = osd_cycles();
+		osd_ticks_t cps = osd_ticks_per_second();
+		osd_ticks_t curr = osd_ticks();
 		double seconds_elapsed = (double)(curr - last_fps_time) * (1.0 / (double)cps);
 		double frames_per_sec = (double)frames_since_last_fps / seconds_elapsed;
 
@@ -745,11 +745,9 @@ void video_frame_update(void)
 		sound_frame_update();
 
 		/* finish updating the screens */
-		if (!paused)
 		for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
 			if (Machine->drv->screen[scrnum].tag != NULL)
 				video_screen_update_partial(scrnum, Machine->screen[scrnum].visarea.max_y);
-
 
 		/* now add the quads for all the screens */
 		livemask = render_get_live_screens_mask();
@@ -908,7 +906,7 @@ static mame_file_error mame_fopen_next(const char *pathoption, const char *exten
 	}
 
 	/* create the final file */
-    filerr = mame_fopen(pathoption, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, file);
+    filerr = mame_fopen(pathoption, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, file);
 
     /* free the name and get out */
     free(fname);
@@ -973,7 +971,7 @@ void video_movie_begin_recording(const char *name)
 
 	/* create a new movie file and start recording */
 	if (name != NULL)
-		filerr = mame_fopen(SEARCHPATH_MOVIE, name, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &movie_file);
+		filerr = mame_fopen(SEARCHPATH_MOVIE, name, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, &movie_file);
 	else
 		filerr = mame_fopen_next(SEARCHPATH_MOVIE, "mng", &movie_file);
 

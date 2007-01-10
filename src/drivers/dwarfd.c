@@ -476,7 +476,7 @@ void drawCrt(mame_bitmap *bitmap,const rectangle *cliprect)
 		}
 		for (x=0;x<maxx;x++)
 		{
-			int tile;
+			int tile=0;
 
 			int b=0; //end marker
 			while(b==0)

@@ -14,7 +14,9 @@
   Cookie & Bibi[2]      (c) 1995 SemiCom
   B.C. Story            (c) 1997 SemiCom
   MuHanSeungBu          (c) 1997 SemiCom (Korea Only)
+  Unknown Semicom Quiz  (c) 1998 SemiCom (Korea Only)
   Jumping Pop           (c) 2001 ESD
+
 
   [1] has the same sprites as the bootlegs, not much else is the same tho
 
@@ -622,7 +624,7 @@ READ16_HANDLER( semibase_unknown_r )
 	return mame_rand(Machine);
 }
 static ADDRESS_MAP_START( htchctch_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x100000, 0x10000f) AM_READ(semibase_unknown_r)
 	AM_RANGE(0x120000, 0x123fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x140000, 0x1407ff) AM_READ(MRA16_RAM)
@@ -633,7 +635,7 @@ static ADDRESS_MAP_START( htchctch_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( htchctch_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x100001) AM_WRITE(semicom_soundcmd_w)
 	AM_RANGE(0x100002, 0x100003) AM_WRITE(bcstory_tilebank_w)
 	AM_RANGE(0x120000, 0x123fff) AM_WRITE(MWA16_RAM) AM_BASE(&tumblepb_mainram)
@@ -1896,8 +1898,8 @@ static MACHINE_DRIVER_START( tumblepb )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(OKIM6295,  8000000/10/132)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295,  8000000/10)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
@@ -1925,8 +1927,8 @@ static MACHINE_DRIVER_START( tumbleb2 )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(OKIM6295,  8000000/10/132)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295,  8000000/10)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
@@ -1957,8 +1959,8 @@ static MACHINE_DRIVER_START( jumpkids )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(OKIM6295, 8000000/8/132)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 8000000/8)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
@@ -1988,8 +1990,8 @@ static MACHINE_DRIVER_START( fncywld )
 	MDRV_SOUND_ROUTE(0, "left", 0.20)
 	MDRV_SOUND_ROUTE(1, "right", 0.20)
 
-	MDRV_SOUND_ADD(OKIM6295, 7757)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1023924)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
@@ -2053,8 +2055,8 @@ static MACHINE_DRIVER_START( htchctch )
 	MDRV_SOUND_ROUTE(0, "left", 0.10)
 	MDRV_SOUND_ROUTE(1, "right", 0.10)
 
-	MDRV_SOUND_ADD(OKIM6295, 1024000/132)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1024000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
@@ -2119,8 +2121,8 @@ static MACHINE_DRIVER_START( jumppop )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.70)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.70)
 
-	MDRV_SOUND_ADD(OKIM6295, 875000/132)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 875000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
@@ -2152,8 +2154,8 @@ static MACHINE_DRIVER_START( suprtrio )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 875000/132)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 875000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
@@ -2181,8 +2183,8 @@ static MACHINE_DRIVER_START( pangpang )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(OKIM6295, 8000000/10/132)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 8000000/10)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
 
@@ -2308,7 +2310,7 @@ Lev 6 0x78 0012 0000 <- RAM shared with protection device (first 0x200 bytes?)
 */
 
 ROM_START( htchctch )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "p03.b16",  0x00001, 0x20000, CRC(eff14c40) SHA1(8fdda1fb859546c16f940e51f7e126768205154c) )
 	ROM_LOAD16_BYTE( "p04.b17",  0x00000, 0x20000, CRC(6991483a) SHA1(c8d868ef1f87655c37f0b1efdbb71cd26918f270) )
 
@@ -2340,7 +2342,7 @@ ROM_END
 /* Cookie & Bibi */
 
 ROM_START( cookbib )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "prg1.ub16",  0x00001, 0x20000, CRC(cda6335f) SHA1(34a57785a458d3e9a66c91734b4511fbc9f3455c) )
 	ROM_LOAD16_BYTE( "prg2.ub17",  0x00000, 0x20000, CRC(2664a335) SHA1(8d1c4825720a09db6156599ab905292640b04cba) )
 
@@ -2373,7 +2375,7 @@ ROM_END
 /* Choky Choky */
 
 ROM_START( chokchok )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "ub18.bin",  0x00001, 0x40000, CRC(b183852a) SHA1(fd50c6d91dba64b936ac367e5e5235d09ed60fdd) )
 	ROM_LOAD16_BYTE( "ub17.bin",  0x00000, 0x40000, CRC(ecdb45ca) SHA1(03eb2d27ae4de25aa15477135d3b4de8b3b7f7f0) )
 
@@ -2431,7 +2433,7 @@ First Amusement logo is almost identical to Semicom logo.
 
 
 ROM_START( metlsavr )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "first-3.ub18",     0x00001, 0x40000, CRC(87bf4ed2) SHA1(ee1a23232bc37d95dca6d612b4e22ed2b723bd01) )
 	ROM_LOAD16_BYTE( "first-4.ub17",     0x00000, 0x40000, CRC(667a494d) SHA1(282391ed7fa994ec51d39c6b086a808ee43e8af1) )
 
@@ -2463,7 +2465,7 @@ ROM_END
 /* BC Story */
 
 ROM_START( bcstry )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "bcstry_u.35",  0x40001, 0x20000, CRC(d25b80a4) SHA1(6ea1c28cf508b856e93a06063e634a09291cb32c) )
 	ROM_CONTINUE ( 0x00001, 0x20000)
 	ROM_LOAD16_BYTE( "bcstry_u.62",  0x40000, 0x20000, CRC(7f7aa244) SHA1(ee9bb2bf22d16f06d7935168e2bd09296fba3abc) )
@@ -2517,7 +2519,7 @@ ROM_START( bcstry )
 ROM_END
 
 ROM_START( bcstrya )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "prg1.ic35",  0x40001, 0x20000, CRC(2c55100a) SHA1(bc98a0015c99ef84ebd3fc3f7b7a3bdfd700e1da) )
 	ROM_CONTINUE ( 0x00001, 0x20000)
 	ROM_LOAD16_BYTE( "prg2.ic62",  0x40000, 0x20000, CRC(f54c0a96) SHA1(79a3635792a23f47fc914d1d5e118b5a643ca100) )
@@ -2593,7 +2595,7 @@ logical use (IE:z80 for the Z80 program rom)
 */
 
 ROM_START( semibase )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "ic35.68k",  0x40001, 0x20000, CRC(d2249605) SHA1(ab3faa832f14f799e4a975673495d30160c6eae5) )
 	ROM_CONTINUE ( 0x00001, 0x20000)
 	ROM_LOAD16_BYTE( "ic62.68k",  0x40000, 0x20000, CRC(85ea81c3) SHA1(7e97316f5f373b98fa4063acd74f784b312a1cc4) )
@@ -2643,6 +2645,39 @@ ROM_START( semibase )
 	ROM_LOAD16_BYTE( "ic108.gfx", 0x200001, 0x80000, CRC(b253d60e) SHA1(aca2f6c2233372841908377407068c5d45f5f9c4) ) // b
 	ROM_LOAD16_BYTE( "ic102.gfx", 0x300000, 0x80000, CRC(3caefe97) SHA1(e60c6ef9e1dd6abdd763648dbcebefa4f19364c4) ) // a
 	ROM_LOAD16_BYTE( "ic107.gfx", 0x300001, 0x80000, CRC(68109898) SHA1(dbc0d431da33e22b8d0f918b9c8a3c1667bc4f8e) ) // a
+ROM_END
+
+
+ROM_START( semiquiz )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "ub18",     0x00001, 0x80000, CRC(07f869f2) SHA1(1e69f8a6ce3bcf0feaeb43cc7c0fc3fa324466b2) )
+	ROM_LOAD16_BYTE( "ub17",     0x00000, 0x80000, CRC(0b96ab14) SHA1(fc132118eaa938c85d210713320b0a04425f48de) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "ub5",    0x00000, 0x10000, CRC(e40481da) SHA1(1c1fabcb67693235eaa6ff59ae12a35854b5564a) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
+	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
+
+	ROM_REGION16_BE( 0x200, REGION_USER1, ROMREGION_ERASE00 ) /* Data from Shared RAM */
+	/* this is not a real rom but instead the data extracted from
+       shared ram, the MCU puts it there */
+	//ROM_LOAD16_WORD( "protdata.bin", 0x00000, 0x200 , CRC(1) SHA1(1) )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "uc1",    0x00000, 0x40000, CRC(d0f4c4ba) SHA1(669a04a977e98d8a594cc1621cbb9526c9081ec0) )
+
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* tiles */
+	ROM_LOAD16_BYTE( "srom5",     0x00001, 0x40000, CRC(f1cdd21d) SHA1(0bfc09abce40712c4e95f13ad0d4b78684e44630) )
+	ROM_IGNORE(0x40000)
+	ROM_LOAD16_BYTE( "srom6",     0x00000, 0x40000, CRC(f848939e) SHA1(bf5e62300dd13a37f4715c67a2eec88034a94311) )
+	ROM_IGNORE(0x40000)
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE ) /* sprites */
+	ROM_LOAD16_BYTE( "uor1",     0x000000, 0x80000, CRC(b4912bf6) SHA1(ef827adba58470a201f3c1ecc3286d728a753eff) )
+	ROM_LOAD16_BYTE( "uor2",     0x000001, 0x80000, CRC(b011cf93) SHA1(b993df91511ac17d5bf8e688333f2953b87d5be4) )
+	ROM_LOAD16_BYTE( "uor3",     0x100000, 0x80000, CRC(d96c3582) SHA1(6b313462fd8985fae60bc59cd9c99c97ab70fdcc) )
+	ROM_LOAD16_BYTE( "uor4",     0x100001, 0x80000, CRC(77ff23eb) SHA1(7fc891810591458fd62f3d4b9b4c966662e90403) )
 ROM_END
 
 
@@ -3137,6 +3172,7 @@ static DRIVER_INIT( htchctch )
 
 }
 
+
 static void suprtrio_decrypt_code(void)
 {
 	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
@@ -3209,5 +3245,6 @@ GAME( 1996, fncywld,  0,       fncywld,   fncywld,  fncywld,  ROT0, "Unico", "Fa
 GAME( 1997, bcstry,   0,       bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 1)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
 GAME( 1997, bcstrya,  bcstry,  bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 2)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
 GAME( 1997, semibase, 0,       semibase,  semibase, bcstory,  ROT0, "SemiCom", "MuHanSeungBu (SemiCom Baseball)", GAME_IMPERFECT_GRAPHICS)// sprite offsets..
+GAME( 1998, semiquiz, 0,       cookbib,   chokchok, chokchok,  ROT0, "SemiCom", "Unknown SemiCom Quiz", GAME_NOT_WORKING) // need mcu data
 GAME( 2001, jumppop,  0,       jumppop,   jumppop,  0, ORIENTATION_FLIP_X, "ESD", "Jumping Pop", 0 )
 GAME( 1994, pangpang, 0,       pangpang,  tumblepb, tumbleb2, ROT0, "Dong Gue La Mi Ltd.", "Pang Pang", GAME_IMPERFECT_SOUND ) // PIC is protected, sound simulation not 100%

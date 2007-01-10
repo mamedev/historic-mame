@@ -177,7 +177,6 @@ The games seem to use them to mark platforms, kill zones and no-go areas.
 ***************************************************************************/
 
 #include "driver.h"
-#include "cpu/m68000/m68kmame.h"
 #include "cps1.h"
 
 #define VERBOSE 0
@@ -757,31 +756,13 @@ DRIVER_INIT( cps1 )
 
 
 
-DRIVER_INIT( cps2_nodecrypt )
+DRIVER_INIT( cps2_video )
 {
 	cps2_gfx_decode();
 
 	scanline1 = 262;
 	scanline2 = 262;
 	scancalls = 0;
-}
-
-DRIVER_INIT( cps2 )
-{
-	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
-	UINT16 *xor = (UINT16 *)memory_region(REGION_USER1);
-	int length = memory_region_length(REGION_CPU1);
-	int i;
-
-
-	for (i = 0;i < length/2;i++)
-		xor[i] ^= rom[i];
-
-	memory_set_decrypted_region(0, 0x000000, length - 1, xor);
-	m68k_set_encrypted_opcode_range(0,0,length);
-
-	init_cps2_nodecrypt(machine);
-
 }
 
 

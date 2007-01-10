@@ -67,18 +67,6 @@ static MACHINE_START( crbaloon )
 	return 0;
 }
 
-static MACHINE_RESET( crbaloon )
-{
-	/* MIXER A = 0, MIXER C = 1 */
-	SN76477_mixer_a_w(0, 0);
-	SN76477_mixer_c_w(0, 1);
-	/* ENVELOPE is constant: pin1 = hi, pin 28 = lo */
-	SN76477_envelope_w(0, 1);
-    /* fake: pulse the enable line to get rid of the constant noise */
-    SN76477_enable_w(0, 1);
-    SN76477_enable_w(0, 0);
-}
-
 WRITE8_HANDLER( crbaloon_06_w )
 {
 	val06 = data;
@@ -92,12 +80,12 @@ WRITE8_HANDLER( crbaloon_06_w )
 	SN76477_enable_w(0, (data & 0x08) ? 1 : 0);
 
 	/* BREATH changes slf_res to 10k (middle of two 10k resistors) */
-	/* it also puts a tantal capacitor agains GND on the output,
+	/* it also puts a tantal capacitor against GND on the output,
        but this section of the schematics is not readable. */
 	SN76477_set_slf_res(0, (data & 0x10) ? RES_K(10) : RES_K(20) );
 
 	/* APPEAR is connected to MIXER B */
-	SN76477_mixer_b_w(0, (data & 0x20) ? 1 : 4);
+	SN76477_mixer_b_w(0, (data & 0x20) ? 1 : 0);
 
 	discrete_sound_w(CRBALOON_MUSIC_EN, data & 0x04);
 	discrete_sound_w(CRBALOON_LAUGH_EN, data & 0x40);
@@ -324,22 +312,29 @@ static const gfx_decode gfxdecodeinfo[] =
 
 static struct SN76477interface sn76477_interface =
 {
-	RES_K( 47)   ,		/*  4  noise_res         */
-	RES_K(330)   ,		/*  5  filter_res        */
-	CAP_P(470)   ,		/*  6  filter_cap        */
-	RES_K(220)   ,		/*  7  decay_res         */
-	CAP_U(1.0)   ,		/*  8  attack_decay_cap  */
-	RES_K(4.7)   ,		/* 10  attack_res        */
-	RES_M(  1)   ,		/* 11  amplitude_res     */
-	RES_K(200)   ,		/* 12  feedback_res      */
-	5.0		   ,		/* 16  vco_voltage       */
-	CAP_P(470)   ,		/* 17  vco_cap           */
-	RES_K(330)   ,		/* 18  vco_res           */
-	5.0		   ,		/* 19  pitch_voltage     */
-	RES_K( 20)   ,		/* 20  slf_res           */
-	CAP_P(420)   ,		/* 21  slf_cap           */
-	CAP_U(1.0)   ,		/* 23  oneshot_cap       */
-	RES_K( 47)   		/* 24  oneshot_res       */
+	RES_K( 47),	/*  4 noise_res          */
+	RES_K(330),	/*  5 filter_res         */
+	CAP_P(470),	/*  6 filter_cap         */
+	RES_K(220),	/*  7 decay_res          */
+	CAP_U(1.0),	/*  8 attack_decay_cap   */
+	RES_K(4.7),	/* 10 attack_res         */
+	RES_M(  1),	/* 11 amplitude_res      */
+	RES_K(200),	/* 12 feedback_res       */
+	5.0,		/* 16 vco_voltage        */
+	CAP_P(470),	/* 17 vco_cap            */
+	RES_K(330),	/* 18 vco_res            */
+	5.0,		/* 19 pitch_voltage      */
+	RES_K( 20),	/* 20 slf_res (variable) */
+	CAP_P(420),	/* 21 slf_cap            */
+	CAP_U(1.0),	/* 23 oneshot_cap        */
+	RES_K( 47),	/* 24 oneshot_res        */
+	0,			/* 22 vco                */
+	0,			/* 26 mixer A            */
+	0,			/* 25 mixer B (variable) */
+	1,			/* 27 mixer C            */
+	1,			/* 1  envelope 1         */
+	0,			/* 28 envelope 2         */
+	0			/* 9  enable (variable)  */
 };
 
 
@@ -355,7 +350,6 @@ static MACHINE_DRIVER_START( crbaloon )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_START(crbaloon)
-	MDRV_MACHINE_RESET(crbaloon)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

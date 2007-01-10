@@ -14,6 +14,6 @@
 
 #include "cdrom.h"
 
-int cdrom_parse_toc(char *tocfname, cdrom_toc *outtoc, cdrom_track_input_info *outinfo);
+chd_error cdrom_parse_toc(const char *tocfname, cdrom_toc *outtoc, cdrom_track_input_info *outinfo);
 
 #endif	/* __CHDCD_H__ */

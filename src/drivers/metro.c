@@ -3827,8 +3827,8 @@ static MACHINE_DRIVER_START( daitorid )
 	MDRV_SOUND_ROUTE(0, "left", 0.80)
 	MDRV_SOUND_ROUTE(1, "right", 0.80)
 
-	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1200000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // was /128.. so pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
 MACHINE_DRIVER_END
@@ -3865,8 +3865,8 @@ static MACHINE_DRIVER_START( dharma )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1200000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // was /128.. so pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
 
@@ -3907,8 +3907,8 @@ static MACHINE_DRIVER_START( karatour )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1200000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // was /128.. so pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
 
@@ -3949,8 +3949,8 @@ static MACHINE_DRIVER_START( 3kokushi )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1200000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // was /128.. so pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
 
@@ -3991,8 +3991,8 @@ static MACHINE_DRIVER_START( lastfort )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1200000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // was /128.. so pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
 
@@ -4032,8 +4032,8 @@ static MACHINE_DRIVER_START( lastforg )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1200000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // was /128.. so pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
 
@@ -4067,8 +4067,8 @@ static MACHINE_DRIVER_START( dokyusei )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 8000)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1056000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 
@@ -4117,8 +4117,8 @@ static MACHINE_DRIVER_START( dokyusp )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 16000)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 2112000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 
@@ -4154,8 +4154,8 @@ static MACHINE_DRIVER_START( gakusai )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 16000)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 2112000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 
@@ -4191,8 +4191,8 @@ static MACHINE_DRIVER_START( gakusai2 )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 16000)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 2112000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 
@@ -4233,8 +4233,8 @@ static MACHINE_DRIVER_START( pangpoms )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1200000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // was /128.. so pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
 
@@ -4275,8 +4275,8 @@ static MACHINE_DRIVER_START( poitto )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1200000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // was /128.. so pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
 
@@ -4322,8 +4322,8 @@ static MACHINE_DRIVER_START( pururun )
 	MDRV_SOUND_ROUTE(0, "left", 0.80)
 	MDRV_SOUND_ROUTE(1, "right", 0.80)
 
-	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1200000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // was /128.. so pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
 MACHINE_DRIVER_END
@@ -4360,8 +4360,8 @@ static MACHINE_DRIVER_START( skyalert )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1200000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // was /128.. so pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
 
@@ -4402,8 +4402,8 @@ static MACHINE_DRIVER_START( toride2g )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 1200000/128)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1200000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // was /128.. so pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
 
@@ -4437,8 +4437,8 @@ static MACHINE_DRIVER_START( mouja )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-	MDRV_SOUND_ADD(OKIM6295, 16000000/1024)				/* 15625Hz */
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 16000000/1024*132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
 
@@ -4625,6 +4625,26 @@ static DRIVER_INIT( balcube )
 
 	metro_common();
 	irq_line = 1;
+}
+
+
+DRIVER_INIT( dharmak )
+{
+	UINT8 *src = memory_region( REGION_GFX1 );
+	int i;
+	for (i=0;i<0x200000;i+=4)
+	{
+		UINT8 dat;
+		dat = src[i+1];
+		dat = BITSWAP8(dat, 7,3,2,4, 5,6,1,0);
+		src[i+1] = dat;
+
+		dat = src[i+3];
+		dat = BITSWAP8(dat, 7,2,5,4, 3,6,1,0);
+		src[i+3] = dat;
+	}
+
+	init_metro(Machine);
 }
 
 static DRIVER_INIT( blzntrnd )
@@ -4986,6 +5006,45 @@ ROM_START( dharma )
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "ja-7", 0x000000, 0x040000, CRC(7ce817eb) SHA1(9dfb79021a552877fbc26049cca853c0b93735b5) )
 ROM_END
+
+/*
+
+This is a Korean version of Dharma
+Runs on Metro hardware.
+PCB Number - METRO CORP. MTR527
+Imagetek 14220 gfx chip
+68000 CPU
+XTALs 26.666MHz, 24.0MHz, 3.579545MHz
+YM2413
+OKI M6295
+D78C10
+MACH110
+8-position DSW x2
+6116 SRAM x1
+6264 SRAM x5
+
+*/
+
+ROM_START( dharmak )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "5.bin", 0x000000, 0x020000, CRC(7dec1f77) SHA1(86cda990392e738f1bacec9d7a232d27887c1135) )
+	ROM_LOAD16_BYTE( "6.bin", 0x000001, 0x020000, CRC(a194edbe) SHA1(676a4c0d4ee842a1b9d1c86ecd89417ebd6b5927) )
+
+	ROM_REGION( 0x02c000, REGION_CPU2, 0 )		/* NEC78C10 Code */
+	ROM_LOAD( "8.bin", 0x000000, 0x004000, CRC(d0e0a8e2) SHA1(99a3142589a1763ba162ed5b1b6c44961a5aaabc) )	// (c)1992 Imagetek (11xxxxxxxxxxxxxxx = 0xFF)
+	ROM_CONTINUE(     0x010000, 0x01c000 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 )	/* Gfx + Data (Addressable by CPU & Blitter) */ /* note, these are bitswapped, see init */
+	ROMX_LOAD( "2.bin", 0x000000, 0x080000, CRC(3cc0bb6c) SHA1(aaa063fa748e0f6fe3c07f2dfb510c1b69ea92af) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "4.bin", 0x000002, 0x080000, CRC(2cdcdf91) SHA1(44da8eac822a89e9c07bfd28720ec0b566d19b44) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "1.bin", 0x000004, 0x080000, CRC(312ee2ec) SHA1(73ea401e4615eb9ad5f42be9c75ca4550c3a4668) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "3.bin", 0x000006, 0x080000, CRC(b81aede8) SHA1(fe11e1523a9bcd59397b5866bc03c9d24049a5f5) , ROM_GROUPWORD | ROM_SKIP(6))
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "7.bin", 0x000000, 0x040000, CRC(8af698d7) SHA1(9f8b2ecc07c19f38088cd4be05a498ae4f5af6f5) )
+ROM_END
+
+
 
 /*
 
@@ -5833,6 +5892,7 @@ GAME( 1993?,ladykill, 0,        karatour, ladykill, karatour, ROT90,  "Yanyaka (
 GAME( 1993?,moegonta, ladykill, karatour, moegonta, karatour, ROT90,  "Yanyaka",                    "Moeyo Gonta!! (Japan)",           GAME_IMPERFECT_GRAPHICS )
 GAME( 1993, poitto,   0,        poitto,   poitto,   metro,    ROT0,   "Metro / Able Corp.",         "Poitto!"                            , 0 )
 GAME( 1994, dharma,   0,        dharma,   dharma,   metro,    ROT0,   "Metro",                      "Dharma Doujou"                      , 0 )
+GAME( 1994, dharmak,  dharma,   dharma,   dharma,   dharmak,  ROT0,   "Metro",                      "Dharma Doujou (Korea)"              , 0 )
 GAME( 1994, lastfort, 0,        lastfort, lastfort, metro,    ROT0,   "Metro",                      "Last Fortress - Toride"             , 0 )
 GAME( 1994, lastfero, lastfort, lastfort, lastfero, metro,    ROT0,   "Metro",                      "Last Fortress - Toride (Erotic)"    , 0 )
 GAME( 1994, lastforg, lastfort, lastforg, ladykill, metro,    ROT0,   "Metro",                      "Last Fortress - Toride (German)"    , 0 )

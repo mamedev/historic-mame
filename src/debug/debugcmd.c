@@ -2005,7 +2005,7 @@ static void execute_snap(int ref, int params, const char *param[])
 		}
 
 		fname = (strstr(filename, ".png") != NULL) ? filename : assemble_2_strings(filename, ".png");
-		filerr = mame_fopen(SEARCHPATH_SCREENSHOT, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &fp);
+		filerr = mame_fopen(SEARCHPATH_SCREENSHOT, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, &fp);
 		if (fname != filename)
 			free((void *)fname);
 

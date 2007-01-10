@@ -470,8 +470,8 @@ static MACHINE_DRIVER_START( lordgun )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 
-	MDRV_SOUND_ADD(OKIM6295, 1000000/132)	// 5MHz/132 can't be right!
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 1000000)	// 5MHz can't be right!
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
@@ -486,8 +486,8 @@ static MACHINE_DRIVER_START( hfh )
 	MDRV_CPU_IO_MAP(hfh_soundio_map,0)
 
 	// sound hardware
-	MDRV_SOUND_ADD(OKIM6295, 1000000/132)	// 5MHz/132 can't be right!
-	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ADD(OKIM6295, 1000000)	// 5MHz can't be right!
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END

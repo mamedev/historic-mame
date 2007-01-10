@@ -1207,12 +1207,12 @@ MACHINE_RESET( avgdvg )
  *
  ************************************/
 
-static int avgdvg_init(void)
+static VIDEO_START( avgdvg )
 {
-	xmin = Machine->screen[0].visarea.min_x;
-	ymin = Machine->screen[0].visarea.min_y;
-	xmax = Machine->screen[0].visarea.max_x;
-	ymax = Machine->screen[0].visarea.max_y;
+	xmin = machine->screen[0].visarea.min_x;
+	ymin = machine->screen[0].visarea.min_y;
+	xmax = machine->screen[0].visarea.max_x;
+	ymax = machine->screen[0].visarea.max_y;
 
 	xcenter = ((xmax + xmin) / 2) << 16;
 	ycenter = ((ymax + ymin) / 2) << 16;
@@ -1230,7 +1230,7 @@ static int avgdvg_init(void)
 	vg->xdac_xor = 0x200;
 	vg->ydac_xor = 0x200;
 
-	return video_start_vector(Machine);
+	return video_start_vector(machine);
 }
 
 
@@ -1378,7 +1378,7 @@ VIDEO_START( dvg )
 	vgc = &dvg_default;
 	vg = &vgd;
 	vg->state_prom = memory_region(REGION_PROMS);
-	return avgdvg_init();
+	return video_start_avgdvg(machine);
 }
 
 VIDEO_START( avg )
@@ -1386,7 +1386,7 @@ VIDEO_START( avg )
 	vgc = &avg_default;
 	vg = &vgd;
 	vg->state_prom = memory_region(REGION_PROMS);
-	return avgdvg_init();
+	return video_start_avgdvg(machine);
 }
 
 VIDEO_START( avg_starwars )
@@ -1394,7 +1394,7 @@ VIDEO_START( avg_starwars )
 	vgc = &avg_starwars;
 	vg = &vgd;
 	vg->state_prom = memory_region(REGION_PROMS) + 0x1000;
-	return avgdvg_init();
+	return video_start_avgdvg(machine);
 }
 
 VIDEO_START( avg_tempest )
@@ -1402,7 +1402,7 @@ VIDEO_START( avg_tempest )
 	vgc = &avg_tempest;
 	vg = &vgd;
 	vg->state_prom = memory_region(REGION_PROMS);
-	return avgdvg_init();
+	return video_start_avgdvg(machine);
 }
 
 VIDEO_START( avg_mhavoc )
@@ -1410,7 +1410,7 @@ VIDEO_START( avg_mhavoc )
 	vgc = &avg_mhavoc;
 	vg = &vgd;
 	vg->state_prom = memory_region(REGION_PROMS);
-	return avgdvg_init();
+	return video_start_avgdvg(machine);
 }
 
 VIDEO_START( avg_bzone )
@@ -1418,7 +1418,7 @@ VIDEO_START( avg_bzone )
 	vgc = &avg_bzone;
 	vg = &vgd;
 	vg->state_prom = memory_region(REGION_PROMS);
-	return avgdvg_init();
+	return video_start_avgdvg(machine);
 }
 
 VIDEO_START( avg_quantum )
@@ -1426,6 +1426,6 @@ VIDEO_START( avg_quantum )
 	vgc = &avg_quantum;
 	vg = &vgd;
 	vg->state_prom = memory_region(REGION_PROMS);
-	return avgdvg_init();
+	return video_start_avgdvg(machine);
 }
 

@@ -1579,8 +1579,8 @@ static MACHINE_DRIVER_START( semicom )
 	MDRV_SOUND_ROUTE(0, "mono", 0.10)
 	MDRV_SOUND_ROUTE(1, "mono", 0.10)
 
-	MDRV_SOUND_ADD_TAG("oki", OKIM6295, 7575)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD_TAG("oki", OKIM6295, 999900)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
@@ -1643,8 +1643,8 @@ static MACHINE_DRIVER_START( honeydol )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
 
-	MDRV_SOUND_ADD_TAG("oki", OKIM6295, 7575) /* freq? */
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD_TAG("oki", OKIM6295, 999900) /* freq? */
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
@@ -1677,8 +1677,8 @@ static MACHINE_DRIVER_START( twinadv )
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("oki", OKIM6295, 12000000/12/132) /* freq? */
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD_TAG("oki", OKIM6295, 12000000/12) /* freq? */
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
@@ -1716,8 +1716,8 @@ static MACHINE_DRIVER_START( finalttr )
 	MDRV_SOUND_ROUTE(0, "mono", 0.20)
 	MDRV_SOUND_ROUTE(1, "mono", 0.20)
 
-	MDRV_SOUND_REPLACE("oki", OKIM6295, 7575)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_REPLACE("oki", OKIM6295, 999900)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
@@ -1750,8 +1750,8 @@ static MACHINE_DRIVER_START( snowbro3 )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(OKIM6295, 7575)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 999900)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 

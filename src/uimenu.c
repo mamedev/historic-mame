@@ -31,6 +31,7 @@
 
 #define MENU_TEXTCOLOR			ARGB_WHITE
 #define MENU_SELECTCOLOR		MAKE_ARGB(0xff,0xff,0xff,0x00)
+#define MENU_UNAVAILABLECOLOR	MAKE_ARGB(0xff,0x40,0x40,0x40)
 
 #define MAX_PHYSICAL_DIPS		10
 
@@ -594,9 +595,9 @@ do { \
 	/* add optional input-related menus */
 	if (has_dips)
 		ADD_MENU(UI_dipswitches, menu_switches, (IPT_DIPSWITCH_NAME << 16) | (IPT_DIPSWITCH_SETTING << 24));
-#ifdef MESS
 	if (has_configs)
 		ADD_MENU(UI_configuration, menu_switches, (IPT_CONFIG_NAME << 16) | (IPT_CONFIG_SETTING << 24));
+#ifdef MESS
 	if (has_categories)
 		ADD_MENU(UI_categories, menu_switches, (IPT_CATEGORY_NAME << 16) | (IPT_CATEGORY_SETTING << 24));
 #endif
@@ -1848,58 +1849,79 @@ static void dip_switch_build_model(input_port_entry *entry, int item_is_selected
 
 static void dip_switch_draw_one(float dip_menu_x1, float dip_menu_y1, float dip_menu_x2, float dip_menu_y2, int model_index)
 {
-	int num_toggles, toggle, dip_on;
-
-	/* determine the location to start so that the entire
-       switch is centered: left boarder - (menu_width - switch_width)/2 */
-	float segment_start_loc;
-	float dip_field_top = dip_menu_y1 + DIP_SWITCH_SPACING + (model_index * (DIP_SWITCH_SPACING + DIP_SWITCH_HEIGHT));
-
-	float dip_field_x1;
+	int toggle_index;
+	int num_toggles = 0;
+	float segment_start_x;
+	float dip_field_y;
 	float y1_on, y2_on, y1_off, y2_off;
-	float switch_toggle_gap = ((DIP_SWITCH_HEIGHT/2) - SINGLE_TOGGLE_SWITCH_HEIGHT)/2;
-	float name_width = ui_get_string_width(dip_switch_model[model_index].dip_name) + ui_get_string_width(" ") / 2;
+	float switch_toggle_gap;
+	float name_width;
 
-	/* Determine the number of toggles in the DIP */
-	for (num_toggles = 0; (num_toggles < 16) && (dip_switch_model[model_index].total_dip_mask & (1 << num_toggles)); num_toggles++)
-		;
+	/* determine the number of toggles in the DIP */
+	for (toggle_index = 0; toggle_index < 16; toggle_index++)
+		if (dip_switch_model[model_index].total_dip_mask & (1 << toggle_index))
+			num_toggles = toggle_index + 1;
 
- 	segment_start_loc = dip_menu_x1 + (dip_menu_x2 - dip_menu_x1 - num_toggles * SINGLE_TOGGLE_SWITCH_FIELD_WIDTH) / 2;
+	/* calculate the starting x coordinate so that the entire switch is centered */
+	dip_field_y = dip_menu_y1 + DIP_SWITCH_SPACING + (model_index * (DIP_SWITCH_SPACING + DIP_SWITCH_HEIGHT));
 
-	y1_off = dip_field_top + UI_LINE_WIDTH + switch_toggle_gap;
-	y2_off = y1_off + SINGLE_TOGGLE_SWITCH_HEIGHT ;
+	switch_toggle_gap = ((DIP_SWITCH_HEIGHT/2) - SINGLE_TOGGLE_SWITCH_HEIGHT)/2;
 
-	y1_on = dip_field_top + DIP_SWITCH_HEIGHT/2 + switch_toggle_gap;
+ 	segment_start_x = dip_menu_x1 + (dip_menu_x2 - dip_menu_x1 - num_toggles * SINGLE_TOGGLE_SWITCH_FIELD_WIDTH) / 2;
+
+	y1_off = dip_field_y + UI_LINE_WIDTH + switch_toggle_gap;
+	y2_off = y1_off + SINGLE_TOGGLE_SWITCH_HEIGHT;
+
+	y1_on = dip_field_y + DIP_SWITCH_HEIGHT/2 + switch_toggle_gap;
 	y2_on = y1_on + SINGLE_TOGGLE_SWITCH_HEIGHT;
 
-	for (toggle = 0; toggle < num_toggles; toggle++)
+	for (toggle_index = 0; toggle_index < num_toggles; toggle_index++)
 	{
-		int bit_mask = 1 << toggle;
-		int feature_field_selected = ((bit_mask & dip_switch_model[model_index].selected_dip_feature_mask) != 0);
-		dip_on = ((bit_mask & dip_switch_model[model_index].total_dip_settings) != 0);
+		int bit_mask, dip_on;
+		float dip_field_x1, x1, x2;
+
+		bit_mask = 1 << toggle_index;
 
 		/* draw the field for a single toggle on a DIP switch */
-		dip_field_x1 = segment_start_loc + (SINGLE_TOGGLE_SWITCH_FIELD_WIDTH * toggle);
+		dip_field_x1 = segment_start_x + (SINGLE_TOGGLE_SWITCH_FIELD_WIDTH * toggle_index);
 
-		ui_draw_outlined_box(	dip_field_x1,
-								dip_field_top,
-								dip_field_x1 + SINGLE_TOGGLE_SWITCH_FIELD_WIDTH,
-								dip_field_top + DIP_SWITCH_HEIGHT,
-								UI_FILLCOLOR);
+		ui_draw_outlined_box(dip_field_x1,
+							 dip_field_y,
+							 dip_field_x1 + SINGLE_TOGGLE_SWITCH_FIELD_WIDTH,
+							 dip_field_y + DIP_SWITCH_HEIGHT,
+							 UI_FILLCOLOR);
 
-		/* draw the switch position for a single toggle switch in a switch field */
-		render_ui_add_rect(dip_field_x1 + (SINGLE_TOGGLE_SWITCH_FIELD_WIDTH - SINGLE_TOGGLE_SWITCH_WIDTH)/2,
-							dip_on ? y1_on : y1_off,
-							dip_field_x1 + (SINGLE_TOGGLE_SWITCH_FIELD_WIDTH - SINGLE_TOGGLE_SWITCH_WIDTH)/2 + SINGLE_TOGGLE_SWITCH_WIDTH,
-							dip_on ? y2_on : y2_off,
-							feature_field_selected ? MENU_SELECTCOLOR : ARGB_WHITE,
-							PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+		x1 = dip_field_x1 + (SINGLE_TOGGLE_SWITCH_FIELD_WIDTH - SINGLE_TOGGLE_SWITCH_WIDTH) / 2;
+		x2 = x1 + SINGLE_TOGGLE_SWITCH_WIDTH;
+
+		/* see if the switch is actually used */
+		if (dip_switch_model[model_index].total_dip_mask & bit_mask)
+		{
+			/* yes, draw the switch position for a single toggle switch in a switch field */
+			int feature_field_selected = ((bit_mask & dip_switch_model[model_index].selected_dip_feature_mask) != 0);
+			dip_on = ((bit_mask & dip_switch_model[model_index].total_dip_settings) != 0);
+
+			render_ui_add_rect(x1, dip_on ? y1_on : y1_off,
+							   x2, dip_on ? y2_on : y2_off,
+							   feature_field_selected ? MENU_SELECTCOLOR : ARGB_WHITE,
+							   PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+		}
+		else
+		{
+			/* no, draw it grayed out */
+			render_ui_add_rect(x1, y1_off,
+							   x2, y2_on,
+							   MENU_UNAVAILABLECOLOR,
+							   PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+		}
 	}
 
 	/* add the dip switch name */
+	name_width = ui_get_string_width(dip_switch_model[model_index].dip_name) + ui_get_string_width(" ") / 2;
+
 	ui_draw_text_full(	dip_switch_model[model_index].dip_name,
-						segment_start_loc - name_width,
-						dip_field_top + (DIP_SWITCH_HEIGHT - UI_TARGET_FONT_HEIGHT)/2,
+						segment_start_x - name_width,
+						dip_field_y + (DIP_SWITCH_HEIGHT - UI_TARGET_FONT_HEIGHT)/2,
 						name_width,
 						JUSTIFY_LEFT,
 						WRAP_NEVER,

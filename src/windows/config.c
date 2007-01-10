@@ -25,6 +25,7 @@
 #include "video.h"
 #include "render.h"
 #include "rendutil.h"
+#include "inptport.h"
 #include "debug/debugcpu.h"
 #include "debug/debugcon.h"
 
@@ -540,7 +541,7 @@ static void execute_commands(const char *argv0)
 		// make the base name
 		extract_base_name(argv0, basename, ARRAY_LENGTH(basename) - 5);
 		strcat(basename, ".ini");
-		filerr = mame_fopen(NULL, basename, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);
+		filerr = mame_fopen(NULL, basename, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, &file);
 
 		// error if unable to create the file
 		if (filerr)
@@ -673,7 +674,7 @@ static void extract_options(const game_driver *driver, machine_config *drv)
 	// debugging options
 	if (options_get_bool("log"))
 	{
-		mame_file_error filerr = mame_fopen(SEARCHPATH_DEBUGLOG, "error.log", OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &options.logfile);
+		mame_file_error filerr = mame_fopen(SEARCHPATH_DEBUGLOG, "error.log", OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, &options.logfile);
 		assert_always(filerr == FILERR_NONE, "unable to open log file");
 	}
 	win_erroroslog = options_get_bool("oslog");
@@ -736,7 +737,7 @@ static void setup_record(const char *filename, const game_driver *driver)
 	inp_header inp_header;
 
 	// open the record file
-	filerr = mame_fopen(SEARCHPATH_INPUTLOG, filename, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &options.record);
+	filerr = mame_fopen(SEARCHPATH_INPUTLOG, filename, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, &options.record);
 	assert_always(filerr == FILERR_NONE, "Failed to open file for recording");
 
 	// create a header

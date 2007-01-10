@@ -471,11 +471,11 @@ static READ8_HANDLER( ym2203_data1_r )
 	return YM2203_read_port_0_r(offset);
 }
 
-static int *mcu_reply;
+static const UINT8 *mcu_reply;
 static int mcu_pos = 0, mcu_reply_len = 0;
 static int last_data_adr, last_data;
 
-static int puzznic_mcu_reply[] = { 0x50, 0x1f, 0xb6, 0xba, 0x06, 0x03, 0x47, 0x05, 0x00 };
+static const UINT8 puzznic_mcu_reply[] = { 0x50, 0x1f, 0xb6, 0xba, 0x06, 0x03, 0x47, 0x05, 0x00 };
 
 static WRITE8_HANDLER( mcu_data_w )
 {
@@ -487,7 +487,7 @@ static WRITE8_HANDLER( mcu_data_w )
 	case 0x43:
 		mcu_pos = 0;
 		mcu_reply = puzznic_mcu_reply;
-		mcu_reply_len = sizeof(puzznic_mcu_reply);
+		mcu_reply_len = ARRAY_LENGTH(puzznic_mcu_reply);
 		break;
 	}
 }

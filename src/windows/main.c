@@ -14,7 +14,6 @@
 #include <tchar.h>
 
 // MAME headers
-#include "driver.h"
 #include "strconv.h"
 
 extern int utf8_main(int argc, char **argv);
@@ -48,9 +47,15 @@ int _tmain(int argc, TCHAR **argv)
 #endif // __GNUC__
 
 	/* convert arguments to UTF-8 */
-	utf8_argv = (char **) malloc_or_die(argc * sizeof(*argv));
+	utf8_argv = (char **) malloc(argc * sizeof(*argv));
+	if (utf8_argv == NULL)
+		return 999;
 	for (i = 0; i < argc; i++)
+	{
 		utf8_argv[i] = utf8_from_tstring(argv[i]);
+		if (utf8_argv[i] == NULL)
+			return 999;
+	}
 
 	/* run utf8_main */
 	rc = utf8_main(argc, utf8_argv);
@@ -59,6 +64,13 @@ int _tmain(int argc, TCHAR **argv)
 	for (i = 0; i < argc; i++)
 		free(utf8_argv[i]);
 	free(utf8_argv);
+
+#ifdef MALLOC_DEBUG
+	{
+		void check_unfreed_mem(void);
+		check_unfreed_mem();
+	}
+#endif
 
 	return rc;
 }

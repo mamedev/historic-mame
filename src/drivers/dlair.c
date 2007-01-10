@@ -40,6 +40,7 @@
 #include "render.h"
 #include "machine/laserdsc.h"
 #include "sound/ay8910.h"
+#include "sound/custom.h"
 #include "dlair.lh"
 
 #define LASERDISC_TYPE_MASK			0x7f
@@ -53,6 +54,7 @@ static UINT8 laserdisc_data;
 
 static render_texture *video_texture;
 static render_texture *overlay_texture;
+static mame_bitmap *last_video_bitmap;
 
 static void video_cleanup(running_machine *machine)
 {
@@ -66,6 +68,7 @@ VIDEO_START( dlair )
 {
 	video_texture = NULL;
 	overlay_texture = NULL;
+	last_video_bitmap = NULL;
 
 	add_exit_callback(machine, video_cleanup);
 
@@ -74,17 +77,17 @@ VIDEO_START( dlair )
 
 VIDEO_UPDATE( dlair )
 {
-	if (!video_skip_this_frame())
-	{
-		mame_bitmap *bitmap = laserdisc_get_video(discinfo);
+	mame_bitmap *vidbitmap;
+	laserdisc_get_video(discinfo, &vidbitmap);
 
-		if (video_texture == NULL)
-			video_texture = render_texture_alloc(bitmap, NULL, 0, TEXFORMAT_YUY16, NULL, NULL);
-		else
-			render_texture_set_bitmap(video_texture, bitmap, NULL, 0, TEXFORMAT_YUY16);
+	if (video_texture == NULL)
+		video_texture = render_texture_alloc(vidbitmap, NULL, 0, TEXFORMAT_YUY16, NULL, NULL);
+	else if (vidbitmap != last_video_bitmap)
+		render_texture_set_bitmap(video_texture, vidbitmap, NULL, 0, TEXFORMAT_YUY16);
 
-		render_screen_add_quad(0, 0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(0xff,0xff,0xff,0xff), video_texture, PRIMFLAG_BLENDMODE(BLENDMODE_NONE) | PRIMFLAG_SCREENTEX(1));
-	}
+	last_video_bitmap = vidbitmap;
+
+	render_screen_add_quad(0, 0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(0xff,0xff,0xff,0xff), video_texture, PRIMFLAG_BLENDMODE(BLENDMODE_NONE) | PRIMFLAG_SCREENTEX(1));
 
 	if (discinfo != NULL)
 		popmessage("%s", laserdisc_describe_state(discinfo));
@@ -143,15 +146,14 @@ static MACHINE_RESET( dlair )
 		laserdisc_type &= ~LASERDISC_TYPE_MASK;
 		laserdisc_type |= (readinputportbytag("DSW2") & 0x08) ? LASERDISC_TYPE_LDV1000 : LASERDISC_TYPE_PR7820;
 	}
-	discinfo = laserdisc_init(laserdisc_type & LASERDISC_TYPE_MASK);
+	discinfo = laserdisc_init(laserdisc_type & LASERDISC_TYPE_MASK, get_disk_handle(0), 0);
 }
 
 
 
 void vblank_callback(void)
 {
-	if (cpu_getcurrentframe() % 2 == 1)
-		laserdisc_vsync(discinfo);
+	laserdisc_vsync(discinfo);
 }
 
 
@@ -301,9 +303,7 @@ INPUT_PORTS_START( dlair )
 	PORT_DIPNAME( 0x40, 0x00, "Pay as you go" ) PORT_DIPLOCATION("A:6")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Diagnostics" ) PORT_DIPLOCATION("A:7")
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_SERVICE_DIPLOC( 0x80, IP_ACTIVE_HIGH, "A:7" )
 
 	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, "Sound every 8 attracts" ) PORT_DIPLOCATION("B:0")
@@ -357,7 +357,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( dlaire )
 	PORT_INCLUDE(dlair)
 
-	PORT_MODIFY("DSW1")
+	PORT_MODIFY("DSW2")
 	PORT_DIPNAME( 0x08, 0x08, "LD Player" )		/* In Rev F, F2 and so on... before it was Joystick Sound Feedback */
 	PORT_DIPSETTING(    0x00, "LD-PR7820" )
 	PORT_DIPSETTING(    0x08, "LDV-1000" )
@@ -419,7 +419,7 @@ static MACHINE_DRIVER_START( dlair )
 	MDRV_CPU_VBLANK_INT(vblank_callback, 1)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold, TIME_IN_HZ(MASTER_CLOCK/8/16/16/16/16))
 
-	MDRV_FRAMES_PER_SECOND(24 * 2)
+	MDRV_FRAMES_PER_SECOND(59.940058)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_START(dlair)
@@ -434,10 +434,17 @@ static MACHINE_DRIVER_START( dlair )
 	MDRV_VIDEO_UPDATE(dlair)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
 	MDRV_SOUND_ADD(AY8910, MASTER_CLOCK/8)
 	MDRV_SOUND_CONFIG(ay8910_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.33)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.33)
+
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(laserdisc_custom_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

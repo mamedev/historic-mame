@@ -117,6 +117,11 @@ cdrom_file *cdrom_open(chd_file *chd)
 
 	/* read the CD-ROM metadata */
 	err = parse_metadata(chd, &file->cdtoc);
+	if (err != CHDERR_NONE)
+	{
+		free(file);
+		return NULL;
+	}
 
 	#if VERBOSE
 	logerror("CD has %d tracks\n", file->cdtoc.numtrks);

@@ -99,7 +99,6 @@ struct _d3d_adapter_identifier
 //  Caps enumeration
 //============================================================
 
-typedef enum _d3d_caps_index d3d_caps_index;
 enum _d3d_caps_index
 {
 	CAPS_PRESENTATION_INTERVALS,
@@ -116,6 +115,7 @@ enum _d3d_caps_index
 	CAPS_MAX_TEXTURE_HEIGHT,
 	CAPS_STRETCH_RECT_FILTER
 };
+typedef enum _d3d_caps_index d3d_caps_index;
 
 
 //============================================================

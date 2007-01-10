@@ -8,6 +8,7 @@
 
 #include "driver.h"
 #include "includes/tubep.h"
+#include "res_net.h"
 
 
 UINT8 *tubep_textram;
@@ -19,7 +20,32 @@ static UINT8 *spritemap;
 static UINT8 *dirtybuff;
 static UINT8 prom2[32];
 
-#include "res_net.h"
+/* Globals */
+/*static UINT8 graph_ctrl[10];*/
+static UINT32	romD_addr =0;
+static UINT32	romEF_addr =0;
+static UINT32	E16_add_b = 0;
+static UINT32	HINV = 0;
+static UINT32	VINV = 0;
+static UINT32	XSize = 0;
+static UINT32	YSize = 0;
+static UINT32	mark_1 = 0;
+static UINT32	mark_2 = 0;
+static UINT32	colorram_addr_hi = 0;
+static UINT32	ls273_g6 = 0;
+static UINT32	ls273_j6 = 0;
+static UINT32	romHI_addr_mid = 0;
+static UINT32	romHI_addr_msb = 0;
+static UINT8	DISP = 0;
+static UINT8	background_romsel = 0;
+static UINT8	color_A4 = 0;
+static UINT8	ls175_b7 = 0x0f | 0xf0;
+static UINT8	ls175_e8 = 0x0f;
+static UINT8	ls377_data = 0;
+static UINT32	page = 0;
+
+
+
 
 /***************************************************************************
 
@@ -421,6 +447,10 @@ PALETTE_INIT( tubep )
 }
 
 
+static void tubep_postload(void)
+{
+	memset(dirtybuff,1,0x800/2);
+}
 
 
 VIDEO_START( tubep )
@@ -436,6 +466,30 @@ VIDEO_START( tubep )
 	if (tmpbitmap == NULL)
 		return 1;
 
+	/* Set up save state */
+	state_save_register_func_postload(tubep_postload);
+	state_save_register_global(romD_addr);
+	state_save_register_global(romEF_addr);
+	state_save_register_global(E16_add_b);
+	state_save_register_global(HINV);
+	state_save_register_global(VINV);
+	state_save_register_global(XSize);
+	state_save_register_global(YSize);
+	state_save_register_global(mark_1);
+	state_save_register_global(mark_2);
+	state_save_register_global(colorram_addr_hi);
+	state_save_register_global(ls273_g6);
+	state_save_register_global(ls273_j6);
+	state_save_register_global(romHI_addr_mid);
+	state_save_register_global(romHI_addr_msb);
+	state_save_register_global(DISP);
+	state_save_register_global(background_romsel);
+	state_save_register_global(color_A4);
+	state_save_register_global(ls175_b7);
+	state_save_register_global(ls175_e8);
+	state_save_register_global(ls377_data);
+	state_save_register_global(page);
+
 	return 0;
 }
 
@@ -449,15 +503,12 @@ WRITE8_HANDLER( tubep_textram_w )
 }
 
 
-static UINT8 background_romsel = 0;
 
 WRITE8_HANDLER( tubep_background_romselect_w )
 {
 	background_romsel = data & 1;
 }
 
-
-static UINT8 color_A4 = 0;
 
 WRITE8_HANDLER( tubep_colorproms_A4_line_w )
 {
@@ -469,15 +520,12 @@ WRITE8_HANDLER( tubep_colorproms_A4_line_w )
 }
 
 
-static UINT8 ls175_b7 = 0x0f | 0xf0;
 
 WRITE8_HANDLER( tubep_background_a000_w )
 {
 	ls175_b7 = ((data&0x0f)^0x0f) | 0xf0;
 }
 
-
-static UINT8 ls175_e8 = 0x0f;
 
 WRITE8_HANDLER( tubep_background_c000_w )
 {
@@ -490,25 +538,6 @@ static void sprite_timer_callback(int n)
 	cpunum_set_input_line(3,0,ASSERT_LINE);
 }
 
-/*static UINT8 graph_ctrl[10];*/
-
-static UINT32	romD_addr =0;
-static UINT32	romEF_addr =0;
-static UINT32	E16_add_b = 0;
-static UINT32	HINV = 0;
-static UINT32	VINV = 0;
-static UINT32	XSize = 0;
-static UINT32	YSize = 0;
-static UINT32	mark_1 = 0;
-static UINT32	mark_2 = 0;
-static UINT32	colorram_addr_hi = 0;
-
-static UINT32	ls273_g6 = 0;
-static UINT32	ls273_j6 = 0;
-static UINT32	romHI_addr_mid = 0;
-static UINT32	romHI_addr_msb = 0;
-
-static UINT8	DISP = 0;
 
 static void draw_sprite(void)
 {
@@ -761,7 +790,6 @@ VIDEO_UPDATE( tubep )
 
 
 
-static UINT8 ls377_data = 0;
 
 WRITE8_HANDLER( rjammer_background_LS377_w )
 {
@@ -769,7 +797,6 @@ WRITE8_HANDLER( rjammer_background_LS377_w )
 }
 
 
-static UINT32 page = 0;
 
 WRITE8_HANDLER( rjammer_background_page_w )
 {

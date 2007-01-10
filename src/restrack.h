@@ -34,6 +34,9 @@ void begin_resource_tracking(void);
 /* stop tracking resources and free everything since the last begin */
 void end_resource_tracking(void);
 
+/* validate that a block of memory has been allocated by auto_malloc() */
+void validate_auto_malloc_memory(void *memory, size_t memory_size);
+
 /* return the current resource tag */
 INLINE int get_resource_tag(void)
 {

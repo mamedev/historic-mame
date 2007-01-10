@@ -52,12 +52,12 @@
 
 enum _text_file_type
 {
-	TFT_LATIN1,
-	TFT_UTF8,
-	TFT_UTF16BE,
-	TFT_UTF16LE,
-	TFT_UTF32BE,
-	TFT_UTF32LE
+	TFT_OSD,		/* OSD depdendent encoding format used when BOMs missing */
+	TFT_UTF8,		/* UTF-8 */
+	TFT_UTF16BE,	/* UTF-16 (big endian) */
+	TFT_UTF16LE,	/* UTF-16 (little endian) */
+	TFT_UTF32BE,	/* UTF-32 (UCS-4) (big endian) */
+	TFT_UTF32LE		/* UTF-32 (UCS-4) (little endian) */
 };
 typedef enum _text_file_type text_file_type;
 
@@ -563,15 +563,16 @@ int mame_fgetc(mame_file *file)
 	{
 		utf16_char utf16_buffer[UTF16_CHAR_MAX];
 		char utf8_buffer[UTF8_CHAR_MAX];
+		char default_buffer[16];
 		unicode_char uchar = (unicode_char) ~0;
 		int readlen, charlen;
-		char c;
 
 		/* do we need to check the byte order marks? */
 		if (file->offset == 0)
 		{
 			UINT8 bom[4];
 			int pos = 0;
+
 			if (mame_fread(file, bom, 4) == 4)
 			{
 				if ((bom[0] == 0xEF) && (bom[1] == 0xBB) && (bom[2] == 0xBF))
@@ -599,6 +600,11 @@ int mame_fgetc(mame_file *file)
 					file->text_type = TFT_UTF16LE;
 					pos = 2;
 				}
+				else
+				{
+					file->text_type = TFT_OSD;
+					pos = 0;
+				}
 			}
 			mame_fseek(file, pos, SEEK_SET);
 		}
@@ -606,39 +612,50 @@ int mame_fgetc(mame_file *file)
 		/* fetch the next character */
 		switch (file->text_type)
 		{
-			case TFT_LATIN1:
-				if (mame_fread(file, &c, 1) == 1)
-					uchar = c;
+			case TFT_OSD:
+				readlen = mame_fread(file, default_buffer, sizeof(default_buffer));
+				if (readlen > 0)
+				{
+					charlen = osd_uchar_from_osdchar(&uchar, default_buffer, readlen / sizeof(default_buffer[0]));
+					mame_fseek(file, (INT64) (charlen * sizeof(default_buffer[0])) - readlen, SEEK_CUR);
+				}
 				break;
 
 			case TFT_UTF8:
 				readlen = mame_fread(file, utf8_buffer, sizeof(utf8_buffer));
-				charlen = uchar_from_utf8(&uchar, utf8_buffer, readlen / sizeof(utf8_buffer[0]));
-				mame_fseek(file, (charlen * sizeof(utf8_buffer[0])) - readlen, SEEK_CUR);
+				if (readlen > 0)
+				{
+					charlen = uchar_from_utf8(&uchar, utf8_buffer, readlen / sizeof(utf8_buffer[0]));
+					mame_fseek(file, (INT64) (charlen * sizeof(utf8_buffer[0])) - readlen, SEEK_CUR);
+				}
 				break;
 
 			case TFT_UTF16BE:
 				readlen = mame_fread(file, utf16_buffer, sizeof(utf16_buffer));
-				charlen = uchar_from_utf16be(&uchar, utf16_buffer, readlen / sizeof(utf16_buffer[0]));
-				mame_fseek(file, (charlen * sizeof(utf16_buffer[0])) - readlen, SEEK_CUR);
+				if (readlen > 0)
+				{
+					charlen = uchar_from_utf16be(&uchar, utf16_buffer, readlen / sizeof(utf16_buffer[0]));
+					mame_fseek(file, (INT64) (charlen * sizeof(utf16_buffer[0])) - readlen, SEEK_CUR);
+				}
 				break;
 
 			case TFT_UTF16LE:
 				readlen = mame_fread(file, utf16_buffer, sizeof(utf16_buffer));
-				charlen = uchar_from_utf16le(&uchar, utf16_buffer, readlen / sizeof(utf16_buffer[0]));
-				mame_fseek(file, (charlen * sizeof(utf16_buffer[0])) - readlen, SEEK_CUR);
+				if (readlen > 0)
+				{
+					charlen = uchar_from_utf16le(&uchar, utf16_buffer, readlen / sizeof(utf16_buffer[0]));
+					mame_fseek(file, (INT64) (charlen * sizeof(utf16_buffer[0])) - readlen, SEEK_CUR);
+				}
 				break;
 
 			case TFT_UTF32BE:
-				if (mame_fread(file, &uchar, sizeof(uchar)) != sizeof(uchar))
-					uchar = ~0;
-				uchar = BIG_ENDIANIZE_INT32(uchar);
+				if (mame_fread(file, &uchar, sizeof(uchar)) == sizeof(uchar))
+					uchar = BIG_ENDIANIZE_INT32(uchar);
 				break;
 
 			case TFT_UTF32LE:
-				if (mame_fread(file, &uchar, sizeof(uchar)) != sizeof(uchar))
-					uchar = ~0;
-				uchar = LITTLE_ENDIANIZE_INT32(uchar);
+				if (mame_fread(file, &uchar, sizeof(uchar)) == sizeof(uchar))
+					uchar = LITTLE_ENDIANIZE_INT32(uchar);
 				break;
 
 			default:
@@ -651,6 +668,7 @@ int mame_fgetc(mame_file *file)
 			/* place the new character in the ring buffer */
 			file->back_char_head = 0;
 			file->back_char_tail = utf8_from_uchar(file->back_chars, ARRAY_LENGTH(file->back_chars), uchar);
+			assert(file->back_char_tail != -1);
 		}
 	}
 
@@ -920,7 +938,7 @@ chd_interface_file *chd_open_cb(const char *filename, const char *mode)
 	/* look for read/write drives in the diff area */
 	filerr = mame_fopen(SEARCHPATH_IMAGE_DIFF, filename, OPEN_FLAG_READ | OPEN_FLAG_WRITE, &file);
 	if (filerr != FILERR_NONE)
-		filerr = mame_fopen(SEARCHPATH_IMAGE_DIFF, filename, OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);
+		filerr = mame_fopen(SEARCHPATH_IMAGE_DIFF, filename, OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, &file);
 	return (filerr == FILERR_NONE) ? (chd_interface_file *)file : NULL;
 }
 

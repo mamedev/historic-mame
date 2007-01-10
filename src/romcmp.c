@@ -11,7 +11,7 @@
 
 #include "unzip.h"
 #include "osdepend.h"	/* for CLIB_DECL */
-#include "osd_tool.h"
+#include "osdcore.h"
 #include "fileio.h"
 #include <stdarg.h>
 #ifdef macintosh
@@ -45,44 +45,6 @@
 /* for unzip.c */
 void CLIB_DECL logerror(const char *text,...)
 {
-}
-
-mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 *filesize)
-{
-	const char *mode;
-	osd_tool_file *fp;
-
-	if (openflags & OPEN_FLAG_READ)
-		mode = "rb";
-	else
-		return FILERR_FAILURE;
-
-	fp = osd_tool_fopen(path, mode);
-	if (fp == NULL)
-		return FILERR_NOT_FOUND;
-
-	*filesize = osd_tool_flength(fp);
-
-	*file = (osd_file *)fp;
-	return FILERR_NONE;
-}
-
-mame_file_error osd_close(osd_file *file)
-{
-	osd_tool_fclose((osd_tool_file *)file);
-	return FILERR_NONE;
-}
-
-mame_file_error osd_read(osd_file *file, void *buffer, UINT64 offset, UINT32 length, UINT32 *actual)
-{
-	*actual = osd_tool_fread((osd_tool_file *) file, offset, length, buffer);
-	return FILERR_NONE;
-}
-
-mame_file_error osd_write(osd_file *file, const void *buffer, UINT64 offset, UINT32 length, UINT32 *actual)
-{
-	*actual = osd_tool_fwrite((osd_tool_file *) file, offset, length, buffer);
-	return FILERR_NONE;
 }
 
 
@@ -449,9 +411,11 @@ static float filecompare(const fileinfo *file1,const fileinfo *file2,int mode1,i
 
 static void readfile(const char *path,fileinfo *file)
 {
+	mame_file_error filerr;
+	UINT64 filesize;
+	UINT32 actual;
 	char fullname[256];
-	osd_tool_file *f = 0;
-
+	osd_file *f = 0;
 
 	if (path)
 	{
@@ -468,22 +432,22 @@ static void readfile(const char *path,fileinfo *file)
 		return;
 	}
 
-	if ((f = osd_tool_fopen(fullname,"rb")) == 0)
+	filerr = osd_open(fullname, OPEN_FLAG_READ, &f, &filesize);
+	if (filerr != FILERR_NONE)
 	{
-		printf("%s: %s\n",fullname,strerror(errno));
+		printf("%s: error %d\n", fullname, filerr);
 		return;
 	}
 
-	if (osd_tool_fread(f, 0, file->size, file->buf) != file->size)
+	filerr = osd_read(f, file->buf, 0, file->size, &actual);
+	if (filerr != FILERR_NONE)
 	{
-		printf("%s: %s\n",fullname,strerror(errno));
-		osd_tool_fclose(f);
+		printf("%s: error %d\n", fullname, filerr);
+		osd_close(f);
 		return;
 	}
 
-	osd_tool_fclose(f);
-
-	return;
+	osd_close(f);
 }
 
 
@@ -505,99 +469,33 @@ static void printname(const fileinfo *file1,const fileinfo *file2,float score,in
 
 static int load_files(int i, int *found, const char *path)
 {
-	osd_tool_enttype type;
+	osd_directory *dir;
 
-	/* check the file type */
-	type = osd_get_file_type(path);
-	switch(type)
+	/* attempt to open as a directory first */
+	dir = osd_opendir(path);
+	if (dir != NULL)
 	{
-		case ENTTYPE_DIR:
+		const osd_directory_entry *d;
+
+		/* load all files in directory */
+		while ((d = osd_readdir(dir)) != NULL)
 		{
-			osd_tool_dir *dir;
-			const osd_tool_dirent *d;
+			const char *d_name = d->name;
+			char buf[255+1];
 
-			/* load all files in directory */
-			dir = osd_tool_opendir(path);
-			if (dir)
+			sprintf(buf, "%s%c%s", path, PATH_DELIM, d_name);
+			if (d->type == ENTTYPE_FILE)
 			{
-				while((d = osd_tool_readdir(dir)) != NULL)
-				{
-					char *d_name = d->name;
-					char buf[255+1];
-
-					sprintf(buf, "%s%c%s", path, PATH_DELIM, d_name);
-					if (d->type == ENTTYPE_FILE)
-					{
-						UINT64 size = d->size;
-						while (size && (size & 1) == 0) size >>= 1;
-						if (size & ~1)
-							printf("%-23s %-23s ignored (not a ROM)\n",i ? "" : d_name,i ? d_name : "");
-						else
-						{
-							strcpy(files[i][found[i]].name,d_name);
-							files[i][found[i]].size = d->size;
-							readfile(path,&files[i][found[i]]);
-							files[i][found[i]].listed = 0;
-							if (found[i] >= MAX_FILES)
-							{
-								printf("%s: max of %d files exceeded\n",path,MAX_FILES);
-								break;
-							}
-							found[i]++;
-						}
-					}
-				}
-				osd_tool_closedir(dir);
-			}
-			break;
-		}
-
-		case ENTTYPE_FILE:
-		{
-			zip_file *zip;
-			const zip_file_header* zipent;
-			zip_error ziperr;
-
-			/* wasn't a directory, so try to open it as a zip file */
-			ziperr = zip_file_open(path, &zip);
-			if (ziperr != ZIPERR_NONE)
-			{
-				printf("Error, cannot open zip file '%s' !\n", path);
-				return 1;
-			}
-
-			/* load all files in zip file */
-			for (zipent = zip_file_first_file(zip); zipent != NULL; zipent = zip_file_next_file(zip))
-			{
-				int size;
-
-				size = zipent->uncompressed_length;
+				UINT64 size = d->size;
 				while (size && (size & 1) == 0) size >>= 1;
-				if (zipent->uncompressed_length == 0 || (size & ~1))
-					printf("%-23s %-23s ignored (not a ROM)\n",
-						i ? "" : zipent->filename, i ? zipent->filename : "");
+				if (size & ~1)
+					printf("%-23s %-23s ignored (not a ROM)\n",i ? "" : d_name,i ? d_name : "");
 				else
 				{
-					fileinfo *file = &files[i][found[i]];
-					const char *delim = strrchr(zipent->filename,'/');
-
-					if (delim)
-						strcpy (file->name,delim+1);
-					else
-						strcpy(file->name,zipent->filename);
-					file->size = zipent->uncompressed_length;
-					if ((file->buf = malloc(file->size)) == 0)
-						printf("%s: out of memory!\n",file->name);
-					else
-					{
-						if (zip_file_decompress(zip, (char *)file->buf, file->size) != ZIPERR_NONE)
-						{
-							free(file->buf);
-							file->buf = 0;
-						}
-					}
-
-					file->listed = 0;
+					strcpy(files[i][found[i]].name,d_name);
+					files[i][found[i]].size = d->size;
+					readfile(path,&files[i][found[i]]);
+					files[i][found[i]].listed = 0;
 					if (found[i] >= MAX_FILES)
 					{
 						printf("%s: max of %d files exceeded\n",path,MAX_FILES);
@@ -606,13 +504,66 @@ static int load_files(int i, int *found, const char *path)
 					found[i]++;
 				}
 			}
-			zip_file_close(zip);
-			break;
+		}
+		osd_closedir(dir);
+	}
+
+	/* if not, try to open as a ZIP file */
+	else
+	{
+		zip_file *zip;
+		const zip_file_header* zipent;
+		zip_error ziperr;
+
+		/* wasn't a directory, so try to open it as a zip file */
+		ziperr = zip_file_open(path, &zip);
+		if (ziperr != ZIPERR_NONE)
+		{
+			printf("Error, cannot open zip file '%s' !\n", path);
+			return 1;
 		}
 
-		default:
-			printf("%s: Can not access\n", path);
-			return 10;
+		/* load all files in zip file */
+		for (zipent = zip_file_first_file(zip); zipent != NULL; zipent = zip_file_next_file(zip))
+		{
+			int size;
+
+			size = zipent->uncompressed_length;
+			while (size && (size & 1) == 0) size >>= 1;
+			if (zipent->uncompressed_length == 0 || (size & ~1))
+				printf("%-23s %-23s ignored (not a ROM)\n",
+					i ? "" : zipent->filename, i ? zipent->filename : "");
+			else
+			{
+				fileinfo *file = &files[i][found[i]];
+				const char *delim = strrchr(zipent->filename,'/');
+
+				if (delim)
+					strcpy (file->name,delim+1);
+				else
+					strcpy(file->name,zipent->filename);
+				file->size = zipent->uncompressed_length;
+				if ((file->buf = malloc(file->size)) == 0)
+					printf("%s: out of memory!\n",file->name);
+				else
+				{
+					if (zip_file_decompress(zip, (char *)file->buf, file->size) != ZIPERR_NONE)
+					{
+						free(file->buf);
+						file->buf = 0;
+					}
+				}
+
+				file->listed = 0;
+				if (found[i] >= MAX_FILES)
+				{
+					printf("%s: max of %d files exceeded\n",path,MAX_FILES);
+					break;
+				}
+				found[i]++;
+			}
+		}
+		zip_file_close(zip);
 	}
 	return 0;
 }
@@ -810,6 +761,7 @@ int CLIB_DECL main(int argc,char **argv)
 		}
 	}
 
+	zip_file_cache_clear();
 	return 0;
 }
 

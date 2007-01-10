@@ -3827,9 +3827,9 @@ INLINE UINT16 get_hposition(void)
 
 	time_elapsed_since_scanline_timer = mame_timer_timeelapsed(scanline_timer);
 
-	if (time_elapsed_since_scanline_timer.subseconds<(1000000000000000000LL/megadriv_framerate /megadrive_total_scanlines))
+	if (time_elapsed_since_scanline_timer.subseconds<(MAX_SUBSECONDS/megadriv_framerate /megadrive_total_scanlines))
 	{
-		value4 = (UINT16)(megadrive_max_hposition*((double)(time_elapsed_since_scanline_timer.subseconds) / (double)(1000000000000000000LL/megadriv_framerate /megadrive_total_scanlines)));
+		value4 = (UINT16)(megadrive_max_hposition*((double)(time_elapsed_since_scanline_timer.subseconds) / (double)(MAX_SUBSECONDS/megadriv_framerate /megadrive_total_scanlines)));
 	}
 	else /* in some cases (probably due to rounding errors) we get some stupid results (the odd huge value where the time elapsed is much higher than the scanline time??!).. hopefully by clamping the result to the maximum we limit errors */
 	{
@@ -4142,7 +4142,7 @@ static void scanline_timer_callback(int num)
 	{
 		genesis_scanline_counter++;
 //      mame_printf_debug("scanline %d\n",genesis_scanline_counter);
-		timer_adjust(scanline_timer,  SUBSECONDS_TO_DOUBLE(1000000000000000000LL/megadriv_framerate/megadrive_total_scanlines), 0, 0);
+		timer_adjust(scanline_timer,  SUBSECONDS_TO_DOUBLE(MAX_SUBSECONDS/megadriv_framerate/megadrive_total_scanlines), 0, 0);
 
 		timer_adjust(render_timer,  TIME_IN_USEC(1), 0, 0);
 
@@ -4451,7 +4451,7 @@ int megadrive_z80irq_hpos = 320;
 		UINT64 frametime;
 
 	//  /* reference */
-		frametime = 1000000000000000000LL/megadriv_framerate;
+		frametime = MAX_SUBSECONDS/megadriv_framerate;
 
 		time_elapsed_since_crap = mame_timer_timeelapsed(frame_timer);
 		xxx = MAME_TIME_TO_CYCLES(0,time_elapsed_since_crap);

@@ -461,7 +461,14 @@ static struct SN76477interface sn76477_intf =
 	RES_K(120),			/* 20  slf_res           */
 	CAP_U(1.0),			/* 21  slf_cap           */
 	0,	/* N/C */		/* 23  oneshot_cap       */
-	0	/* N/C */		/* 24  oneshot_res       */
+	0,	/* N/C */		/* 24  oneshot_res       */
+	0,			        /* 22    vco             */
+	1,			        /* 26 mixer A           */
+	1,			        /* 25 mixer B           */
+	1,			        /* 27 mixer C           */
+	1,			        /* 1  envelope 1        */
+	1,			        /* 28 envelope 2        */
+	1			        /* 9     enable          */
 };
 
 

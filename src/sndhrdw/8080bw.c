@@ -50,15 +50,6 @@ static UINT8 bw_last_c = 0;
 static UINT8 bw_last_d = 0;
 int schaser_sx10;
 
-static void bw_sn76477_setup ( int chip )
-{
-	SN76477_envelope_1_w(chip, 1);
-	SN76477_envelope_2_w(chip, 0);
-	SN76477_mixer_a_w(chip, 0);
-	SN76477_mixer_b_w(chip, 0);
-	SN76477_mixer_c_w(chip, 0);
-	SN76477_vco_w(chip, 1);
-}
 
 /*******************************************************/
 /*                                                     */
@@ -68,22 +59,29 @@ static void bw_sn76477_setup ( int chip )
 
 struct SN76477interface invaders_sn76477_interface =
 {
-	0	/* N/C */,		/*  4  noise_res         */
-	0	/* N/C */,		/*  5  filter_res        */
-	0	/* N/C */,		/*  6  filter_cap        */
-	0	/* N/C */,		/*  7  decay_res         */
-	0	/* N/C */,		/*  8  attack_decay_cap  */
-	RES_K(100) ,		/* 10  attack_res        */
-	RES_K(56)  ,		/* 11  amplitude_res     */
-	RES_K(10)  ,		/* 12  feedback_res      */
-	0	/* N/C */,		/* 16  vco_voltage       */
-	CAP_U(0.1) ,		/* 17  vco_cap           */
-	RES_K(8.2) ,		/* 18  vco_res           */
-	5.0		 ,		/* 19  pitch_voltage     */
-	RES_K(120) ,		/* 20  slf_res           */
-	CAP_U(1.0) ,		/* 21  slf_cap           */
-	0	/* N/C */,		/* 23  oneshot_cap       */
-	0	/* N/C */		/* 24  oneshot_res       */
+	0,			/*  4 noise_res (N/C)        */
+	0,			/*  5 filter_res (N/C)       */
+	0,			/*  6 filter_cap (N/C)       */
+	0,			/*  7 decay_res (N/C)        */
+	0,			/*  8 attack_decay_cap (N/C) */
+	RES_K(100), /* 10 attack_res             */
+	RES_K(56),	/* 11 amplitude_res          */
+	RES_K(10),	/* 12 feedback_res           */
+	0,			/* 16 vco_voltage (N/C)      */
+	CAP_U(0.1),	/* 17 vco_cap                */
+	RES_K(8.2),	/* 18 vco_res                */
+	5.0,		/* 19 pitch_voltage          */
+	RES_K(120),	/* 20 slf_res                */
+	CAP_U(1.0),	/* 21 slf_cap                */
+	0,			/* 23 oneshot_cap (N/C)      */
+	0,			/* 24 oneshot_res (N/C)      */
+	1,			/* 22 vco                    */
+	0,			/* 26 mixer A                */
+	0,			/* 25 mixer B                */
+	0,			/* 27 mixer C                */
+	1,			/* 1  envelope 1             */
+	0,			/* 28 envelope 2             */
+	0			/* 9  enable (variable)      */
 };
 
 /* First 9 sounds are for all space invaders games
@@ -156,7 +154,6 @@ MACHINE_RESET( invaders )
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, invaders_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, invaders_sh_port5_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, watchdog_reset_w);
-	bw_sn76477_setup( 0 );
 }
 
 
@@ -170,7 +167,6 @@ MACHINE_RESET( sstrangr )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x42, 0x42, 0, 0, invaders_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x44, 0x44, 0, 0, invaders_sh_port5_w);
-	bw_sn76477_setup( 0 );
 }
 
 
@@ -182,22 +178,29 @@ MACHINE_RESET( sstrangr )
 
 struct SN76477interface invad2ct_sn76477_interface =
 {
-	0	/* N/C */  ,	/*  4  noise_res         */
-	0	/* N/C */  ,	/*  5  filter_res        */
-	0	/* N/C */  ,	/*  6  filter_cap        */
-	0	/* N/C */  ,	/*  7  decay_res         */
-	0	/* N/C */  ,	/*  8  attack_decay_cap  */
-	RES_K(100)   ,	/* 10  attack_res        */
-	RES_K(56)    ,	/* 11  amplitude_res     */
-	RES_K(10)    ,	/* 12  feedback_res      */
-	0	/* N/C */  ,	/* 16  vco_voltage       */
-	CAP_U(0.047) ,	/* 17  vco_cap           */
-	RES_K(39)    ,	/* 18  vco_res           */
-	5.0		   ,	/* 19  pitch_voltage     */
-	RES_K(120)   ,	/* 20  slf_res           */
-	CAP_U(1.0)   ,	/* 21  slf_cap           */
-	0	/* N/C */,	/* 23  oneshot_cap       */
-	0	/* N/C */	/* 24  oneshot_res       */
+	0,			  /*  4 noise_res (N/C)        */
+	0,			  /*  5 filter_res (N/C)       */
+	0,			  /*  6 filter_cap (N/C)       */
+	0,			  /*  7 decay_res (N/C)        */
+	0,			  /*  8 attack_decay_cap (N/C) */
+	RES_K(100),   /* 10 attack_res             */
+	RES_K(56),	  /* 11 amplitude_res          */
+	RES_K(10),	  /* 12 feedback_res           */
+	0,			  /* 16 vco_voltage (N/C)      */
+	CAP_U(0.047), /* 17 vco_cap                */
+	RES_K(39),	  /* 18 vco_res                */
+	5.0,		  /* 19 pitch_voltage          */
+	RES_K(120),	  /* 20 slf_res                */
+	CAP_U(1.0),	  /* 21 slf_cap                */
+	0,			  /* 23 oneshot_cap (N/C)      */
+	0,			  /* 24 oneshot_res (N/C)      */
+	1,			  /* 22 vco                    */
+	0,			  /* 26 mixer A                */
+	0,			  /* 25 mixer B                */
+	0,			  /* 27 mixer C                */
+	1,			  /* 1  envelope 1             */
+	0,			  /* 28 envelope 2             */
+	0			  /* 9  enable (variable)      */
 };
 
 struct Samplesinterface invad2ct_samples_interface =
@@ -240,7 +243,6 @@ MACHINE_RESET( invad2ct )
 	machine_reset_invaders(machine);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, invad2ct_sh_port1_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x07, 0x07, 0, 0, invad2ct_sh_port7_w);
-	bw_sn76477_setup( 1 );
 }
 
 
@@ -269,7 +271,6 @@ MACHINE_RESET( spcewars )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, spcewars_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, invaders_sh_port5_w);
-	bw_sn76477_setup( 0 );
 }
 
 
@@ -1156,22 +1157,29 @@ MACHINE_RESET( desertgu )
 
 struct SN76477interface schaser_sn76477_interface =
 {
-	RES_K( 47)	,		/*  4  noise_res         */
-	RES_K(330)	,		/*  5  filter_res        */
-	CAP_P(470)	,		/*  6  filter_cap        */
-	RES_M(2.2)	,		/*  7  decay_res         */
-	CAP_U(1.0)	,		/*  8  attack_decay_cap  */
-	RES_K(4.7)	,		/* 10  attack_res        */
-	0			,		/* 11  amplitude_res (variable)  */
-	RES_K(33)	,		/* 12  feedback_res      */
-	0			,		/* 16  vco_voltage       */
-	CAP_U(0.1)	,		/* 17  vco_cap           */
-	RES_K(39)	,		/* 18  vco_res           */
-	5.0			,		/* 19  pitch_voltage     */
-	RES_K(120)	,		/* 20  slf_res           */
-	CAP_U(1.0)	,		/* 21  slf_cap           */
-	CAP_U(0.1)	,		/* 23  oneshot_cap       */
-	RES_K(220)   		/* 24  oneshot_res       */
+	RES_K( 47),	/*  4 noise_res         */
+	RES_K(330),	/*  5 filter_res        */
+	CAP_P(470),	/*  6 filter_cap        */
+	RES_M(2.2),	/*  7 decay_res         */
+	CAP_U(1.0),	/*  8 attack_decay_cap  */
+	RES_K(4.7),	/* 10 attack_res        */
+	0,			/* 11 amplitude_res (variable)  */
+	RES_K(33),	/* 12 feedback_res      */
+	0,			/* 16 vco_voltage       */
+	CAP_U(0.1),	/* 17 vco_cap           */
+	RES_K(39),	/* 18 vco_res           */
+	5.0,		/* 19 pitch_voltage     */
+	RES_K(120),	/* 20 slf_res           */
+	CAP_U(1.0),	/* 21 slf_cap           */
+	CAP_U(0.1),	/* 23 oneshot_cap       */
+	RES_K(220),	/* 24 oneshot_res       */
+	1,			/* 22 vco               */
+	0,			/* 26 mixer A           */
+	0,			/* 25 mixer B           */
+	0,			/* 27 mixer C           */
+	1,			/* 1  envelope 1        */
+	0,			/* 28 envelope 2        */
+	0			/* 9  enable (variable) */
 };
 
 /* Nodes - Inputs */
@@ -1362,7 +1370,6 @@ MACHINE_RESET( schaser )
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, schaser_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, schaser_sh_port5_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, watchdog_reset_w);
-	bw_sn76477_setup( 0 );
 
 	schaser_effect_555_is_low = 0;
 	timer_adjust(schaser_effect_555_timer, TIME_NEVER, 0, 0);
@@ -1750,7 +1757,6 @@ MACHINE_RESET( lupin3 )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, lupin3_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, lupin3_sh_port5_w);
-	bw_sn76477_setup( 0 );
 }
 
 
@@ -1830,7 +1836,6 @@ MACHINE_RESET( yosakdon )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, yosakdon_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, yosakdon_sh_port5_w);
-	bw_sn76477_setup( 0 );
 }
 
 
@@ -1877,8 +1882,6 @@ MACHINE_RESET( m4 )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, m4_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, m4_sh_port5_w);
-	bw_sn76477_setup( 0 );
-	bw_sn76477_setup( 1 );
 }
 
 
@@ -1919,7 +1922,6 @@ MACHINE_RESET( gmissile )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, gmissile_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x07, 0x07, 0, 0, gmissile_sh_port7_w);
-	bw_sn76477_setup( 0 );
 }
 
 
@@ -1968,7 +1970,6 @@ MACHINE_RESET( shuttlei )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xfd, 0xfd, 0, 0, shuttlei_sh_portfd_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xfe, 0xfe, 0, 0, shuttlei_sh_portfe_w);
-	bw_sn76477_setup( 0 );
 }
 
 

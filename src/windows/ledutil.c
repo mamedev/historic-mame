@@ -170,7 +170,7 @@ static void led_set_state(int state);
 //  main
 //============================================================
 
-int main(int argc, char *argv[])
+int utf8_main(int argc, char *argv[])
 {
 	const char *arg = (argc > 1) ? argv[1] : "";
 	int exitcode = 1;

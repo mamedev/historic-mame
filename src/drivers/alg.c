@@ -117,16 +117,17 @@ static VIDEO_UPDATE( alg )
 	/* composite the video */
 	if (!video_skip_this_frame())
 	{
-		mame_bitmap *bitmap = laserdisc_get_video(discinfo);
+		mame_bitmap *vidbitmap;
 		rectangle fixedvis = Machine->screen[screen].visarea;
 		fixedvis.max_x++;
 		fixedvis.max_y++;
 
 		/* first lay down the video data */
+		laserdisc_get_video(discinfo, &vidbitmap);
 		if (video_texture == NULL)
-			video_texture = render_texture_alloc(bitmap, NULL, 0, TEXFORMAT_YUY16, NULL, NULL);
+			video_texture = render_texture_alloc(vidbitmap, NULL, 0, TEXFORMAT_YUY16, NULL, NULL);
 		else
-			render_texture_set_bitmap(video_texture, bitmap, NULL, 0, TEXFORMAT_YUY16);
+			render_texture_set_bitmap(video_texture, vidbitmap, NULL, 0, TEXFORMAT_YUY16);
 
 		/* then overlay the Amiga video */
 		if (overlay_texture == NULL)
@@ -701,7 +702,7 @@ static void alg_init(void)
 	memory_configure_bank(1, 0, 1, amiga_chip_ram, 0);
 	memory_configure_bank(1, 1, 1, memory_region(REGION_USER1), 0);
 
-	discinfo = laserdisc_init(LASERDISC_TYPE_LDP1450);
+	discinfo = laserdisc_init(LASERDISC_TYPE_LDP1450, get_disk_handle(0), 0);
 	serial_timer = timer_alloc(response_timer);
 	serial_timer_active = FALSE;
 }

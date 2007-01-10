@@ -24,6 +24,13 @@ struct _callback_item
 	void			(*free_resources)(void);
 };
 
+typedef struct _malloc_entry malloc_entry;
+struct _malloc_entry
+{
+	void *memory;
+	size_t size;
+};
+
 
 
 /***************************************************************************
@@ -31,7 +38,7 @@ struct _callback_item
 ***************************************************************************/
 
 /* malloc tracking */
-static void **malloc_list = NULL;
+static malloc_entry *malloc_list = NULL;
 static int malloc_list_index = 0;
 static int malloc_list_size = 0;
 
@@ -118,12 +125,12 @@ static void free_callback_list(callback_item **cb)
     auto_malloc_add - add pointer to malloc list
 -------------------------------------------------*/
 
-INLINE void auto_malloc_add(void *result)
+INLINE void auto_malloc_add(void *result, size_t size)
 {
 	/* make sure we have tracking space */
 	if (malloc_list_index == malloc_list_size)
 	{
-		void **list;
+		malloc_entry *list;
 
 		/* if this is the first time, allocate 256 entries, otherwise double the slots */
 		if (malloc_list_size == 0)
@@ -137,7 +144,9 @@ INLINE void auto_malloc_add(void *result)
 			fatalerror("Unable to extend malloc tracking array to %d slots", malloc_list_size);
 		malloc_list = list;
 	}
-	malloc_list[malloc_list_index++] = result;
+	malloc_list[malloc_list_index].memory = result;
+	malloc_list[malloc_list_index].size = size;
+	malloc_list_index++;
 }
 
 
@@ -148,8 +157,8 @@ INLINE void auto_malloc_add(void *result)
 static void auto_malloc_free(void)
 {
 	/* start at the end and free everything till you reach the sentinel */
-	while (malloc_list_index > 0 && malloc_list[--malloc_list_index] != NULL)
-		free(malloc_list[malloc_list_index]);
+	while (malloc_list_index > 0 && malloc_list[--malloc_list_index].memory != NULL)
+		free(malloc_list[malloc_list_index].memory);
 
 	/* if we free everything, free the list */
 	if (malloc_list_index == 0)
@@ -196,7 +205,7 @@ void exit_resource_tracking(void)
 void begin_resource_tracking(void)
 {
 	/* add a NULL as a sentinel */
-	auto_malloc_add(NULL);
+	auto_malloc_add(NULL, 0);
 
 	/* increment the tag counter */
 	resource_tracking_tag++;
@@ -233,7 +242,7 @@ void *_auto_malloc(size_t size, const char *file, int line)
 	result = _malloc_or_die(size, file, line);
 
 	/* track this item in our list */
-	auto_malloc_add(result);
+	auto_malloc_add(result, size);
 	return result;
 }
 
@@ -257,5 +266,61 @@ char *auto_strdup(const char *str)
 char *auto_strdup_allow_null(const char *str)
 {
 	return (str != NULL) ? auto_strdup(str) : NULL;
+}
+
+
+
+/*-------------------------------------------------
+    pointer_in_block - returns whether a pointer
+    is within a memory block
+-------------------------------------------------*/
+
+static int pointer_in_block(const UINT8 *ptr, const UINT8 *block, size_t block_size)
+{
+	return (ptr >= block) && (ptr < (block + block_size));
+}
+
+
+
+/*-------------------------------------------------
+    validate_auto_malloc_memory - validate that a
+    block of memory has been allocated by auto_malloc()
+-------------------------------------------------*/
+
+void validate_auto_malloc_memory(void *memory, size_t memory_size)
+{
+	int i;
+	int tag = 0;
+	const UINT8 *this_memory = (const UINT8 *) memory;
+	size_t this_memory_size = memory_size;
+
+	assert(memory_size > 0);
+
+	for (i = 0; i < malloc_list_size; i++)
+	{
+		if (malloc_list[i].memory != NULL)
+		{
+			const UINT8 *that_memory = (const UINT8 *) malloc_list[i].memory;
+			size_t that_memory_size = malloc_list[i].size;
+
+			if (pointer_in_block(this_memory, that_memory, that_memory_size))
+			{
+				if (!pointer_in_block(this_memory + this_memory_size - 1, that_memory, that_memory_size))
+					fatalerror("Memory block [0x%p-0x%p] partially overlaps with allocated block [0x%p-0x%p]", this_memory, this_memory + this_memory_size - 1, that_memory, that_memory + that_memory_size - 1);
+				return;
+			}
+			else if (pointer_in_block(that_memory, this_memory, this_memory_size))
+			{
+				if (!pointer_in_block(that_memory + that_memory_size - 1, this_memory, this_memory_size))
+					fatalerror("Memory block [0x%p-0x%p] partially overlaps with allocated block [0x%p-0x%p]", this_memory, this_memory + this_memory_size - 1, that_memory, that_memory + that_memory_size - 1);
+				return;
+			}
+		}
+		else
+		{
+			tag++;
+		}
+	}
+	fatalerror("Memory block [0x%p-0x%p] not found", this_memory, this_memory + this_memory_size - 1);
 }
 

@@ -47,13 +47,13 @@ something is missing, currently needs a hack to boot
 
 
 #include "driver.h"
-
+static int toggle_bit;
 
 READ16_HANDLER( wheelfir_rand1 )
 {
-	static int toggle_bit;
 
-	toggle_bit ^= 0x8000; // must toggle..
+
+
 
 	return readinputport(0)^toggle_bit;// mame_rand(Machine);
 }
@@ -71,7 +71,7 @@ READ16_HANDLER( wheelfir_rand4 )
 
 static UINT16 *wheelfir_myram;
 static UINT16 wheelfir_blitdata[16];
-static mame_bitmap *wheelfir_tmp_bitmap;
+static mame_bitmap *wheelfir_tmp_bitmap[3];
 
 /*
 
@@ -150,9 +150,8 @@ static int wheelfir_six_pos = 0;
 static WRITE16_HANDLER(wheelfir_blit_w)
 {
 	//wheelfir_blitdata[offset]=data;
+	int vpage=0;
 	COMBINE_DATA(&wheelfir_blitdata[offset]);
-
-	//mame_printf_debug("%x %x %x\n",activecpu_get_pc(),offset,data);
 
 	/* a bit of a hack really .. */
 	if(offset==0x6)
@@ -168,8 +167,8 @@ static WRITE16_HANDLER(wheelfir_blit_w)
 
 		wheelfir_six_pos++;
 
-		plot_pixel(wheelfir_tmp_bitmap,x,y,sixdat);
-
+		plot_pixel(wheelfir_tmp_bitmap[2],x,y,sixdat);
+		return;
 	}
 
 
@@ -179,19 +178,33 @@ static WRITE16_HANDLER(wheelfir_blit_w)
 		int x,y;
 		int xsize,ysize;
 		UINT8 *rom = memory_region(REGION_GFX1);
+		int dir=0;
 
 
 		wheelfir_six_pos = 0;
 
 		mame_printf_debug("XX %.4x - ",wheelfir_blitdata[0]-wheelfir_blitdata[1]);
 		mame_printf_debug("YY %.4x - ",wheelfir_blitdata[2]-wheelfir_blitdata[3]);
+
+
 		for(x=0;x<16;x++)
-			mame_printf_debug("%.4x - ",wheelfir_blitdata[x]);
+			mame_printf_debug("%x-",wheelfir_blitdata[x]);
 
 		mame_printf_debug("\n");
 
 		xsize = ((wheelfir_blitdata[1]&0xff)-(wheelfir_blitdata[0]&0xff))&0xff;
-		ysize = ((wheelfir_blitdata[3]&0xff)-(wheelfir_blitdata[2]&0xff))&0xff;
+		ysize = ((wheelfir_blitdata[3]&0xff)-(wheelfir_blitdata[2]&0xff))&0x0ff;
+
+
+
+
+		if(wheelfir_blitdata[7]&0x1)
+			dir=1;
+		else
+		{
+			dir=-1;
+			xsize=0x100-xsize;
+		}
 
 		for(y=0;y<=ysize/*((wheelfir_blitdata[9]?wheelfir_blitdata[9]:16)*/;y++)
 			for(x=0;x<=xsize/*(wheelfir_blitdata[9]?wheelfir_blitdata[9]:16)*/;x++)
@@ -208,8 +221,9 @@ static WRITE16_HANDLER(wheelfir_blit_w)
 				int pix;
 				int diffx,diffy;
 
-				if (wheelfir_blitdata[7]&0x0040) destx +=0x100;
-				if (wheelfir_blitdata[7]&0x0080) desty +=0x100;
+				if (wheelfir_blitdata[7]&0x0040)destx +=0x100;
+			//  if (wheelfir_blitdata[7]&0x0080) desty +=0x100;
+
 //              if (wheelfir_blitdata[9]&0x0004) destx +=0x100;
 //              if (wheelfir_blitdata[9]&0x0008) desty +=0x100;
 
@@ -232,7 +246,7 @@ static WRITE16_HANDLER(wheelfir_blit_w)
 				diffy+=y;
 
 
-				destx+=x;
+				destx+=x*dir;
 				desty+=y;
 
 				offs=gfxbase+diffy*512+diffx;
@@ -243,13 +257,8 @@ static WRITE16_HANDLER(wheelfir_blit_w)
 
 
 				if(pix && destx<Machine->screen[0].width && desty <Machine->screen[0].height)
-					plot_pixel(wheelfir_tmp_bitmap,destx,desty,pix);
+					plot_pixel(wheelfir_tmp_bitmap[vpage],destx,desty,pix);
 			}
-
-
-
-	//  drawgfx(wheelfir_tmp_bitmap, Machine->gfx[0], 5, 0, 0, 0, wheelfir_blitdata[3], wheelfir_blitdata[1], NULL, TRANSPARENCY_NONE, 0);
-
 	}
 
 
@@ -259,7 +268,9 @@ static WRITE16_HANDLER(wheelfir_blit_w)
 VIDEO_START(wheelfir)
 {
 
-	wheelfir_tmp_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+	wheelfir_tmp_bitmap[0] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+	wheelfir_tmp_bitmap[1] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+	wheelfir_tmp_bitmap[2] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 	return 0;
 }
 
@@ -270,8 +281,6 @@ VIDEO_UPDATE(wheelfir)
 {
 	int x,y;
 	static int base = 0;
-	if ( code_pressed_memory(KEYCODE_W) )
-		fillbitmap(wheelfir_tmp_bitmap, get_black_pen(machine), cliprect);
 
 	if ( code_pressed_memory(KEYCODE_E) )
 		base += 512*512;
@@ -282,8 +291,10 @@ VIDEO_UPDATE(wheelfir)
 	if (base<0x000000) base = 0x000000;
 	if (base>0x3c0000) base = 0x3c0000;
 
-
-	copybitmap(bitmap, wheelfir_tmp_bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, wheelfir_tmp_bitmap[2], 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+	//copybitmap(bitmap, wheelfir_tmp_bitmap[1], 0, 0, 0, 0, cliprect, TRANSPARENCY_PEN, 0);
+	copybitmap(bitmap, wheelfir_tmp_bitmap[0], 0, 0, 0, 0, cliprect, TRANSPARENCY_PEN, 0);
+	fillbitmap(wheelfir_tmp_bitmap[0], 0,&Machine->screen[0].visarea);
 
 	if ( code_pressed(KEYCODE_R) )
 	{
@@ -516,9 +527,6 @@ INPUT_PORTS_END
 
 static INTERRUPT_GEN( wheelfir_irq )
 {
-
-//  wheelfir_myram[0x1cb8]=mame_rand(Machine)&1;
-	wheelfir_myram[0x1cb9]=mame_rand(Machine)&1; // hack!
 	switch (  cpu_getiloops() )
 	{
 		case 0:
@@ -526,6 +534,7 @@ static INTERRUPT_GEN( wheelfir_irq )
 			break;
 		case 1:
 			cpunum_set_input_line(0, 5, HOLD_LINE);
+			toggle_bit ^= 0x8000; // must toggle..
 			break;
 		default:
 			cpunum_set_input_line(0, 1, HOLD_LINE);
@@ -549,7 +558,7 @@ static MACHINE_DRIVER_START( wheelfir )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*8, 64*8)
-	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 64*8-1)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 32*8-1)
 
 	MDRV_PALETTE_LENGTH(8192)
 

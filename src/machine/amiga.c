@@ -702,7 +702,7 @@ static unsigned int blit_line(void)
 	/* see if folks are breaking the rules */
 	if ((CUSTOM_REG(REG_BLTSIZE) & 0x003f) != 0x0002)
 		logerror("Blitter: BLTSIZE.w != 2 in line mode!\n");
-	if ((CUSTOM_REG(REG_BLTCON0) & 0x0b00) != 0x0b00)
+	if ((CUSTOM_REG(REG_BLTCON0) & 0x0a00) != 0x0a00)
 		logerror("Blitter: Channel selection incorrect in line mode!\n" );
 
 	/* extract the length of the line */
@@ -770,8 +770,7 @@ static unsigned int blit_line(void)
 		blitsum |= tempd;
 
 		/* write to the destination */
-		if (CUSTOM_REG(REG_BLTCON0) & 0x0100)
-			amiga_chip_ram_w(CUSTOM_REG_LONG(REG_BLTDPTH), tempd);
+		amiga_chip_ram_w(CUSTOM_REG_LONG(REG_BLTDPTH), tempd);
 
 		/* always increment along the major axis */
 		if (CUSTOM_REG(REG_BLTCON1) & 0x0010)
@@ -1264,14 +1263,14 @@ WRITE16_HANDLER( amiga_custom_w )
 
 		case REG_DDFSTRT:
 			/* impose hardware limits ( HRM, page 75 ) */
-			data &= 0xfc;
+			data &= 0xfe;
 			if (data < 0x18)
 				data = 0x18;
 			break;
 
 		case REG_DDFSTOP:
 			/* impose hardware limits ( HRM, page 75 ) */
-			data &= 0xfc;
+			data &= 0xfe;
 			if (data > 0xd8)
 				data = 0xd8;
 			break;

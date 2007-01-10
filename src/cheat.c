@@ -5668,8 +5668,9 @@ static int DoSearchMenuClassic(int selection)
 
 	if(doSearch)
 	{
-		/* ----- initialize search ----- */
-		InitializeNewSearch(search);
+		if(!doneSaveMemory)
+			/* ----- initialize search ----- */
+			InitializeNewSearch(search);
 
 		if( (sel == kMenu_ValueEqual) || (sel == kMenu_ValueNearTo) || doneSaveMemory)
 		{
@@ -6117,8 +6118,9 @@ static int DoSearchMenu(int selection)
 					break;
 
 				case kMenu_DoSearch:
-					/* ----- initialize search ----- */
-					InitializeNewSearch(search);
+					if(!doneMemorySave)
+						/* ----- initialize search ----- */
+						InitializeNewSearch(search);
 
 					if((!kSearchOperandNeedsInit[search->lhs] && !kSearchOperandNeedsInit[search->rhs]) || doneMemorySave)
 					{
@@ -9697,7 +9699,7 @@ static void SaveCheat(CheatEntry * entry, int selection, int saveCode)
 		return;
 	if (filerr != FILERR_NONE)
 	{
-		filerr = mame_fopen(SEARCHPATH_CHEAT, mainDatabaseName, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &theFile);
+		filerr = mame_fopen(SEARCHPATH_CHEAT, mainDatabaseName, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, &theFile);
 
 		/* ----- if fails to create, no save ----- */
 		if(filerr != FILERR_NONE)

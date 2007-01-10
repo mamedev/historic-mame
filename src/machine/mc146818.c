@@ -267,7 +267,7 @@ void mc146818_save(void)
 {
 	mame_file *file;
 
-	file = nvram_fopen(Machine, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE);
+	file = nvram_fopen(Machine, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS);
 	if (file)
 	{
 		mame_fwrite(file, mc146818->data, sizeof(mc146818->data));

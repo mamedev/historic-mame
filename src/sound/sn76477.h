@@ -1,22 +1,20 @@
 /*****************************************************************************
   SN76477 pins and assigned interface variables/functions
 
-                            SN76477_envelope_w()
-                           /                    \
-                    [ 1] ENV SEL 1          ENV SEL 2 [28]
-                    [ 2] GND                  MIXER C [27] \
-  SN76477_noise_w() [ 3] NOISE EXT OSC        MIXER A [26]  > SN76477_mixer_w()
-          noise_res [ 4] RES NOISE OSC        MIXER B [25] /
-         filter_res [ 5] NOISE FILTER RES     O/S RES [24] oneshot_res
-         filter_cap [ 6] NOISE FILTER CAP     O/S CAP [23] oneshot_cap
-          decay_res [ 7] DECAY RES            VCO SEL [22] SN76477_vco_w()
-   attack_decay_cap [ 8] A/D CAP              SLF CAP [21] slf_cap
- SN76477_enable_w() [ 9] ENABLE               SLF RES [20] slf_res
-         attack_res [10] ATTACK RES             PITCH [19] pitch_voltage
-      amplitude_res [11] AMP                  VCO RES [18] vco_res
-       feedback_res [12] FEEDBACK             VCO CAP [17] vco_cap
-                    [13] OUTPUT          VCO EXT CONT [16] vco_voltage
-                    [14] Vcc              +5V REG OUT [15]
+               envelope_1 [ 1] ENV SEL 1          ENV SEL 2 [28] envelope_2
+                          [ 2] GND                  MIXER C [27] mixer_c
+  SN76477_noise_clock_w() [ 3] NOISE EXT OSC        MIXER A [26] mixer_a
+                noise_res [ 4] RES NOISE OSC        MIXER B [25] mixer_b
+               filter_res [ 5] NOISE FILTER RES     O/S RES [24] oneshot_res
+               filter_cap [ 6] NOISE FILTER CAP     O/S CAP [23] oneshot_cap
+                decay_res [ 7] DECAY RES            VCO SEL [22] vco
+         attack_decay_cap [ 8] A/D CAP              SLF CAP [21] slf_cap
+                   enable [ 9] ENABLE               SLF RES [20] slf_res
+               attack_res [10] ATTACK RES             PITCH [19] pitch_voltage
+            amplitude_res [11] AMP                  VCO RES [18] vco_res
+             feedback_res [12] FEEDBACK             VCO CAP [17] vco_cap
+                          [13] OUTPUT          VCO EXT CONT [16] vco_voltage
+                          [14] Vcc              +5V REG OUT [15]
 
     All resistor values in Ohms.
     All capacitor values in Farads.
@@ -47,47 +45,48 @@ struct SN76477interface {
     double slf_cap;
     double oneshot_cap;
     double oneshot_res;
+    UINT32 vco;
+    UINT32 mixer_a;
+    UINT32 mixer_b;
+    UINT32 mixer_c;
+    UINT32 envelope_1;
+    UINT32 envelope_2;
+    UINT32 enable;
 };
 
 /* Noise clock write, useful only if noise_res is zero */
-extern void SN76477_noise_clock_w(int chip, int data);
+extern void SN76477_noise_clock_w(int chip, UINT32 data);
 
 /* Enable (one input line: 0 enabled, 1 inhibited) - resets one shot */
-extern void SN76477_enable_w(int chip, int data);
-
-/* Mixer select (three input lines, data 0 to 7) */
-extern void SN76477_mixer_w(int chip, int data);
+extern void SN76477_enable_w(int chip, UINT32 data);
 
 /* Alternatively write the single input lines */
-extern void SN76477_mixer_a_w(int chip, int data);
-extern void SN76477_mixer_b_w(int chip, int data);
-extern void SN76477_mixer_c_w(int chip, int data);
-
-/* Select envelope (two input lines, data 0 to 3) */
-extern void SN76477_envelope_w(int chip, int data);
+extern void SN76477_mixer_a_w(int chip, UINT32 data);
+extern void SN76477_mixer_b_w(int chip, UINT32 data);
+extern void SN76477_mixer_c_w(int chip, UINT32 data);
 
 /* Alternatively use the single input lines */
-extern void SN76477_envelope_1_w(int chip, int data);
-extern void SN76477_envelope_2_w(int chip, int data);
+extern void SN76477_envelope_1_w(int chip, UINT32 data);
+extern void SN76477_envelope_2_w(int chip, UINT32 data);
 
 /* VCO select (one input line: 0 external control, 1: SLF control) */
-extern void SN76477_vco_w(int chip, int data);
+extern void SN76477_vco_w(int chip, UINT32 data);
 
-void SN76477_set_noise_res(int chip, double res);
-void SN76477_set_filter_res(int chip, double res);
-void SN76477_set_filter_cap(int chip, double cap);
-void SN76477_set_decay_res(int chip, double res);
-void SN76477_set_attack_decay_cap(int chip, double cap);
-void SN76477_set_attack_res(int chip, double res);
-void SN76477_set_amplitude_res(int chip, double res);
-void SN76477_set_feedback_res(int chip, double res);
-void SN76477_set_slf_res(int chip, double res);
-void SN76477_set_slf_cap(int chip, double cap);
-void SN76477_set_oneshot_res(int chip, double res);
-void SN76477_set_oneshot_cap(int chip, double cap);
-void SN76477_set_vco_res(int chip, double res);
-void SN76477_set_vco_cap(int chip, double cap);
-void SN76477_set_pitch_voltage(int chip, double voltage);
-void SN76477_set_vco_voltage(int chip, double voltage);
+void SN76477_set_noise_res(int chip, double data);
+void SN76477_set_filter_res(int chip, double data);
+void SN76477_set_filter_cap(int chip, double data);
+void SN76477_set_decay_res(int chip, double data);
+void SN76477_set_attack_decay_cap(int chip, double data);
+void SN76477_set_attack_res(int chip, double data);
+void SN76477_set_amplitude_res(int chip, double data);
+void SN76477_set_feedback_res(int chip, double data);
+void SN76477_set_slf_res(int chip, double data);
+void SN76477_set_slf_cap(int chip, double data);
+void SN76477_set_oneshot_res(int chip, double data);
+void SN76477_set_oneshot_cap(int chip, double data);
+void SN76477_set_vco_res(int chip, double data);
+void SN76477_set_vco_cap(int chip, double data);
+void SN76477_set_pitch_voltage(int chip, double data);
+void SN76477_set_vco_voltage(int chip, double data);
 
 #endif

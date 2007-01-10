@@ -565,6 +565,7 @@ $(OBJ)/capcom.a: \
 	$(OBJ)/drivers/vulgus.o $(OBJ)/vidhrdw/vulgus.o \
 	$(OBJ)/drivers/tigeroad.o $(OBJ)/vidhrdw/tigeroad.o \
 	$(OBJ)/drivers/zn.o $(OBJ)/machine/znsec.o $(OBJ)/machine/at28c16.o $(OBJ)/machine/mb3773.o \
+	$(OBJ)/machine/cps2crpt.o \
 	$(OBJ)/machine/kabuki.o \
 
 $(OBJ)/cinemat.a: \
@@ -730,7 +731,6 @@ $(OBJ)/igs.a: \
 	$(OBJ)/drivers/tarzan.o \
 	$(OBJ)/machine/pgmcrypt.o \
 	$(OBJ)/machine/pgmprot.o \
-	$(OBJ)/machine/pgmy2ks.o \
 
 $(OBJ)/irem.a: \
 	$(OBJ)/drivers/m62.o $(OBJ)/vidhrdw/m62.o \

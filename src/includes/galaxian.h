@@ -187,12 +187,14 @@ DRIVER_INIT( mrkougar );
 DRIVER_INIT( mrkougb );
 DRIVER_INIT( mimonscr );
 DRIVER_INIT( sfx );
+DRIVER_INIT( monsterz );
 DRIVER_INIT( ladybugg );
 DRIVER_INIT( scorpion );
 DRIVER_INIT( ad2083 );
 
 MACHINE_RESET( scramble );
 MACHINE_RESET( sfx );
+MACHINE_RESET( monsterz );
 MACHINE_RESET( explorer );
 
 READ8_HANDLER( triplep_pip_r );

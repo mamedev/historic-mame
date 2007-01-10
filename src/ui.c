@@ -96,13 +96,13 @@ static int single_step;
 
 /* FPS counter display */
 static int showfps;
-static cycles_t showfps_end;
+static osd_ticks_t showfps_end;
 
 /* profiler display */
 static int show_profiler;
 
 /* popup text display */
-static cycles_t popup_text_end;
+static osd_ticks_t popup_text_end;
 
 /* messagebox buffer */
 static char messagebox_text[4096];
@@ -333,15 +333,15 @@ int ui_display_startup_screens(int show_disclaimer, int show_warnings, int show_
 
 void ui_set_startup_text(const char *text, int force)
 {
-	static cycles_t lastupdatetime = 0;
-	cycles_t curtime = osd_cycles();
+	static osd_ticks_t lastupdatetime = 0;
+	osd_ticks_t curtime = osd_ticks();
 
 	/* copy in the new text */
 	strncpy(messagebox_text, text, sizeof(messagebox_text));
 	messagebox_backcolor = UI_FILLCOLOR;
 
 	/* don't update more than 4 times/second */
-	if (force || (curtime - lastupdatetime) > osd_cycles_per_second() / 4)
+	if (force || (curtime - lastupdatetime) > osd_ticks_per_second() / 4)
 	{
 		lastupdatetime = curtime;
 		video_frame_update();
@@ -369,17 +369,6 @@ void ui_update_and_render(void)
 			render_ui_add_rect(0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(alpha,0x00,0x00,0x00), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 	}
 
-	/* first draw the FPS counter */
-	if (showfps || osd_cycles() < showfps_end)
-		ui_draw_text_full(osd_get_fps_text(mame_get_performance_info()), 0.0f, 0.0f, 1.0f,
-					JUSTIFY_RIGHT, WRAP_WORD, DRAW_OPAQUE, ARGB_WHITE, ARGB_BLACK, NULL, NULL);
-	else
-		showfps_end = 0;
-
-	/* draw the profiler if visible */
-	if (show_profiler)
-		ui_draw_text_full(profiler_get_text(), 0.0f, 0.0f, 1.0f, JUSTIFY_LEFT, WRAP_WORD, DRAW_OPAQUE, ARGB_WHITE, ARGB_BLACK, NULL, NULL);
-
 	/* call the current UI handler */
 	assert(ui_handler_callback != NULL);
 	ui_handler_param = (*ui_handler_callback)(ui_handler_param);
@@ -387,16 +376,6 @@ void ui_update_and_render(void)
 	/* cancel takes us back to the ingame handler */
 	if (ui_handler_param == UI_HANDLER_CANCEL)
 		ui_set_handler(handler_ingame, 0);
-
-	/* then let the cheat engine display its stuff */
-	if (options.cheat)
-		cheat_display_watches();
-
-	/* finally, display any popup messages */
-	if (osd_cycles() < popup_text_end)
-		ui_draw_text_box(messagebox_text, JUSTIFY_CENTER, 0.5f, 0.9f, messagebox_backcolor);
-	else
-		popup_text_end = 0;
 
 	/* add a message if we are rescaling */
 	if (display_rescale_message)
@@ -698,7 +677,7 @@ void CLIB_DECL ui_popup(const char *text, ...)
 
 	/* set a timer */
 	seconds = (int)strlen(messagebox_text) / 40 + 2;
-	popup_text_end = osd_cycles() + osd_cycles_per_second() * seconds;
+	popup_text_end = osd_ticks() + osd_ticks_per_second() * seconds;
 }
 
 
@@ -718,7 +697,7 @@ void CLIB_DECL ui_popup_time(int seconds, const char *text, ...)
 	va_end(arg);
 
 	/* set a timer */
-	popup_text_end = osd_cycles() + osd_cycles_per_second() * seconds;
+	popup_text_end = osd_ticks() + osd_ticks_per_second() * seconds;
 }
 
 
@@ -730,7 +709,7 @@ void CLIB_DECL ui_popup_time(int seconds, const char *text, ...)
 void ui_show_fps_temp(double seconds)
 {
 	if (!showfps)
-		showfps_end = osd_cycles() + seconds * osd_cycles_per_second();
+		showfps_end = osd_ticks() + seconds * osd_ticks_per_second();
 }
 
 
@@ -1089,6 +1068,27 @@ static UINT32 handler_messagebox_anykey(UINT32 state)
 static UINT32 handler_ingame(UINT32 state)
 {
 	int is_paused = mame_is_paused(Machine);
+
+	/* first draw the FPS counter */
+	if (showfps || osd_ticks() < showfps_end)
+		ui_draw_text_full(osd_get_fps_text(mame_get_performance_info()), 0.0f, 0.0f, 1.0f,
+					JUSTIFY_RIGHT, WRAP_WORD, DRAW_OPAQUE, ARGB_WHITE, ARGB_BLACK, NULL, NULL);
+	else
+		showfps_end = 0;
+
+	/* draw the profiler if visible */
+	if (show_profiler)
+		ui_draw_text_full(profiler_get_text(), 0.0f, 0.0f, 1.0f, JUSTIFY_LEFT, WRAP_WORD, DRAW_OPAQUE, ARGB_WHITE, ARGB_BLACK, NULL, NULL);
+
+	/* let the cheat engine display its stuff */
+	if (options.cheat)
+		cheat_display_watches();
+
+	/* display any popup messages */
+	if (osd_ticks() < popup_text_end)
+		ui_draw_text_box(messagebox_text, JUSTIFY_CENTER, 0.5f, 0.9f, messagebox_backcolor);
+	else
+		popup_text_end = 0;
 
 	/* if we're single-stepping, pause now */
 	if (single_step)

@@ -234,11 +234,18 @@ struct SN76477interface sn76477_interface =
 	0	/* N/C */,		/* 16  vco_voltage       */
 	CAP_U(0.1) ,		/* 17  vco_cap           */
 	RES_K(8.2) ,		/* 18  vco_res           */
-	5.0		 ,		/* 19  pitch_voltage     */
+	5.0		 ,			/* 19  pitch_voltage     */
 	RES_K(120) ,		/* 20  slf_res           */
 	CAP_U(1.0) ,		/* 21  slf_cap           */
 	0	/* N/C */,		/* 23  oneshot_cap       */
-	0	/* N/C */		/* 24  oneshot_res       */
+	0	/* N/C */,		/* 24  oneshot_res       */
+	0,			    	/* 22    vco                    */
+	1,					/* 26 mixer A           */
+	1,					/* 25 mixer B           */
+	1,					/* 27 mixer C           */
+	1,					/* 1  envelope 1        */
+	1,					/* 28 envelope 2        */
+	1				    /* 9     enable */
 };
 
 static MACHINE_DRIVER_START( safarir )

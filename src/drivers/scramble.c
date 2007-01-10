@@ -123,6 +123,50 @@ static MACHINE_START( ad2083 )
 	return 0;
 }
 
+//cpu #0 (PC=00003F6C): warning - op-code execute on mapped I/O
+extern int monsterz_count;
+static READ8_HANDLER( monsterz_prot_r )
+{
+	int pc = activecpu_get_pc();
+	if(pc != 0xc5e0 && pc != 0xC604 && pc != 0xc62c)
+		printf("%X\n",pc);
+
+	if( !(monsterz_count % 0x200) )
+	{
+
+		UINT8 ret = memory_region(REGION_CPU1)[0x19 - monsterz_count / 0x200];
+
+		printf("count = %X\n",monsterz_count );
+
+		ret ^= memory_region(REGION_CPU1)[0x100 + monsterz_count / 2];
+		monsterz_count++;
+		return ret;
+	}
+	else
+	{
+		UINT8 ret;
+
+		if(monsterz_count & 0x100)
+			// missing data?
+			ret = 0;//memory_region(REGION_CPU1)[0xc000 + monsterz_count2+ (monsterz_count / 0x200) * 0x100 + (monsterz_count % 0x200)];
+		else
+			ret = memory_region(REGION_CPU1)[0x100 + (monsterz_count / 0x200) * 0x100 + (monsterz_count % 0x200)];
+
+		printf("count = %X\n",monsterz_count);
+
+		monsterz_count++;
+
+		if(monsterz_count == 0x200*9)
+		{
+			UINT8 *ROM = memory_region(REGION_CPU1);
+			memcpy(&ROM[0x3800],&ROM[0xc01f],0x800);
+			monsterz_count = 0;
+		}
+
+		return ret;
+	}
+}
+
 
 static ADDRESS_MAP_START( scramble_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
@@ -440,6 +484,44 @@ static ADDRESS_MAP_START( sfx_sample_writeport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x07) AM_WRITE(ppi8255_2_w)
 	AM_RANGE(0x10, 0x10) AM_WRITE(DAC_0_signed_data_w)
+ADDRESS_MAP_END
+
+
+static READ8_HANDLER( monsterz_sound_status_r )
+{
+	return 0x80;
+}
+
+static ADDRESS_MAP_START( monsterz_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x37ff) AM_ROM
+	AM_RANGE(0x3800, 0x3fff) AM_RAM
+	AM_RANGE(0x4000, 0x47ff) AM_RAM
+	AM_RANGE(0x4800, 0x4bff) AM_READWRITE(galaxian_videoram_r, galaxian_videoram_w) AM_BASE(&galaxian_videoram)
+	AM_RANGE(0x4c00, 0x4fff) AM_READWRITE(galaxian_videoram_r, galaxian_videoram_w)	/* mirror address */
+	AM_RANGE(0x5000, 0x503f) AM_RAM AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
+	AM_RANGE(0x5040, 0x505f) AM_RAM AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
+	AM_RANGE(0x5060, 0x507f) AM_RAM AM_BASE(&galaxian_bulletsram) AM_SIZE(&galaxian_bulletsram_size)
+	AM_RANGE(0x7000, 0x7000) AM_READ(watchdog_reset_r)
+	AM_RANGE(0x8100, 0x8103) AM_READWRITE(ppi8255_0_r, ppi8255_0_w)
+	AM_RANGE(0x8200, 0x8203) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)
+	AM_RANGE(0x6800, 0x6800) AM_WRITE(scramble_background_red_w)
+	AM_RANGE(0x6801, 0x6801) AM_WRITE(galaxian_nmi_enable_w)
+	AM_RANGE(0x6802, 0x6802) AM_WRITE(galaxian_coin_counter_w)
+	AM_RANGE(0x6803, 0x6803) AM_WRITE(scramble_background_blue_w)
+	AM_RANGE(0x6804, 0x6804) AM_WRITE(galaxian_stars_enable_w)
+	AM_RANGE(0x6805, 0x6805) AM_WRITE(scramble_background_green_w)
+	AM_RANGE(0x6806, 0x6806) AM_WRITE(galaxian_flip_screen_x_w)
+	AM_RANGE(0x6807, 0x6807) AM_WRITE(galaxian_flip_screen_y_w)
+	AM_RANGE(0xc000, 0xd7ff) AM_ROM
+	AM_RANGE(0xd800, 0xd800) AM_READ(monsterz_prot_r)
+ADDRESS_MAP_END
+
+ADDRESS_MAP_START( monsterz_sound_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x04, 0x04) AM_READ(monsterz_sound_status_r)
+	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x20, 0x20) AM_READWRITE(AY8910_read_port_0_r, AY8910_write_port_0_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x80, 0x80) AM_READWRITE(AY8910_read_port_1_r, AY8910_write_port_1_w)
 ADDRESS_MAP_END
 
 
@@ -2216,6 +2298,49 @@ static MACHINE_DRIVER_START( sfx )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
+
+
+
+
+
+static MACHINE_DRIVER_START( monsterz )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(scramble)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(monsterz_map,0)
+	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,16*4) //?
+
+	MDRV_CPU_MODIFY("audio")
+	MDRV_CPU_IO_MAP(monsterz_sound_io_map,0)
+
+	MDRV_CPU_ADD(Z80, 14318000/8)	/* 1.78975 MHz */
+	/* audio CPU */
+	MDRV_CPU_PROGRAM_MAP(sfx_sample_readmem,sfx_sample_writemem)
+	MDRV_CPU_IO_MAP(sfx_sample_readport,sfx_sample_writeport)
+
+	MDRV_MACHINE_RESET(monsterz)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(2*8, 30*8-1, 2*8, 30*8-1)
+	MDRV_PALETTE_LENGTH(32+64+2+8)	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */
+	MDRV_GFXDECODE(sfx_gfxdecodeinfo)
+	MDRV_PALETTE_INIT(turtles)
+	MDRV_VIDEO_START(sfx)
+
+	/* sound hardware */
+	MDRV_SOUND_MODIFY("8910.1")
+	MDRV_SOUND_CONFIG(sfx_ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
+
+	MDRV_SOUND_MODIFY("8910.2")
+	MDRV_SOUND_CONFIG(scramble_ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( mimonscr )
 
 	/* basic machine hardware */
@@ -3026,6 +3151,50 @@ ROM_START( skelagon )
 	ROM_LOAD( "6331.9g",      0x0000, 0x0020, CRC(ca1d9ccd) SHA1(27124759a06497c1bc1a64b6d3faa6ba924a8447) )
 ROM_END
 
+/*
+Monster Zero
+
+CPU: Z80 (x3)
+Sound: AY-3-8910 (x2)
+Other: 8255 (x3)
+RAM: 2114 (x2), 2114 (x2), TMM2016P, TMM314A (x4), MPB8216 (x2), MPB8216 (x2), 2114 (x2), TMM314A (x2), D2125A (x5)
+PAL: 16R8C (protected x2)
+PROM: 82S123
+X1: 1431818
+X2: 16000
+*/
+
+ROM_START( monsterz )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "b-1e.a1",      0x0000, 0x1000, CRC(97886542) SHA1(01f4f9bd55f9eae28162cbb22a26f7cda22cd3f3) )
+	ROM_LOAD( "b-2e.c1",      0x1000, 0x1000, CRC(184ffcb4) SHA1(829d6ca13773aba7c3a81e122171befbe3666110) )
+	ROM_LOAD( "b-3e.d1",      0x2000, 0x1000, CRC(b7b10ac7) SHA1(51d544d4db456df756a95d7f1853fffed9259647) )
+	ROM_LOAD( "b-4e.e1",      0x3000, 0x1000, CRC(fb02c736) SHA1(24466116dd07b856b1afff62b8312c67ff466b95) )
+	ROM_LOAD( "b-5e.g1",      0xc000, 0x1000, CRC(b2788ab9) SHA1(eb1a6b41f4c7a243481bfccf2b068ce1bc292366) )
+	ROM_LOAD( "b-6e.h1",      0xd000, 0x1000, CRC(77d7aa8d) SHA1(62aaf582ba55f7b21f6cf13b4fb6c2c54bb729f5) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "a-1e.k1",      0x0000, 0x1000, CRC(b88ba44e) SHA1(85c141fb411d541b1e20412f5fefd18395f635ae) )
+	ROM_LOAD( "a-2.k2",       0x1000, 0x1000, CRC(8913c94e) SHA1(6c4fe065217a234d45761f8ad4d2c4e7078a0abd) )
+	ROM_LOAD( "a-3e.k3",      0x2000, 0x1000, CRC(a8fa5095) SHA1(5cabe5497a79a0c43e78a84ae87c824af60a2a3f) )
+	ROM_LOAD( "a-4.k4",       0x3000, 0x1000, CRC(93f81317) SHA1(167708be94cb9a47290067a20bc5ff6f018b93b6) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the sample CPU */
+	ROM_LOAD( "a-5e.k5",      0x0000, 0x1000, CRC(b5bcdb4e) SHA1(db0965e5636e0f4e9cd4f4a7d808c413ecf733db) )
+	ROM_LOAD( "a-6.k6",       0x1000, 0x1000, CRC(24832b2e) SHA1(2a67888e86ce1a3182303e841513ba2a07977359) )
+	ROM_LOAD( "a-7e.k7",      0x2000, 0x1000, CRC(20ebea81) SHA1(473c688365b256d8593663ff95768f4a5bb1289d) )
+	// 0x3000 empty ?
+	ROM_LOAD( "a-8.k8",       0x4000, 0x1000, CRC(b833a15b) SHA1(0d21aaa0ca5ccba89118b205a6b3b36b15663c47) )
+	ROM_LOAD( "a-9.k9",       0x5000, 0x1000, CRC(cbd76ec2) SHA1(9434350ee93ca71efe78018b69913386353306ff) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b-7e.a5",      0x0000, 0x1000, CRC(ddd4158d) SHA1(9701e2d8a0226455dfbed650e58bb4be05918fe8) )
+	ROM_LOAD( "b-8e.c5",      0x1000, 0x1000, CRC(b1331b4c) SHA1(fa1af406ecd6919b4846aea68d3edb70106f9273) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "prom.g9",      0x0000, 0x0020, CRC(b7ea00d7) SHA1(f658c6ac8123ae1e6b68ae513cc02c4d9d2b4e47) )
+ROM_END
+
 ROM_START( mimonscr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "mm1",          0x0000, 0x1000, CRC(0399a0c4) SHA1(8314124f9b535ce531663625d19cd3a76782ed3b) )
@@ -3159,6 +3328,7 @@ GAME( 1984, hncholms, huncholy, hncholms, hncholms, scramble_ppi, ROT90, "Centur
 GAME( 1983, cavelon,  0,        cavelon,  cavelon,  cavelon,      ROT90, "Jetsoft", "Cavelon", GAME_SUPPORTS_SAVE )
 GAME( 1983, sfx,      0,        sfx,      sfx,      sfx,          ORIENTATION_FLIP_X, "Nichibutsu", "SF-X", GAME_SUPPORTS_SAVE )
 GAME( 1983, skelagon, sfx,      sfx,      sfx,      sfx,          ORIENTATION_FLIP_X, "Nichibutsu USA", "Skelagon", GAME_NOT_WORKING | GAME_SUPPORTS_SAVE)
+GAME( 198?, monsterz, 0,        monsterz, sfx,      monsterz,     ORIENTATION_FLIP_X, "Nihon", "Monster Zero", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAME( 198?, mimonscr, mimonkey, mimonscr, mimonscr, mimonscr,     ROT90, "bootleg", "Mighty Monkey (bootleg on Scramble hardware)", GAME_SUPPORTS_SAVE )
 GAME( 1982, scorpion, 0,		scorpion, scorpion, scorpion,	  ROT90, "Zaccaria", "Scorpion (set 1)", GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE)
 GAME( 1982, scrpiona, scorpion, scorpion, scorpion, scorpion,	  ROT90, "Zaccaria", "Scorpion (set 2)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE)

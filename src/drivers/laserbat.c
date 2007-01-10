@@ -580,7 +580,14 @@ static struct SN76477interface sn76477_interface =
 	RES_K(27),		/* 20  slf_res           R54    27K */
 	CAP_U(4.7),		/* 21  slf_cap           C24    4.7 uF */
 	0,				/* 23  oneshot_cap       */
-	0				/* 24  oneshot_res       */
+	0,				/* 24  oneshot_res       */
+	0,			    /* 22    vco                    */
+	1,			    /* 26 mixer A           */
+	1,			    /* 25 mixer B           */
+	1,			    /* 27 mixer C           */
+	1,			    /* 1  envelope 1        */
+	1,			    /* 28 envelope 2        */
+	0			    /* 9  enable (variable) */
 };
 
 /* Cat'N Mouse sound ***********************************/

@@ -44,7 +44,7 @@ static int memory;
 
 
 static int FILO_type[10];
-static cycles_t FILO_start[10];
+static osd_ticks_t FILO_start[10];
 static int FILO_length;
 
 void profiler_start(void)
@@ -60,7 +60,7 @@ void profiler_stop(void)
 
 void profiler_mark(int type)
 {
-	cycles_t curr_cycles;
+	osd_ticks_t curr_ticks;
 
 
 	if (!use_profiler)
@@ -72,7 +72,7 @@ void profiler_mark(int type)
 	if (type >= PROFILER_CPU1 && type <= PROFILER_CPU8)
 		profile.cpu_context_switches[memory]++;
 
-	curr_cycles = osd_profiling_ticks();
+	curr_ticks = osd_profiling_ticks();
 
 	if (type != PROFILER_END)
 	{
@@ -85,10 +85,10 @@ logerror("Profiler error: FILO buffer overflow\n");
 			}
 
 			/* handle nested calls */
-			profile.count[memory][FILO_type[FILO_length-1]] += curr_cycles - FILO_start[FILO_length-1];
+			profile.count[memory][FILO_type[FILO_length-1]] += curr_ticks - FILO_start[FILO_length-1];
 		}
 		FILO_type[FILO_length] = type;
-		FILO_start[FILO_length] = curr_cycles;
+		FILO_start[FILO_length] = curr_ticks;
 		FILO_length++;
 	}
 	else
@@ -100,11 +100,11 @@ logerror("Profiler error: FILO buffer underflow\n");
 		}
 
 		FILO_length--;
-		profile.count[memory][FILO_type[FILO_length]] += curr_cycles - FILO_start[FILO_length];
+		profile.count[memory][FILO_type[FILO_length]] += curr_ticks - FILO_start[FILO_length];
 		if (FILO_length > 0)
 		{
 			/* handle nested calls */
-			FILO_start[FILO_length-1] = curr_cycles;
+			FILO_start[FILO_length-1] = curr_ticks;
 		}
 	}
 }

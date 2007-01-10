@@ -446,8 +446,8 @@ void tms34061_w(int col, int row, int func, UINT8 data)
 				offs |= (tms34061.regs[TMS34061_CONTROL2] & 3) << 16;
 			offs &= tms34061.vrammask;
 
-			memcpy(&tms34061.vram[offs], tms34061.shiftreg, 1 << tms34061.intf.rowshift);
-			memset(&tms34061.latchram[offs], tms34061.latchdata, 1 << tms34061.intf.rowshift);
+			memcpy(&tms34061.vram[offs], tms34061.shiftreg, (size_t)1 << tms34061.intf.rowshift);
+			memset(&tms34061.latchram[offs], tms34061.latchdata, (size_t)1 << tms34061.intf.rowshift);
 			break;
 
 		/* function 5 performs a shift reg transfer from VRAM */
@@ -500,8 +500,8 @@ UINT8 tms34061_r(int col, int row, int func)
 				offs |= (tms34061.regs[TMS34061_CONTROL2] & 3) << 16;
 			offs &= tms34061.vrammask;
 
-			memcpy(&tms34061.vram[offs], tms34061.shiftreg, 1 << tms34061.intf.rowshift);
-			memset(&tms34061.latchram[offs], tms34061.latchdata, 1 << tms34061.intf.rowshift);
+			memcpy(&tms34061.vram[offs], tms34061.shiftreg, (size_t)1 << tms34061.intf.rowshift);
+			memset(&tms34061.latchram[offs], tms34061.latchdata, (size_t)1 << tms34061.intf.rowshift);
 			break;
 
 		/* function 5 performs a shift reg transfer from VRAM */

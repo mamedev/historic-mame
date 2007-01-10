@@ -7,21 +7,7 @@
     Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
-***************************************************************************/
-
-#pragma once
-
-#ifndef __OSDEPEND_H__
-#define __OSDEPEND_H__
-
-#include "mamecore.h"
-#include "fileio.h"
-#include "timer.h"
-#include <stdarg.h>
-
-
-
-/******************************************************************************
+****************************************************************************
 
     The prototypes in this file describe the interfaces that the MAME core
     relies upon to interact with the outside world. They are broken out into
@@ -45,9 +31,16 @@
     (this was written during 0.109u2 development) as some of the OSD
     responsibilities are pushed into the core.
 
-******************************************************************************/
+*******************************************************************c********/
 
+#pragma once
 
+#ifndef __OSDEPEND_H__
+#define __OSDEPEND_H__
+
+#include "mamecore.h"
+#include "osdcore.h"
+#include "timer.h"
 
 
 /*-----------------------------------------------------------------------------
@@ -217,179 +210,8 @@ void osd_joystick_calibrate(void);
 void osd_joystick_end_calibration(void);
 
 
-
-/******************************************************************************
-
-    File I/O
-
-******************************************************************************/
-
-/* inp header */
-typedef struct _inp_header inp_header;
-struct _inp_header
-{
-	char name[9];      /* 8 bytes for game->name + NUL */
-	char version[3];   /* byte[0] = 0, byte[1] = version byte[2] = beta_version */
-	char reserved[20]; /* for future use, possible store game options? */
-};
-
-
-/* osd_file is an opaque type which represents an open file */
-typedef struct _osd_file osd_file;
-
-
-/*-----------------------------------------------------------------------------
-    osd_open: open a new file.
-
-    Parameters:
-
-        path - path to the file to open
-
-        openflags - some combination of:
-
-            OPEN_FLAG_READ - open the file for read access
-            OPEN_FLAG_WRITE - open the file for write access
-            OPEN_FLAG_CREATE - create/truncate the file when opening; this
-                    flag also implies that an non-existant paths should be
-                    created if necessary
-
-        file - pointer to an osd_file * to receive the newly-opened file
-            handle; this is only valid if the function returns FILERR_NONE
-
-        filesize - pointer to a UINT64 to receive the size of the opened
-            file; this is only valid if the function returns FILERR_NONE
-
-    Return value:
-
-        a mame_file_error describing any error that occurred while opening
-        the file, or FILERR_NONE if no error occurred
-
-    Notes:
-
-        This function is called by mame_fopen and several other places in
-        the core to access files. These functions will construct paths by
-        concatenating various search paths held in the options.c options
-        database with partial paths specified by the core. The core assumes
-        that the path separator is the first character of the string
-        PATH_SEPARATOR, but does not interpret any path separators in the
-        search paths, so if you use a different path separator in a search
-        path, you may get a mixture of PATH_SEPARATORs (from the core) and
-        alternate path separators (specified by users and placed into the
-        options database).
------------------------------------------------------------------------------*/
-mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 *filesize);
-
-
-/*-----------------------------------------------------------------------------
-    osd_close: close an open file
-
-    Parameters:
-
-        file - handle to a file previously opened via osd_open
-
-    Return value:
-
-        a mame_file_error describing any error that occurred while closing
-        the file, or FILERR_NONE if no error occurred
------------------------------------------------------------------------------*/
-mame_file_error osd_close(osd_file *file);
-
-
-/*-----------------------------------------------------------------------------
-    osd_read: read from an open file
-
-    Parameters:
-
-        file - handle to a file previously opened via osd_open
-
-        buffer - pointer to memory that will receive the data read
-
-        offset - offset within the file to read from
-
-        length - number of bytes to read from the file
-
-        actual - pointer to a UINT32 to receive the number of bytes actually
-            read during the operation; valid only if the function returns
-            FILERR_NONE
-
-    Return value:
-
-        a mame_file_error describing any error that occurred while reading
-        from the file, or FILERR_NONE if no error occurred
------------------------------------------------------------------------------*/
-mame_file_error osd_read(osd_file *file, void *buffer, UINT64 offset, UINT32 length, UINT32 *actual);
-
-
-/*-----------------------------------------------------------------------------
-    osd_write: write to an open file
-
-    Parameters:
-
-        file - handle to a file previously opened via osd_open
-
-        buffer - pointer to memory that contains the data to write
-
-        offset - offset within the file to write to
-
-        length - number of bytes to write to the file
-
-        actual - pointer to a UINT32 to receive the number of bytes actually
-            written during the operation; valid only if the function returns
-            FILERR_NONE
-
-    Return value:
-
-        a mame_file_error describing any error that occurred while writing to
-        the file, or FILERR_NONE if no error occurred
------------------------------------------------------------------------------*/
-mame_file_error osd_write(osd_file *file, const void *buffer, UINT64 offset, UINT32 length, UINT32 *actual);
-
-
-
-/******************************************************************************
-
-    Timing
-
-******************************************************************************/
-
-typedef INT64 cycles_t;
-
-/* return the current number of cycles, or some other high-resolution timer */
-cycles_t osd_cycles(void);
-
-/* return the number of cycles per second */
-cycles_t osd_cycles_per_second(void);
-
-/* return the current number of cycles, or some other high-resolution timer.
-   This call must be the fastest possible because it is called by the profiler;
-   it isn't necessary to know the number of ticks per seconds. */
-cycles_t osd_profiling_ticks(void);
-
-
-
-/******************************************************************************
-
-    Miscellaneous
-
-******************************************************************************/
-
-/* called to allocate/free memory that can contain executable code */
-void *osd_alloc_executable(size_t size);
-void osd_free_executable(void *ptr, size_t size);
-
-/* checks to see if a pointer is bad */
-int osd_is_bad_read_ptr(const void *ptr, size_t size);
-
-/* breaks into OSD debugger if attached */
-void osd_break_into_debugger(const char *message);
-
-/* multithreading locks; only need to implement if you use threads */
-typedef struct _osd_lock osd_lock;
-osd_lock *osd_lock_alloc(void);
-void osd_lock_acquire(osd_lock *lock);
-int osd_lock_try(osd_lock *lock);
-void osd_lock_release(osd_lock *lock);
-void osd_lock_free(osd_lock *lock);
+/* default text conversion */
+int osd_uchar_from_osdchar(UINT32 /* unicode_char */ *uchar, const char *osdchar, size_t count);
 
 
 #ifdef MESS

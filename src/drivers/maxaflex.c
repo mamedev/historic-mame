@@ -228,12 +228,6 @@ void supervisor_board_check_coin_input(void)
 	}
 }
 
-static MACHINE_START(maxaflex)
-{
-	add_reset_callback(Machine, machine_reset_supervisor_board);
-	return machine_start_a600xl(machine);
-}
-
 int atari_input_disabled(void)
 {
 	return (portB_out & 0x80) == 0x00;
@@ -487,7 +481,12 @@ static MACHINE_DRIVER_START( a600xl )
 	MDRV_SOUND_ADD(SPEAKER, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
-	MDRV_MACHINE_START( maxaflex )
+	MDRV_MACHINE_START( a600xl )
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( maxaflex )
+	MDRV_IMPORT_FROM( a600xl )
+	MDRV_MACHINE_RESET( supervisor_board )
 MACHINE_DRIVER_END
 
 ROM_START(maxaflex)
@@ -555,9 +554,9 @@ DRIVER_INIT( a600xl )
 	memcpy( memory_region(REGION_CPU1) + 0x5000, memory_region(REGION_CPU1) + 0xd000, 0x800 );
 }
 
-GAME( 1984, maxaflex, 0,		  a600xl, a600xl, a600xl, ROT0, "Exidy", "Max-A-Flex", NOT_A_DRIVER )
-GAME( 1982, mf_achas, maxaflex,  a600xl, a600xl, a600xl, ROT0, "Exidy / First Star Software", "Astro Chase (Max-A-Flex)", 0 )
-GAME( 1983, mf_brist, maxaflex,  a600xl, a600xl, a600xl, ROT0, "Exidy / First Star Software", "Bristles (Max-A-Flex)", 0 )
-GAME( 1983, mf_flip,  maxaflex,  a600xl, a600xl, a600xl, ROT0, "Exidy / First Star Software", "Flip & Flop (Max-A-Flex)", 0 )
-GAME( 1984, mf_bdash, maxaflex,  a600xl, a600xl, a600xl, ROT0, "Exidy / First Star Software", "Boulder Dash (Max-A-Flex)", 0 )
+GAME( 1984, maxaflex, 0,        maxaflex, a600xl, a600xl, ROT0, "Exidy", "Max-A-Flex", NOT_A_DRIVER )
+GAME( 1982, mf_achas, maxaflex, maxaflex, a600xl, a600xl, ROT0, "Exidy / First Star Software", "Astro Chase (Max-A-Flex)", 0 )
+GAME( 1983, mf_brist, maxaflex, maxaflex, a600xl, a600xl, ROT0, "Exidy / First Star Software", "Bristles (Max-A-Flex)", 0 )
+GAME( 1983, mf_flip,  maxaflex, maxaflex, a600xl, a600xl, ROT0, "Exidy / First Star Software", "Flip & Flop (Max-A-Flex)", 0 )
+GAME( 1984, mf_bdash, maxaflex, maxaflex, a600xl, a600xl, ROT0, "Exidy / First Star Software", "Boulder Dash (Max-A-Flex)", 0 )
 

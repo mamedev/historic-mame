@@ -50,14 +50,22 @@ typedef struct _laserdisc_info laserdisc_info;
 
 
 /***************************************************************************
+    GLOBAL VARIABLES
+***************************************************************************/
+
+extern struct CustomSound_interface laserdisc_custom_interface;
+
+
+
+/***************************************************************************
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-laserdisc_info *laserdisc_init(int type);
+laserdisc_info *laserdisc_init(int type, chd_file *chd, int custom_index);
 void laserdisc_vsync(laserdisc_info *info);
 void laserdisc_reset(laserdisc_info *info);
 const char *laserdisc_describe_state(laserdisc_info *info);
-mame_bitmap *laserdisc_get_video(laserdisc_info *info);
+void laserdisc_get_video(laserdisc_info *info, mame_bitmap **bitmap);
 
 void laserdisc_data_w(laserdisc_info *info, UINT8 data);
 void laserdisc_line_w(laserdisc_info *info, UINT8 line, UINT8 newstate);

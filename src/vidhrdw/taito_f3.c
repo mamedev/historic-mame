@@ -2379,7 +2379,7 @@ static void f3_scanline_draw(mame_bitmap *bitmap, const rectangle *cliprect)
 							sprite_pri_usage&=~sftbit;  // Disable sprite priority block
 						else
 						{
-							dpix_sp[1<<i]=dpix_n[2];
+							dpix_sp[sftbit]=dpix_n[2];
 							sprite_alpha_check|=sftbit;
 						}
 					}
@@ -2390,7 +2390,7 @@ static void f3_scanline_draw(mame_bitmap *bitmap, const rectangle *cliprect)
 							if(f3_alpha_level_3as==0 && f3_alpha_level_3ad==255) sprite_pri_usage&=~sftbit;
 							else
 							{
-								dpix_sp[1<<i]=dpix_n[3];
+								dpix_sp[sftbit]=dpix_n[3];
 								sprite_alpha_check|=sftbit;
 								sprite_alpha_all_2a=0;
 							}
@@ -2400,7 +2400,7 @@ static void f3_scanline_draw(mame_bitmap *bitmap, const rectangle *cliprect)
 							if(f3_alpha_level_3bs==0 && f3_alpha_level_3bd==255) sprite_pri_usage&=~sftbit;
 							else
 							{
-								dpix_sp[1<<i]=dpix_n[5];
+								dpix_sp[sftbit]=dpix_n[5];
 								sprite_alpha_check|=sftbit;
 								sprite_alpha_all_2a=0;
 							}

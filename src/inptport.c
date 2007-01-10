@@ -1748,7 +1748,7 @@ static void input_port_detokenize(input_port_init_params *param, const input_por
 				break;
 
 			case INPUT_TOKEN_KEYDELTA:
-				port->analog.delta = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				port->analog.delta = port->analog.centerdelta = INPUT_PORT_PAIR_ITEM(--ipt, 1);
 				ipt += INPUT_PORT_PAIR_TOKENS;
 				break;
 
@@ -1803,13 +1803,72 @@ static void input_port_detokenize(input_port_init_params *param, const input_por
 				defval = INPUT_PORT_PAIR_ITEM(--ipt, 1);
 				ipt += INPUT_PORT_PAIR_TOKENS;
 
-				port = input_port_initialize(param, IPT_DIPSWITCH_SETTING, modify_tag, 0xff, defval | (defval << 8));
+				port = input_port_initialize(param, IPT_ADJUSTER, modify_tag, 0xff, defval | (defval << 8));
 				seq_index[0] = seq_index[1] = seq_index[2] = 0;
 				port->name = input_port_string_from_token(*ipt++);
 				break;
 
+			/* configuration definition */
+			case INPUT_TOKEN_CONFNAME:
+				mask = INPUT_PORT_PAIR_ITEM(ipt, 0);
+				defval = INPUT_PORT_PAIR_ITEM(ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+
+				port = input_port_initialize(param, IPT_CONFIG_NAME, modify_tag, mask, defval);
+				seq_index[0] = seq_index[1] = seq_index[2] = 0;
+				port->name = input_port_string_from_token(*ipt++);
+				break;
+
+			case INPUT_TOKEN_CONFSETTING:
+				defval = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+
+				port = input_port_initialize(param, IPT_CONFIG_SETTING, modify_tag, 0, defval);
+				seq_index[0] = seq_index[1] = seq_index[2] = 0;
+				port->name = input_port_string_from_token(*ipt++);
+				break;
+
+#ifdef MESS
+			case INPUT_TOKEN_CHAR:
+				val = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+
+				{
+					int ch;
+					for (ch = 0; port->keyboard.chars[ch] != 0; ch++)
+						;
+					port->keyboard.chars[ch] = (unicode_char) val;
+				}
+				break;
+
+			/* category definition */
+			case INPUT_TOKEN_CATEGORY:
+				port->category = (UINT16) INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+				break;
+
+			case INPUT_TOKEN_CATEGORY_NAME:
+				mask = INPUT_PORT_PAIR_ITEM(ipt, 0);
+				defval = INPUT_PORT_PAIR_ITEM(ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+
+				port = input_port_initialize(param, IPT_CATEGORY_NAME, modify_tag, mask, defval);
+				seq_index[0] = seq_index[1] = seq_index[2] = 0;
+				port->name = input_port_string_from_token(*ipt++);
+				break;
+
+			case INPUT_TOKEN_CATEGORY_SETTING:
+				defval = INPUT_PORT_PAIR_ITEM(--ipt, 1);
+				ipt += INPUT_PORT_PAIR_TOKENS;
+
+				port = input_port_initialize(param, IPT_CATEGORY_SETTING, modify_tag, 0, defval);
+				seq_index[0] = seq_index[1] = seq_index[2] = 0;
+				port->name = input_port_string_from_token(*ipt++);
+				break;
+#endif /* MESS */
+
 			default:
-				assert_always(0, "unknown port entry type");
+				fatalerror("unknown port entry type");
 				break;
 		}
 	}

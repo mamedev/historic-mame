@@ -202,6 +202,8 @@ enum
 	UI_flip_x,
 	UI_flip_y,
 
+	UI_configuration,
+
 	UI_last_mame_entry
 };
 

@@ -1750,7 +1750,7 @@ INTERRUPT_GEN( cischeat_interrupt )
 #define CISCHEAT_SOUND_INTERRUPT_NUM	16
 
 #define STD_FM_CLOCK	3000000
-#define STD_OKI_CLOCK	  12000
+#define STD_OKI_CLOCK	  (1584000)
 
 
 
@@ -1797,11 +1797,11 @@ static MACHINE_DRIVER_START( bigrun )
 	MDRV_SOUND_ROUTE(1, "right", 0.75)
 
 	MDRV_SOUND_ADD(OKIM6295, STD_OKI_CLOCK)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 
 	MDRV_SOUND_ADD(OKIM6295, STD_OKI_CLOCK)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
@@ -1918,13 +1918,13 @@ static MACHINE_DRIVER_START( scudhamm )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 16000)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, 2112000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 
-	MDRV_SOUND_ADD(OKIM6295, 16000)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ADD(OKIM6295, 2112000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END

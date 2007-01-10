@@ -102,6 +102,7 @@ TP-S.1 TP-S.2 TP-S.3 TP-B.1  8212 TP-B.2 TP-B.3          TP-B.4
 
 ***************************************************************************/
 
+#include "state.h"
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "sound/ay8910.h"
@@ -109,9 +110,12 @@ TP-S.1 TP-S.2 TP-S.3 TP-B.1  8212 TP-B.2 TP-B.3          TP-B.4
 
 #include "tubep.h"
 
+/* Global variables */
+static UINT8 sound_latch;
+static UINT8 ls74 = 0;
+static UINT8 ls377 = 0;
 
-static int sound_latch;
-
+static mame_timer *interrupt_timer;
 
 /*************************** Main CPU on main PCB **************************/
 
@@ -250,23 +254,41 @@ static void scanline_callback(int scanline)
 	scanline += 128;
 	scanline &= 255;
 
-	timer_set( cpu_getscanlinetime( scanline ), scanline, scanline_callback );
+	timer_adjust(interrupt_timer, cpu_getscanlinetime(scanline), scanline, 0);
+}
+
+
+static void tubep_setup_save_state(void)
+{
+	/* Set up save state */
+	state_save_register_global(sound_latch);
+	state_save_register_global(ls74);
+	state_save_register_global(ls377);
+}
+
+
+static MACHINE_START( tubep )
+{
+	/* Create interrupt timer */
+	interrupt_timer = timer_alloc(scanline_callback);
+
+	tubep_setup_save_state();
+
+	return 0;
 }
 
 static MACHINE_RESET( tubep )
 {
-	timer_set(cpu_getscanlinetime( 64 ), 64, scanline_callback );
+	timer_adjust(interrupt_timer, cpu_getscanlinetime(64), 64, 0);
 }
 
 
+static MACHINE_START( rjammer )
+{
+	tubep_setup_save_state();
 
-
-
-
-
-
-
-
+	return 0;
+}
 
 /****************************************************************/
 
@@ -374,9 +396,6 @@ static WRITE8_HANDLER( rjammer_voice_frequency_select_w )
 
 	return;
 }
-
-static int ls74 = 0;
-static int ls377 = 0;
 
 static void rjammer_adpcm_vck (int data)
 {
@@ -735,6 +754,7 @@ static MACHINE_DRIVER_START( tubep )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
+	MDRV_MACHINE_START(tubep)
 	MDRV_MACHINE_RESET(tubep)
 
 	/* video hardware */
@@ -793,6 +813,8 @@ static MACHINE_DRIVER_START( rjammer )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_START(rjammer)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -940,6 +962,6 @@ ROM_START( rjammer )
 ROM_END
 
 /*     year  rom      parent  machine  inp   init */
-GAME( 1984, tubep,   0,      tubep,   tubep,   0, ROT0, "Nichibutsu + Fujitek", "Tube Panic", 0 )
-GAME( 1984, rjammer, 0,      rjammer, rjammer, 0, ROT0, "Nichibutsu + Alice", "Roller Jammer", 0 )
+GAME( 1984, tubep,   0,      tubep,   tubep,   0, ROT0, "Nichibutsu + Fujitek", "Tube Panic", GAME_SUPPORTS_SAVE )
+GAME( 1984, rjammer, 0,      rjammer, rjammer, 0, ROT0, "Nichibutsu + Alice", "Roller Jammer", GAME_SUPPORTS_SAVE )
 

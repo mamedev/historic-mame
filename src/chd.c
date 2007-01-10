@@ -72,6 +72,7 @@ struct _codec_interface
 {
 	UINT32		compression;				/* type of compression */
 	const char *compname;					/* name of the algorithm */
+	UINT8		lossy;						/* is this a lossy algorithm? */
 	chd_error	(*init)(chd_file *chd);		/* codec initialize */
 	void 		(*free)(chd_file *chd);		/* codec free */
 	chd_error	(*compress)(chd_file *chd, const void *src, UINT32 *complen); /* compress data */
@@ -241,6 +242,7 @@ static const codec_interface codec_interfaces[] =
 	{
 		CHDCOMPRESSION_NONE,
 		"none",
+		FALSE,
 		NULL,
 		NULL,
 		NULL,
@@ -252,6 +254,7 @@ static const codec_interface codec_interfaces[] =
 	{
 		CHDCOMPRESSION_ZLIB,
 		"zlib",
+		FALSE,
 		zlib_codec_init,
 		zlib_codec_free,
 		zlib_codec_compress,
@@ -263,6 +266,7 @@ static const codec_interface codec_interfaces[] =
 	{
 		CHDCOMPRESSION_ZLIB_PLUS,
 		"zlib+",
+		FALSE,
 		zlib_codec_init,
 		zlib_codec_free,
 		zlib_codec_compress,
@@ -873,8 +877,25 @@ chd_error chd_read(chd_file *chd, UINT32 hunknum, void *buffer)
 	}
 
 	/* now copy the data from the cache */
+	if (buffer != NULL)
 	memcpy(buffer, chd->cache, chd->header.hunkbytes);
 	return CHDERR_NONE;
+}
+
+
+/*-------------------------------------------------
+    chd_get_cache_ptr - return a pointer to the
+    internal cache
+-------------------------------------------------*/
+
+const void *chd_get_cache_ptr(chd_file *chd)
+{
+	/* punt if NULL or invalid */
+	if (chd == NULL || chd->cookie != COOKIE_VALUE)
+		return NULL;
+
+	/* return the pointer */
+	return chd->cache;
 }
 
 
@@ -1144,25 +1165,6 @@ chd_error chd_compress_begin(chd_file *chd)
 
 
 /*-------------------------------------------------
-    chd_compress_config - set internal codec
-    parameters
--------------------------------------------------*/
-
-chd_error chd_compress_config(chd_file *chd, int param, void *config)
-{
-	/* error if in the wrong state */
-	if (!chd->compressing)
-		return CHDERR_INVALID_STATE;
-
-	/* if the codec has a configuration callback, call through to it */
-	if (chd->codecintf->config != NULL)
-		return (*chd->codecintf->config)(chd, param, config);
-
-	return CHDERR_INVALID_PARAMETER;
-}
-
-
-/*-------------------------------------------------
     chd_compress_hunk - append data to a CHD
     that is being compressed
 -------------------------------------------------*/
@@ -1330,6 +1332,44 @@ chd_error chd_verify_finish(chd_file *chd, UINT8 *finalmd5, UINT8 *finalsha1)
 	/* return an error */
 	chd->verifying = FALSE;
 	return (chd->verhunk < chd->header.totalhunks) ? CHDERR_VERIFY_INCOMPLETE : CHDERR_NONE;
+}
+
+
+
+/***************************************************************************
+    CODEC INTERFACES
+***************************************************************************/
+
+/*-------------------------------------------------
+    chd_codec_config - set internal codec
+    parameters
+-------------------------------------------------*/
+
+chd_error chd_codec_config(chd_file *chd, int param, void *config)
+{
+	/* if the codec has a configuration callback, call through to it */
+	if (chd->codecintf->config != NULL)
+		return (*chd->codecintf->config)(chd, param, config);
+
+	return CHDERR_INVALID_PARAMETER;
+}
+
+
+/*-------------------------------------------------
+    chd_get_codec_name - get the name of a
+    particular codec
+-------------------------------------------------*/
+
+const char *chd_get_codec_name(UINT32 codec)
+{
+	int intfnum;
+
+	/* look for a matching codec and return its string */
+	for (intfnum = 0; intfnum < ARRAY_LENGTH(codec_interfaces); intfnum++)
+		if (codec_interfaces[intfnum].compression == codec)
+			return codec_interfaces[intfnum].compname;
+
+	return "Unknown";
 }
 
 
@@ -1694,6 +1734,8 @@ static chd_error hunk_write_from_memory(chd_file *chd, UINT32 hunknum, const UIN
 		data = chd->compressed;
 		newentry.length = bytes;
 		newentry.flags = MAP_ENTRY_TYPE_COMPRESSED;
+		if (chd->codecintf->lossy)
+			newentry.flags |= MAP_ENTRY_FLAG_NO_CRC;
 	}
 
 	/* otherwise, mark it uncompressed and use the original data */

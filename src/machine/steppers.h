@@ -3,10 +3,10 @@
 #ifndef INC_STEPPERS
 #define INC_STEPPERS
 
-#define MAX_STEPPERS		  16 // maximum number of steppers
+#define MAX_STEPPERS		  16			// maximum number of steppers
 
-#define STEPPER_48STEP_REEL    0 // STARPOINT RMXXX reel unit
-#define STEPPER_144STEPS_DICE  1 // STARPOINT 1DCU DICE mechanism - tech sheet available from Re-A or EC on request
+#define STEPPER_48STEP_REEL    0			// STARPOINT RMXXX reel unit
+#define STEPPER_144STEPS_DICE  1			// STARPOINT 1DCU DICE mechanism - tech sheet available from Re-A or EC on request
 
 void Stepper_init(  int id, int type);		// init a stepper motor
 
@@ -16,7 +16,7 @@ int  Stepper_optic_state(   int id);		// read a motor's optics
 
 int  Stepper_update(int id, UINT8 pattern);	// update a motor
 
-int  Stepper_get_position(int id);		// get current position in half steps
+int  Stepper_get_position(int id);			// get current position in half steps
 
-int  Stepper_get_max(int id);		// get maximum position in half steps
+int  Stepper_get_max(int id);				// get maximum position in half steps
 #endif

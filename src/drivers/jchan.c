@@ -370,7 +370,7 @@ are loaded in RAM then saved with cmd 0x42 (see code @ $5196 & $50d4)
 		case 0x42: /* save game settings to 93C46 EEPROM ($50d4) */
 		{
 			mame_file *f;
-			if ((f = nvram_fopen(Machine, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE)) != 0)
+			if ((f = nvram_fopen(Machine, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS)) != 0)
 			{
 				mame_fwrite(f,&mcu_ram[mcu_offset], 128);
 				mame_fclose(f);

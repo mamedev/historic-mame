@@ -131,7 +131,7 @@ static struct YM2203interface ym2203_interface =					\
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)						\
 																	\
 	MDRV_SOUND_ADD(OKIM6295, freq2)									\
-	MDRV_SOUND_CONFIG(okim6295_interface_region_##region)			\
+	MDRV_SOUND_CONFIG(okim6295_interface_region_##region##_pin7low)	\
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)						\
 
 #define SEIBU_SOUND_SYSTEM_YM3812_RAIDEN_INTERFACE(freq1,freq2,region) \
@@ -142,7 +142,7 @@ static struct YM2203interface ym2203_interface =					\
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)						\
 																	\
 	MDRV_SOUND_ADD(OKIM6295, freq2)									\
-	MDRV_SOUND_CONFIG(okim6295_interface_region_##region)			\
+	MDRV_SOUND_CONFIG(okim6295_interface_region_##region##_pin7low)	\
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)						\
 
 #define SEIBU_SOUND_SYSTEM_YM2151_INTERFACE(freq1,freq2,region)		\
@@ -154,7 +154,7 @@ static struct YM2203interface ym2203_interface =					\
 	MDRV_SOUND_ROUTE(1, "mono", 0.50)								\
 																	\
 	MDRV_SOUND_ADD(OKIM6295, freq2)									\
-	MDRV_SOUND_CONFIG(okim6295_interface_region_##region)			\
+	MDRV_SOUND_CONFIG(okim6295_interface_region_##region##_pin7low)	\
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)						\
 
 #define SEIBU_SOUND_SYSTEM_YM2203_INTERFACE(freq)					\

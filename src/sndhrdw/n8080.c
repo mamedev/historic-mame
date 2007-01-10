@@ -54,6 +54,13 @@ struct SN76477interface sheriff_sn76477_interface =
 	CAP_N(47)  ,  /* 21 */
 	CAP_N(47)  ,  /* 23 */
 	RES_K(560) ,  /* 24 */
+	0,			  /* 22 vco */
+	0,			  /* 26 mixer A */
+	0,			  /* 25 mixer B */
+	0,			  /* 27 mixer C */
+	1,			  /* 1  envelope 1 */
+	0,			  /* 28 envelope 2 */
+	1			  /* 9  enable */
 };
 
 
@@ -75,6 +82,13 @@ struct SN76477interface spacefev_sn76477_interface =
 	CAP_N(47)  ,  /* 21 */
 	CAP_N(47)  ,  /* 23 */
 	RES_K(820) ,  /* 24 */
+	0,			  /* 22 vco */
+	0,			  /* 26 mixer A */
+	0,			  /* 25 mixer B */
+	0,			  /* 27 mixer C */
+	1,			  /* 1  envelope 1 */
+	0,			  /* 28 envelope 2 */
+	1			  /* 9  enable */
 };
 
 
@@ -450,13 +464,6 @@ static MACHINE_RESET( spacefev_sound )
 	sound_timer[1] = timer_alloc(stop_mono_flop);
 	sound_timer[2] = timer_alloc(stop_mono_flop);
 
-	SN76477_envelope_1_w(0, 1);
-	SN76477_envelope_2_w(0, 0);
-	SN76477_mixer_a_w(0, 0);
-	SN76477_mixer_b_w(0, 0);
-	SN76477_mixer_c_w(0, 0);
-	SN76477_noise_clock_w(0, 0);
-
 	mono_flop[0] = 0;
 	mono_flop[1] = 0;
 	mono_flop[2] = 0;
@@ -472,13 +479,6 @@ static MACHINE_RESET( sheriff_sound )
 
 	sound_timer[0] = timer_alloc(stop_mono_flop);
 	sound_timer[1] = timer_alloc(stop_mono_flop);
-
-	SN76477_envelope_1_w(0, 1);
-	SN76477_envelope_2_w(0, 0);
-	SN76477_mixer_a_w(0, 0);
-	SN76477_mixer_b_w(0, 0);
-	SN76477_mixer_c_w(0, 0);
-	SN76477_noise_clock_w(0, 0);
 
 	mono_flop[0] = 0;
 	mono_flop[1] = 0;

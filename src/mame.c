@@ -1413,7 +1413,7 @@ static void handle_save(running_machine *machine)
 	}
 
 	/* open the file */
-	filerr = mame_fopen(SEARCHPATH_STATE, mame->saveload_pending_file, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);
+	filerr = mame_fopen(SEARCHPATH_STATE, mame->saveload_pending_file, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS, &file);
 	if (filerr == FILERR_NONE)
 	{
 		int cpunum;

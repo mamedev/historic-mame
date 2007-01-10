@@ -184,11 +184,15 @@ void identify_file(const TCHAR *name, FILE *output)
 		_totlower(name[namelen - 1]) == 'p')
 	{
 		/* first attempt to examine it as a valid ZIP file */
-		zip_file *zip;
+		zip_file *zip = NULL;
 		char *utf8_name = utf8_from_tstring(name);
-		zip_error ziperr = zip_file_open(utf8_name, &zip);
-		free(utf8_name);
-		if (ziperr == ZIPERR_NONE)
+		zip_error ziperr = ZIPERR_OUT_OF_MEMORY;
+		if (utf8_name != NULL)
+		{
+			ziperr = zip_file_open(utf8_name, &zip);
+			free(utf8_name);
+		}
+		if (ziperr == ZIPERR_NONE && zip != NULL)
 		{
 			const zip_file_header *entry;
 
@@ -228,10 +232,13 @@ void identify_file(const TCHAR *name, FILE *output)
 			if (data != NULL)
 			{
 				char *utf8_name = utf8_from_tstring(name);
-				fread(data, 1, length, f);
-				identify_data(utf8_name, data, length, output);
+				if (utf8_name != NULL)
+				{
+					fread(data, 1, length, f);
+					identify_data(utf8_name, data, length, output);
+					free(utf8_name);
+				}
 				free(data);
-				free(utf8_name);
 			}
 		}
 		fclose(f);
@@ -303,6 +310,8 @@ void romident(const char *name, FILE *output)
 	DWORD attr;
 
 	tname = tstring_from_utf8(name);
+	if (tname == NULL)
+		return;
 
 	/* reset the globals */
 	knownstatus = KNOWN_START;
@@ -316,8 +325,11 @@ void romident(const char *name, FILE *output)
 	{
 		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), 0, error, ARRAY_LENGTH(error), NULL);
 		utf8_error = utf8_from_tstring(error);
-		mame_printf_error("%s: %s\n", name, utf8_error);
-		free(utf8_error);
+		if (utf8_error != NULL)
+		{
+			mame_printf_error("%s: %s\n", name, utf8_error);
+			free(utf8_error);
+		}
 	}
 	else
 	{

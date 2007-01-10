@@ -944,17 +944,17 @@ static int validate_sound(int drivnum, const machine_config *drv)
 
 int mame_validitychecks(int game)
 {
-	cycles_t prep = 0;
-	cycles_t expansion = 0;
-	cycles_t driver_checks = 0;
-	cycles_t rom_checks = 0;
-	cycles_t cpu_checks = 0;
-	cycles_t gfx_checks = 0;
-	cycles_t display_checks = 0;
-	cycles_t input_checks = 0;
-	cycles_t sound_checks = 0;
+	osd_ticks_t prep = 0;
+	osd_ticks_t expansion = 0;
+	osd_ticks_t driver_checks = 0;
+	osd_ticks_t rom_checks = 0;
+	osd_ticks_t cpu_checks = 0;
+	osd_ticks_t gfx_checks = 0;
+	osd_ticks_t display_checks = 0;
+	osd_ticks_t input_checks = 0;
+	osd_ticks_t sound_checks = 0;
 #ifdef MESS
-	cycles_t mess_checks = 0;
+	osd_ticks_t mess_checks = 0;
 #endif
 
 	input_port_entry *inputports = NULL;

@@ -143,6 +143,7 @@ struct _raw_mouse
 //============================================================
 
 int							win_use_mouse;
+HANDLE							win_input_handle;
 
 
 
@@ -160,7 +161,7 @@ static int					dinput_version;
 
 // global states
 static int					input_paused;
-static cycles_t				last_poll;
+static osd_ticks_t			last_poll;
 
 // Controller override options
 static float				a2d_deadzone;
@@ -848,6 +849,8 @@ static BOOL CALLBACK enum_mouse_callback(LPCDIDEVICEINSTANCE instance, LPVOID re
 
 	// remember the name
 	utf8_instance_name = utf8_from_tstring(instance->tszInstanceName);
+	if (utf8_instance_name == NULL)
+		goto cant_alloc_memory;
 	strcpy(mouse_name[mouse_count], utf8_instance_name);
 	free(utf8_instance_name);
 
@@ -899,6 +902,7 @@ cant_set_coop_level:
 cant_set_format:
 cant_set_axis_mode:
 cant_get_caps:
+cant_alloc_memory:
 	if (mouse_device2[mouse_count])
 		IDirectInputDevice_Release(mouse_device2[mouse_count]);
 	IDirectInputDevice_Release(mouse_device[mouse_count]);
@@ -979,6 +983,8 @@ static BOOL CALLBACK enum_joystick_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 
 	// remember the name
 	utf8_instance_name = utf8_from_tstring(instance->tszInstanceName);
+	if (utf8_instance_name == NULL)
+		goto cant_alloc_memory;
 	strcpy(joystick_name[joystick_count], utf8_instance_name);
 	free(utf8_instance_name);
 
@@ -1021,6 +1027,7 @@ cant_set_coop_level:
 cant_set_format:
 cant_set_axis_mode:
 cant_get_caps:
+cant_alloc_memory:
 	if (joystick_device2[joystick_count])
 		IDirectInputDevice_Release(joystick_device2[joystick_count]);
 	IDirectInputDevice_Release(joystick_device[joystick_count]);
@@ -1040,6 +1047,7 @@ int wininput_init(running_machine *machine)
 	const input_port_entry *inp;
 	HRESULT result;
 
+	win_input_handle = GetStdHandle(STD_INPUT_HANDLE);
 	add_pause_callback(machine, win_pause_input);
 	add_exit_callback(machine, wininput_exit);
 
@@ -1276,7 +1284,7 @@ void wininput_poll(void)
 	int i, j;
 
 	// remember when this happened
-	last_poll = osd_cycles();
+	last_poll = osd_ticks();
 
 	// periodically process events, in case they're not coming through
 	winwindow_process_events_periodic();
@@ -1573,7 +1581,7 @@ static int is_key_pressed(os_code keycode)
 	int dik = DICODE(keycode);
 
 	// make sure we've polled recently
-	if (osd_cycles() > last_poll + osd_cycles_per_second()/4)
+	if (osd_ticks() > last_poll + osd_ticks_per_second()/4)
 		wininput_poll();
 
 	// if the video window isn't visible, we have to get our events from the console
@@ -1582,9 +1590,10 @@ static int is_key_pressed(os_code keycode)
 		// warning: this code relies on the assumption that when you're polling for
 		// keyboard events before the system is initialized, they are all of the
 		// "press any key" to continue variety
-		int result = _kbhit();
-		if (result)
-			_getch();
+		DWORD result = 0;
+		INPUT_RECORD record;
+		if (GetNumberOfConsoleInputEvents(win_input_handle, &result) && result > 0)
+			ReadConsoleInput(win_input_handle, &record, 1, &result);
 		return result;
 	}
 
@@ -1628,7 +1637,7 @@ static void init_keycodes(void)
 
 			// copy the name
 			char *namecopy = utf8_from_tstring(instance.tszName);
-			if (namecopy)
+			if (namecopy != NULL)
 			{
 				input_code standardcode;
 				os_code code;
@@ -1818,9 +1827,12 @@ static void init_joycodes(void)
 				if (result == DI_OK)
 				{
 					char *utf8_name = utf8_from_tstring(instance.tszName);
-					sprintf(tempname, "%s%s", mousename, utf8_name);
-					free(utf8_name);
-					add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
+					if (utf8_name != NULL)
+					{
+						sprintf(tempname, "%s%s", mousename, utf8_name);
+						free(utf8_name);
+						add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
+					}
 				}
 			}
 		}
@@ -1861,30 +1873,33 @@ static void init_joycodes(void)
 			if (result == DI_OK)
 			{
 				char *utf8_name = utf8_from_tstring(instance.tszName);
-				verbose_printf("Input:  Axis %d (%s)%s\n", axis, utf8_name, joystick_digital[stick][axis] ? " - digital" : "");
-
-				// add analog axis
-				if (!joystick_digital[stick][axis])
+				if (utf8_name != NULL)
 				{
-					sprintf(tempname, "J%d %s", stick + 1, utf8_name);
-					add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_JOYAXIS, axis), CODE_OTHER_ANALOG_ABSOLUTE);
+					verbose_printf("Input:  Axis %d (%s)%s\n", axis, utf8_name, joystick_digital[stick][axis] ? " - digital" : "");
+
+					// add analog axis
+					if (!joystick_digital[stick][axis])
+					{
+						sprintf(tempname, "J%d %s", stick + 1, utf8_name);
+						add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_JOYAXIS, axis), CODE_OTHER_ANALOG_ABSOLUTE);
+					}
+
+					// add negative value
+					sprintf(tempname, "J%d %s -", stick + 1, utf8_name);
+					add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_AXIS_NEG, axis), CODE_OTHER_DIGITAL);
+
+					// add positive value
+					sprintf(tempname, "J%d %s +", stick + 1, utf8_name);
+					add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_AXIS_POS, axis), CODE_OTHER_DIGITAL);
+
+					// get the axis range while we're here
+					joystick_range[stick][axis].diph.dwSize = sizeof(DIPROPRANGE);
+					joystick_range[stick][axis].diph.dwHeaderSize = sizeof(joystick_range[stick][axis].diph);
+					joystick_range[stick][axis].diph.dwObj = offsetof(DIJOYSTATE, lX) + axis * sizeof(LONG);
+					joystick_range[stick][axis].diph.dwHow = DIPH_BYOFFSET;
+					result = IDirectInputDevice_GetProperty(joystick_device[stick], DIPROP_RANGE, &joystick_range[stick][axis].diph);
+					free(utf8_name);
 				}
-
-				// add negative value
-				sprintf(tempname, "J%d %s -", stick + 1, utf8_name);
-				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_AXIS_NEG, axis), CODE_OTHER_DIGITAL);
-
-				// add positive value
-				sprintf(tempname, "J%d %s +", stick + 1, utf8_name);
-				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_AXIS_POS, axis), CODE_OTHER_DIGITAL);
-
-				// get the axis range while we're here
-				joystick_range[stick][axis].diph.dwSize = sizeof(DIPROPRANGE);
-				joystick_range[stick][axis].diph.dwHeaderSize = sizeof(joystick_range[stick][axis].diph);
-				joystick_range[stick][axis].diph.dwObj = offsetof(DIJOYSTATE, lX) + axis * sizeof(LONG);
-				joystick_range[stick][axis].diph.dwHow = DIPH_BYOFFSET;
-				result = IDirectInputDevice_GetProperty(joystick_device[stick], DIPROP_RANGE, &joystick_range[stick][axis].diph);
-				free(utf8_name);
 			}
 		}
 
@@ -1901,9 +1916,12 @@ static void init_joycodes(void)
 			{
 				// make the name for this item
 				char *utf8_name = utf8_from_tstring(instance.tszName);
-				sprintf(tempname, "J%d %s", stick + 1, utf8_name);
-				free(utf8_name);
-				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_BUTTON, button), CODE_OTHER_DIGITAL);
+				if (utf8_name != NULL)
+				{
+					sprintf(tempname, "J%d %s", stick + 1, utf8_name);
+					free(utf8_name);
+					add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_BUTTON, button), CODE_OTHER_DIGITAL);
+				}
 			}
 		}
 
@@ -1919,24 +1937,26 @@ static void init_joycodes(void)
 			if (result == DI_OK)
 			{
 				char *utf8_name = utf8_from_tstring(instance.tszName);
+				if (utf8_name != NULL)
+				{
+					// add up direction
+					sprintf(tempname, "J%d %s U", stick + 1, utf8_name);
+					add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_POV_UP, pov), CODE_OTHER_DIGITAL);
 
-				// add up direction
-				sprintf(tempname, "J%d %s U", stick + 1, utf8_name);
-				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_POV_UP, pov), CODE_OTHER_DIGITAL);
+					// add down direction
+					sprintf(tempname, "J%d %s D", stick + 1, utf8_name);
+					add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_POV_DOWN, pov), CODE_OTHER_DIGITAL);
 
-				// add down direction
-				sprintf(tempname, "J%d %s D", stick + 1, utf8_name);
-				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_POV_DOWN, pov), CODE_OTHER_DIGITAL);
+					// add left direction
+					sprintf(tempname, "J%d %s L", stick + 1, utf8_name);
+					add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_POV_LEFT, pov), CODE_OTHER_DIGITAL);
 
-				// add left direction
-				sprintf(tempname, "J%d %s L", stick + 1, utf8_name);
-				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_POV_LEFT, pov), CODE_OTHER_DIGITAL);
+					// add right direction
+					sprintf(tempname, "J%d %s R", stick + 1, utf8_name);
+					add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_POV_RIGHT, pov), CODE_OTHER_DIGITAL);
 
-				// add right direction
-				sprintf(tempname, "J%d %s R", stick + 1, utf8_name);
-				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_POV_RIGHT, pov), CODE_OTHER_DIGITAL);
-
-				free(utf8_name);
+					free(utf8_name);
+				}
 			}
 		}
 	}

@@ -516,7 +516,7 @@ void bloodwar_mcu_run(void)
 		case 0x42:	// Write to NVRAM
 		{
 			mame_file *f;
-			if ((f = nvram_fopen(Machine, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE)) != 0)
+			if ((f = nvram_fopen(Machine, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS)) != 0)
 			{
 				mame_fwrite(f,&mcu_ram[mcu_offset], 128);
 				mame_fclose(f);
@@ -629,7 +629,7 @@ void bonkadv_mcu_run(void)
 		case 0x42:	// Write to NVRAM
 		{
 			mame_file *f;
-			if ((f = nvram_fopen(Machine, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE)) != 0)
+			if ((f = nvram_fopen(Machine, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS)) != 0)
 			{
 				mame_fwrite(f,&mcu_ram[mcu_offset], 128);
 				mame_fclose(f);
@@ -745,7 +745,7 @@ void gtmr_mcu_run(void)
 		case 0x42:	// Write to NVRAM
 		{
 			mame_file *f;
-			if ((f = nvram_fopen(Machine, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE)) != 0)
+			if ((f = nvram_fopen(Machine, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE | OPEN_FLAG_CREATE_PATHS)) != 0)
 			{
 				mame_fwrite(f,&mcu_ram[mcu_offset], 128);
 				mame_fclose(f);

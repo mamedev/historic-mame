@@ -3950,8 +3950,8 @@ static MACHINE_DRIVER_START( cps1 )
 	MDRV_SOUND_ROUTE(0, "mono", 0.35)
 	MDRV_SOUND_ROUTE(1, "mono", 0.35)
 
-	MDRV_SOUND_ADD_TAG("okim", OKIM6295, 7576)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD_TAG("okim", OKIM6295, 1000000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // pin 7 can be changed by the game code
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 
@@ -3962,8 +3962,8 @@ static MACHINE_DRIVER_START( forgottn )
 	MDRV_IMPORT_FROM(cps1)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("okim", OKIM6295, 6061)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_REPLACE("okim", OKIM6295, 1000000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7low) // pin 7 can be changed by the game code
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 MACHINE_DRIVER_END
 

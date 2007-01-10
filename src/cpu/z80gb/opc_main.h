@@ -1477,7 +1477,7 @@ case 0xF2: /*      LD A,($FF00+C) */
   Regs.b.A = mem_ReadByte ((UINT16) (0xFF00 + Regs.b.C));
   break;
 case 0xF3: /*      DI */
-
+  Regs.w.ei_delay = 0;
   Regs.w.enable &= ~IME;
   break;
 case 0xF4: /*      EH? */
@@ -1548,6 +1548,7 @@ case 0xFA: /*      LD A,(n16) */
 case 0xFB: /*      EI */
 
   Regs.w.enable |= IME;
+  Regs.w.ei_delay = 1;
   CheckInterrupts = 1;
   break;
 case 0xFC: /*      EH? */

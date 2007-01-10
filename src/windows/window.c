@@ -100,7 +100,7 @@ int win_use_raw_mouse = 0;
 //============================================================
 
 // event handling
-static cycles_t last_event_check;
+static osd_ticks_t last_event_check;
 
 // debugger
 static int in_background;
@@ -150,7 +150,7 @@ static void set_fullscreen(win_window_info *window, int fullscreen);
 #if LOG_THREADS
 struct _mtlog
 {
-	cycles_t	timestamp;
+	osd_ticks_t	timestamp;
 	const char *event;
 };
 
@@ -162,21 +162,21 @@ void mtlog_add(const char *event)
 	int index = InterlockedIncrement((LONG *) &mtlogindex) - 1;
 	if (index < ARRAY_LENGTH(mtlog))
 	{
-		mtlog[index].timestamp = osd_cycles();
+		mtlog[index].timestamp = osd_ticks();
 		mtlog[index].event = event;
 	}
 }
 
 static void mtlog_dump(void)
 {
-	cycles_t cps = osd_cycles_per_second();
-	cycles_t last = mtlog[0].timestamp * 1000000 / cps;
+	osd_ticks_t cps = osd_ticks_per_second();
+	osd_ticks_t last = mtlog[0].timestamp * 1000000 / cps;
 	int i;
 
 	FILE *f = fopen("mt.log", "w");
 	for (i = 0; i < mtlogindex; i++)
 	{
-		cycles_t curr = mtlog[i].timestamp * 1000000 / cps;
+		osd_ticks_t curr = mtlog[i].timestamp * 1000000 / cps;
 		fprintf(f, "%20I64d %10I64d %s\n", curr, curr - last, mtlog[i].event);
 		last = curr;
 	}
@@ -318,13 +318,13 @@ static void winwindow_exit(running_machine *machine)
 
 void winwindow_process_events_periodic(void)
 {
-	cycles_t curr;
+	osd_ticks_t curr;
 
 	assert(GetCurrentThreadId() == main_threadid);
 
 	// update once every 1/8th of a second
-	curr = osd_cycles();
-	if (curr - last_event_check < osd_cycles_per_second() / 8)
+	curr = osd_ticks();
+	if (curr - last_event_check < osd_ticks_per_second() / 8)
 		return;
 	winwindow_process_events(TRUE);
 }
@@ -353,7 +353,7 @@ void winwindow_process_events(int ingame)
 #endif
 
 	// remember the last time we did this
-	last_event_check = osd_cycles();
+	last_event_check = osd_ticks();
 
 	do
 	{
@@ -1097,6 +1097,8 @@ static int complete_create(win_window_info *window)
 
 	// create the window, but don't show it yet
 	t_title = tstring_from_utf8(window->title);
+	if (t_title == NULL)
+		return 1;
 	window->hwnd = CreateWindowEx(
 						window->fullscreen ? FULLSCREEN_STYLE_EX : WINDOW_STYLE_EX,
 						TEXT("MAME"),

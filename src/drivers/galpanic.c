@@ -997,8 +997,8 @@ static MACHINE_DRIVER_START( galpanic )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD_TAG("oki", OKIM6295, 12000)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD_TAG("oki", OKIM6295, 1584000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
@@ -1051,8 +1051,8 @@ static MACHINE_DRIVER_START( supmodel )
 	MDRV_VIDEO_UPDATE(comad)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("oki", OKIM6295, 12000)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_REPLACE("oki", OKIM6295, 1584000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
@@ -1096,8 +1096,8 @@ static MACHINE_DRIVER_START( zipzap )
 	MDRV_VIDEO_UPDATE(comad)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("oki", OKIM6295, 8000)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_REPLACE("oki", OKIM6295, 1056000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // clock frequency & pin 7 not verified
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 

@@ -46,6 +46,13 @@ static void custom_reset(void *token)
 }
 
 
+void *custom_get_token(int index)
+{
+	struct custom_info *token = sndti_token(SOUND_CUSTOM, index);
+	return token->token;
+}
+
+
 
 /**************************************************************************
  * Generic get_info

@@ -249,6 +249,9 @@ chd_error chd_set_header(const char *filename, const chd_header *header);
 /* read one hunk from the CHD file */
 chd_error chd_read(chd_file *chd, UINT32 hunknum, void *buffer);
 
+/* return a pointer to the internal cache */
+const void *chd_get_cache_ptr(chd_file *chd);
+
 /* write one hunk to a CHD file */
 chd_error chd_write(chd_file *chd, UINT32 hunknum, const void *buffer);
 
@@ -272,9 +275,6 @@ chd_error chd_clone_metadata(chd_file *source, chd_file *dest);
 /* begin compressing data to a CHD */
 chd_error chd_compress_begin(chd_file *chd);
 
-/* set internal codec parameters */
-chd_error chd_compress_config(chd_file *chd, int param, void *config);
-
 /* compress the next hunk of data */
 chd_error chd_compress_hunk(chd_file *chd, const void *data, double *curratio);
 
@@ -294,6 +294,15 @@ chd_error chd_verify_hunk(chd_file *chd);
 /* finish verifying a CHD, returning the computed MD5 and SHA1 */
 chd_error chd_verify_finish(chd_file *chd, UINT8 *finalmd5, UINT8 *finalsha1);
 
+
+
+/* ----- codec interfaces ----- */
+
+/* set internal codec parameters */
+chd_error chd_codec_config(chd_file *chd, int param, void *config);
+
+/* return a string description of a codec */
+const char *chd_get_codec_name(UINT32 codec);
 
 
 #endif /* __CHD_H__ */

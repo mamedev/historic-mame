@@ -386,7 +386,7 @@ static WRITE8_HANDLER( jsa2_io_w )
 			coin_counter_w(0, (data >> 4) & 1);
 
 			/* update the OKI frequency */
-			if (has_oki6295) OKIM6295_set_frequency(0, ATARI_CLOCK_3MHz/3 / ((data & 8) ? 132 : 165));
+			if (has_oki6295) OKIM6295_set_pin7(0, data & 8);
 			break;
 
 		case 0x206:		/* /MIX */
@@ -512,7 +512,7 @@ static WRITE8_HANDLER( jsa3_io_w )
 			coin_counter_w(0, (data >> 4) & 1);
 
 			/* update the OKI frequency */
-			if (has_oki6295) OKIM6295_set_frequency(0, ATARI_CLOCK_3MHz/3 / ((data & 8) ? 132 : 165));
+			if (has_oki6295) OKIM6295_set_pin7(0, data & 8);
 			break;
 
 		case 0x206:		/* /MIX */
@@ -653,8 +653,8 @@ static WRITE8_HANDLER( jsa3s_io_w )
 			coin_counter_w(0, (data >> 4) & 1);
 
 			/* update the OKI frequency */
-			OKIM6295_set_frequency(0, ATARI_CLOCK_3MHz/3 / ((data & 8) ? 132 : 165));
-			OKIM6295_set_frequency(1, ATARI_CLOCK_3MHz/3 / ((data & 8) ? 132 : 165));
+			OKIM6295_set_pin7(0, data & 8);
+			OKIM6295_set_pin7(1, data & 8);
 			break;
 
 		case 0x206:		/* /MIX */
@@ -860,8 +860,8 @@ MACHINE_DRIVER_START( jsa_ii_mono )
 	MDRV_SOUND_ROUTE(0, "mono", 0.60)
 	MDRV_SOUND_ROUTE(1, "mono", 0.60)
 
-	MDRV_SOUND_ADD_TAG("adpcm", OKIM6295, ATARI_CLOCK_3MHz/3/132)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD_TAG("adpcm", OKIM6295, ATARI_CLOCK_3MHz/3)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
@@ -903,11 +903,11 @@ MACHINE_DRIVER_START( jsa_iiis_stereo )
 	MDRV_SOUND_ROUTE(0, "left", 0.60)
 	MDRV_SOUND_ROUTE(1, "right", 0.60)
 
-	MDRV_SOUND_ADD(OKIM6295, ATARI_CLOCK_3MHz/3/132)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, ATARI_CLOCK_3MHz/3)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.75)
 
-	MDRV_SOUND_ADD(OKIM6295, ATARI_CLOCK_3MHz/3/132)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD(OKIM6295, ATARI_CLOCK_3MHz/3)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.75)
 MACHINE_DRIVER_END

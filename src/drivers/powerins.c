@@ -365,12 +365,12 @@ static MACHINE_DRIVER_START( powerins )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD_TAG("oki1", OKIM6295, 4000000 / 165)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ADD_TAG("oki1", OKIM6295, 4000000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7low)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
-	MDRV_SOUND_ADD_TAG("oki2", OKIM6295, 4000000 / 165)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ADD_TAG("oki2", OKIM6295, 4000000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2_pin7low)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
 	MDRV_SOUND_ADD_TAG("ym2203", YM2203, 12000000 / 8)
@@ -387,8 +387,8 @@ static MACHINE_DRIVER_START( powerina )
 
 	MDRV_CPU_REMOVE("sound")
 
-	MDRV_SOUND_REPLACE("oki1", OKIM6295, 6000)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_REPLACE("oki1", OKIM6295, 990000) // pin7 not verified
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7low)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
 	MDRV_SOUND_REMOVE("oki2")

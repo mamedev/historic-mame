@@ -2087,6 +2087,24 @@ ROM_START( mach3 )
 	ROM_LOAD( "m3target.bin", 0, 1024*1024, CRC(6e779a6f) SHA1(e556ad438e637a71f17ea04088de10b39b45f8df) )
 ROM_END
 
+ROM_START( cobram3 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "bh03",   0x8000, 0x2000, CRC(755cbbf5) SHA1(e3ea146f8c344af1e9bf51548ae4902cb09e589a) )
+	ROM_LOAD( "bh02",   0xa000, 0x2000, CRC(928ef670) SHA1(6f56454aaf76418ae94da2bd16b4e8309aca29a6) )
+	ROM_LOAD( "bh01",   0xc000, 0x2000, CRC(7d86ab08) SHA1(26b7eb089ca3fe3f8b1531316ce8f95e33b380e5) )
+	ROM_LOAD( "bh00",   0xe000, 0x2000, CRC(c19ad038) SHA1(4d20ae70d8ad1eaa61cb91d7a0cff6932fce30d2) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "bh09",   0x0000, 0x1000, CRC(8c5dfac0) SHA1(5be28f807c4eb9df76a8f7519086ae57953d8c6f) )
+	ROM_LOAD( "bh0a",   0x1000, 0x1000, CRC(8b8da8dc) SHA1(9f03ac0e6b6396cd44843ea394d55d79848d6a27) )
+
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "bh05",   0x0000, 0x2000, CRC(d8f49994) SHA1(0631457264ff7f8d5fb1edc2c0211992a67c73e6) )
+	ROM_LOAD( "bh08",   0x4000, 0x2000, CRC(d6439e2f) SHA1(84a6e574f76313ce065d8765f21bdda8fe5a9a7b) )
+	ROM_LOAD( "bh07",   0x8000, 0x2000, CRC(f94668d2) SHA1(b5c3a54cf80097ac447a8140bd5877a66712e240) )
+	ROM_LOAD( "bh06",   0xc000, 0x2000, CRC(ab6c7cf1) SHA1(3625f2e00a333552036bff99af25edeac5915d78) )
+ROM_END
+
 ROM_START( usvsthem )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "usvs.rm4",     0x6000, 0x2000, CRC(0d7a4072) SHA1(84a7eec31037243185ab40ab269be0f83946ebd5) )
@@ -2272,7 +2290,7 @@ static DRIVER_INIT( stooges )
 static DRIVER_INIT( laserdsc )
 {
 	gottlieb_sound_init();
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x05803, 0x05803, 0, 0, usvsthem_video_outputs_w);       /* OUT1 */
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x05803, 0x05803, 0, 0, usvsthem_video_outputs_w);      /* OUT1 */
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x05805, 0x05805, 0, 0, gottlieb_laserdisc_command_w);	/* command for the player */
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x05806, 0x05806, 0, 0, gottlieb_laserdisc_mpx_w);
 }
@@ -2296,6 +2314,7 @@ GAME( 1983, sqbert,   0,        qbert,    qbert,    0,        ROT270, "Mylstar",
 GAME( 1983, mach3,    0,        gottlieb2,mach3,    laserdsc, ROT0,   "Mylstar", "M.A.C.H. 3", GAME_NOT_WORKING )
 GAME( 1983, qbertqub, 0,        qbert,    qbertqub, 0,        ROT270, "Mylstar", "Q*bert's Qubes", 0 )
 GAME( 1983, screwloo, 0,        gottlieb2,screwloo, gottlieb, ROT0,   "Mylstar", "Screw Loose (prototype)", 0 )
+GAME( 1984, cobram3,  0,        gottlieb2,mach3,    laserdsc, ROT0,   "Data East","Cobra Command", GAME_NOT_WORKING )
 GAME( 1984, curvebal, 0,        gottlieb, curvebal, 0,        ROT270, "Mylstar", "Curve Ball", 0 )
 GAME( 1984, usvsthem, 0,        gottlieb2,usvsthem, laserdsc, ROT0,   "Mylstar", "Us vs. Them", GAME_NOT_WORKING )
 GAME( 1984, 3stooges, 0,        stooges,  3stooges, stooges,  ROT0,   "Mylstar", "The Three Stooges In Brides Is Brides", 0 )

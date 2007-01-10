@@ -1551,8 +1551,11 @@ static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, L
 						if (info->process_string)
 						{
 							char *utf8_buffer = utf8_from_tstring(buffer);
-							(*info->process_string)(info, utf8_buffer);
-							free(utf8_buffer);
+							if (utf8_buffer != NULL)
+							{
+								(*info->process_string)(info, utf8_buffer);
+								free(utf8_buffer);
+							}
 						}
 						break;
 					}
@@ -1603,6 +1606,8 @@ static void generic_create_window(int type)
 	// create the window
 	t_name = tstring_from_utf8(Machine->gamedrv->name);
 	t_description = tstring_from_utf8(Machine->gamedrv->description);
+	if (t_name == NULL || t_description == NULL)
+		return;
 	_sntprintf(title, ARRAY_LENGTH(title), TEXT("Debug: %s [%s]"), t_description, t_name);
 	free(t_name);
 	free(t_description);
@@ -1671,6 +1676,8 @@ static void log_create_window(void)
 	// create the window
 	t_name = tstring_from_utf8(Machine->gamedrv->name);
 	t_description = tstring_from_utf8(Machine->gamedrv->description);
+	if (t_name == NULL || t_description == NULL)
+		return;
 	_sntprintf(title, ARRAY_LENGTH(title), TEXT("Errorlog: %s [%s]"), t_description, t_name);
 	free(t_name);
 	free(t_description);
@@ -1812,8 +1819,11 @@ static void memory_update_selection(debugwin_info *info, memorycombo_item *ci)
 	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_RAW_LITTLE_ENDIAN, ci->little_endian);
 	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK, ci->prefsize);
 	t_name = tstring_from_utf8(ci->name);
-	SetWindowText(info->wnd, t_name);
-	free(t_name);
+	if (t_name != NULL)
+	{
+		SetWindowText(info->wnd, t_name);
+		free(t_name);
+	}
 }
 
 
@@ -2486,8 +2496,11 @@ static void disasm_update_caption(HWND wnd)
 	// then update the caption
 	sprintf(title, "Disassembly: %s (%d)", cpunum_name(cpunum), cpunum);
 	t_title = tstring_from_utf8(title);
-	SetWindowText(wnd, t_title);
-	free(t_title);
+	if (t_title != NULL)
+	{
+		SetWindowText(wnd, t_title);
+		free(t_title);
+	}
 }
 
 
@@ -2714,12 +2727,15 @@ static void console_set_cpunum(int cpunum)
 	// then update the caption
 	t_gamedrv_name = tstring_from_utf8(Machine->gamedrv->name);
 	t_cpu_name =  tstring_from_utf8(activecpu_name());
-	_sntprintf(title, ARRAY_LENGTH(title), TEXT("Debug: %s - CPU %d (%s)"), t_gamedrv_name, cpu_getactivecpu(), t_cpu_name);
-	free(t_gamedrv_name);
-	free(t_cpu_name);
-	GetWindowText(main_console->wnd, curtitle, sizeof(curtitle) / sizeof(curtitle[0]));
-	if (_tcscmp(title, curtitle))
-		SetWindowText(main_console->wnd, title);
+	if (t_gamedrv_name != NULL && t_cpu_name != NULL)
+	{
+		_sntprintf(title, ARRAY_LENGTH(title), TEXT("Debug: %s - CPU %d (%s)"), t_gamedrv_name, cpu_getactivecpu(), t_cpu_name);
+		free(t_gamedrv_name);
+		free(t_cpu_name);
+		GetWindowText(main_console->wnd, curtitle, sizeof(curtitle) / sizeof(curtitle[0]));
+		if (_tcscmp(title, curtitle))
+			SetWindowText(main_console->wnd, title);
+	}
 }
 
 

@@ -15,14 +15,14 @@
 
 
 //============================================================
-//  PROTOTYPES
+//  FUNCTION PROTOTYPES
 //============================================================
 
 CHAR *astring_from_utf8(const char *s) ATTR_MALLOC;
 char *utf8_from_astring(const CHAR *s) ATTR_MALLOC;
 
-WCHAR *wstring_from_utf8(const char *s);
-char *utf8_from_wstring(const WCHAR *s);
+WCHAR *wstring_from_utf8(const char *s) ATTR_MALLOC;
+char *utf8_from_wstring(const WCHAR *s) ATTR_MALLOC;
 
 #ifdef UNICODE
 #define tstring_from_utf8	wstring_from_utf8

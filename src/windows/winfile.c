@@ -1,6 +1,6 @@
 //============================================================
 //
-//  fileio.c - Win32 file access functions
+//  winfile.c - Win32 OSD core file access functions
 //
 //  Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
 //  Visit http://mamedev.org for licensing and usage restrictions.
@@ -10,16 +10,11 @@
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <ctype.h>
+#include <winioctl.h>
 #include <tchar.h>
 
-// MAME headers
-#include "osdepend.h"
+#include "osdcore.h"
 #include "strconv.h"
-
-
-static DWORD create_path_recursive(TCHAR *path);
-
 
 
 //============================================================
@@ -33,44 +28,14 @@ struct _osd_file
 };
 
 
+
 //============================================================
-//  error_to_mame_file_error
+//  FUNCTION PROTOTYPES
 //============================================================
 
-static mame_file_error error_to_mame_file_error(DWORD error)
-{
-	mame_file_error filerr;
+static DWORD create_path_recursive(TCHAR *path);
+static mame_file_error error_to_mame_file_error(DWORD error);
 
-	// convert a Windows error to a mame_file_error
-	switch (error)
-	{
-		case ERROR_SUCCESS:
-			filerr = FILERR_NONE;
-			break;
-
-		case ERROR_OUTOFMEMORY:
-			filerr = FILERR_OUT_OF_MEMORY;
-			break;
-
-		case ERROR_FILE_NOT_FOUND:
-		case ERROR_PATH_NOT_FOUND:
-			filerr = FILERR_NOT_FOUND;
-			break;
-
-		case ERROR_ACCESS_DENIED:
-			filerr = FILERR_ACCESS_DENIED;
-			break;
-
-		case ERROR_SHARING_VIOLATION:
-			filerr = FILERR_ALREADY_OPEN;
-			break;
-
-		default:
-			filerr = FILERR_FAILURE;
-			break;
-	}
-	return filerr;
-}
 
 
 //============================================================
@@ -80,6 +45,7 @@ static mame_file_error error_to_mame_file_error(DWORD error)
 mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 *filesize)
 {
 	DWORD disposition, access, sharemode;
+	mame_file_error filerr = FILERR_NONE;
 	const TCHAR *src;
 	DWORD upper;
 	TCHAR *t_path;
@@ -87,9 +53,19 @@ mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UI
 
 	// convert path to TCHAR
 	t_path = tstring_from_utf8(path);
+	if (t_path == NULL)
+	{
+		filerr = FILERR_OUT_OF_MEMORY;
+		goto error;
+	}
 
 	// allocate a file object, plus space for the converted filename
-	*file = malloc_or_die(sizeof(**file) + sizeof(TCHAR) * _tcslen(t_path));
+	*file = malloc(sizeof(**file) + sizeof(TCHAR) * _tcslen(t_path));
+	if (*file == NULL)
+	{
+		filerr = FILERR_OUT_OF_MEMORY;
+		goto error;
+	}
 
 	// convert the path into something Windows compatible
 	dst = (*file)->filename;
@@ -111,7 +87,10 @@ mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UI
 		sharemode = FILE_SHARE_READ;
 	}
 	else
-		fatalerror("Invalid openflags in osd_open!");
+	{
+		filerr = FILERR_INVALID_ACCESS;
+		goto error;
+	}
 
 	// attempt to open the file
 	(*file)->handle = CreateFile((*file)->filename, access, sharemode, NULL, disposition, 0, NULL);
@@ -120,7 +99,7 @@ mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UI
 		DWORD error = GetLastError();
 
 		// create the path if necessary
-		if (error == ERROR_PATH_NOT_FOUND && (openflags & OPEN_FLAG_CREATE))
+		if (error == ERROR_PATH_NOT_FOUND && (openflags & OPEN_FLAG_CREATE) && (openflags & OPEN_FLAG_CREATE_PATHS))
 		{
 			TCHAR *pathsep = _tcsrchr((*file)->filename, '\\');
 			if (pathsep != NULL)
@@ -139,18 +118,24 @@ mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UI
 		// if we still failed, clean up and free
 		if ((*file)->handle == INVALID_HANDLE_VALUE)
 		{
-			free(*file);
-			*file = NULL;
-			free(t_path);
-			return error_to_mame_file_error(error);
+			filerr = error_to_mame_file_error(error);
+			goto error;
 		}
 	}
 
 	// get the file size
 	*filesize = GetFileSize((*file)->handle, &upper);
 	*filesize |= (UINT64)upper << 32;
+
+error:
+	// cleanup
+	if (filerr != FILERR_NONE && *file != NULL)
+	{
+		free(*file);
+		*file = NULL;
+	}
 	free(t_path);
-	return FILERR_NONE;
+	return filerr;
 }
 
 
@@ -222,6 +207,55 @@ mame_file_error osd_close(osd_file *file)
 
 
 //============================================================
+//  osd_get_physical_drive_geometry
+//============================================================
+
+int osd_get_physical_drive_geometry(const char *filename, UINT32 *cylinders, UINT32 *heads, UINT32 *sectors, UINT32 *bps)
+{
+	DISK_GEOMETRY dg;
+	DWORD bytesRead;
+	TCHAR *t_filename;
+	HANDLE file;
+	int result;
+
+	// if it doesn't smell like a physical drive, just return FALSE
+	if (_strnicmp(filename, "\\\\.\\physicaldrive", 17) != 0)
+		return FALSE;
+
+	// do a create file on the drive
+	t_filename = tstring_from_utf8(filename);
+	if (t_filename == NULL)
+		return FALSE;
+	file = CreateFile(t_filename, GENERIC_READ, FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING, NULL);
+	free(t_filename);
+	if (file == INVALID_HANDLE_VALUE)
+		return FALSE;
+
+	// device I/O control should return the geometry
+	result = DeviceIoControl(file, IOCTL_DISK_GET_DRIVE_GEOMETRY, NULL, 0, &dg, sizeof(dg), &bytesRead, NULL);
+	CloseHandle(file);
+
+	// if that failed, return false
+	if (!result)
+		return FALSE;
+
+	// store the results
+  	*cylinders = (UINT32)dg.Cylinders.QuadPart;
+  	*heads = dg.TracksPerCylinder;
+  	*sectors = dg.SectorsPerTrack;
+  	*bps = dg.BytesPerSector;
+
+  	// normalize
+  	while (*heads > 16 && !(*heads & 1))
+  	{
+  		*heads /= 2;
+  		*cylinders *= 2;
+  	}
+  	return TRUE;
+}
+
+
+//============================================================
 //  create_path_recursive
 //============================================================
 
@@ -246,4 +280,44 @@ static DWORD create_path_recursive(TCHAR *path)
 	if (CreateDirectory(path, NULL) == 0)
 		return GetLastError();
 	return NO_ERROR;
+}
+
+
+//============================================================
+//  error_to_mame_file_error
+//============================================================
+
+static mame_file_error error_to_mame_file_error(DWORD error)
+{
+	mame_file_error filerr;
+
+	// convert a Windows error to a mame_file_error
+	switch (error)
+	{
+		case ERROR_SUCCESS:
+			filerr = FILERR_NONE;
+			break;
+
+		case ERROR_OUTOFMEMORY:
+			filerr = FILERR_OUT_OF_MEMORY;
+			break;
+
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+			filerr = FILERR_NOT_FOUND;
+			break;
+
+		case ERROR_ACCESS_DENIED:
+			filerr = FILERR_ACCESS_DENIED;
+			break;
+
+		case ERROR_SHARING_VIOLATION:
+			filerr = FILERR_ALREADY_OPEN;
+			break;
+
+		default:
+			filerr = FILERR_FAILURE;
+			break;
+	}
+	return filerr;
 }

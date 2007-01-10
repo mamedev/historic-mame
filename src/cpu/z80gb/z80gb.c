@@ -41,6 +41,7 @@ typedef struct {
 	UINT16 PC;
 	int enable;
 	int irq_state;
+	int ei_delay;
 	int (*irq_callback)(int irqline);
 	int leavingHALT;
 	int doHALTbug;
@@ -165,13 +166,18 @@ static void z80gb_reset(void)
 	CheckInterrupts = 0;
 	Regs.w.leavingHALT = 0;
 	Regs.w.doHALTbug = 0;
+	Regs.w.ei_delay = 0;
 	gb_speed_change_pending = 0;
 	gb_speed = 1;
 }
 
 INLINE void z80gb_ProcessInterrupts (void)
 {
-
+	/* Interrupts should be taken after the first instruction after an EI instruction */
+	if (Regs.w.ei_delay) {
+		Regs.w.ei_delay = 0;
+		return;
+	}
 	if (CheckInterrupts && (Regs.w.enable & IME))
 	{
 		UINT8 irq;
@@ -204,7 +210,7 @@ INLINE void z80gb_ProcessInterrupts (void)
 					}
 					Regs.w.enable &= ~IME;
 					IFLAGS &= ~(1 << irqline);
-					ICycles += 19; /* RST cycles (16) + irq latency (2/3/4??) */
+					ICycles += 12; /* Taking an IRQ seems to take about 12 cycles */
 					Regs.w.SP -= 2;
 					mem_WriteWord (Regs.w.SP, Regs.w.PC);
 					Regs.w.PC = 0x40 + irqline * 8;

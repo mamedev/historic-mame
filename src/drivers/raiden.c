@@ -344,7 +344,7 @@ static MACHINE_DRIVER_START( raidena )
 	MDRV_VIDEO_UPDATE(raiden)
 
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM3812_RAIDEN_INTERFACE(14318180/4,8000,1)
+	SEIBU_SOUND_SYSTEM_YM3812_RAIDEN_INTERFACE(14318180/4,1320000,1)
 MACHINE_DRIVER_END
 
 /***************************************************************************/
