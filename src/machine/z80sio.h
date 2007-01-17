@@ -1,6 +1,6 @@
 /***************************************************************************
 
-    Z80 SIO implementation
+    Z80 SIO (Z8440) implementation
 
     Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
@@ -19,6 +19,7 @@
     TYPE DEFINITIONS
 ***************************************************************************/
 
+typedef struct _z80sio_interface z80sio_interface;
 struct _z80sio_interface
 {
 	int baseclock;
@@ -27,8 +28,8 @@ struct _z80sio_interface
 	write8_handler rts_changed_cb;
 	write8_handler break_changed_cb;
 	write8_handler transmit_cb;
+	int (*receive_poll_cb)(int which);
 };
-typedef struct _z80sio_interface z80sio_interface;
 
 
 

@@ -476,28 +476,6 @@ VIDEO_UPDATE( gaelco2 )
 	return 0;
 }
 
-VIDEO_UPDATE( bang )
-{
-    /* standard rendering on this hardware */
-    video_update_gaelco2(machine, screen, bitmap, cliprect);
-
-    /* draw crosshairs */
-    {
-        int posx, posy;
-
-        /* 1P Gun */
-        posx = readinputport(3)*320/256;
-        posy = readinputport(5)*240/256;
-        draw_crosshair(bitmap, posx, posy + 0x0c, cliprect, 0);
-
-        /* 2P Gun */
-        posx = readinputport(4)*320/256;
-        posy = readinputport(6)*240/256;
-        draw_crosshair(bitmap, posx, posy + 0x0c, cliprect, 1);
-    }
-	return 0;
-}
-
 VIDEO_UPDATE( gaelco2_dual )
 {
 	int i;

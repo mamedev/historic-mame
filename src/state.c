@@ -300,21 +300,7 @@ void state_save_register_memory(const char *module, UINT32 instance, const char 
 
 void state_save_register_bitmap(const char *module, UINT32 instance, const char *name, mame_bitmap *val)
 {
-	switch (val->depth)
-	{
-		case 8:
-			state_save_register_memory(module, instance, name, val->base, 1, val->rowpixels * val->height);
-			break;
-
-		case 15:
-		case 16:
-			state_save_register_memory(module, instance, name, val->base, 2, val->rowpixels * val->height);
-			break;
-
-		case 32:
-			state_save_register_memory(module, instance, name, val->base, 4, val->rowpixels * val->height);
-			break;
-	}
+	state_save_register_memory(module, instance, name, val->base, val->bpp / 8, val->rowpixels * val->height);
 }
 
 

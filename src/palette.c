@@ -23,14 +23,6 @@
 #define MAX_PEN_BRIGHTNESS		(4 << PEN_BRIGHTNESS_BITS)
 #define MAX_SHADOW_PRESETS 		4
 
-enum
-{
-	PALETTIZED_16BIT = 0,
-	DIRECT_15BIT = 1,
-	DIRECT_32BIT = 2,
-	DIRECT_RGB = DIRECT_15BIT | DIRECT_32BIT
-};
-
 
 
 /***************************************************************************
@@ -56,7 +48,6 @@ struct _palette_private
 
 	UINT16 shadow_factor, highlight_factor;
 
-	UINT8 colormode;
 	pen_t total_colors;
 	pen_t total_colors_with_ui;
 
@@ -234,9 +225,10 @@ INLINE void notify_pen_changed(palette_private *palette, int pen, rgb_t newval)
 void palette_init(running_machine *machine)
 {
 	palette_private *palette = auto_malloc(sizeof(*palette));
-	machine->palette_data = palette;
+	int format = machine->screen[0].format;
 
 	/* request cleanup */
+	machine->palette_data = palette;
 	add_exit_callback(machine, palette_exit);
 
 	/* reset all our data */
@@ -245,12 +237,17 @@ void palette_init(running_machine *machine)
 	palette->highlight_factor = (int)(PALETTE_DEFAULT_HIGHLIGHT_FACTOR * (double)(1 << PEN_BRIGHTNESS_BITS));
 
 	/* determine the color mode */
-	if (machine->color_depth == 15)
-		palette->colormode = DIRECT_15BIT;
-	else if (machine->color_depth == 32)
-		palette->colormode = DIRECT_32BIT;
-	else
-		palette->colormode = PALETTIZED_16BIT;
+	switch (format)
+	{
+		case BITMAP_FORMAT_INDEXED16:
+		case BITMAP_FORMAT_RGB15:
+		case BITMAP_FORMAT_RGB32:
+			break;
+
+		default:
+			fatalerror("Unsupported screen bitmap format!");
+			break;
+	}
 
 	/* ensure that RGB direct video modes don't have a colortable */
 //  assert_always(!(machine->drv->video_attributes & VIDEO_RGB_DIRECT) || machine->drv->color_table_len == 0,
@@ -258,9 +255,9 @@ void palette_init(running_machine *machine)
 
 	/* compute the total colors, including shadows and highlights */
 	palette->total_colors = machine->drv->total_colors;
-	if ((machine->drv->video_attributes & VIDEO_HAS_SHADOWS) && !(palette->colormode & DIRECT_RGB))
+	if ((machine->drv->video_attributes & VIDEO_HAS_SHADOWS) && format == BITMAP_FORMAT_INDEXED16)
 		palette->total_colors += machine->drv->total_colors;
-	if ((machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS) && !(palette->colormode & DIRECT_RGB))
+	if ((machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS) && format == BITMAP_FORMAT_INDEXED16)
 		palette->total_colors += machine->drv->total_colors;
 	palette->total_colors_with_ui = palette->total_colors;
 
@@ -302,6 +299,7 @@ static void palette_exit(running_machine *machine)
 
 static void palette_alloc(running_machine *machine, palette_private *palette)
 {
+	int format = machine->screen[0].format;
 	int max_total_colors = palette->total_colors + 2;
 	int i;
 
@@ -316,7 +314,7 @@ static void palette_alloc(running_machine *machine, palette_private *palette)
 		palette->adjusted_color[i] = palette->raw_color[i];
 
 	/* for 16bpp, notify that all pens have changed */
-	if (palette->colormode == PALETTIZED_16BIT)
+	if (format == BITMAP_FORMAT_INDEXED16)
 		for (i = 0; i < max_total_colors; i++)
 			notify_pen_changed(palette, i, palette->adjusted_color[i]);
 
@@ -364,7 +362,7 @@ static void palette_alloc(running_machine *machine, palette_private *palette)
 		pen_t *table = auto_malloc(65536 * sizeof(*table));
 
 		/* palettized mode gets a single 64k table in slots 0 and 2 */
-		if (!(palette->colormode & DIRECT_RGB))
+		if (format == BITMAP_FORMAT_INDEXED16)
 		{
 			palette->shadow_table_base[0] = palette->shadow_table_base[2] = table;
 			for (i = 0; i < 65536; i++)
@@ -387,7 +385,7 @@ static void palette_alloc(running_machine *machine, palette_private *palette)
 		pen_t *table = auto_malloc(65536 * sizeof(*table));
 
 		/* palettized mode gets a single 64k table in slots 1 and 3 */
-		if (!(palette->colormode & DIRECT_RGB))
+		if (format == BITMAP_FORMAT_INDEXED16)
 		{
 			palette->shadow_table_base[1] = palette->shadow_table_base[3] = table;
 			for (i = 0; i < 65536; i++)
@@ -427,10 +425,10 @@ void palette_config(running_machine *machine)
 		(*machine->drv->init_palette)(machine, machine->game_colortable, memory_region(REGION_PROMS));
 
 	/* switch off the color mode */
-	switch (palette->colormode)
+	switch (machine->screen[0].format)
 	{
 		/* 16-bit paletteized case */
-		case PALETTIZED_16BIT:
+		case BITMAP_FORMAT_INDEXED16:
 		{
 			/* refresh the palette to support shadows in static palette games */
 			for (i = 0; i < machine->drv->total_colors; i++)
@@ -454,7 +452,7 @@ void palette_config(running_machine *machine)
 		}
 
 		/* 15-bit direct case */
-		case DIRECT_15BIT:
+		case BITMAP_FORMAT_RGB15:
 		{
 			/* remap the game palette into direct RGB pens */
 			for (i = 0; i < palette->total_colors; i++)
@@ -466,7 +464,8 @@ void palette_config(running_machine *machine)
 			break;
 		}
 
-		case DIRECT_32BIT:
+		/* 32-bit direct case */
+		case BITMAP_FORMAT_RGB32:
 		{
 			/* remap the game palette into direct RGB pens */
 			for (i = 0; i < palette->total_colors; i++)
@@ -477,6 +476,10 @@ void palette_config(running_machine *machine)
 			palette->white_pen = MAKE_RGB(0xff,0xff,0xff);
 			break;
 		}
+
+		default:
+			fatalerror("Unhandled bitmap format!");
+			break;
 	}
 
 	/* now compute the remapped_colortable */
@@ -588,13 +591,14 @@ rgb_t *palette_get_adjusted_colors(running_machine *machine)
 
 static void configure_rgb_shadows(running_machine *machine, int mode, float factor)
 {
+	int format = machine->screen[0].format;
 	palette_private *palette = machine->palette_data;
 	pen_t *table = palette->shadow_table_base[mode];
 	int ifactor = (int)(factor * 256.0f);
 	int i;
 
 	/* only applies to RGB direct modes */
-	assert((palette->colormode & DIRECT_RGB) != 0);
+	assert(format != BITMAP_FORMAT_INDEXED16);
 	assert(table != NULL);
 
 	#if VERBOSE
@@ -616,7 +620,7 @@ static void configure_rgb_shadows(running_machine *machine, int mode, float fact
 		final = MAKE_RGB(r, g, b);
 
 		/* store either 16 or 32 bit */
-		if (palette->colormode == DIRECT_32BIT)
+		if (format == BITMAP_FORMAT_RGB32)
 			table[i] = final;
 		else
 			table[i] = rgb_to_direct15(final);
@@ -634,12 +638,13 @@ void palette_set_shadow_mode(running_machine *machine, int mode)
 
 void palette_set_shadow_dRGB32(running_machine *machine, int mode, int dr, int dg, int db, int noclip)
 {
+	int format = machine->screen[0].format;
 	palette_private *palette = machine->palette_data;
 	pen_t *table = palette->shadow_table_base[mode];
 	int i;
 
 	/* only applies to RGB direct modes */
-	assert((palette->colormode & DIRECT_RGB) != 0);
+	assert(format != BITMAP_FORMAT_INDEXED16);
 	assert(table != NULL);
 
 	/* clamp the deltas (why?) */
@@ -677,7 +682,7 @@ void palette_set_shadow_dRGB32(running_machine *machine, int mode, int dr, int d
 		final = MAKE_RGB(r, g, b);
 
 		/* store either 16 or 32 bit */
-		if (palette->colormode == DIRECT_32BIT)
+		if (format == BITMAP_FORMAT_RGB32)
 			table[i] = final;
 		else
 			table[i] = rgb_to_direct15(final);
@@ -694,11 +699,11 @@ void palette_set_shadow_dRGB32(running_machine *machine, int mode, int dr, int d
 
 int palette_get_total_colors_with_ui(running_machine *machine)
 {
-	palette_private *palette = machine->palette_data;
+	int format = machine->screen[0].format;
 	int result = machine->drv->total_colors;
-	if (machine->drv->video_attributes & VIDEO_HAS_SHADOWS && !(palette->colormode & DIRECT_RGB))
+	if (machine->drv->video_attributes & VIDEO_HAS_SHADOWS && format == BITMAP_FORMAT_INDEXED16)
 		result += machine->drv->total_colors;
-	if (machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS && !(palette->colormode & DIRECT_RGB))
+	if (machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS && format == BITMAP_FORMAT_INDEXED16)
 		result += machine->drv->total_colors;
 	if (result <= 65534)
 		result += 2;
@@ -731,20 +736,25 @@ static void internal_modify_single_pen(running_machine *machine, palette_private
 		palette->adjusted_color[pen] = adjusted_color;
 
 		/* update the pen value */
-		switch (palette->colormode)
+		switch (machine->screen[0].format)
 		{
 			/* 16-bit palettized */
-			case PALETTIZED_16BIT:
+			case BITMAP_FORMAT_INDEXED16:
 				notify_pen_changed(palette, pen, adjusted_color);
 				break;
 
 			/* 15/32-bit direct: update the machine->pens array */
-			case DIRECT_15BIT:
+			case BITMAP_FORMAT_RGB15:
 				machine->pens[pen] = rgb_to_direct15(adjusted_color);
 				break;
 
-			case DIRECT_32BIT:
+			case BITMAP_FORMAT_RGB32:
 				machine->pens[pen] = adjusted_color;
+				break;
+
+			/* other formats unexpected */
+			default:
+				fatalerror("Unhandled bitmap format!");
 				break;
 		}
 	}

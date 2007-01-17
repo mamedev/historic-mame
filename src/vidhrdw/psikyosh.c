@@ -406,7 +406,7 @@ void psikyosh_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 	profiler_mark(PROFILER_DRAWGFX);
 
 	assert(transparency == TRANSPARENCY_PEN || transparency == TRANSPARENCY_ALPHA || transparency == TRANSPARENCY_ALPHARANGE);
-	assert(dest_bmp->depth == 32);
+	assert(dest_bmp->bpp == 32);
 
 	/* KW 991012 -- Added code to force clip to bitmap boundary */
 	if(clip)
@@ -1054,11 +1054,11 @@ static void psikyosh_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect
 VIDEO_START( psikyosh )
 {
 	zoom_bitmap = 0, z_bitmap = 0;
-	if ((zoom_bitmap = auto_bitmap_alloc_depth(16*16, 16*16,8)) == 0) /* hw can do 16-tile wide sprites */
+	if ((zoom_bitmap = auto_bitmap_alloc_format(16*16, 16*16, BITMAP_FORMAT_INDEXED8)) == 0) /* hw can do 16-tile wide sprites */
 		return 1;
 
 	/* Need 16-bit z-buffer */
-	if ((z_bitmap = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16)) == 0)
+	if ((z_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16)) == 0)
 		return 1;
 
 	Machine->gfx[1]->color_granularity=16; /* 256 colour sprites with palette selectable on 16 colour boundaries */
@@ -1086,11 +1086,7 @@ static void psikyosh_prelineblend( mame_bitmap *bitmap, const rectangle *cliprec
 	UINT32 *linefill = psikyosh_bgram; /* Per row */
 	int x,y;
 
-	if (bitmap->depth != 32)
-	{
-		popmessage("psikyosh_prelineblend needs 32-bit depth");
-		return;
-	}
+	assert(bitmap->bpp == 32);
 
 	profiler_mark(PROFILER_USER1);
 	for (y = cliprect->min_y; y <= cliprect->max_y; y += 1) {
@@ -1111,7 +1107,7 @@ static void psikyosh_postlineblend( mame_bitmap *bitmap, const rectangle *clipre
 	UINT32 *lineblend = psikyosh_bgram+0x400/4; /* Per row */
 	int x,y;
 
-	assert(bitmap->depth == 32);
+	assert(bitmap->bpp == 32);
 
 	profiler_mark(PROFILER_USER2);
 	for (y = cliprect->min_y; y <= cliprect->max_y; y += 1) {

@@ -336,16 +336,17 @@ static MACHINE_DRIVER_START( konamigv )
 	MDRV_CPU_PROGRAM_MAP( konamigv_map, 0 )
 	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
 
-	MDRV_FRAMES_PER_SECOND( 60 )
-	MDRV_VBLANK_DURATION( 0 )
+	MDRV_SCREEN_REFRESH_RATE( 60 )
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC( 0 ))
 
 	MDRV_MACHINE_RESET( konamigv )
 	MDRV_NVRAM_HANDLER(konamigv_93C46)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE( 1024, 512 )
-	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
+	MDRV_SCREEN_VISIBLE_AREA( 0, 639, 0, 479 )
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
@@ -531,10 +532,10 @@ static READ32_HANDLER( unknown_r )
 
 static DRIVER_INIT( simpbowl )
 {
-	intelflash_init( 0, FLASH_INTEL_28F016S5, NULL );
-	intelflash_init( 1, FLASH_INTEL_28F016S5, NULL );
-	intelflash_init( 2, FLASH_INTEL_28F016S5, NULL );
-	intelflash_init( 3, FLASH_INTEL_28F016S5, NULL );
+	intelflash_init( 0, FLASH_FUJITSU_29F016A, NULL );
+	intelflash_init( 1, FLASH_FUJITSU_29F016A, NULL );
+	intelflash_init( 2, FLASH_FUJITSU_29F016A, NULL );
+	intelflash_init( 3, FLASH_FUJITSU_29F016A, NULL );
 
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, flash_r );
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, flash_w );
@@ -840,15 +841,6 @@ static int kdeadeye_crosshair_y( int port )
 	return Machine->screen[0].visarea.min_y + y;
 }
 
-static VIDEO_UPDATE( kdeadeye )
-{
-	video_update_psx( machine, screen, bitmap, cliprect );
-
-	draw_crosshair( bitmap, kdeadeye_crosshair_x( 3 ), kdeadeye_crosshair_y( 4 ), cliprect, 0 );
-	draw_crosshair( bitmap, kdeadeye_crosshair_x( 5 ), kdeadeye_crosshair_y( 6 ), cliprect, 1 );
-	return 0;
-}
-
 static DRIVER_INIT( kdeadeye )
 {
 	intelflash_init( 0, FLASH_SHARP_LH28F400, NULL );
@@ -867,7 +859,6 @@ static DRIVER_INIT( kdeadeye )
 
 static MACHINE_DRIVER_START( kdeadeye )
 	MDRV_IMPORT_FROM( konamigv )
-	MDRV_VIDEO_UPDATE( kdeadeye )
 	MDRV_NVRAM_HANDLER( btchamp )
 MACHINE_DRIVER_END
 

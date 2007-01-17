@@ -268,7 +268,7 @@ static void lordgun_draw_sprites(mame_bitmap *bitmap)
 VIDEO_UPDATE( lordgun )
 {
 	int layers_ctrl = -1;
-	int i,y;
+	int y;
 
 #ifdef MAME_DEBUG
 if (code_pressed(KEYCODE_Z))
@@ -311,10 +311,5 @@ if (code_pressed(KEYCODE_Z))
 	if (layers_ctrl & 16)	lordgun_draw_sprites(bitmap);
 	if (layers_ctrl & 8)	tilemap_draw(bitmap, cliprect, tilemap_3, 0, 0);
 
-	for (i = 0; i < 2; i++)
-	{
-		lorddgun_calc_gun_scr(i);
-		draw_crosshair(bitmap, lordgun_gun[i].scr_x,lordgun_gun[i].scr_y, cliprect,i);
-	}
 	return 0;
 }

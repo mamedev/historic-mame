@@ -55,10 +55,12 @@ void *_malloc_or_die(size_t size, const char *file, int line) ATTR_MALLOC;
 void *_auto_malloc(size_t size, const char *file, int line) ATTR_MALLOC;
 
 /* allocate memory and duplicate a string that will be freed at the next end_resource_tracking */
-char *auto_strdup(const char *str) ATTR_MALLOC;
+#define auto_strdup(s)		_auto_strdup(s, __FILE__, __LINE__)
+char *_auto_strdup(const char *str, const char *file, int line) ATTR_MALLOC;
 
 /* auto_strdup() variant that tolerates NULL */
-char *auto_strdup_allow_null(const char *str) ATTR_MALLOC;
+#define auto_strdup_allow_null(s)	_auto_strdup_allow_null(s, __FILE__, __LINE__)
+char *_auto_strdup_allow_null(const char *str, const char *file, int line) ATTR_MALLOC;
 
 
 

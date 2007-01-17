@@ -116,12 +116,12 @@
 */
 
 /* The default is to have no VBLANK timing -- this is historical, and a bad idea */
-#define DEFAULT_60HZ_VBLANK_DURATION		0
-#define DEFAULT_30HZ_VBLANK_DURATION		0
+#define DEFAULT_60HZ_VBLANK_DURATION		TIME_IN_USEC(0)
+#define DEFAULT_30HZ_VBLANK_DURATION		TIME_IN_USEC(0)
 
 /* If you use IPT_VBLANK, you need a duration different from 0 */
-#define DEFAULT_REAL_60HZ_VBLANK_DURATION	2500
-#define DEFAULT_REAL_30HZ_VBLANK_DURATION	2500
+#define DEFAULT_REAL_60HZ_VBLANK_DURATION	TIME_IN_USEC(2500)
+#define DEFAULT_REAL_30HZ_VBLANK_DURATION	TIME_IN_USEC(2500)
 
 
 
@@ -134,12 +134,6 @@
 /* should VIDEO_UPDATE by called at the start of VBLANK or at the end? */
 #define	VIDEO_UPDATE_BEFORE_VBLANK		0x0000
 #define	VIDEO_UPDATE_AFTER_VBLANK		0x0002
-
-/* set this to use a direct RGB bitmap rather than a palettized bitmap */
-#define VIDEO_RGB_DIRECT	 			0x0004
-
-/* set this if the color resolution of *any* component is 6 bits or more */
-#define VIDEO_NEEDS_6BITS_PER_GUN		0x0008
 
 /* automatically extend the palette creating a darker copy for shadows */
 #define VIDEO_HAS_SHADOWS				0x0010
@@ -417,6 +411,9 @@ struct _game_driver
 #define MDRV_SCREEN_MODIFY(tag)											\
 	screen = driver_find_screen(machine, tag);							\
 
+#define MDRV_SCREEN_FORMAT(_format)										\
+	screen->defstate.format = (_format);								\
+
 #define MDRV_SCREEN_RAW_PARAMS(pixclock, htotal, hbend, hbstart, vtotal, vbend, vbstart) \
 	screen->defstate.refresh = (float)(pixclock) / (float)(htotal) / (float)(vtotal); \
 	screen->defstate.vblank = ((float)((vtotal) - ((vbstart) - (vbend))) / (float)(vtotal) * TIME_IN_HZ(screen->defstate.refresh)); \
@@ -433,7 +430,7 @@ struct _game_driver
 #define MDRV_SCREEN_VBLANK_TIME(time)									\
 	screen->defstate.vblank = (time);									\
 
-#define MDRV_SCREEN_MAXSIZE(_width, _height)							\
+#define MDRV_SCREEN_SIZE(_width, _height)								\
 	screen->defstate.width = (_width);									\
 	screen->defstate.height = (_height);								\
 
@@ -442,20 +439,6 @@ struct _game_driver
 	screen->defstate.visarea.max_x = (maxx);							\
 	screen->defstate.visarea.min_y = (miny);							\
 	screen->defstate.visarea.max_y = (maxy);							\
-
-
-/* video backwards compatibility */
-#define MDRV_FRAMES_PER_SECOND(rate)									\
-	MDRV_SCREEN_REFRESH_RATE(rate)										\
-
-#define MDRV_VBLANK_DURATION(duration)									\
-	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(duration))						\
-
-#define MDRV_SCREEN_SIZE(width, height)									\
-	MDRV_SCREEN_MAXSIZE(width, height)									\
-
-#define MDRV_VISIBLE_AREA(minx, maxx, miny, maxy)						\
-	MDRV_SCREEN_VISIBLE_AREA(minx, maxx, miny, maxy)					\
 
 
 /* add/remove speakers */

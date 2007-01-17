@@ -919,6 +919,30 @@ static READ16_HANDLER(irq_r)
 		}
 	}
 
+	if (!strcmp(Machine->gamedrv->name,"ggroundj"))
+	{
+
+		if (activecpu_get_pc()==0x0084ac)
+		{
+			ggground_kludge = 1;
+			return mame_rand(Machine);
+
+		}
+		if (activecpu_get_pc()==0x084bc)
+		{
+			/* Clear IRQ line so IRQ doesn't happen too early */
+			cpunum_set_input_line(1, 5, CLEAR_LINE);
+
+			/* set a timer to generate an irq at the needed point */
+			if (ggground_kludge == 1)
+			{
+				timer_set(TIME_IN_USEC(180000), 0, gground_generate_kludge_irq);
+				ggground_kludge = 0;
+			}
+			return 1;
+		}
+	}
+
 	switch(offset) {
 	case 2:
 		irq_timer_pend0 = 0;
@@ -1944,6 +1968,74 @@ INPUT_PORTS_START( gground )
 	PORT_DIPSETTING(    0x00, "0.80 sec" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( ggroundj )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 ) PORT_NAME("P1 Service")
+ 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE3 ) PORT_NAME("P2 Service")
+  	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE4 ) PORT_NAME("P3 Service")
+ 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_NAME("All Service")
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	SYS16_COINAGE
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easiest ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Easier ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x18, "Little Easy" )
+	PORT_DIPSETTING(    0x1c, "Moderate" )
+	PORT_DIPSETTING(    0x0c, "Little Hard" )
+	PORT_DIPSETTING(    0x14, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x60, 0x60, "Time Limit Per Stage" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Easiest ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x60, "Moderate" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x80, 0x80, "Clock Of Time Limit" )
+	PORT_DIPSETTING(    0x80, "1.00 sec" )
+	PORT_DIPSETTING(    0x00, "0.80 sec" )
+INPUT_PORTS_END
 
 ROM_START( hotrod )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 code */
@@ -2044,7 +2136,7 @@ ROM_START( bnzabros )
 	ROM_RELOAD ( 0x180001, 0x40000)
 
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
-	ROM_LOAD( "bb-disk.bin",        0x000000, 0x1c2000, CRC(ea7a3302) SHA1(5f92efb2e1135c1f3eeca38ba5789739a22dbd11) )
+	ROM_LOAD( "ds3-5000-07d.img",        0x000000, 0x1c2000, CRC(ea7a3302) SHA1(5f92efb2e1135c1f3eeca38ba5789739a22dbd11) ) /* Region letter needs to be verfied */
 ROM_END
 
 ROM_START( bnzabrsj )
@@ -2085,7 +2177,7 @@ ROM_START( sspirits )
 
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
 	/* this image was repaired using other images, a dump of a known good disk would be preferable */
-	ROM_LOAD( "ss-repaired.bin",         0x000000, 0x1c2000, BAD_DUMP CRC(cefbda69) SHA1(5b47ae0f1584ce1eb697246273ba761bd9e981c1)  )
+	ROM_LOAD( "ds3-5000-02-repaired.img",         0x000000, 0x1c2000, BAD_DUMP CRC(cefbda69) SHA1(5b47ae0f1584ce1eb697246273ba761bd9e981c1)  )
 ROM_END
 
 ROM_START( sspiritj )
@@ -2106,7 +2198,7 @@ ROM_START( sspirtfc )
 	ROM_LOAD( "317-0058-02c.key", 0x0000, 0x2000,  CRC(ebae170e) SHA1(b6d1e1b6943a35b96e98e426ecb39bb5a42fb643) )
 
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
-	ROM_LOAD( "ds3-5000-02c.bin",         0x000000, 0x1c2000, NO_DUMP )
+	ROM_LOAD( "ds3-5000-02c.img",         0x000000, 0x1c2000, NO_DUMP )
 ROM_END
 
 ROM_START( sgmast )
@@ -2119,9 +2211,9 @@ ROM_START( sgmast )
 
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
 	/* not sure which of these images is best */
-	ROM_LOAD( "ds3-5000-05d.bin",      0x000000, 0x1c2000, CRC(e9a69f93) SHA1(dc15e47ed78373688c1fab72a9605528068ad702) )
-	ROM_LOAD( "ds3-5000-05d_alt.bin",  0x000000, 0x1c2000, CRC(e71a8ebf) SHA1(60feb0af1cfc0508c8d68c8572495eec1763dc93) )
-	ROM_LOAD( "ds3-5000-05d_alt2.bin", 0x000000, 0x1c2000, CRC(460bdcd5) SHA1(49b7384ac5742b45b7369f220f33f04ef955e992) )
+	ROM_LOAD( "ds3-5000-05d.img",      0x000000, 0x1c2000, CRC(e9a69f93) SHA1(dc15e47ed78373688c1fab72a9605528068ad702) )
+	ROM_LOAD( "ds3-5000-05d_alt.img",  0x000000, 0x1c2000, CRC(e71a8ebf) SHA1(60feb0af1cfc0508c8d68c8572495eec1763dc93) )
+	ROM_LOAD( "ds3-5000-05d_alt2.img", 0x000000, 0x1c2000, CRC(460bdcd5) SHA1(49b7384ac5742b45b7369f220f33f04ef955e992) )
 
 ROM_END
 
@@ -2134,7 +2226,7 @@ ROM_START( sgmastc )
 	ROM_LOAD( "317-0058-05c.key", 0x0000, 0x2000, CRC(ae0eabe5) SHA1(692d7565bf9c5b32cc80bb4bd88c9193aa04cbb0) )
 
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
-	ROM_LOAD( "josmg.dsk",      0x000000, 0x1c2000, CRC(06c4f834) SHA1(5e178ed0edff7721c93f76da2e03ae188dc5efa4) )
+	ROM_LOAD( "ds3-5000-05c.img",      0x000000, 0x1c2000, CRC(06c4f834) SHA1(5e178ed0edff7721c93f76da2e03ae188dc5efa4) )
 ROM_END
 
 ROM_START( sgmastj )
@@ -2158,7 +2250,7 @@ ROM_START( qsww )
 	ROM_LOAD( "317-0058-08b.key", 0x0000, 0x2000,  CRC(fe0a336a) SHA1(f7a5b2c1a057d0bb8c1ae0453c58aa8f5fb731b9) )
 
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
-	ROM_LOAD( "ds3-5000-08b.bin",    0x000000, 0x1c2000, CRC(5a886d38) SHA1(2e974a9ffe3534da4fb117c579b8b0e61a63542c) )
+	ROM_LOAD( "ds3-5000-08b.img",    0x000000, 0x1c2000, CRC(5a886d38) SHA1(2e974a9ffe3534da4fb117c579b8b0e61a63542c) )
 ROM_END
 
 ROM_START( gground )
@@ -2167,10 +2259,22 @@ ROM_START( gground )
 	ROM_LOAD16_BYTE( "epr-12186.ic1", 0x000001, 0x20000, CRC(ce76319d) SHA1(0ede61f0700f9161285c768fa97636f0e42b96f8) )
 
 	ROM_REGION( 0x2000, REGION_USER3, 0 )	/* decryption key */
-	ROM_LOAD( "317-0058.03", 0x0000, 0x2000,  CRC(e1785bbd) SHA1(b4bebb2829299f1c0815d6a5f317a2526b322f63) )
+	ROM_LOAD( "317-0058-03c.key", 0x0000, 0x2000,  CRC(e1785bbd) SHA1(b4bebb2829299f1c0815d6a5f317a2526b322f63) ) /* Region letter needs to be verfied */
 
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
-	ROM_LOAD( "gg-dump.bin",         0x000000, 0x1c2000, CRC(5c5910f2) SHA1(9ed564a03c0d4ca4a207f3ecfb7336c6cbcaa70f) )
+	ROM_LOAD( "ds3-5000-03c.img",         0x000000, 0x1c2000, CRC(5c5910f2) SHA1(9ed564a03c0d4ca4a207f3ecfb7336c6cbcaa70f) ) /* Region letter needs to be verfied */
+ROM_END
+
+ROM_START( ggroundj )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr-12187.ic2", 0x000000, 0x20000, CRC(e83783f3) SHA1(4b3b32df7de85aef9cd77c8a4ffc17e10466b638) )
+	ROM_LOAD16_BYTE( "epr-12186.ic1", 0x000001, 0x20000, CRC(ce76319d) SHA1(0ede61f0700f9161285c768fa97636f0e42b96f8) )
+
+	ROM_REGION( 0x2000, REGION_USER3, 0 )	/* decryption key */
+	ROM_LOAD( "317-0058-03b.key", 0x0000, 0x2000,  CRC(84aecdba) SHA1(ceddf967359a6e76543fe1ab00be53d0a11fe1ab) )
+
+	ROM_REGION( 0x1c2000, REGION_USER2, 0)
+	ROM_LOAD( "ds3-5000-03b.img",         0x000000, 0x1c2000, CRC(7200dac9) SHA1(07cf33bf2a0da36e3852de409959f30128cdbf77) )
 ROM_END
 
 ROM_START( crkdown )
@@ -2182,7 +2286,7 @@ ROM_START( crkdown )
 	ROM_LOAD( "317-0058-04d.key", 0x0000, 0x2000,  CRC(934ac358) SHA1(73418e22c9d201bc3fec5c63284858958c010e05) )
 
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
-	ROM_LOAD( "ds3-5000-04d.bin",    0x000000, 0x1c2000, CRC(8679032c) SHA1(887b245a70652897fbda736b60e81a123866ec12) )
+	ROM_LOAD( "ds3-5000-04d.img",    0x000000, 0x1c2000, CRC(8679032c) SHA1(887b245a70652897fbda736b60e81a123866ec12) )
 ROM_END
 
 ROM_START( crkdownj )
@@ -2203,10 +2307,22 @@ ROM_START( dcclub )
 	ROM_LOAD16_BYTE( "epr13947.bin", 0x000001, 0x20000, CRC(7e3cff5e) SHA1(ff8cb776d2491796feeb8892c7e644e590438945) )
 
 	ROM_REGION16_BE( 0x200000, REGION_USER1, 0)
-	ROM_LOAD16_BYTE( "epr15345.bin", 0x000000, 0x80000, CRC(d9e120c2) SHA1(b18b76733078d8534c6f0d8950632ab51e6a10ab) )
-	ROM_LOAD16_BYTE( "epr15344.bin", 0x000001, 0x80000, CRC(8f8b9f74) SHA1(de6b923118bea60197547ad016cb5d5e1a8f372b) )
-	ROM_LOAD16_BYTE( "mpr14097.bin", 0x100000, 0x80000, CRC(4bd74cae) SHA1(5aa90bd5d2b8e2338ef0fe41d1f794e8d51321e1) )
-	ROM_LOAD16_BYTE( "mpr14096.bin", 0x100001, 0x80000, CRC(38d96502) SHA1(c68b3c5c83fd0839c3f6f81189c310ec19bdf1c4) )
+	ROM_LOAD16_BYTE( "epr-15345.2",  0x000000, 0x80000, CRC(d9e120c2) SHA1(b18b76733078d8534c6f0d8950632ab51e6a10ab) )
+	ROM_LOAD16_BYTE( "epr-15344.1",  0x000001, 0x80000, CRC(8f8b9f74) SHA1(de6b923118bea60197547ad016cb5d5e1a8f372b) )
+	ROM_LOAD16_BYTE( "mpr-14097-t.4",0x100000, 0x80000, CRC(4bd74cae) SHA1(5aa90bd5d2b8e2338ef0fe41d1f794e8d51321e1) )
+	ROM_LOAD16_BYTE( "mpr-14096-t.3",0x100001, 0x80000, CRC(38d96502) SHA1(c68b3c5c83fd0839c3f6f81189c310ec19bdf1c4) )
+ROM_END
+
+ROM_START( dcclubj )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr13948.bin", 0x000000, 0x20000, CRC(d6a031c8) SHA1(45b7e3cd2c7412e24f547cd4185166199d3938d5) )
+	ROM_LOAD16_BYTE( "epr13947.bin", 0x000001, 0x20000, CRC(7e3cff5e) SHA1(ff8cb776d2491796feeb8892c7e644e590438945) )
+
+	ROM_REGION16_BE( 0x200000, REGION_USER1, 0)
+	ROM_LOAD16_BYTE( "epr-14095a.2", 0x000000, 0x80000, CRC(88d184e9) SHA1(519F3A22E1619DE9D5F13A45B85EBD249EBFA979) )
+	ROM_LOAD16_BYTE( "epr-14094a.1", 0x000001, 0x80000, CRC(7dd2b7d4) SHA1(C7EAF9E2700E0C55F7E867F5CD3FFAA5AAE97956) )
+	ROM_LOAD16_BYTE( "mpr-14097-t.4",0x100000, 0x80000, CRC(4bd74cae) SHA1(5aa90bd5d2b8e2338ef0fe41d1f794e8d51321e1) )
+	ROM_LOAD16_BYTE( "mpr-14096-t.3",0x100001, 0x80000, CRC(38d96502) SHA1(c68b3c5c83fd0839c3f6f81189c310ec19bdf1c4) )
 ROM_END
 
 ROM_START( dcclubfd )
@@ -2218,7 +2334,7 @@ ROM_START( dcclubfd )
 	ROM_LOAD( "317-0058-09d.key", 0x0000, 0x2000, CRC(a91ebffb) SHA1(70b8b4272ca456491f254d115b434bb4ce73f049) )
 
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
-	ROM_LOAD( "ds3-5000-09d.bin", 0x000000, 0x1c2000,  CRC(69870887) SHA1(e47a997c2c783bf6670ab213ebe2ee35492eba34) )
+	ROM_LOAD( "ds3-5000-09d.img", 0x000000, 0x1c2000,  CRC(69870887) SHA1(e47a997c2c783bf6670ab213ebe2ee35492eba34) )
 ROM_END
 
 ROM_START( roughrac )
@@ -2247,16 +2363,17 @@ static MACHINE_DRIVER_START( system24 )
 	MDRV_CPU_ADD(M68000, 10000000)
 	MDRV_CPU_PROGRAM_MAP(system24_cpu2_map, 0)
 
-	MDRV_FRAMES_PER_SECOND(58)
-	MDRV_VBLANK_DURATION(100)
+	MDRV_SCREEN_REFRESH_RATE(58)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(100))
 	MDRV_INTERLEAVE(4)
 
 	MDRV_MACHINE_RESET(system24)
 	MDRV_NVRAM_HANDLER(system24)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(62*8, 48*8)
-	MDRV_VISIBLE_AREA(0*8, 62*8-1, 0*8, 48*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 62*8-1, 0*8, 48*8-1)
 	MDRV_PALETTE_LENGTH(8192*2)
 
 	MDRV_VIDEO_START(system24)
@@ -2287,20 +2404,22 @@ MACHINE_DRIVER_END
 /* 02 */GAME( 1988, sspirits, 0,        system24, sspirits, sspirits, ROT270, "Sega", "Scramble Spirits", 0 )
 /* 02 */GAME( 1988, sspiritj, sspirits, system24, sspirits, sspiritj, ROT270, "Sega", "Scramble Spirits (Japan, Floppy DS3-5000-02-REV-A)", 0 )
 /* 02 */GAME( 1988, sspirtfc, sspirits, system24, sspirits, sspirits, ROT270, "Sega", "Scramble Spirits (FD1094 317-0058-02c)",GAME_NOT_WORKING ) /* MISSING disk image */
-/* 03 */GAME( 1988, gground,  0,        system24, gground,  gground,  ROT270, "Sega", "Gain Ground (FD1094 317-0058-03?)", 0 )
+/* 03 */GAME( 1988, gground,  0,        system24, gground,  gground,  ROT270, "Sega", "Gain Ground (World, FD1094 317-0058-03c?)", 0 )
+/* 03 */GAME( 1988, ggroundj, gground,  system24, ggroundj, gground,  ROT270, "Sega", "Gain Ground (Japan, FD1094 317-0058-03b)", 0 )
 /* 04 */GAME( 1989, crkdown,  0,        system24, crkdown,  crkdown,  ROT0,   "Sega", "Crack Down (US, FD1094 317-0058-04d)", GAME_IMPERFECT_GRAPHICS ) // clipping probs / solid layer probs? (radar display)
 /* 04 */GAME( 1989, crkdownj, crkdown,  system24, crkdown,  crkdown,  ROT0,   "Sega", "Crack Down (Japan, FD1094 317-0058-04b)", GAME_IMPERFECT_GRAPHICS ) // clipping probs / solid layer probs? (radar display)
-/* 05 */GAME( 1989, sgmast,   0,        system24, bnzabros, sgmast,   ROT0,	  "Sega", "Super Masters Golf (FD1094 317-0058-05d?)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION ) // NOT decrypted
+/* 05 */GAME( 1989, sgmast,   0,        system24, bnzabros, sgmast,   ROT0,   "Sega", "Super Masters Golf (FD1094 317-0058-05d?)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION ) // NOT decrypted
 /* 05 */GAME( 1989, sgmastc,  sgmast,   system24, bnzabros, sgmast,   ROT0,   "Sega", "Jumbo Ozaki Super Masters Golf (World, FD1094 317-0058-05c)", GAME_NOT_WORKING ) // controls, some gfx offset / colour probs?
 /* 05 */GAME( 1989, sgmastj,  sgmast,   system24, bnzabros, sgmast,   ROT0,   "Sega", "Jumbo Ozaki Super Masters Golf (Japan, FD1094 317-0058-05b)", GAME_NOT_WORKING ) // controls, some gfx offset / colour probs?
 /* 06 */GAME( 1990, roughrac, 0,        system24, roughrac, roughrac, ROT0,   "Sega", "Rough Racer (Japan, FD1094 317-0058-06b)", 0 )
 /* 07 */GAME( 1990, bnzabros, 0,        system24, bnzabros, bnzabros, ROT0,   "Sega", "Bonanza Bros (US, Floppy DS3-5000-07d?)", 0 )
 /* 07 */GAME( 1990, bnzabrsj, bnzabros, system24, bnzabros, bnzabros, ROT0,   "Sega", "Bonanza Bros (Japan, Floppy DS3-5000-07b)", 0 )
-/* 08 */GAME( 1991, qsww,     0,        system24, bnzabros, qsww,     ROT0,   "Sega", "Quiz Syukudai wo Wasuremashita", GAME_IMPERFECT_GRAPHICS ) // wrong bg colour on title
-/* 09 */GAME( 1991, dcclubfd, 0,        system24, dcclub,   dcclubfd, ROT0,   "Sega", "Dynamic Country Club (Floppy DS3-5000-09d, FD1094 317-0058-09d)", 0 )
+/* 08 */GAME( 1991, qsww,     0,        system24, bnzabros, qsww,     ROT0,   "Sega", "Quiz Syukudai wo Wasuremashita (Japan, FD1094 317-0058-08b)", GAME_IMPERFECT_GRAPHICS ) // wrong bg colour on title
+/* 09 */GAME( 1991, dcclubfd, 0,        system24, dcclub,   dcclubfd, ROT0,   "Sega", "Dynamic Country Club (FD1094 317-0058-09d)", 0 )
 
 /* ROM Based */
 GAME( 1991, dcclub,   0,        system24, dcclub,   dcclub,   ROT0,   "Sega", "Dynamic Country Club", 0 )
+GAME( 1991, dcclubj,  dcclub,   system24, dcclub,   dcclub,   ROT0,   "Sega", "Dynamic Country Club (Japan)", 0 )
 GAME( 1992, mahmajn,  0,        system24, mahmajn,  mahmajn,  ROT0,   "Sega", "Tokoro San no MahMahjan", 0 )
 GAME( 1994, qgh,      0,        system24, qgh,      qgh,      ROT0,   "Sega", "Quiz Ghost Hunter", 0 )
 GAME( 1994, quizmeku, 0,        system24, quizmeku, quizmeku, ROT0,   "Sega", "Quiz Mekurumeku Story", 0 )

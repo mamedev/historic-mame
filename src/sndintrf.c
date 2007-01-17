@@ -151,6 +151,7 @@ void wave_get_info(void *token, UINT32 state, sndinfo *info);
 void sid6581_get_info(void *token, UINT32 state, sndinfo *info);
 void sid8580_get_info(void *token, UINT32 state, sndinfo *info);
 void sp0256_get_info(void *token, UINT32 state, sndinfo *info);
+void s14001a_get_info(void *token, UINT32 state, sndinfo *info);
 
 void filter_volume_get_info(void *token, UINT32 state, sndinfo *info);
 void filter_rc_get_info(void *token, UINT32 state, sndinfo *info);
@@ -403,6 +404,9 @@ static const struct
 #endif
 #if (HAS_CDP1869)
 	{ SOUND_CDP1869, cdp1869_get_info },
+#endif
+#if (HAS_S14001A)
+	{ SOUND_S14001A, s14001a_get_info },
 #endif
 
 #ifdef MESS

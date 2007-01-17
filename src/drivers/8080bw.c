@@ -9,12 +9,6 @@
 /*  Notes:                                                                  */
 /*  -----                                                                   */
 /*                                                                          */
-/*  - "The Amazing Maze Game" on title screen, but manual, flyer,           */
-/*    cabinet side art all call it just "Amazing Maze"                      */
-/*                                                                          */
-/*  - Desert Gun was originally named Road Runner. The name was changed     */
-/*    when Midway merged with Bally who had a game by the same title        */
-/*                                                                          */
 /*  - Space Invaders Deluxe still says Space Invaders Part II,              */
 /*    because according to KLOV, Midway was only allowed to make minor      */
 /*    modifications of the Taito code.                                      */
@@ -22,10 +16,6 @@
 /*                                                                          */
 /*  To Do:                                                                  */
 /*  -----                                                                   */
-/*                                                                          */
-/*  - Space Encounters: 'trench' circuit                                    */
-/*                                                                          */
-/*  - Phantom II: verify clouds                                             */
 /*                                                                          */
 /*  - Space Chaser (schaser)                                                */
 /*    1. The "missile" sound is incorrect. This is how it should be:        */
@@ -89,17 +79,10 @@
 
 #include "driver.h"
 #include "8080bw.h"
-#include "includes/circus.h"
-#include "cpu/i8039/i8039.h"
-#include "rendlay.h"
+#include "mw8080bw.h"
 
-#include "clowns.lh"
-#include "invaders.lh"
-#include "invad2ct.lh"
 #include "invrvnge.lh"
 
-
-/* gmissile and m4 need the RAM mirror */
 
 static ADDRESS_MAP_START( c8080bw_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
@@ -120,19 +103,9 @@ static ADDRESS_MAP_START( writeport_0_3, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x03, 0x03) AM_WRITE(c8080bw_shift_data_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writeport_1_2, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x01, 0x01) AM_WRITE(c8080bw_shift_amount_w)
-	AM_RANGE(0x02, 0x02) AM_WRITE(c8080bw_shift_data_w)
-ADDRESS_MAP_END
-
 static ADDRESS_MAP_START( writeport_2_4, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x02, 0x02) AM_WRITE(c8080bw_shift_amount_w)
 	AM_RANGE(0x04, 0x04) AM_WRITE(c8080bw_shift_data_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writeport_4_3, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x03, 0x03) AM_WRITE(c8080bw_shift_data_w)
-	AM_RANGE(0x04, 0x04) AM_WRITE(c8080bw_shift_amount_w)
 ADDRESS_MAP_END
 
 static MACHINE_DRIVER_START( 8080bw )
@@ -142,13 +115,14 @@ static MACHINE_DRIVER_START( 8080bw )
 	MDRV_CPU_PROGRAM_MAP(c8080bw_cpu_map,0)
 	MDRV_CPU_IO_MAP(c8080bw_readport,writeport_2_4)
 	MDRV_CPU_VBLANK_INT(c8080bw_interrupt,2)    /* two interrupts per frame */
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 4*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 4*8, 32*8-1)
 	MDRV_PALETTE_LENGTH(2)
 	MDRV_PALETTE_INIT(black_and_white)
 	MDRV_VIDEO_START(generic_bitmapped)
@@ -160,11 +134,11 @@ MACHINE_DRIVER_END
 
 /*******************************************************/
 /*                                                     */
-/* Midway "Space Invaders"                             */
+/* Space Invaders CV Version (Taito)                   */
 /*                                                     */
 /*******************************************************/
 
-INPUT_PORTS_START( invaders )
+INPUT_PORTS_START( sicv )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -202,35 +176,11 @@ INPUT_PORTS_START( invaders )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( invaders )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_MACHINE_RESET(invaders)
-	MDRV_WATCHDOG_VBLANK_INIT(255)
-
-	/* video hardware */
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(SN76477, 0)
-	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-MACHINE_DRIVER_END
-
 
 /*******************************************************/
 /*                                                     */
@@ -238,7 +188,7 @@ MACHINE_DRIVER_END
 /*                                                     */
 /*******************************************************/
 
-/* same as Invaders with a test mode switch */
+/* same as the CV version with a test mode switch */
 
 INPUT_PORTS_START( sitv )
 	PORT_START_TAG("IN0")
@@ -278,7 +228,7 @@ INPUT_PORTS_START( sitv )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START_TAG("FAKE")
+	PORT_START_TAG("CAB")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -328,7 +278,7 @@ INPUT_PORTS_START( invadrmr )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -339,6 +289,16 @@ INPUT_PORTS_END
 /* Midway "Space Invaders Part II"                     */
 /*                                                     */
 /*******************************************************/
+
+static ADDRESS_MAP_START( invadpt2_io_map, ADDRESS_SPACE_IO, 8 )
+    AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
+    AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
+    AM_RANGE(0x02, 0x02) AM_READWRITE(input_port_2_r, c8080bw_shift_amount_w)
+    AM_RANGE(0x03, 0x03) AM_READWRITE(c8080bw_shift_data_r, invadpt2_sh_port_1_w)
+    AM_RANGE(0x04, 0x04) AM_WRITE(c8080bw_shift_data_w)
+    AM_RANGE(0x05, 0x05) AM_WRITE(invadpt2_sh_port_2_w)
+    AM_RANGE(0x06, 0x06) AM_WRITE(watchdog_reset_w)
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( invadpt2 )
 	PORT_START_TAG("IN0")
@@ -380,7 +340,7 @@ INPUT_PORTS_START( invadpt2 )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -391,12 +351,19 @@ INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( invadpt2 )
 
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(invaders)
+    /* basic machine hardware */
+    MDRV_IMPORT_FROM(8080bw)
+    MDRV_CPU_MODIFY("main")
+    MDRV_CPU_IO_MAP(invadpt2_io_map,0)
 
-	/* video hardware */
+    /* video hardware */
+    MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
+
+    /* sound hardware */
+	MDRV_IMPORT_FROM(invaders_sound)
+
 MACHINE_DRIVER_END
 
 /*******************************************************/
@@ -442,7 +409,7 @@ INPUT_PORTS_START( spcewars )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -456,22 +423,15 @@ static MACHINE_DRIVER_START( spcewars )
 	MDRV_MACHINE_RESET(spcewars)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(SN76477, 0)
-	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_IMPORT_FROM(invaders_sound)
 
 	/* extra audio channel */
 	MDRV_SOUND_ADD(SPEAKER, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
 MACHINE_DRIVER_END
 
 /*******************************************************/
@@ -513,11 +473,12 @@ INPUT_PORTS_START( cosmo )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN ) /* must be HIGH normally or the joystick won't work */
 
-	PORT_START_TAG("FAKE")
+	PORT_START_TAG("CAB")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
+
 static ADDRESS_MAP_START( cosmo_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_RAM)
@@ -543,22 +504,28 @@ static ADDRESS_MAP_START( cosmo_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x01, 0x01) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x02, 0x02) AM_WRITE(MWA8_NOP)
+    AM_RANGE(0x03, 0x03) AM_WRITE(invadpt2_sh_port_1_w)
 	AM_RANGE(0x06, 0x06) AM_WRITE(watchdog_reset_w)
+    AM_RANGE(0x05, 0x05) AM_WRITE(invadpt2_sh_port_2_w)
 	AM_RANGE(0x07, 0x07) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
 
 static MACHINE_DRIVER_START( cosmo )
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(invaders)
-	MDRV_CPU_MODIFY("main")
+
+    MDRV_IMPORT_FROM(8080bw)
+    MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(cosmo_readmem, cosmo_writemem)
 	MDRV_CPU_IO_MAP(cosmo_readport, cosmo_writeport)
 
-	/* video hardware */
+    /* video hardware */
+    MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(cosmo)
-MACHINE_DRIVER_END
 
+    /* sound hardware */
+	MDRV_IMPORT_FROM(invaders_sound)
+
+MACHINE_DRIVER_END
 
 /*******************************************************/
 /*                                                     */
@@ -605,7 +572,7 @@ INPUT_PORTS_START( earthinv )
 	PORT_DIPSETTING(    0x00, "2C/1C 50p/3C (+ Bonus Life)" )
 	PORT_DIPSETTING(    0x80, "1C/1C 50p/5C" )
 
-	PORT_START_TAG("FAKE")
+	PORT_START_TAG("CAB")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -711,7 +678,7 @@ INPUT_PORTS_START( invrvnge )
 	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 
-	PORT_START_TAG("FAKE")
+	PORT_START_TAG("CAB")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -726,89 +693,11 @@ static MACHINE_DRIVER_START( invrvnge )
 	MDRV_MACHINE_RESET(invrvnge)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_IMPORT_FROM(invaders_sound)
 
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-MACHINE_DRIVER_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Space Invaders II Cocktail"                 */
-/*                                                     */
-/*******************************************************/
-
-INPUT_PORTS_START( invad2ct )
-	PORT_START_TAG("IN0")
-	PORT_SERVICE(0x01, IP_ACTIVE_LOW) 			  /* dip 8 */
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* tied to pull-down */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* tied to pull-up */
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* tied to pull-down */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* tied to pull-up */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* tied to pull-up */
-    PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* labelled reset but tied to pull-up */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* tied to pull-up */
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* tied to pull-down */
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )  /* tied to pull-up */
-
-	PORT_START_TAG("DSW0")
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) ) /* dips 4 & 3 */
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 2C_2C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )   /* tied to pull-up */
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) ) /* dip 2 */
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_COCKTAIL
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_COCKTAIL
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Bonus_Life ) ) /* dip 1 */
-	PORT_DIPSETTING(    0x80, "1500" )
-	PORT_DIPSETTING(    0x00, "2000" )
-
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode (not used) */
-	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( invad2ct )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_MACHINE_RESET(invad2ct)
-	MDRV_WATCHDOG_VBLANK_INIT(255)
-
-	/* sound hardware */
-	/* Both player sounds come out of separate speakers, but samples do not
-     * support multiple interfaces.  This will have to wait for proper discrete emulation. */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invad2ct_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(SN76477, 0)
-	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(SN76477, 0)
-	MDRV_SOUND_CONFIG(invad2ct_sn76477_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -866,7 +755,7 @@ INPUT_PORTS_START( sstrangr )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -888,18 +777,11 @@ static MACHINE_DRIVER_START( sstrangr )
 	MDRV_MACHINE_RESET(sstrangr)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_IMPORT_FROM(invaders_sound)
 
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(SN76477, 0)
-	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -958,7 +840,7 @@ INPUT_PORTS_START( sstrngr2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -983,18 +865,11 @@ static MACHINE_DRIVER_START( sstrngr2 )
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_IMPORT_FROM(invaders_sound)
 
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(SN76477, 0)
-	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -1147,7 +1022,7 @@ INPUT_PORTS_START( galxwars )
 	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -1198,7 +1073,7 @@ INPUT_PORTS_START( lrescue )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -1212,7 +1087,7 @@ static MACHINE_DRIVER_START( lrescue )
 	MDRV_MACHINE_RESET(lrescue)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
 
@@ -1226,6 +1101,7 @@ static MACHINE_DRIVER_START( lrescue )
 	/* extra audio channel */
 	MDRV_SOUND_ADD(SPEAKER, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
 MACHINE_DRIVER_END
 
 
@@ -1276,7 +1152,7 @@ INPUT_PORTS_START( cosmicmo )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -1327,7 +1203,7 @@ INPUT_PORTS_START( invasion )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -1376,7 +1252,7 @@ INPUT_PORTS_START( superinv )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -1446,7 +1322,7 @@ INPUT_PORTS_START( rollingc )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -1465,308 +1341,10 @@ static MACHINE_DRIVER_START( rollingc )
 	MDRV_PALETTE_INIT(invadpt2)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_IMPORT_FROM(invaders_sound)
 
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(SN76477, 0)
-	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Space Encounters"                           */
-/*                                                     */
-/*******************************************************/
-
-static ADDRESS_MAP_START( spcenctr_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_READ(spcenctr_port_0_r) /* These 2 ports use Gray's binary encoding */
-	AM_RANGE(0x01, 0x01) AM_READ(spcenctr_port_1_r)
-	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
-ADDRESS_MAP_END
-
-
-INPUT_PORTS_START( spcenctr )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x3f, 0x1f, IPT_AD_STICK_X ) PORT_MINMAX(0,0x3f) PORT_SENSITIVITY(10) PORT_KEYDELTA(10) PORT_REVERSE /* 6 bit horiz encoder - Gray's binary */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )    /* fire */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x3f, 0x1f, IPT_AD_STICK_Y ) PORT_MINMAX(0,0x3f) PORT_SENSITIVITY(10) PORT_KEYDELTA(10) /* 6 bit vert encoder - Gray's binary */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
-
-	PORT_START_TAG("IN2")      /* IN2 Dips & Coins */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "2000 4000 8000" )
-	PORT_DIPSETTING(    0x01, "3000 6000 12000" )
-	PORT_DIPSETTING(    0x02, "4000 8000 16000" )
-	PORT_DIPSETTING(    0x03, "5000 10000 20000" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_3C ) )
-	PORT_DIPNAME( 0x30, 0x00, "Bonus/Test Mode" )
-	PORT_DIPSETTING(    0x00, "Bonus On" )
-	PORT_DIPSETTING(    0x30, "Bonus Off" )
-	PORT_DIPSETTING(    0x20, "Cross Hatch" )
-	PORT_DIPSETTING(    0x10, "Test Mode" )
-	PORT_DIPNAME( 0xc0, 0x00, "Time" )
-	PORT_DIPSETTING(    0x00, "45" )
-	PORT_DIPSETTING(    0x40, "60" )
-	PORT_DIPSETTING(    0x80, "75" )
-	PORT_DIPSETTING(    0xc0, "90" )
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( spcenctr )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_IO_MAP(spcenctr_readport,0)
-	MDRV_MACHINE_RESET(spcenctr)
-
-	/* video hardware */
-	MDRV_VISIBLE_AREA(1*8, 30*8-1, 4*8, 32*8-1)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-MACHINE_DRIVER_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Gun Fight"                                  */
-/*                                                     */
-/*******************************************************/
-
-static ADDRESS_MAP_START( gunfight_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
-	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
-	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
-	AM_RANGE(0x03, 0x03) AM_READ(boothill_shift_data_r)
-ADDRESS_MAP_END
-
-INPUT_PORTS_START( gunfight )
-    /* Gun position uses bits 4-6, handled using fake paddles */
-	PORT_START_TAG("IN0")      /* Player 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)        /* Move Man */
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2) PORT_NAME("P2 Fire")             /* Fire */
-
-	PORT_START_TAG("IN1")      /* Player 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY              /* Move Man */
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME("P1 Fire")                   /* Fire */
-
-#ifdef NOTDEF
-	PORT_START_TAG("IN2")      /* IN2 Dips & Coins */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_DIPNAME( 0x0C, 0x00, "Plays" )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x04, "2" )
-	PORT_DIPSETTING(    0x08, "3" )
-	PORT_DIPSETTING(    0x0C, "4" )
-	PORT_DIPNAME( 0x30, 0x00, "Time" ) /* These are correct */
-	PORT_DIPSETTING(    0x00, "60" )
-	PORT_DIPSETTING(    0x10, "70" )
-	PORT_DIPSETTING(    0x20, "80" )
-	PORT_DIPSETTING(    0x30, "90" )
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Player" )
-	PORT_DIPSETTING(    0x40, "1 Coin/2 Players" )
-	PORT_DIPSETTING(    0x80, "1 Coin/3 Players" )
-	PORT_DIPSETTING(    0xc0, "1 Coin/4 Players" )
-#endif
-
-	PORT_START_TAG("IN2")      /* IN2 Dips & Coins */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "1 Coin" )
-	PORT_DIPSETTING(    0x01, "2 Coins" )
-	PORT_DIPSETTING(    0x02, "3 Coins" )
-	PORT_DIPSETTING(    0x03, "4 Coins" )
-	PORT_DIPNAME( 0x0C, 0x00, "Plays" )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x04, "2" )
-	PORT_DIPSETTING(    0x08, "3" )
-	PORT_DIPSETTING(    0x0C, "4" )
-	PORT_DIPNAME( 0x30, 0x00, "Time" ) /* These are correct */
-	PORT_DIPSETTING(    0x00, "60" )
-	PORT_DIPSETTING(    0x10, "70" )
-	PORT_DIPSETTING(    0x20, "80" )
-	PORT_DIPSETTING(    0x30, "90" )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
-
-	PORT_START_TAG("FAKE1")                                        /* Player 2 Gun */
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(1,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_CENTERDELTA(0) PORT_CODE_DEC(KEYCODE_M) PORT_CODE_INC(KEYCODE_J) PORT_PLAYER(2)
-
-	PORT_START_TAG("FAKE2")                                         /* Player 1 Gun */
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(1,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_CENTERDELTA(0) PORT_CODE_DEC(KEYCODE_N) PORT_CODE_INC(KEYCODE_H)
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( gunfight )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_IO_MAP(gunfight_readport,writeport_2_4)
-	MDRV_MACHINE_RESET(gunfight)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(boothill_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-MACHINE_DRIVER_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "M-4"                                        */
-/*                                                     */
-/*******************************************************/
-
-INPUT_PORTS_START( m4 )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP ) PORT_2WAY PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNUSED )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN ) PORT_2WAY PORT_PLAYER(2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON1 ) PORT_PLAYER(2) PORT_NAME("P2 Trigger")/* left trigger */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON2 ) PORT_PLAYER(2) PORT_NAME("P2 Reload")/* left reload */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNUSED )
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP ) PORT_2WAY
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN ) PORT_2WAY
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON1 ) PORT_NAME("P1 Trigger")/* right trigger */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON2 ) PORT_NAME("P1 Reload")/* right reload */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNUSED )
-
-	PORT_START_TAG("IN2")      /* IN2 Dips & Coins */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 2C_2C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x0c, 0x0c, "Time" )
-	PORT_DIPSETTING(    0x00, "60" )
-	PORT_DIPSETTING(    0x04, "70" )
-	PORT_DIPSETTING(    0x08, "80" )
-	PORT_DIPSETTING(    0x0C, "90" )
-	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( m4 )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_IO_MAP(gunfight_readport,writeport_1_2)
-	MDRV_MACHINE_RESET(m4)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invad2ct_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(SN76477, 0)
-	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(SN76477, 0)
-	MDRV_SOUND_CONFIG(invad2ct_sn76477_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-MACHINE_DRIVER_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Boot Hill"                                  */
-/*                                                     */
-/*******************************************************/
-
-INPUT_PORTS_START( boothill )
-    /* Gun position uses bits 4-6, handled using fake paddles */
-	PORT_START_TAG("IN0")      /* Player 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)        /* Move Man */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2) PORT_NAME("P2 Fire")/* Fire */
-
-	PORT_START_TAG("IN1")      /* Player 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY /* Move Man */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("P1 Fire")/* Fire */
-
-	PORT_START_TAG("IN2")      /* Dips & Coins */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
-//  PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x0c, 0x00, "Time" )
-	PORT_DIPSETTING(    0x00, "60 seconds" )
-	PORT_DIPSETTING(    0x04, "70 seconds" )
-	PORT_DIPSETTING(    0x08, "80 seconds" )
-	PORT_DIPSETTING(    0x0C, "90 seconds" )
-	PORT_SERVICE( 0x10, IP_ACTIVE_HIGH )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
-
-	PORT_START_TAG("FAKE1")                                             /* Player 2 Gun */
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(1,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_CODE_DEC(KEYCODE_M) PORT_CODE_INC(KEYCODE_J) PORT_CENTERDELTA(0) PORT_PLAYER(2)
-
-	PORT_START_TAG("FAKE2")                                             /* Player 1 Gun */
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(1,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_CODE_DEC(KEYCODE_N) PORT_CODE_INC(KEYCODE_H) PORT_CENTERDELTA(0)
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( boothill )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_IO_MAP(gunfight_readport,writeport_1_2)
-	MDRV_MACHINE_RESET(boothill)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(boothill_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-MACHINE_DRIVER_END
 
 
 /*******************************************************/
@@ -1840,7 +1418,7 @@ INPUT_PORTS_START( schaser )
 
 	// port 3 (all 8 bits) connected to custom chip MB14241 driven by out port 2 and 4
 	// To get cocktail mode, turn this on, and choose 2 controllers.
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -1868,7 +1446,7 @@ static MACHINE_DRIVER_START( schaser )
 
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
-	MDRV_VISIBLE_AREA(0*8, 31*8-1, 4*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -1927,7 +1505,7 @@ INPUT_PORTS_START( schasrcv )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -1944,17 +1522,14 @@ static MACHINE_DRIVER_START( schasrcv )
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
-	MDRV_VISIBLE_AREA(0*8, 31*8-1, 4*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_IMPORT_FROM(invaders_sound)
 
 	MDRV_SOUND_ADD(SPEAKER, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
 MACHINE_DRIVER_END
 
 
@@ -2008,7 +1583,7 @@ static MACHINE_DRIVER_START( sflush )
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(sflush)
-	MDRV_VISIBLE_AREA(0*8, 31*8-1, 4*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 31*8-1, 4*8, 30*8-1)
 
 MACHINE_DRIVER_END
 
@@ -2039,243 +1614,6 @@ INPUT_PORTS_START( sflush )
 	PORT_BIT( 0xff, 0x6a, IPT_PADDLE ) PORT_MINMAX(0x16,0xbf) PORT_SENSITIVITY(30) PORT_KEYDELTA(30) PORT_CENTERDELTA(0)
 INPUT_PORTS_END
 
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Clowns"                                     */
-/*                                                     */
-/*******************************************************/
-
-/*
- * Clowns (EPROM version)
- */
-INPUT_PORTS_START( clowns )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0xff, 0x7f, IPT_PADDLE ) PORT_MINMAX(0x01,0xfe) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_CENTERDELTA(0)
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN2")
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_2C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x0c, 0x00, "Bonus Game" )
-	PORT_DIPSETTING(    0x00, "No Bonus" )
-	PORT_DIPSETTING(    0x04, "9000" )
-	PORT_DIPSETTING(    0x08, "11000" )
-	PORT_DIPSETTING(    0x0c, "13000" )
-	PORT_DIPNAME( 0x10, 0x00, "Balloon Resets" )
-	PORT_DIPSETTING(    0x00, "Each row" )
-	PORT_DIPSETTING(    0x10, "All rows" )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "3000" )
-	PORT_DIPSETTING(    0x20, "4000" )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x40, "4" )
-	/* Test Mode - Open Coin SW for RAM-ROM Test,
-    Close Coin SW for Springboard Alignment */
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Test) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-INPUT_PORTS_END
-
-
-INPUT_PORTS_START( clowns1 )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0xff, 0x7f, IPT_PADDLE ) PORT_MINMAX(0x01,0xfe) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_CENTERDELTA(0)
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN2")
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_2C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x04, "3" )
-	PORT_DIPSETTING(    0x08, "4" )
-	PORT_DIPSETTING(    0x0c, "5" )
-	PORT_DIPNAME( 0x10, 0x00, "Balloon Resets" )
-	PORT_DIPSETTING(    0x00, "Each row" )
-	PORT_DIPSETTING(    0x10, "All rows" )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "3000" )
-	PORT_DIPSETTING(    0x20, "4000" )
-	PORT_DIPNAME( 0x40, 0x00, "Input Test"  )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Test ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( clowns )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_IO_MAP(c8080bw_readport,writeport_1_2)
-	MDRV_MACHINE_RESET(clowns)
-	MDRV_WATCHDOG_VBLANK_INIT(255)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(circus_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
-
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
-	MDRV_SOUND_CONFIG(clowns_discrete_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
-MACHINE_DRIVER_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Guided Missile"                             */
-/*                                                     */
-/*******************************************************/
-
-INPUT_PORTS_START( gmissile )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
-
-	PORT_START_TAG("IN2")
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x0c, 0x0c, "Time" )
-	PORT_DIPSETTING(    0x00, "60" )
-	PORT_DIPSETTING(    0x08, "70" )
-	PORT_DIPSETTING(    0x04, "80" )
-	PORT_DIPSETTING(    0x0c, "90" )
-	PORT_DIPNAME( 0x30, 0x00, "Extra Play" )
-	PORT_DIPSETTING(    0x00, "500" )
-	PORT_DIPSETTING(    0x20, "700" )
-	PORT_DIPSETTING(    0x10, "1000" )
-	PORT_DIPSETTING(    0x30, "1300" )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( gmissile )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_IO_MAP(gunfight_readport,writeport_1_2)
-	MDRV_MACHINE_RESET(gmissile)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invad2ct_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(SN76477, 0)
-	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-MACHINE_DRIVER_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "280 ZZZAP"                                  */
-/*                                                     */
-/*******************************************************/
-
-INPUT_PORTS_START( 280zzzap )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x0f, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0x0f) PORT_SENSITIVITY(100) PORT_KEYDELTA(64)	/* accelerator */
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_TOGGLE PORT_NAME("P1 Shift") /* shift */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START1 )
-
-	PORT_START_TAG("IN1")      /* Steering Wheel */
-	PORT_BIT( 0xff, 0x7f, IPT_PADDLE ) PORT_MINMAX(0x01,0xfe) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE
-
-	PORT_START_TAG("IN2")
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
-	PORT_DIPNAME( 0x0c, 0x00, "Time" )
-	PORT_DIPSETTING(    0x0c, "60" )
-	PORT_DIPSETTING(    0x00, "80" )
-	PORT_DIPSETTING(    0x08, "99" )
-	PORT_DIPSETTING(    0x04, "Test Mode" )
-	PORT_DIPNAME( 0x30, 0x00, "Extended Time" )
-	PORT_DIPSETTING(    0x00, "Score >= 2.5" )
-	PORT_DIPSETTING(    0x10, "Score >= 2" )
-	PORT_DIPSETTING(    0x20, DEF_STR( None ) )
-/* 0x30 same as 0x20 */
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Language ))
-	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( German ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( French ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( Spanish ) )
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( 280zzzap )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_IO_MAP(c8080bw_readport,writeport_4_3)
-	MDRV_MACHINE_RESET(280zzzap)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-MACHINE_DRIVER_END
 
 
 /*******************************************************/
@@ -2338,18 +1676,11 @@ static MACHINE_DRIVER_START( lupin3 )
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_IMPORT_FROM(invaders_sound)
 
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(SN76477, 0)
-	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -2415,7 +1746,7 @@ INPUT_PORTS_START( polaris )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -2445,7 +1776,7 @@ static MACHINE_DRIVER_START( polaris )
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -2453,686 +1784,10 @@ static MACHINE_DRIVER_START( polaris )
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(polaris_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
 MACHINE_DRIVER_END
 
 
-/*******************************************************/
-/*                                                     */
-/* Midway "Laguna Racer"                               */
-/*                                                     */
-/*******************************************************/
-
-INPUT_PORTS_START( lagunar )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x0f, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0x0f) PORT_SENSITIVITY(100) PORT_KEYDELTA(64)	/* accelerator */
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_TOGGLE  PORT_NAME ("P1 Shift")/* shift */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START1 )
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0xff, 0x7f, IPT_PADDLE ) PORT_MINMAX(0x01,0xfe) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_REVERSE
-
-	PORT_START_TAG("IN2")      /* Dips & Coins */
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x0c, 0x0c, "Time" )
-	PORT_DIPSETTING(    0x00, "45" )
-	PORT_DIPSETTING(    0x04, "60" )
-	PORT_DIPSETTING(    0x08, "75" )
-	PORT_DIPSETTING(    0x0c, "90" )
-	PORT_DIPNAME( 0x30, 0x00, "Extended Time" )
-	PORT_DIPSETTING(    0x00, "350" )
-	PORT_DIPSETTING(    0x10, "400" )
-	PORT_DIPSETTING(    0x20, "450" )
-	PORT_DIPSETTING(    0x30, "500" )
-	PORT_DIPNAME( 0xc0, 0x00, "Test Modes")
-	PORT_DIPSETTING(    0x00, "Play Mode" )
-	PORT_DIPSETTING(    0x40, "RAM/ROM" )
-	PORT_DIPSETTING(    0x80, "Steering" )
-	PORT_DIPSETTING(    0xc0, "No Extended Play" )
-INPUT_PORTS_END
-
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Phantom II"                                 */
-/*                                                     */
-/*******************************************************/
-
-static PALETTE_INIT( phantom2 )
-{
-	palette_set_color(machine,0,0x00,0x00,0x00); /* black */
-	palette_set_color(machine,1,0xff,0xff,0xff); /* white */
-	palette_set_color(machine,2,0xc0,0xc0,0xc0); /* grey */
-}
-
-
-INPUT_PORTS_START( phantom2 )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START_TAG("IN2")      /* Dips & Coins */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0x06, 0x06, "Time" )
-	PORT_DIPSETTING(    0x00, "45sec 20sec 20" )
-	PORT_DIPSETTING(    0x02, "60sec 25sec 25" )
-	PORT_DIPSETTING(    0x04, "75sec 30sec 30" )
-	PORT_DIPSETTING(    0x06, "90sec 35sec 35" )
-	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
-
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( phantom2 )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_IO_MAP(gunfight_readport,writeport_1_2)
-	MDRV_CPU_VBLANK_INT(phantom2_interrupt,2)
-	MDRV_MACHINE_RESET(phantom2)
-
-	/* video hardware */
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
-
-	MDRV_PALETTE_LENGTH(3)
-	MDRV_PALETTE_INIT(phantom2)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-MACHINE_DRIVER_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Dog Patch"                                  */
-/*                                                     */
-/*******************************************************/
-
-INPUT_PORTS_START( dogpatch )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x38, 0x1f, IPT_AD_STICK_X ) PORT_MINMAX(0x05,0x48) PORT_SENSITIVITY(25) PORT_KEYDELTA(10) PORT_PLAYER(2)
-	/* 6 bit horiz encoder - Gray's binary? */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x3f, 0x1f, IPT_AD_STICK_X ) PORT_MINMAX(0x01,0x3e) PORT_SENSITIVITY(25) PORT_KEYDELTA(10) /* 6 bit horiz encoder - Gray's binary? */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
-
-	PORT_START_TAG("IN2")
-	PORT_DIPNAME( 0x03, 0x00, "# Cans" )
-	PORT_DIPSETTING(    0x03, "10" )
-	PORT_DIPSETTING(    0x02, "15" )
-	PORT_DIPSETTING(    0x01, "20" )
-	PORT_DIPSETTING(    0x00, "25" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_2C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x10, 0x00, "Extended Play" )
-	PORT_DIPSETTING(    0x10, "3 extra cans" )
-	PORT_DIPSETTING(    0x00, "5 extra cans" )
-	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0xc0, 0x00, "Extended Play" )
-	PORT_DIPSETTING(    0xc0, "150 Pts" )
-	PORT_DIPSETTING(    0x80, "175 Pts" )
-	PORT_DIPSETTING(    0x40, "225 Pts" )
-	PORT_DIPSETTING(    0x00, "275 Pts" )
-INPUT_PORTS_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "4 Player Bowling"                           */
-/*                                                     */
-/*******************************************************/
-
-static ADDRESS_MAP_START( bowler_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x01, 0x01) AM_READ(c8080bw_shift_data_comp_r)
-	AM_RANGE(0x02, 0x02) AM_READ(input_port_0_r)				/* dip switch */
-	AM_RANGE(0x04, 0x04) AM_READ(input_port_1_r)				/* coins / switches */
-	AM_RANGE(0x05, 0x05) AM_READ(input_port_2_r)				/* ball vert */
-	AM_RANGE(0x06, 0x06) AM_READ(input_port_3_r)				/* ball horz */
-ADDRESS_MAP_END
-
-INPUT_PORTS_START( bowler )
-	PORT_START_TAG("IN2")
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( French ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( German ) )
-  	PORT_DIPSETTING(    0x03, DEF_STR( German ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )				/* Every 17 minutes */
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Game_Time ) )
-	PORT_DIPSETTING(    0x00, "No Limit" )
-	PORT_DIPSETTING(    0x08, "5 Min" )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Test ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-
-	PORT_START_TAG("IN4")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-	PORT_START_TAG("IN5")
-	PORT_BIT( 0xff, 0, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(10) PORT_KEYDELTA(10) PORT_REVERSE
-
-	PORT_START_TAG("IN6")
-	PORT_BIT( 0xff, 0, IPT_TRACKBALL_X ) PORT_SENSITIVITY(10) PORT_KEYDELTA(10)
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( bowler )
-
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_IO_MAP(bowler_readport,writeport_1_2)
-	MDRV_MACHINE_RESET(bowler)
-
-	/* video hardware */
-	MDRV_SCREEN_SIZE(35*8, 32*8)	/* Extra 3 lines for the bonus display */
-	MDRV_VISIBLE_AREA(0*8, 35*8-1, 4*8, 32*8-1)
-
-	/* sound hardware */
-MACHINE_DRIVER_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Shuffleboard"                               */
-/*                                                     */
-/*******************************************************/
-
-static ADDRESS_MAP_START( shuffle_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x01, 0x01) AM_READ(c8080bw_shift_data_r)
-	AM_RANGE(0x02, 0x02) AM_READ(input_port_0_r)				/* dip switch */
-	AM_RANGE(0x04, 0x04) AM_READ(input_port_1_r)				/* coins / switches */
-	AM_RANGE(0x05, 0x05) AM_READ(input_port_2_r)				/* ball vert */
-	AM_RANGE(0x06, 0x06) AM_READ(input_port_3_r)				/* ball horz */
-ADDRESS_MAP_END
-
-INPUT_PORTS_START( shuffle )
-	PORT_START_TAG("DSW0")
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Language ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( French ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( German ) )
-  /*PORT_DIPSETTING(    0x03, DEF_STR( German ) )*/
-	PORT_DIPNAME( 0x0c, 0x04, "Points to Win" )
-	PORT_DIPSETTING(    0x00, "25" )
-	PORT_DIPSETTING(    0x04, "35" )
-	PORT_DIPSETTING(    0x08, "40" )
-	PORT_DIPSETTING(    0x0c, "50" )
-	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x30, "2 Coins/1 Player  4 Coins/2 Players" )
-	PORT_DIPSETTING(    0x20, "2 Coins/1 or 2 Players" )
-	PORT_DIPSETTING(    0x10, "1 Coin/1 Player  2 Coins/2 Players" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 or 2 Players" )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )	/* time limit? */
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1  )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1) PORT_NAME("Game Select")
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START_TAG("IN2")
-	PORT_BIT( 0xff, 0, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(10) PORT_KEYDELTA(10)
-
-	PORT_START_TAG("IN3")
-	PORT_BIT( 0xff, 0, IPT_TRACKBALL_X ) PORT_SENSITIVITY(10) PORT_KEYDELTA(10) PORT_REVERSE
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( shuffle )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_IO_MAP(shuffle_readport,writeport_1_2)
-
-	/* sound hardware */
-MACHINE_DRIVER_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Sea Wolf"                                   */
-/*                                                     */
-/*******************************************************/
-
-static ADDRESS_MAP_START( seawolf_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_READ(c8080bw_shift_data_rev_r)
-	AM_RANGE(0x01, 0x01) AM_READ(input_port_0_r)
-	AM_RANGE(0x02, 0x02) AM_READ(input_port_1_r)
-	AM_RANGE(0x03, 0x03) AM_READ(c8080bw_shift_data_r)
-ADDRESS_MAP_END
-
-INPUT_PORTS_START( seawolf )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x1f, 0x01, IPT_PADDLE ) PORT_MINMAX(0,0x1f) PORT_SENSITIVITY(20) PORT_KEYDELTA(5) PORT_CENTERDELTA(0)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_DIPNAME( 0xc0, 0x00, "Time" )
-	PORT_DIPSETTING(    0x00, "61" )
-	PORT_DIPSETTING(    0x40, "71" )
-	PORT_DIPSETTING(    0x80, "81" )
-	PORT_DIPSETTING(    0xc0, "91" )
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_TILT ) // Reset High Scores
-	PORT_DIPNAME( 0xe0, 0x20, "Extended Play" )
-	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
-	PORT_DIPSETTING(    0x20, "2000" )
-	PORT_DIPSETTING(    0x40, "3000" )
-	PORT_DIPSETTING(    0x60, "4000" )
-	PORT_DIPSETTING(    0x80, "5000" )
-	PORT_DIPSETTING(    0xa0, "6000" )
-	PORT_DIPSETTING(    0xc0, "7000" )
-	PORT_DIPSETTING(    0xe0, "Test Mode" )
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( seawolf )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_IO_MAP(seawolf_readport,writeport_4_3)
-	MDRV_MACHINE_RESET(seawolf)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(seawolf_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-MACHINE_DRIVER_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Blue Shark"                                 */
-/*                                                     */
-/*******************************************************/
-
-INPUT_PORTS_START( blueshrk )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x7f, 0x45, IPT_PADDLE ) PORT_MINMAX(0xf,0x7f) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_CENTERDELTA(0)
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x60, 0x20, "Replay" )
-	PORT_DIPSETTING(    0x20, "14000" )
-	PORT_DIPSETTING(    0x40, "18000" )
-	PORT_DIPSETTING(    0x60, "22000" )
-	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
-	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( blueshrk )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_IO_MAP(seawolf_readport,writeport_1_2)
-	MDRV_MACHINE_RESET(blueshrk)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-MACHINE_DRIVER_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Desert Gun"                                 */
-/*                                                     */
-/*******************************************************/
-
-INPUT_PORTS_START( desertgu )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x7f, 0x55, IPT_LIGHTGUN_X ) PORT_MINMAX(0xf,0x7f) PORT_SENSITIVITY(70) PORT_KEYDELTA(10)
-
-	PORT_START_TAG("IN1")
-	PORT_DIPNAME( 0x03, 0x00, "Time" )
-	PORT_DIPSETTING(    0x00, "40" )
-	PORT_DIPSETTING(    0x01, "50" )
-	PORT_DIPSETTING(    0x02, "60" )
-	PORT_DIPSETTING(    0x03, "70" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Language ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( German ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( French ) )
-	PORT_DIPSETTING(    0x0c, "Norwegian?" )
-	PORT_DIPNAME( 0x30, 0x00, "Extended Play" )
-	PORT_DIPSETTING(    0x00, "5000" )
-	PORT_DIPSETTING(    0x10, "7000" )
-	PORT_DIPSETTING(    0x20, "9000" )
-	PORT_DIPSETTING(    0x30, "Test Mode" )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
-
-	PORT_START_TAG("IN2")
-	PORT_BIT( 0x7f, 0x45, IPT_LIGHTGUN_Y ) PORT_MINMAX(0xf,0x7f) PORT_SENSITIVITY(70) PORT_KEYDELTA(10)
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( desertgu )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_IO_MAP(seawolf_readport,writeport_1_2)
-	MDRV_MACHINE_RESET(desertgu)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-MACHINE_DRIVER_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Extra Innings"                              */
-/*                                                     */
-/*******************************************************/
-
-/*
- * The cocktail version has independent bat, pitch, and field controls
- * while the upright version ties the pairs of inputs together through
- * jumpers in the wiring harness.
- */
-INPUT_PORTS_START( einnings )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2) PORT_NAME("P2 (Home) Bat")	/* home bat */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2) PORT_NAME("P2 (Home) Fielders Left")	/* home fielders left */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2) PORT_NAME("P2 (Home) Fielders Right")	/* home fielders right */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)	PORT_NAME("P2 (Home) Pitch Left")	/* home pitch left */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2) PORT_NAME("P2 (Home) Pitch Right")	/* home pitch right */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2) PORT_NAME("P2 (Home) Pitch Slow")			/* home pitch slow */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3) PORT_PLAYER(2) PORT_NAME("P2 (Home) Pitch Fast")			/* home pitch fast */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("P1 (Visitor) Bat")		/* visitor bat */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_NAME("P1 (Visitor) Fielders Left")	/* visitor fielders left */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )	PORT_NAME("P1 (Visitor) Fielders Right")/* visitor fielders right */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )	PORT_NAME("P1 (Visitor) Pitch Left")/* visitor pitch left */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )	PORT_NAME("P1 (Visitor) Pitch Right")/* visitor pitch right */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )		PORT_NAME("P1 (Visitor) Pitch Slow")/* visitor pitch slow */
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )		PORT_NAME("P1 (Visitor) Pitch Fast")/* visitor pitch fast */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
-
-	PORT_START_TAG("IN2")
-	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coinage ))
-	PORT_DIPSETTING(    0x02, "2C/1 In (1 or 2 Players)" )
-	PORT_DIPSETTING(    0x03, "2C/1 In 4C/3 In (1 or 2 Pls)" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Inning (1 or 2 Pls)" )
-	PORT_DIPSETTING(    0x01, "1C/1 In 2C/3 In (1 or 2 Pls)" )
-	PORT_DIPSETTING(    0x04, "1C/1Pl 2C/2Pl 4C/3Inn" )
-	PORT_DIPSETTING(    0x05, "2C/1Pl 4C/2Pl 8C/3Inn" )
-/* 0x06 and 0x07 same as 0x00 */
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-INPUT_PORTS_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Amazing Maze"                               */
-/*                                                     */
-/*******************************************************/
-
-INPUT_PORTS_START( maze )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(1)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1  )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
-
-	PORT_START_TAG("DSW0")
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-INPUT_PORTS_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Tornado Baseball"                           */
-/*                                                     */
-/*******************************************************/
-
-INPUT_PORTS_START( tornbase )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3) PORT_PLAYER(1)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3) PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(1)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(1)
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_PLAYER(1)
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("DSW0")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_DIPNAME( 0x78, 0x40, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x18, "4 Coins/1 Inning 32/9" )
-	PORT_DIPSETTING(    0x10, "3 Coins/1 Inning 24/9" )
-	PORT_DIPSETTING(    0x38, "4 Coins/2 Innings 16/9" )
-	PORT_DIPSETTING(    0x08, "2 Coins/1 Inning 16/9" )
-	PORT_DIPSETTING(    0x30, "3 Coins/2 Innings 12/9" )
-	PORT_DIPSETTING(    0x28, "2 Coins/2 Innings 8/9" )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 Inning 8/9" )
-	PORT_DIPSETTING(    0x58, "4 Coins/4 Innings 8/9" )
-	PORT_DIPSETTING(    0x50, "3 Coins/4 Innings 6/9" )
-	PORT_DIPSETTING(    0x48, "2 Coins/4 Innings 4/9" )
-	PORT_DIPSETTING(    0x20, "1 Coin/2 Innings 4/9" )
-	PORT_DIPSETTING(    0x40, "1 Coin/4 Innings 2/9" )
-	PORT_DIPSETTING(    0x78, "4 Coins/9 Innings" )
-	PORT_DIPSETTING(    0x70, "3 Coins/9 Innings" )
-	PORT_DIPSETTING(    0x68, "2 Coins/9 Innings" )
-	PORT_DIPSETTING(    0x60, "1 Coin/9 Innings" )
-	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
-INPUT_PORTS_END
-
-
-/*******************************************************/
-/*                                                     */
-/* Midway "Checkmate"                                  */
-/*                                                     */
-/*******************************************************/
-
-static ADDRESS_MAP_START( checkmat_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_READ(input_port_0_r)
-	AM_RANGE(0x01, 0x01) AM_READ(input_port_1_r)
-	AM_RANGE(0x02, 0x02) AM_READ(input_port_2_r)
-	AM_RANGE(0x03, 0x03) AM_READ(input_port_3_r)
-ADDRESS_MAP_END
-
-
-INPUT_PORTS_START( checkmat )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(1)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(3)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(3)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(3)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(3)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(4)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(4)
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(4)
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(4)
-
-	PORT_START_TAG("IN2")
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x00, "1 Coin/1 or 2 Players" )
-	PORT_DIPSETTING(    0x01, "1 Coin/1 to 4 Players" )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x00, "Rounds" )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x04, "3" )
-	PORT_DIPSETTING(    0x08, "4" )
-	PORT_DIPSETTING(    0x0c, "5" )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x60, 0x00, "Language?" )
-	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( German ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( French ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( Spanish ) )
-	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
-
-	PORT_START_TAG("IN3")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START3 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START4 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( checkmat )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(8080bw)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_IO_MAP(checkmat_readport,0)
-
-	/* sound hardware */
-MACHINE_DRIVER_END
 
 
 /*******************************************************/
@@ -3182,7 +1837,7 @@ INPUT_PORTS_START( ozmawars )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -3278,7 +1933,7 @@ INPUT_PORTS_START( sinvemag )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -3333,7 +1988,7 @@ INPUT_PORTS_START( jspecter )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -3380,7 +2035,7 @@ INPUT_PORTS_START( ballbomb )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -3396,14 +2051,11 @@ static MACHINE_DRIVER_START( ballbomb )
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(invadpt2)
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_IMPORT_FROM(invaders_sound)
 
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -3477,18 +2129,11 @@ static MACHINE_DRIVER_START( yosakdon )
 	MDRV_MACHINE_RESET(yosakdon)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_IMPORT_FROM(invaders_sound)
 
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(SN76477, 0)
-	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -3529,7 +2174,7 @@ INPUT_PORTS_START( indianbt )
 
 	PORT_START_TAG("DUMMY") /*  cabinet fake port  must be 4th  */
 
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_START_TAG("CAB")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
@@ -3591,18 +2236,15 @@ static MACHINE_DRIVER_START( indianbt )
 	MDRV_PALETTE_INIT(indianbt)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_IMPORT_FROM(invaders_sound)
 
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(indianbt_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
 MACHINE_DRIVER_END
 
 /*****************************************************
@@ -3691,20 +2333,13 @@ static MACHINE_DRIVER_START( shuttlei )
 	MDRV_MACHINE_RESET(shuttlei)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 24*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 0*8, 24*8-1)
 	MDRV_PALETTE_LENGTH(2)
 	MDRV_PALETTE_INIT(black_and_white)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_IMPORT_FROM(invaders_sound)
 
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(SN76477, 0)
-	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -3793,14 +2428,6 @@ static MACHINE_DRIVER_START( darthvdr )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 MACHINE_DRIVER_END
 
-
-ROM_START( invaders )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "invaders.h",   0x0000, 0x0800, CRC(734f5ad8) SHA1(ff6200af4c9110d8181249cbcef1a8a40fa40b7f) )
-	ROM_LOAD( "invaders.g",   0x0800, 0x0800, CRC(6bfaca4a) SHA1(16f48649b531bdef8c2d1446c429b5f414524350) )
-	ROM_LOAD( "invaders.f",   0x1000, 0x0800, CRC(0ccead96) SHA1(537aef03468f63c5b9e11dd61e253f7ae17d9743) )
-	ROM_LOAD( "invaders.e",   0x1800, 0x0800, CRC(14e538b0) SHA1(1d6ca0c99f9df71e2990b610deb9d7da0125e2d8) )
-ROM_END
 
 ROM_START( searthin )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )             /* 64k for code */
@@ -4039,16 +2666,6 @@ ROM_START( moonbase )
 	ROM_LOAD( "n01prm.6b",    0x0400, 0x0400, CRC(aac24f34) SHA1(ad110e776547fb48baac568bb50d61854537ca34) )
 ROM_END
 
-ROM_START( invad2ct )
-    ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-    ROM_LOAD( "invad2ct.h",   0x0000, 0x0800, CRC(51d02a71) SHA1(2fa82ddc2702a72de0a9559ec244b70ab3db3f18) )
-    ROM_LOAD( "invad2ct.g",   0x0800, 0x0800, CRC(533ac770) SHA1(edb65c289027432dad7861a7d6abbda9223c13b1) )
-    ROM_LOAD( "invad2ct.f",   0x1000, 0x0800, CRC(d1799f39) SHA1(f7f1ba34d57f9883241ba3ef90e34ed20dfb8003) )
-    ROM_LOAD( "invad2ct.e",   0x1800, 0x0800, CRC(291c1418) SHA1(0d9f7973ed81d28c43ef8b96f1180d6629871785) )
-    ROM_LOAD( "invad2ct.b",   0x5000, 0x0800, CRC(8d9a07c4) SHA1(4acbe15185d958b5589508dc0ea3a615fbe3bcca) )
-    ROM_LOAD( "invad2ct.a",   0x5800, 0x0800, CRC(efdabb03) SHA1(33f4cf249e88e2b7154350e54c479eb4fa86f26f) )
-ROM_END
-
 ROM_START( invrvnge )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "invrvnge.h",   0x0000, 0x0800, CRC(aca41bbb) SHA1(ca71f792abd6d9a44d15b19d2ccf678e82ccba4f) )
@@ -4257,14 +2874,6 @@ ROM_START( rollingc )
 	ROM_LOAD( "rc12.bin",     0x5800, 0x0800, CRC(2052f6d9) SHA1(036702fc40cf133eb374ed674695d7c6c79e8311) )
 ROM_END
 
-ROM_START( boothill )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "romh.cpu",     0x0000, 0x0800, CRC(1615d077) SHA1(e59a26c2f2fc67ab24301e22d2e3f33043acdf72) )
-	ROM_LOAD( "romg.cpu",     0x0800, 0x0800, CRC(65a90420) SHA1(9f36c44b5ae5b912cdbbeb9ff11a42221b8362d2) )
-	ROM_LOAD( "romf.cpu",     0x1000, 0x0800, CRC(3fdafd79) SHA1(b18e8ac9df40c4687ac1acd5174eb99f2ef60081) )
-	ROM_LOAD( "rome.cpu",     0x1800, 0x0800, CRC(374529f4) SHA1(18c57b79df0c66052eef40a694779a5ade15d0e0) )
-ROM_END
-
 ROM_START( schaser )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "rt13.bin",     0x0000, 0x0400, CRC(0dfbde68) SHA1(7367b138ad8448aba9222fed632a892df65cecbd) )
@@ -4309,72 +2918,6 @@ ROM_START( schasrcv )
 	ROM_LOAD( "cv02",         0x0400, 0x0400, CRC(8263da38) SHA1(2e7c769d129e6f8a1a31eba1e02777bb94ac32b2) )
 ROM_END
 
-ROM_START( spcenctr )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "4m33.cpu",     0x0000, 0x0800, CRC(7458b2db) SHA1(c4f41efb8a35fd8bebc75bff0111476affe2b34d) )
-	ROM_LOAD( "4m32.cpu",     0x0800, 0x0800, CRC(1b873788) SHA1(6cdf0d602a65c7efcf8abe149c6172b4c7ab87a1) )
-	ROM_LOAD( "4m31.cpu",     0x1000, 0x0800, CRC(d4319c91) SHA1(30830595c220f490fe150ad018fbf4671bb71e02) )
-	ROM_LOAD( "4m30.cpu",     0x1800, 0x0800, CRC(9b9a1a45) SHA1(8023a05c13e8b541f9e2fe4d389e6a2dcd4766ea) )
-	ROM_LOAD( "4m29.cpu",     0x4000, 0x0800, CRC(294d52ce) SHA1(0ee63413c5caf60d45ae8bef08f6c07099d30f79) )
-	ROM_LOAD( "4m28.cpu",     0x4800, 0x0800, CRC(ce44c923) SHA1(9d35908de3194c5fe6fc8495ae413fa722018744) )
-	ROM_LOAD( "4m27.cpu",     0x5000, 0x0800, CRC(098070ab) SHA1(72ae344591df0174353dc2e3d22daf5a70e2261f) )
-	ROM_LOAD( "4m26.cpu",     0x5800, 0x0800, CRC(7f1d1f44) SHA1(2f4951171a55e7ac072742fa24eceeee6aca7e39) )
-ROM_END
-
-ROM_START( clowns )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "h2.cpu",       0x0000, 0x0400, CRC(ff4432eb) SHA1(997aee1e3669daa1d8169b4e103d04baaab8ea8d) )
-	ROM_LOAD( "g2.cpu",       0x0400, 0x0400, CRC(676c934b) SHA1(72b681ca9ef23d820fdd297cc417932aecc9677b) )
-	ROM_LOAD( "f2.cpu",       0x0800, 0x0400, CRC(00757962) SHA1(ef39211493393e97284a08eea63be0757643ac88) )
-	ROM_LOAD( "e2.cpu",       0x0c00, 0x0400, CRC(9e506a36) SHA1(8aad486a72d148d8b03e7bec4c12abd14e425c5f) )
-	ROM_LOAD( "d2.cpu",       0x1000, 0x0400, CRC(d61b5b47) SHA1(6051c0a2e81d6e975e82c2d48d0e52dc0d4723e3) )
-	ROM_LOAD( "c2.cpu",       0x1400, 0x0400, CRC(154d129a) SHA1(61eebb319ee3a6be598b764b295c18a93a953c1e) )
-ROM_END
-
-ROM_START( clowns1 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "clownsv1.h",   0x0000, 0x0400, CRC(5560c951) SHA1(b6972e1918604263579de577ec58fa6a91e8ff3e) )
-	ROM_LOAD( "clownsv1.g",   0x0400, 0x0400, CRC(6a571d66) SHA1(e825f95863e901a1b648c74bb47098c8e74f179b) )
-	ROM_LOAD( "clownsv1.f",   0x0800, 0x0400, CRC(a2d56cea) SHA1(61bc07e6a24a1980216453b4dd2688695193a4ae) )
-	ROM_LOAD( "clownsv1.e",   0x0c00, 0x0400, CRC(bbd606f6) SHA1(1cbaa21d9834c8d76cf335fd118851591e815c86) )
-	ROM_LOAD( "clownsv1.d",   0x1000, 0x0400, CRC(37b6ff0e) SHA1(bf83bebb6c14b3663ca86a180f9ae3cddb84e571) )
-	ROM_LOAD( "clownsv1.c",   0x1400, 0x0400, CRC(12968e52) SHA1(71e4f09d30b992a4ac44b0e88e83b4f8a0f63caa) )
-ROM_END
-
-ROM_START( gmissile )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "gm_623.h",     0x0000, 0x0800, CRC(a3ebb792) SHA1(30d9613de849c1a868056c5e28cf2a8608b63e88) )
-	ROM_LOAD( "gm_623.g",     0x0800, 0x0800, CRC(a5e740bb) SHA1(963c0984953eb58fe7eab84fabb724ec6e29e706) )
-	ROM_LOAD( "gm_623.f",     0x1000, 0x0800, CRC(da381025) SHA1(c9d0511567ed571b424459896ce7de0326850388) )
-	ROM_LOAD( "gm_623.e",     0x1800, 0x0800, CRC(f350146b) SHA1(a07000a979b1a735754eca623cc880988924877f) )
-ROM_END
-
-ROM_START( seawolf )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "sw0041.h",     0x0000, 0x0400, CRC(8f597323) SHA1(b538277d3a633dd8a3179cff202f18d322e6fe17) )
-	ROM_LOAD( "sw0042.g",     0x0400, 0x0400, CRC(db980974) SHA1(cc2a99b18695f61e0540c9f6bf8fe3b391dde4a0) )
-	ROM_LOAD( "sw0043.f",     0x0800, 0x0400, CRC(e6ffa008) SHA1(385198434b08fe4651ad2c920d44fb49cfe0bc33) )
-	ROM_LOAD( "sw0044.e",     0x0c00, 0x0400, CRC(c3557d6a) SHA1(bd345dd72fed8ce15da76c381782b025f71b006f) )
-ROM_END
-
-ROM_START( gunfight )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "7609h.bin",    0x0000, 0x0400, CRC(0b117d73) SHA1(99d01313e251818d336281700e206d9003c71dae) )
-	ROM_LOAD( "7609g.bin",    0x0400, 0x0400, CRC(57bc3159) SHA1(c177e3f72db9af17ab99b2481448ca26318184b9) )
-	ROM_LOAD( "7609f.bin",    0x0800, 0x0400, CRC(8049a6bd) SHA1(215b068663e431582591001cbe028929fa96d49f) )
-	ROM_LOAD( "7609e.bin",    0x0c00, 0x0400, CRC(773264e2) SHA1(de3f2e6841122bbe6e2fda5b87d37842c072289a) )
-ROM_END
-
-ROM_START( 280zzzap )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "zzzaph",       0x0000, 0x0400, CRC(1fa86e1c) SHA1(b9cf16eb037ada73631ed24297e9e3b3bf6ab3cd) )
-	ROM_LOAD( "zzzapg",       0x0400, 0x0400, CRC(9639bc6b) SHA1(b2e2497e421e79a411d07ebf2eed2bb8dc227003) )
-	ROM_LOAD( "zzzapf",       0x0800, 0x0400, CRC(adc6ede1) SHA1(206bf2575696c4b14437f3db37a215ba33211943) )
-	ROM_LOAD( "zzzape",       0x0c00, 0x0400, CRC(472493d6) SHA1(ae5cf4481ee4b78ca0d2f4d560d295e922aa04a7) )
-	ROM_LOAD( "zzzapd",       0x1000, 0x0400, CRC(4c240ee1) SHA1(972475f80253bb0d24773a10aec26a12f28e7c23) )
-	ROM_LOAD( "zzzapc",       0x1400, 0x0400, CRC(6e85aeaf) SHA1(ffa6bb84ef1f7c2d72fd26c24bd33aa014aeab7e) )
-ROM_END
-
 ROM_START( lupin3 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "lp12.bin",     0x0000, 0x0800, CRC(68a7f47a) SHA1(dce99b3810331d7603fa468f1dea984e571f709b) )
@@ -4417,111 +2960,6 @@ ROM_START( polarisa )
 
 	ROM_REGION( 0x0100, REGION_USER1, 0 )		/* cloud graphics */
 	ROM_LOAD( "mb7052.2c",    0x0000, 0x0100, CRC(2953253b) SHA1(2fb851bc9652ca4e51d473b484ede6dab05f1b51) )
-ROM_END
-
-ROM_START( lagunar )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "lagunar.h",    0x0000, 0x0800, CRC(0cd5a280) SHA1(89a744c912070f11b0b90b0cc92061e238b00b64) )
-	ROM_LOAD( "lagunar.g",    0x0800, 0x0800, CRC(824cd6f5) SHA1(a74f6983787cf040eab6f19de2669c019962b9cb) )
-	ROM_LOAD( "lagunar.f",    0x1000, 0x0800, CRC(62692ca7) SHA1(d62051bd1b45ca6e60df83942ff26a64ae25a97b) )
-	ROM_LOAD( "lagunar.e",    0x1800, 0x0800, CRC(20e098ed) SHA1(e0c52c013f5e93794b363d7762ce0f34ba98c660) )
-ROM_END
-
-ROM_START( m4 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "m4.h",         0x0000, 0x0800, CRC(9ee2a0b5) SHA1(b81b4001c90ac6db25edd838652c42913022d9a9) )
-	ROM_LOAD( "m4.g",         0x0800, 0x0800, CRC(0e84b9cb) SHA1(a7b74851979aaaa16496e506c487a18df14ab6dc) )
-	ROM_LOAD( "m4.f",         0x1000, 0x0800, CRC(9ded9956) SHA1(449204a50efd3345cde815ca5f1fb596843a30ac) )
-	ROM_LOAD( "m4.e",         0x1800, 0x0800, CRC(b6983238) SHA1(3f3b99b33135e144c111d2ebaac8f9433c269bc5) )
-ROM_END
-
-ROM_START( phantom2 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "phantom2.h",   0x0000, 0x0800, CRC(0e3c2439) SHA1(450182e590845c651530b2c84e1f11fe2451dcf6) )
-	ROM_LOAD( "phantom2.g",   0x0800, 0x0800, CRC(e8df3e52) SHA1(833925e44e686df4d4056bce4c0ffae3269d57df) )
-	ROM_LOAD( "phantom2.f",   0x1000, 0x0800, CRC(30e83c6d) SHA1(fe34a3e4519a7e5ffe66e76fe974049988656b71) )
-	ROM_LOAD( "phantom2.e",   0x1800, 0x0800, CRC(8c641cac) SHA1(c4986daacb7ed9efed59b022c6101240b0eddcdc) )
-
-	ROM_REGION( 0x0800, REGION_PROMS, 0 )	   /* cloud graphics */
-	ROM_LOAD( "p2clouds",     0x0000, 0x0800, CRC(dcdd2927) SHA1(d8d42c6594e36c12b40ee6342a9ad01a8bbdef75) )
-ROM_END
-
-ROM_START( dogpatch )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "dogpatch.h",   0x0000, 0x0800, CRC(74ebdf4d) SHA1(6b31f9563b0f79fe9128ee83e85a3e2f90d7985b) )
-	ROM_LOAD( "dogpatch.g",   0x0800, 0x0800, CRC(ac246f70) SHA1(7ee356c3218558a78ee0ff495f9f51ef88cac951) )
-	ROM_LOAD( "dogpatch.f",   0x1000, 0x0800, CRC(a975b011) SHA1(fb807d9eefde7177d7fd7ab06fc2dbdc58ae6fcb) )
-	ROM_LOAD( "dogpatch.e",   0x1800, 0x0800, CRC(c12b1f60) SHA1(f0504e16d2ce60a0fb3fc2af8c323bfca0143818) )
-ROM_END
-
-ROM_START( bowler )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "h.cpu",        0x0000, 0x0800, CRC(74c29b93) SHA1(9cbd5b7b8a4c889406b6bc065360f74c036320b2) )
-	ROM_LOAD( "g.cpu",        0x0800, 0x0800, CRC(ca26d8b4) SHA1(cf18991cde8044a961cf556f18c6eb60a7ade595) )
-	ROM_LOAD( "f.cpu",        0x1000, 0x0800, CRC(ba8a0bfa) SHA1(bb017ddac58d031b249596b70ab1068cd1bad499) )
-	ROM_LOAD( "e.cpu",        0x1800, 0x0800, CRC(4da65a40) SHA1(7795d59870fa722da89888e72152145662554080) )
-	ROM_LOAD( "d.cpu",        0x4000, 0x0800, CRC(e7dbc9d9) SHA1(05049a69ee588de85db86df188e7670778b77e90) )
-ROM_END
-
-ROM_START( shuffle )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "shuffle.h",    0x0000, 0x0800, CRC(0d422a18) SHA1(909c5b9e3c1194abd101cbf993a2ed7c8fbeb5d0) )
-	ROM_LOAD( "shuffle.g",    0x0800, 0x0800, CRC(7db7fcf9) SHA1(f41b568f2340e5307a7a45658946cfd4cf4056bf) )
-	ROM_LOAD( "shuffle.f",    0x1000, 0x0800, CRC(cd04d848) SHA1(f0f7e9bc483f08934d5c29568b4a7fe084623031) )
-	ROM_LOAD( "shuffle.e",    0x1800, 0x0800, CRC(2c118357) SHA1(178db02aaa70963dd8dbcb9b8651209913c539af) )
-ROM_END
-
-ROM_START( blueshrk )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "blueshrk.h",   0x0000, 0x0800, CRC(4ff94187) SHA1(7cb80e2ccc34983bfd688c549ffc032d6dacf880) )
-	ROM_LOAD( "blueshrk.g",   0x0800, 0x0800, CRC(e49368fd) SHA1(2495ba48532bb714361e4f0e94c9317161c6c77f) )
-	ROM_LOAD( "blueshrk.f",   0x1000, 0x0800, CRC(86cca79d) SHA1(7b4633fb8033ee2c0e692135c383ebf57deef0e5) )
-ROM_END
-
-ROM_START( einnings )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "ei.h",         0x0000, 0x0800, CRC(eff9c7af) SHA1(316fffc972bd9935ead5ee4fd629bddc8a8ed5ce) )
-	ROM_LOAD( "ei.g",         0x0800, 0x0800, CRC(5d1e66cb) SHA1(a5475362e12b7c251a05d67c2fd070cf7d333ad0) )
-	ROM_LOAD( "ei.f",         0x1000, 0x0800, CRC(ed96785d) SHA1(d5557620227fcf6f30dcf6c8f5edd760d77d30ae) )
-	ROM_LOAD( "ei.e",         0x1800, 0x0800, CRC(ad096a5d) SHA1(81d48302a0e039b8601a6aed7276e966592af693) )
-	ROM_LOAD( "ei.b",         0x5000, 0x0800, CRC(56b407d4) SHA1(95e4be5b2f28192df85c6118079de2e68838b67c) )
-ROM_END
-
-ROM_START( dplay )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "dplay619.h",   0x0000, 0x0800, CRC(6680669b) SHA1(49ad2333f81613c2f27231de60b415cbc254546a) )
-	ROM_LOAD( "dplay619.g",   0x0800, 0x0800, CRC(0eec7e01) SHA1(2661e77061119d7d95d498807bd29d2630c6b6ab) )
-	ROM_LOAD( "dplay619.f",   0x1000, 0x0800, CRC(3af4b719) SHA1(3122138ac36b1a129226836ddf1916d763d73e10) )
-	ROM_LOAD( "dplay619.e",   0x1800, 0x0800, CRC(65cab4fc) SHA1(1ce7cb832e95e4a6d0005bf730eec39225b2e960) )
-ROM_END
-
-ROM_START( maze )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "invaders.h",   0x0000, 0x0800, CRC(f2860cff) SHA1(62b3fd3d04bf9c5dd9b50964374fb884dc0ab79c) )
-	ROM_LOAD( "invaders.g",   0x0800, 0x0800, CRC(65fad839) SHA1(893f0a7621e7df19f777be991faff0db4a9ad571) )
-ROM_END
-
-ROM_START( tornbase )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "tb.h",         0x0000, 0x0800, CRC(653f4797) SHA1(feb4c802aa3e0c2a66823cd032496cca5742c883) )
-	ROM_LOAD( "tb.g",         0x0800, 0x0800, CRC(b63dcdb3) SHA1(bdaa0985bcb5257204ee10faa11a4e02a38b9ac5) )
-	ROM_LOAD( "tb.f",         0x1000, 0x0800, CRC(215e070c) SHA1(425915b37e5315f9216707de0850290145f69a30) )
-ROM_END
-
-ROM_START( checkmat )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "checkmat.h",   0x0000, 0x0400, CRC(3481a6d1) SHA1(f758599d6393398a6a8e6e7399dc1a3862604f65) )
-	ROM_LOAD( "checkmat.g",   0x0400, 0x0400, CRC(df5fa551) SHA1(484ff9bfb95166ba09f34c753a7908a73de3cc7d) )
-	ROM_LOAD( "checkmat.f",   0x0800, 0x0400, CRC(25586406) SHA1(39e0cf502735819a7e1d933e3686945fcfae21af) )
-	ROM_LOAD( "checkmat.e",   0x0c00, 0x0400, CRC(59330d84) SHA1(453f95dd31968d439339c41e625481170437eb0f) )
-ROM_END
-
-ROM_START( desertgu )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "desertgu.h",   0x0000, 0x0800, CRC(c0030d7c) SHA1(4d0a3a59d4f8181c6e30966a6b1d19ba5b29c398) )
-	ROM_LOAD( "desertgu.g",   0x0800, 0x0800, CRC(1ddde10b) SHA1(8fb8e85844a8ec6c0722883013ecdd4eeaeb08c1) )
-	ROM_LOAD( "desertgu.f",   0x1000, 0x0800, CRC(808e46f1) SHA1(1cc4e9b0aa7e9546c133bd40d40ede6f2fbe93ba) )
-	ROM_LOAD( "desertgu.e",   0x1800, 0x0800, CRC(ac64dc62) SHA1(202433dfb174901bd3b91e843d9d697a8333ef9e) )
 ROM_END
 
 ROM_START( ozmawars )
@@ -4667,44 +3105,18 @@ ROM_START( darthvdr )
 ROM_END
 
 
-/* Midway games */
 
-/* board #            rom       parent    machine   inp       init (overlay/color hardware setup) */
 
-/* 596 */ GAME( 1976, seawolf,  0,        seawolf,  seawolf,  seawolf,  ROT0,   "Midway", "Sea Wolf", GAME_IMPERFECT_SOUND )
-/* 597 */ GAMEL(1975, gunfight, 0,        gunfight, gunfight, 8080bw,   ROT0,   "Midway", "Gun Fight", GAME_IMPERFECT_SOUND, layout_hoffff20 )
-/* 605 */ GAME( 1976, tornbase, 0,        8080bw,   tornbase, 8080bw,	ROT0,   "Midway", "Tornado Baseball", GAME_NO_SOUND )
-/* 610 */ GAME( 1976, 280zzzap, 0,        280zzzap, 280zzzap, 8080bw,	ROT0,   "Midway", "Datsun 280 Zzzap", GAME_IMPERFECT_SOUND )
-/* 611 */ GAMEL(1976, maze,     0,        8080bw,   maze,     8080bw,	ROT0,   "Midway", "Amazing Maze", GAME_NO_SOUND, layout_ho4f893d )
-/* 612 */ GAME( 1977, boothill, 0,        boothill, boothill, 8080bw,   ROT0,   "Midway", "Boot Hill" , GAME_IMPERFECT_SOUND )
-/* 615 */ GAME( 1977, checkmat, 0,        checkmat, checkmat, 8080bw,	ROT0,   "Midway", "Checkmate", GAME_NO_SOUND )
-/* 618 */ GAME( 1977, desertgu, 0,        desertgu, desertgu, desertgu,	ROT0,   "Midway", "Desert Gun", GAME_IMPERFECT_SOUND )
-/* 619 */ GAME( 1977, dplay,    einnings, m4,       einnings, 8080bw,	ROT0,   "Midway", "Double Play", GAME_NO_SOUND )
-/* 622 */ GAME( 1977, lagunar,  0,        280zzzap, lagunar,  8080bw,   ROT90,  "Midway", "Laguna Racer", GAME_IMPERFECT_SOUND )
-/* 623 */ GAME( 1977, gmissile, 0,        gmissile, gmissile, 8080bw,   ROT0,   "Midway", "Guided Missile", GAME_IMPERFECT_SOUND )
-/* 626 */ GAME( 1977, m4,       0,        m4,       m4,       8080bw,   ROT0,   "Midway", "M-4", GAME_IMPERFECT_SOUND )
-/* 630 */ GAMEL(1978, clowns,   0,        clowns,   clowns,   8080bw,   ROT0,   "Midway", "Clowns (rev. 2)", GAME_IMPERFECT_SOUND, layout_clowns )
-/* 630 */ GAMEL(1978, clowns1,  clowns,   clowns,   clowns1,  8080bw,   ROT0,   "Midway", "Clowns (rev. 1)", GAME_IMPERFECT_SOUND, layout_clowns )
-/* 640                                                                          "Midway", "Space Walk" */
-/* 642 */ GAME( 1978, einnings, 0,        m4,       einnings, 8080bw,	ROT0,   "Midway", "Extra Inning", GAME_NO_SOUND )
-/* 643 */ GAME( 1978, shuffle,  0,        shuffle,  shuffle,  8080bw,	ROT90,  "Midway", "Shuffleboard", GAME_NO_SOUND )
-/* 644 */ GAME( 1977, dogpatch, 0,        clowns,   dogpatch, 8080bw,   ROT0,   "Midway", "Dog Patch", GAME_IMPERFECT_SOUND )
-/* 645 */ GAME( 1980, spcenctr, 0,        spcenctr, spcenctr, 8080bw,	ROT0,   "Midway", "Space Encounters", GAME_IMPERFECT_SOUND )
-/* 652 */ GAMEL(1979, phantom2, 0,        phantom2, phantom2, phantom2, ROT0,   "Midway", "Phantom II", GAME_IMPERFECT_SOUND, layout_hoa0a0ff )
-/* 730 */ GAME( 1978, bowler,   0,        bowler,   bowler,   bowler,	ROT90,  "Midway", "4 Player Bowling Alley", GAME_NO_SOUND | GAME_NO_COCKTAIL )
-/* 739 */ GAMEL(1978, invaders, 0,        invaders, invaders, 8080bw,   ROT270, "Midway", "Space Invaders", 0, layout_invaders )
-/* 742 */ GAME( 1978, blueshrk, 0,        blueshrk, blueshrk, blueshrk, ROT0,   "Midway", "Blue Shark", GAME_IMPERFECT_SOUND )
-/* 749                                                                          "Midway", "4 Player Bowling Alley (cocktail) "*/
-/* 851 */ GAMEL(1980, invad2ct, 0,        invad2ct, invad2ct, 8080bw,   ROT90,  "Midway", "Space Invaders II (Midway, cocktail)", 0, layout_invad2ct )
-/* 852 */ GAME( 1980, invaddlx, invadpt2, invaders, invadpt2, invaddlx, ROT270, "Midway", "Space Invaders Deluxe", 0 )
-/* 870                                                                          "Midway", "Space Invaders Deluxe (cocktail) "*/
+MACHINE_DRIVER_EXTERN(invaders);  // Once removed, add back 'static' to driver in mw8080bw.c
+extern const char layout_invaders[];
+
+/* board #        rom       parent    machine   inp       init (overlay/color hardware setup) */
 
 /* Taito games */
-
 	  GAMEL(1978, sitv,     invaders, invaders, sitv,     8080bw,   ROT270, "Taito", "Space Invaders (TV Version)", 0, layout_invaders )
-	  GAME( 1979, sicv,     invaders, invadpt2, invaders, invadpt2, ROT270, "Taito", "Space Invaders (CV Version)", 0 )
-	  GAME( 1978, sisv,     invaders, invadpt2, invaders, invadpt2, ROT270, "Taito", "Space Invaders (SV Version)", 0 )
-	  GAME( 1978, sisv2,    invaders, invadpt2, invaders, invadpt2, ROT270, "Taito", "Space Invaders (SV Version 2)", 0 )
+	  GAME( 1979, sicv,     invaders, invadpt2, sicv,     invadpt2, ROT270, "Taito", "Space Invaders (CV Version)", 0 )
+	  GAME( 1978, sisv,     invaders, invadpt2, sicv,     invadpt2, ROT270, "Taito", "Space Invaders (SV Version)", 0 )
+	  GAME( 1978, sisv2,    invaders, invadpt2, sicv,     invadpt2, ROT270, "Taito", "Space Invaders (SV Version 2)", 0 )
 	  GAMEL(1979, galxwars, 0,        invaders, galxwars, 8080bw,   ROT270, "Universal", "Galaxy Wars (Universal set 1)", 0, layout_invaders )
 	  GAMEL(1979, galxwar2, galxwars, invaders, galxwars, 8080bw,   ROT270, "Universal", "Galaxy Wars (Universal set 2)", 0, layout_invaders )
 	  GAMEL(1979, galxwart, galxwars, invaders, galxwars, 8080bw,   ROT270,	"Taito?", "Galaxy Wars (Taito?)" , 0, layout_invaders) /* Copyright Not Displayed */
@@ -4714,6 +3126,7 @@ ROM_END
 	  GAME( 1979, grescue,  lrescue,  lrescue,  lrescue,  invadpt2, ROT270, "Taito (Universal license?)", "Galaxy Rescue", 0 )
 	  GAME( 1979, desterth, lrescue,  lrescue,  invrvnge, invadpt2, ROT270, "bootleg", "Destination Earth", 0 )
 	  GAME( 1979, invadpt2, 0,        invadpt2, invadpt2, invadpt2, ROT270, "Taito", "Space Invaders Part II (Taito)", 0 )
+      GAME( 1980, invaddlx, invadpt2, invaders, invadpt2, invaddlx, ROT270, "Midway", "Space Invaders Deluxe", 0 )
 	  GAME( 1979, cosmo,    0,        cosmo,    cosmo,    cosmo,    ROT90,  "TDS & Mints", "Cosmo", GAME_IMPERFECT_SOUND )
 	  GAME( 1979, schaser,  0,        schaser,  schaser,  schaser,  ROT270, "Taito", "Space Chaser", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_COLORS )
 	  GAME( 1979, schasrcv, schaser,  schasrcv, schasrcv, schasrcv, ROT270, "Taito", "Space Chaser (CV version)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_COLORS )
@@ -4729,24 +3142,24 @@ ROM_END
 	  GAMEL(1980, searthin, invaders, invaders, earthinv, 8080bw,   ROT270, "bootleg", "Super Earth Invasion (set 1)", 0, layout_invaders )
 	  GAMEL(1980, searthia, invaders, invaders, earthinv, 8080bw,   ROT270, "bootleg", "Super Earth Invasion (set 2)", 0, layout_invaders )
 	  GAMEL(1978, invadrmr, invaders, invaders, invadrmr, 8080bw,   ROT270, "Model Racing", "Space Invaders (Model Racing)", 0, layout_invaders )
-	  GAMEL(1978, spaceatt, invaders, invaders, invaders, 8080bw,   ROT270, "Video Games GMBH", "Space Attack", 0, layout_invaders )
+	  GAMEL(1978, spaceatt, invaders, invaders, sicv,     8080bw,   ROT270, "Video Games GMBH", "Space Attack", 0, layout_invaders )
 	  GAMEL(1980, spaceat2, invaders, invaders, spaceatt, 8080bw,   ROT270, "Zenitone-Microsec Ltd", "Space Attack II", 0, layout_invaders )
 	  GAMEL(19??, sinvzen,  invaders, invaders, spaceatt, 8080bw,   ROT270, "Zenitone-Microsec Ltd", "Super Invaders (Zenitone-Microsec)", 0, layout_invaders )
 	  GAMEL(19??, sinvemag, invaders, invaders, sinvemag, 8080bw,   ROT270, "bootleg", "Super Invaders (EMAG)", 0, layout_invaders )
-	  GAMEL(19??, tst_invd, invaders, invaders, invaders, 8080bw,   ROT0,   "Test ROM", "Space Invaders Test ROM", 0, layout_invaders )
+	  GAMEL(19??, tst_invd, invaders, invaders, sicv,     8080bw,   ROT0,   "Test ROM", "Space Invaders Test ROM", 0, layout_invaders )
 	  GAMEL(19??, alieninv, invaders, invaders, earthinv, 8080bw,   ROT270, "bootleg", "Alien Invasion Part II", 0, layout_invaders )
-	  GAMEL(1978, spceking, invaders, invaders, invaders, 8080bw,   ROT270, "Leijac (Konami)","Space King", 0, layout_invaders )
+	  GAMEL(1978, spceking, invaders, invaders, sicv,     8080bw,   ROT270, "Leijac (Konami)","Space King", 0, layout_invaders )
 	  GAMEL(1978, spcewars, invaders, spcewars, spcewars, 8080bw,   ROT270, "Sanritsu", "Space War (Sanritsu)", 0, layout_invaders )
-	  GAMEL(1978, spacewr3, invaders, spcewars, spcewars, 8080bw,   ROT270, "bootleg", "Space War Part 3", 0, layout_invaders )
-	  GAMEL(1978, invaderl, invaders, invaders, invaders, 8080bw,   ROT270, "bootleg", "Space Invaders (Logitec)", 0, layout_invaders )
-	  GAMEL(1978, invader4, invaders, invaders, invaders, 8080bw,   ROT270, "bootleg", "Space Invaders Part Four", 0, layout_invaders )
+	  GAMEL(1978, spacewr3, invaders, spcewars, sicv,     8080bw,   ROT270, "bootleg", "Space War Part 3", 0, layout_invaders )
+	  GAMEL(1978, invaderl, invaders, invaders, sicv,     8080bw,   ROT270, "bootleg", "Space Invaders (Logitec)", 0, layout_invaders )
+	  GAMEL(1978, invader4, invaders, invaders, sicv,     8080bw,   ROT270, "bootleg", "Space Invaders Part Four", 0, layout_invaders )
 	  GAMEL(1979, jspecter, invaders, invaders, jspecter, 8080bw,   ROT270, "Jatre", "Jatre Specter (set 1)", 0, layout_invaders )
 	  GAMEL(1979, jspectr2, invaders, invaders, jspecter, 8080bw,   ROT270, "Jatre", "Jatre Specter (set 2)", 0, layout_invaders )
 	  GAMEL(1979, cosmicmo, invaders, invaders, cosmicmo, 8080bw,   ROT270, "Universal", "Cosmic Monsters", 0, layout_invaders )
 	  GAMEL(1979, cosmicm2, invaders, invaders, cosmicmo, 8080bw,   ROT270, "Universal", "Cosmic Monsters 2", 0, layout_invaders )
 	  GAMEL(19??, superinv, invaders, invaders, superinv, 8080bw,   ROT270, "bootleg", "Super Invaders", 0, layout_invaders )
 	  GAMEL(19??, invasion, invaders, invaders, invasion, 8080bw,   ROT270, "Sidam", "Invasion", 0, layout_invaders )
-	  GAME( 1978, sstrangr, 0,	  sstrangr, sstrangr, 8080bw,   ROT270,	"Yachiyo Electronics, Ltd.", "Space Stranger", 0 )
+	  GAME( 1978, sstrangr, 0,	      sstrangr, sstrangr, 8080bw,   ROT270,	"Yachiyo Electronics, Ltd.", "Space Stranger", 0 )
 	  GAME( 1979, sstrngr2, 0,        sstrngr2, sstrngr2, sstrngr2, ROT270, "Yachiyo Electronics, Ltd.", "Space Stranger 2", 0 )
 	  GAME( 1979, moonbase, invadpt2, invadpt2, invadpt2, invadpt2, ROT270, "Nichibutsu", "Moon Base", 0 )
 	  GAMEL(19??, invrvnge, 0,        invrvnge, invrvnge, 8080bw,   ROT270, "Zenitone-Microsec Ltd.", "Invader's Revenge",  GAME_IMPERFECT_SOUND, layout_invrvnge )

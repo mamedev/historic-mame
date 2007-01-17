@@ -291,10 +291,6 @@ VIDEO_UPDATE( bbuster )
 	draw_sprites(bitmap,buffered_spriteram16_2,2,0,0);
 	draw_sprites(bitmap,buffered_spriteram16,1,0,0);
 	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
-
-	draw_crosshair(bitmap,readinputport(6),readinputport(5),cliprect,0);
-	draw_crosshair(bitmap,readinputport(8),readinputport(7),cliprect,1);
-	draw_crosshair(bitmap,readinputport(10),readinputport(9),cliprect,2);
 	return 0;
 }
 
@@ -309,8 +305,5 @@ VIDEO_UPDATE( mechatt )
 	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 	draw_sprites(bitmap,buffered_spriteram16,1,0,0);
 	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
-
-	draw_crosshair(bitmap,readinputport(2),readinputport(3),cliprect,0);
-	draw_crosshair(bitmap,readinputport(4),readinputport(5),cliprect,1);
 	return 0;
 }

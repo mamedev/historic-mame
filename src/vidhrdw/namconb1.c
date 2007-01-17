@@ -191,7 +191,6 @@ video_update_common(running_machine *machine, mame_bitmap *bitmap, const rectang
 
 VIDEO_UPDATE( namconb1 )
 {
-	int beamx,beamy;
 	/* compute window for custom screen blanking */
 	rectangle clip;
 	//004a 016a 0021 0101 0144 0020 (nebulas ray)
@@ -211,16 +210,6 @@ VIDEO_UPDATE( namconb1 )
 
 	video_update_common( machine, bitmap, &clip, 0 );
 
-	if( namcos2_gametype == NAMCONB1_GUNBULET )
-	{
-		beamx = ((readinputport(4))*288)/256;
-		beamy = ((readinputport(5))*224)/256;
-		draw_crosshair( bitmap, beamx, beamy, cliprect, 0 );
-
-		beamx = ((readinputport(6))*288)/256;
-		beamy = ((readinputport(7))*224)/256;
-		draw_crosshair( bitmap, beamx, beamy, cliprect, 1 );
-	}
 	return 0;
 }
 

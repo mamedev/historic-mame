@@ -480,22 +480,6 @@ static WRITE16_HANDLER( lghost_custom_io_w )
 }
 
 
-static VIDEO_UPDATE( lghost )
-{
-	int x1 = readinputportbytag("GUNX1");
-	int y1 = readinputportbytag("GUNY1");
-	int x2 = readinputportbytag("GUNX2");
-	int y2 = readinputportbytag("GUNY2");
-	int x3 = readinputportbytag("GUNX3");
-	int y3 = readinputportbytag("GUNY3");
-	video_update_system18(machine, screen, bitmap, cliprect);
-	draw_crosshair(bitmap, x1 * (Machine->screen[0].width - 1) / 255, y1 * (Machine->screen[0].height - 1) / 255, cliprect, 0);
-	draw_crosshair(bitmap, x2 * (Machine->screen[0].width - 1) / 255, y2 * (Machine->screen[0].height - 1) / 255, cliprect, 1);
-	draw_crosshair(bitmap, x3 * (Machine->screen[0].width - 1) / 255, y3 * (Machine->screen[0].height - 1) / 255, cliprect, 2);
-	return 0;
-}
-
-
 
 /*************************************
  *
@@ -1281,16 +1265,17 @@ static MACHINE_DRIVER_START( system18 )
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_portmap,0)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(1000000 * (262 - 224) / (262 * 60)))
 
 	MDRV_MACHINE_RESET(system18)
 	MDRV_NVRAM_HANDLER(system18)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(40*8, 28*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048*3+2048)
 
@@ -1323,12 +1308,6 @@ static MACHINE_DRIVER_START( system18_8751 )
 	MDRV_CPU_PROGRAM_MAP(mcu_map,0)
 	MDRV_CPU_DATA_MAP(mcu_data_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
-MACHINE_DRIVER_END
-
-
-static MACHINE_DRIVER_START( lghost )
-	MDRV_IMPORT_FROM(system18)
-	MDRV_VIDEO_UPDATE(lghost)
 MACHINE_DRIVER_END
 
 
@@ -2276,8 +2255,8 @@ GAME( 1991, ddcrewu,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "
 GAME( 1991, ddcrew2,  ddcrew,   system18,      ddcrew2p, ddcrew,       ROT0,   "Sega",    "D. D. Crew (set 2, World, 2 Player, FD1094 317-0184)", 0 )
 GAME( 1991, ddcrew1,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (set 1, World, 4 Player, FD1094 317-?)", 0 )
 GAME( 1991, ddcrewj,  ddcrew,   system18,      ddcrew2p, ddcrew,       ROT0,   "Sega",    "D. D. Crew (set 5, Japan, 2 Player, FD1094 317-0182)", 0 )
-GAME( 1990, lghost,   0,        lghost,        lghost,   lghost,       ROT0,   "Sega",    "Laser Ghost (set 2, World, 317-0166)", 0 )
-GAME( 1990, lghostu,  lghost,   lghost,        lghost,   lghost,       ROT0,   "Sega",    "Laser Ghost (set 1, US, 317-0165)", 0 )
+GAME( 1990, lghost,   0,        system18,      lghost,   lghost,       ROT0,   "Sega",    "Laser Ghost (set 2, World, 317-0166)", 0 )
+GAME( 1990, lghostu,  lghost,   system18,      lghost,   lghost,       ROT0,   "Sega",    "Laser Ghost (set 1, US, 317-0165)", 0 )
 GAME( 1990, mwalk,    0,        system18_8751, mwalk,    generic_5874, ROT0,   "Sega",    "Michael Jackson's Moonwalker (set 3, World, FD1094/8751 317-0159)", 0 )
 GAME( 1990, mwalku,   mwalk,    system18_8751, mwalka,   generic_5874, ROT0,   "Sega",    "Michael Jackson's Moonwalker (set 2, US, FD1094/8751 317-0158)", 0 )
 GAME( 1990, mwalkj,   mwalk,    system18_8751, mwalk,    generic_5874, ROT0,   "Sega",    "Michael Jackson's Moonwalker (set 1, Japan, FD1094/8751 317-0157)", 0 )

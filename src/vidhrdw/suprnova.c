@@ -16,6 +16,8 @@ Tilemap flip flags were reversed
 
 #include "driver.h"
 
+#define SUPRNOVA_DECODE_BUFFER_SIZE 0x2000
+
 extern UINT32 *skns_tilemapA_ram, *skns_tilemapB_ram, *skns_v3slc_ram;
 extern UINT32 *skns_palette_ram, *skns_v3t_ram, *skns_main_ram, *skns_cache_ram;
 extern UINT32 *skns_pal_regs, *skns_v3_regs, *skns_spc_regs;
@@ -25,7 +27,7 @@ extern int skns_v3t_somedirty,skns_v3t_4bpp_somedirty;
 
 void skns_palette_update(void);
 
-static UINT8 decodebuffer[64*128];
+static UINT8 decodebuffer[SUPRNOVA_DECODE_BUFFER_SIZE];
 static int old_depthA=0, depthA=0;
 static int old_depthB=0, depthB=0;
 
@@ -34,27 +36,29 @@ static int sprite_kludge_x=0, sprite_kludge_y=0;
 
 static int skns_rle_decode ( int romoffset, int size )
 {
-	UINT8 *src = memory_region (REGION_GFX1)+ romoffset;
+	UINT8 *src = memory_region (REGION_GFX1);
+	size_t srcsize = memory_region_length (REGION_GFX1);
 	UINT8 *dst = decodebuffer;
+	int decodeoffset = 0;
 
 	while(size>0) {
-		UINT8 code = *src++;
+		UINT8 code = src[(romoffset++)%srcsize];
 		size -= (code & 0x7f) + 1;
 		if(code & 0x80) {
 			code &= 0x7f;
 			do {
-				*dst++ = *src++;
+				dst[(decodeoffset++)%SUPRNOVA_DECODE_BUFFER_SIZE] = src[(romoffset++)%srcsize];
 				code--;
 			} while(code != 0xff);
 		} else {
-			UINT8 val = *src++;
+			UINT8 val = src[(romoffset++)%srcsize];
 			do {
-				*dst++ = val;
+				dst[(decodeoffset++)%SUPRNOVA_DECODE_BUFFER_SIZE] = val;
 				code--;
 			} while(code != 0xff);
 		}
 	}
-	return src-memory_region (REGION_GFX1);
+	return &src[romoffset%srcsize]-memory_region (REGION_GFX1);
 }
 
 void skns_sprite_kludge(int x, int y)

@@ -45,7 +45,7 @@ void hard_disk_close(hard_disk_file *file);
 chd_file *hard_disk_get_chd(hard_disk_file *file);
 hard_disk_info *hard_disk_get_info(hard_disk_file *file);
 
-UINT32 hard_disk_read(hard_disk_file *file, UINT32 lbasector, UINT32 numsectors, void *buffer);
-UINT32 hard_disk_write(hard_disk_file *file, UINT32 lbasector, UINT32 numsectors, const void *buffer);
+UINT32 hard_disk_read(hard_disk_file *file, UINT32 lbasector, void *buffer);
+UINT32 hard_disk_write(hard_disk_file *file, UINT32 lbasector, const void *buffer);
 
 #endif	/* __HARDDISK_H__ */

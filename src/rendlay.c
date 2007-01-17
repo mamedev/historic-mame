@@ -356,7 +356,7 @@ static void layout_element_scale(mame_bitmap *dest, const mame_bitmap *source, c
 					if (component->bitmap == NULL)
 						component->bitmap = load_component_bitmap(component->dirname, component->imagefile, component->alphafile, &component->hasalpha);
 					render_resample_argb_bitmap_hq(
-							(UINT32 *)dest->base + bounds.min_y * dest->rowpixels + bounds.min_x,
+							BITMAP_ADDR32(dest, bounds.min_y, bounds.min_x),
 							dest->rowpixels,
 							bounds.max_x - bounds.min_x,
 							bounds.max_y - bounds.min_y,
@@ -410,14 +410,14 @@ static void layout_element_draw_rect(mame_bitmap *dest, const rectangle *bounds,
 			/* if we're translucent, add in the destination pixel contribution */
 			if (inva > 0)
 			{
-				UINT32 dpix = *((UINT32 *)dest->base + y * dest->rowpixels + x);
+				UINT32 dpix = *BITMAP_ADDR32(dest, y, x);
 				finalr += (RGB_RED(dpix) * inva) >> 8;
 				finalg += (RGB_GREEN(dpix) * inva) >> 8;
 				finalb += (RGB_BLUE(dpix) * inva) >> 8;
 			}
 
 			/* store the target pixel, dividing the RGBA values by the overall scale factor */
-			*((UINT32 *)dest->base + y * dest->rowpixels + x) = MAKE_ARGB(0xff, finalr, finalg, finalb);
+			*BITMAP_ADDR32(dest, y, x) = MAKE_ARGB(0xff, finalr, finalg, finalb);
 		}
 }
 
@@ -468,14 +468,14 @@ static void layout_element_draw_disk(mame_bitmap *dest, const rectangle *bounds,
 			/* if we're translucent, add in the destination pixel contribution */
 			if (inva > 0)
 			{
-				UINT32 dpix = *((UINT32 *)dest->base + y * dest->rowpixels + x);
+				UINT32 dpix = *BITMAP_ADDR32(dest, y, x);
 				finalr += (RGB_RED(dpix) * inva) >> 8;
 				finalg += (RGB_GREEN(dpix) * inva) >> 8;
 				finalb += (RGB_BLUE(dpix) * inva) >> 8;
 			}
 
 			/* store the target pixel, dividing the RGBA values by the overall scale factor */
-			*((UINT32 *)dest->base + y * dest->rowpixels + x) = MAKE_ARGB(0xff, finalr, finalg, finalb);
+			*BITMAP_ADDR32(dest, y, x) = MAKE_ARGB(0xff, finalr, finalg, finalb);
 		}
 	}
 }
@@ -512,7 +512,7 @@ static void layout_element_draw_text(mame_bitmap *dest, const rectangle *bounds,
 	curx = bounds->min_x + (bounds->max_x - bounds->min_x - width) / 2;
 
 	/* allocate a temporary bitmap */
-	tempbitmap = bitmap_alloc_depth(dest->width, dest->height, 32);
+	tempbitmap = bitmap_alloc_format(dest->width, dest->height, BITMAP_FORMAT_ARGB32);
 
 	/* loop over characters */
 	for (s = string; *s != 0; s++)
@@ -529,8 +529,8 @@ static void layout_element_draw_text(mame_bitmap *dest, const rectangle *bounds,
 			int effy = bounds->min_y + y;
 			if (effy >= bounds->min_y && effy <= bounds->max_y)
 			{
-				UINT32 *s = (UINT32 *)tempbitmap->base + y * tempbitmap->rowpixels;
-				UINT32 *d = (UINT32 *)dest->base + effy * dest->rowpixels;
+				UINT32 *s = BITMAP_ADDR32(tempbitmap, y, 0);
+				UINT32 *d = BITMAP_ADDR32(dest, effy, 0);
 				for (x = 0; x < chbounds.max_x - chbounds.min_x; x++)
 				{
 					int effx = curx + x + chbounds.min_x;
@@ -575,8 +575,8 @@ static void draw_segment_horizontal(mame_bitmap *dest, int minx, int maxx, int m
 	/* loop over the width of the segment */
 	for (y = 0; y < width / 2; y++)
 	{
-		UINT32 *d0 = (UINT32 *)dest->base + (midy - y) * dest->rowpixels;
-		UINT32 *d1 = (UINT32 *)dest->base + (midy + y) * dest->rowpixels;
+		UINT32 *d0 = BITMAP_ADDR32(dest, midy - y, 0);
+		UINT32 *d1 = BITMAP_ADDR32(dest, midy + y, 0);
 		int ty = (y < width / 8) ? width / 8 : y;
 
 		/* loop over the length of the segment */
@@ -598,8 +598,8 @@ static void draw_segment_vertical(mame_bitmap *dest, int miny, int maxy, int mid
 	/* loop over the width of the segment */
 	for (x = 0; x < width / 2; x++)
 	{
-		UINT32 *d0 = (UINT32 *)dest->base + (midx - x);
-		UINT32 *d1 = (UINT32 *)dest->base + (midx + x);
+		UINT32 *d0 = BITMAP_ADDR32(dest, 0, midx - x);
+		UINT32 *d1 = BITMAP_ADDR32(dest, 0, midx + x);
 		int tx = (x < width / 8) ? width / 8 : x;
 
 		/* loop over the length of the segment */
@@ -625,8 +625,8 @@ static void draw_segment_decimal(mame_bitmap *dest, int midx, int midy, int widt
 	/* iterate over y */
 	for (y = 0; y <= width; y++)
 	{
-		UINT32 *d0 = (UINT32 *)dest->base + (midy - y) * dest->rowpixels;
-		UINT32 *d1 = (UINT32 *)dest->base + (midy + y) * dest->rowpixels;
+		UINT32 *d0 = BITMAP_ADDR32(dest, midy - y, 0);
+		UINT32 *d1 = BITMAP_ADDR32(dest, midy + y, 0);
 		float xval = width * sqrt(1.0f - (float)(y * y) * ooradius2);
 		INT32 left, right;
 
@@ -661,7 +661,7 @@ static void layout_element_draw_led7seg(mame_bitmap *dest, const rectangle *boun
 	skewwidth = 40;
 
 	/* allocate a temporary bitmap for drawing */
-	tempbitmap = bitmap_alloc_depth(bmwidth + skewwidth, bmheight, 32);
+	tempbitmap = bitmap_alloc_format(bmwidth + skewwidth, bmheight, BITMAP_FORMAT_ARGB32);
 	fillbitmap(tempbitmap, MAKE_ARGB(0xff,0x00,0x00,0x00), NULL);
 
 	/* top bar */
@@ -688,7 +688,7 @@ static void layout_element_draw_led7seg(mame_bitmap *dest, const rectangle *boun
 	/* apply skew */
 	for (y = 0; y < tempbitmap->height; y++)
 	{
-		UINT32 *destrow = (UINT32 *)tempbitmap->base + y * tempbitmap->rowpixels;
+		UINT32 *destrow = BITMAP_ADDR32(tempbitmap, y, 0);
 		int offs = skewwidth * (tempbitmap->height - y) / tempbitmap->height;
 		for (x = bmwidth - 1; x >= 0; x--)
 			destrow[x + offs] = destrow[x];
@@ -700,7 +700,7 @@ static void layout_element_draw_led7seg(mame_bitmap *dest, const rectangle *boun
 	draw_segment_decimal(tempbitmap, bmwidth + segwidth/2, bmheight - segwidth/2, segwidth, (pattern & (1 << 7)) ? onpen : offpen);
 
 	/* resample to the target size */
-	render_resample_argb_bitmap_hq((UINT32 *)dest->base, dest->rowpixels, dest->width, dest->height, tempbitmap, NULL, color);
+	render_resample_argb_bitmap_hq(dest->base, dest->rowpixels, dest->width, dest->height, tempbitmap, NULL, color);
 
 	bitmap_free(tempbitmap);
 }
@@ -1254,11 +1254,11 @@ static mame_bitmap *load_component_bitmap(const char *dirname, const char *file,
 		int step, line;
 
 		/* draw some stripes in the bitmap */
-		bitmap = bitmap_alloc_depth(100, 100, 32);
+		bitmap = bitmap_alloc_format(100, 100, BITMAP_FORMAT_ARGB32);
 		fillbitmap(bitmap, 0, NULL);
 		for (step = 0; step < 100; step += 25)
 			for (line = 0; line < 100; line++)
-				*((UINT32 *)bitmap->base + ((step + line) % 100) * bitmap->rowbytes + line % 100) = MAKE_ARGB(0xff,0xff,0xff,0xff);
+				*BITMAP_ADDR32(bitmap, (step + line) % 100, line % 100) = MAKE_ARGB(0xff,0xff,0xff,0xff);
 
 		/* log an error */
 		if (alphafile == NULL)

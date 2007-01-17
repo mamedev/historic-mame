@@ -412,6 +412,8 @@ static void _TMS9928A_change_register (int reg, UINT8 val) {
         }
         tms.anyDirtyColour = 1;
         memset (tms.DirtyColour, 1, MAX_DIRTY_COLOUR);
+	tms.patternmask = (tms.Regs[4] & 3) * 256 |
+		    (tms.colourmask & 255);
         break;
     case 4:
         if (tms.Regs[0] & 2) {
@@ -929,11 +931,11 @@ void mdrv_tms9928a(machine_config *machine, const TMS9928a_interface *intf)
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(LEFT_BORDER+32*8+RIGHT_BORDER, top_border+24*8+bottom_border)
 	/* display no border */
-	/*MDRV_VISIBLE_AREA(LEFT_BORDER+0*8, LEFT_BORDER+32*8-1, top_border+0*8, top_border+24*8-1)*/
+	/*MDRV_SCREEN_VISIBLE_AREA(LEFT_BORDER+0*8, LEFT_BORDER+32*8-1, top_border+0*8, top_border+24*8-1)*/
 	/* display max borders */
-	/*MDRV_VISIBLE_AREA(0, LEFT_BORDER+32*8+RIGHT_BORDER-1, 0, top_border+24*8+bottom_border-1)*/
+	/*MDRV_SCREEN_VISIBLE_AREA(0, LEFT_BORDER+32*8+RIGHT_BORDER-1, 0, top_border+24*8+bottom_border-1)*/
 	/* display fixed (12+12)*(9+9) borders */
-	MDRV_VISIBLE_AREA(LEFT_BORDER-12, LEFT_BORDER+32*8+12-1, top_border-9, top_border+24*8+9-1)
+	MDRV_SCREEN_VISIBLE_AREA(LEFT_BORDER-12, LEFT_BORDER+32*8+12-1, top_border-9, top_border+24*8+9-1)
 	MDRV_PALETTE_LENGTH(TMS9928A_PALETTE_SIZE)
 	MDRV_COLORTABLE_LENGTH(0)
 	MDRV_PALETTE_INIT(tms9928a)

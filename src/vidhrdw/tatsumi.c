@@ -206,7 +206,7 @@ VIDEO_START( apache3 )
 {
 	tx_layer = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 	shadow_pen_array = auto_malloc(8192);
-	temp_bitmap = auto_bitmap_alloc_depth(512, 512, 32);
+	temp_bitmap = auto_bitmap_alloc_format(512, 512, BITMAP_FORMAT_RGB32);
 
 	if (!tx_layer)
 		return 1;

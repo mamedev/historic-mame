@@ -84,6 +84,10 @@ BUILD_ZLIB = 1
 # uncomment next line to generate a link map for exception handling in windows
 # MAP = 1
 
+# specify optimization level or leave commented to use the default
+# (default is OPTIMIZE = 3 normally, or OPTIMIZE = 0 with symbols)
+# OPTIMIZE = 3
+
 
 ###########################################################################
 ##################   END USER-CONFIGURABLE OPTIONS   ######################
@@ -98,6 +102,15 @@ BUILD_ZLIB = 1
 ifdef PTR64
 X86_MIPS3_DRC =
 X86_PPC_DRC =
+endif
+
+# specify a default optimization level if none explicitly stated
+ifndef OPTIMIZE
+ifndef SYMBOLS
+OPTIMIZE = 3
+else
+OPTIMIZE = 0
+endif
 endif
 
 
@@ -196,12 +209,10 @@ endif
 CFLAGS = -std=gnu89 -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/layout
 
 ifdef SYMBOLS
-CFLAGS += -O0 -Wall -Wno-unused -g
-else
-CFLAGS += -DNDEBUG \
-	$(ARCH) -O3 -fno-strict-aliasing \
-	-Werror -Wall \
-	-Wno-sign-compare \
+CFLAGS += -g
+endif
+
+CFLAGS += -Wall \
 	-Wno-unused-functions \
 	-Wpointer-arith \
 	-Wbad-function-cast \
@@ -211,7 +222,12 @@ CFLAGS += -DNDEBUG \
 	-Wformat-security \
 	-Wwrite-strings \
 	-Wdeclaration-after-statement
+
+ifneq ($(OPTIMIZE),0)
+CFLAGS += -Werror -DNDEBUG $(ARCH) -fno-strict-aliasing
 endif
+
+CFLAGS += -O$(OPTIMIZE)
 
 # extra options needed *only* for the osd files
 CFLAGSOSDEPEND = $(CFLAGS)

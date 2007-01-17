@@ -1417,22 +1417,6 @@ INLINE void get_crosshair_xy(int player, int *x, int *y)
 }
 
 
-static VIDEO_UPDATE( carnevil )
-{
-	int beamx, beamy;
-
-	/* first do common video update */
-	voodoo_update(0, bitmap, cliprect);
-
-	/* now draw the crosshairs */
-	get_crosshair_xy(0, &beamx, &beamy);
-	draw_crosshair(bitmap, beamx, beamy, cliprect, 0);
-	get_crosshair_xy(1, &beamx, &beamy);
-	draw_crosshair(bitmap, beamx, beamy, cliprect, 1);
-	return 0;
-}
-
-
 static READ32_HANDLER( carnevil_gun_r )
 {
 	UINT32 result = 0;
@@ -2512,16 +2496,17 @@ MACHINE_DRIVER_START( seattle_common )
 	MDRV_CPU_CONFIG(config)
 	MDRV_CPU_PROGRAM_MAP(seattle_map,0)
 
-	MDRV_FRAMES_PER_SECOND(57)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(57)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_RESET(seattle)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_RGB32)
 	MDRV_SCREEN_SIZE(640, 480)
-	MDRV_VISIBLE_AREA(0, 639, 0, 479)
+	MDRV_SCREEN_VISIBLE_AREA(0, 639, 0, 479)
 	MDRV_PALETTE_LENGTH(65536)
 
 	MDRV_VIDEO_START(seattle)
@@ -2549,12 +2534,6 @@ MACHINE_DRIVER_START( seattle200 )
 	MDRV_IMPORT_FROM(seattle_common)
 	MDRV_CPU_REPLACE("main", R5000LE, SYSTEM_CLOCK*4)
 	MDRV_IMPORT_FROM(dcs2_audio_2115)
-MACHINE_DRIVER_END
-
-
-MACHINE_DRIVER_START( carnevil )
-	MDRV_IMPORT_FROM(seattle150)
-	MDRV_VIDEO_UPDATE(carnevil)
 MACHINE_DRIVER_END
 
 
@@ -2999,5 +2978,5 @@ GAME( 1997, blitz,    0,        seattle150, blitz,    blitz,    ROT0, "Midway Ga
 GAME( 1997, blitz11,  blitz,    seattle150, blitz,    blitz,    ROT0, "Midway Games", "NFL Blitz (boot ROM 1.1)", 0 )
 GAME( 1998, blitz99,  0,        seattle150, blitz99,  blitz99,  ROT0, "Midway Games", "NFL Blitz '99", 0 )
 GAME( 1999, blitz2k,  0,        seattle150, blitz99,  blitz2k,  ROT0, "Midway Games", "NFL Blitz 2000 Gold Edition", 0 )
-GAME( 1998, carnevil, 0,        carnevil,   carnevil, carnevil, ROT0, "Midway Games", "CarnEvil", 0 )
+GAME( 1998, carnevil, 0,        seattle150, carnevil, carnevil, ROT0, "Midway Games", "CarnEvil", 0 )
 GAME( 1998, hyprdriv, 0,        seattle200, hyprdriv, hyprdriv, ROT0, "Midway Games", "Hyperdrive", 0 )

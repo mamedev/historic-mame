@@ -1,6 +1,6 @@
 /***************************************************************************
 
-    Z80 SIO implementation
+    Z80 SIO (Z8440) implementation
 
     Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
@@ -162,20 +162,42 @@
     TYPE DEFINITIONS
 ***************************************************************************/
 
+typedef struct _sio_channel sio_channel;
+struct _sio_channel
+{
+	UINT8		regs[8];			/* 8 writeable registers */
+	UINT8		status[4];			/* 3 readable registers */
+	int			inbuf;				/* input buffer */
+	int			outbuf;				/* output buffer */
+	UINT8		int_on_next_rx;		/* interrupt on next rx? */
+	mame_timer *receive_timer;		/* timer to clock data in */
+	UINT8		receive_buffer[16];	/* buffer for incoming data */
+	UINT8		receive_inptr;		/* index of data coming in */
+	UINT8		receive_outptr;		/* index of data going out */
+};
+
+
+typedef struct _z80sio z80sio;
 struct _z80sio
 {
-	UINT8 		regs[2][8];			/* 8 writeable registers */
-	UINT8 		status[2][4];		/* 3 readable registers */
+	sio_channel	chan[2];			/* 2 channels */
 	UINT8		int_state[8];		/* interrupt states */
-	UINT8		int_on_next_rx[2];	/* interrupt on next rx? */
-	UINT8		inbuf[2], outbuf[2];/* input and output buffers */
+
 	void (*irq_cb)(int state);
 	write8_handler dtr_changed_cb;
 	write8_handler rts_changed_cb;
 	write8_handler break_changed_cb;
 	write8_handler transmit_cb;
+	int (*receive_poll_cb)(int which);
 };
-typedef struct _z80sio z80sio;
+
+
+
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
+
+static void serial_callback(int param);
 
 
 
@@ -238,11 +260,22 @@ static z80sio sios[MAX_SIO];
 */
 
 
-static void interrupt_check(z80sio *sio)
+/***************************************************************************
+    INLINE FUNCTIONS
+***************************************************************************/
+
+INLINE void interrupt_check(z80sio *sio)
 {
 	/* if we have a callback, update it with the current state */
-	if (sio->irq_cb)
+	if (sio->irq_cb != NULL)
 		(*sio->irq_cb)((z80sio_irq_state(sio - sios) & Z80_DAISY_INT) ? ASSERT_LINE : CLEAR_LINE);
+}
+
+
+INLINE double compute_time_per_character(z80sio *sio, int which)
+{
+	/* fix me -- should compute properly and include data, stop, parity bits */
+	return TIME_IN_HZ(9600 / 10);
 }
 
 
@@ -263,11 +296,15 @@ void z80sio_init(int which, z80sio_interface *intf)
 
 	memset(sio, 0, sizeof(*sio));
 
+	sio->chan[0].receive_timer = timer_alloc(serial_callback);
+	sio->chan[1].receive_timer = timer_alloc(serial_callback);
+
 	sio->irq_cb = intf->irq_cb;
 	sio->dtr_changed_cb = intf->dtr_changed_cb;
 	sio->rts_changed_cb = intf->rts_changed_cb;
 	sio->break_changed_cb = intf->break_changed_cb;
 	sio->transmit_cb = intf->transmit_cb;
+	sio->receive_poll_cb = intf->receive_poll_cb;
 
 	z80sio_reset(which);
 }
@@ -279,15 +316,24 @@ void z80sio_init(int which, z80sio_interface *intf)
 
 static void reset_channel(z80sio *sio, int ch)
 {
-	sio->status[ch][0] = SIO_RR0_TX_BUFFER_EMPTY;
-	sio->status[ch][1] = 0x00;
-	sio->status[ch][2] = 0x00;
-	sio->int_on_next_rx[ch] = 0;
+	double tpc = compute_time_per_character(sio, ch);
+	sio_channel *chan = &sio->chan[ch];
+
+	chan->status[0] = SIO_RR0_TX_BUFFER_EMPTY;
+	chan->status[1] = 0x00;
+	chan->status[2] = 0x00;
+	chan->int_on_next_rx = 0;
+	chan->outbuf = -1;
+
 	sio->int_state[0 + 4*ch] = 0;
 	sio->int_state[1 + 4*ch] = 0;
 	sio->int_state[2 + 4*ch] = 0;
 	sio->int_state[3 + 4*ch] = 0;
+
 	interrupt_check(sio);
+
+	/* start the receive timer running */
+	timer_adjust(chan->receive_timer, tpc, ((sio - sios) << 1) | ch, tpc);
 }
 
 
@@ -320,18 +366,19 @@ void z80sio_reset(int which)
 void z80sio_c_w(int which, int ch, UINT8 data)
 {
 	z80sio *sio = sios + which;
-	int reg = sio->regs[ch][0] & 7;
-	UINT8 old = sio->regs[ch][reg];
+	sio_channel *chan = &sio->chan[ch];
+	int reg = chan->regs[0] & 7;
+	UINT8 old = chan->regs[reg];
 
 	if (reg != 0 || (reg & 0xf8))
 		VPRINTF(("%04X:sio_reg_w(%c,%d) = %02X\n", activecpu_get_pc(), 'A' + ch, reg, data));
 
 	/* write a new value to the selected register */
-	sio->regs[ch][reg] = data;
+	chan->regs[reg] = data;
 
 	/* clear the register number for the next write */
 	if (reg != 0)
-		sio->regs[ch][0] &= ~7;
+		chan->regs[0] &= ~7;
 
 	/* switch off the register for live state changes */
 	switch (reg)
@@ -351,7 +398,7 @@ void z80sio_c_w(int which, int ch, UINT8 data)
 					break;
 
 				case SIO_WR0_COMMAND_ENA_RX_INT:
-					sio->int_on_next_rx[ch] = TRUE;
+					chan->int_on_next_rx = TRUE;
 					interrupt_check(sio);
 					break;
 
@@ -365,6 +412,11 @@ void z80sio_c_w(int which, int ch, UINT8 data)
 					interrupt_check(sio);
 					break;
 			}
+			break;
+
+		/* SIO write register 1 */
+		case 1:
+			interrupt_check(sio);
 			break;
 
 		/* SIO write register 5 */
@@ -387,8 +439,9 @@ void z80sio_c_w(int which, int ch, UINT8 data)
 UINT8 z80sio_c_r(int which, int ch)
 {
 	z80sio *sio = sios + which;
-	int reg = sio->regs[ch][0] & 7;
-	UINT8 result = sio->status[ch][reg];
+	sio_channel *chan = &sio->chan[ch];
+	int reg = chan->regs[0] & 7;
+	UINT8 result = chan->status[reg];
 
 	/* switch off the register for live state changes */
 	switch (reg)
@@ -401,9 +454,9 @@ UINT8 z80sio_c_r(int which, int ch)
 			break;
 	}
 
-	VPRINTF(("%04X:sio_reg_r(%c,%d) = %02x\n", activecpu_get_pc(), 'A' + ch, reg, sio->status[ch][reg]));
+	VPRINTF(("%04X:sio_reg_r(%c,%d) = %02x\n", activecpu_get_pc(), 'A' + ch, reg, chan->status[reg]));
 
-	return sio->status[ch][reg];
+	return chan->status[reg];
 }
 
 
@@ -414,60 +467,29 @@ UINT8 z80sio_c_r(int which, int ch)
 ***************************************************************************/
 
 /*-------------------------------------------------
-    transmit_complete - timer callback that is
-    signalled when the character has finished
-    transmitting
--------------------------------------------------*/
-
-static void transmit_complete(int param)
-{
-	z80sio *sio = sios + (param >> 1);
-	int ch = param & 1;
-
-	VPRINTF(("sio_transmit_complete(%c) = %02x\n", 'A' + ch, sio->outbuf[ch]));
-
-	/* actually transmit the character */
-	if (sio->transmit_cb)
-		(*sio->transmit_cb)(ch, sio->outbuf[ch]);
-
-	/* update the status register */
-	sio->status[ch][0] |= SIO_RR0_TX_BUFFER_EMPTY;
-
-	/* set the transmit buffer empty interrupt if enabled */
-	if (sio->regs[ch][1] & SIO_WR1_TXINT_ENABLE)
-	{
-		sio->int_state[INT_CHA_TRANSMIT - 4*ch] |= Z80_DAISY_INT;
-		interrupt_check(sio);
-	}
-}
-
-
-/*-------------------------------------------------
     z80sio_d_w - write to a data register
 -------------------------------------------------*/
 
 void z80sio_d_w(int which, int ch, UINT8 data)
 {
 	z80sio *sio = sios + which;
+	sio_channel *chan = &sio->chan[ch];
 
 	VPRINTF(("%04X:sio_data_w(%c) = %02X\n", activecpu_get_pc(), 'A' + ch, data));
 
 	/* if tx not enabled, just ignore it */
-	if (!(sio->regs[ch][5] & SIO_WR5_TX_ENABLE))
+	if (!(chan->regs[5] & SIO_WR5_TX_ENABLE))
 		return;
 
 	/* update the status register */
-	sio->status[ch][0] &= ~SIO_RR0_TX_BUFFER_EMPTY;
+	chan->status[0] &= ~SIO_RR0_TX_BUFFER_EMPTY;
 
 	/* reset the transmit interrupt */
 	sio->int_state[INT_CHA_TRANSMIT - 4*ch] &= ~Z80_DAISY_INT;
 	interrupt_check(sio);
 
 	/* stash the character */
-	sio->outbuf[ch] = data;
-
-	/* fix me - should use the baud rate and number of bits */
-	timer_set(TIME_IN_HZ(9600/10), which * 2 + ch, transmit_complete);
+	chan->outbuf = data;
 }
 
 
@@ -478,17 +500,18 @@ void z80sio_d_w(int which, int ch, UINT8 data)
 UINT8 z80sio_d_r(int which, int ch)
 {
 	z80sio *sio = sios + which;
+	sio_channel *chan = &sio->chan[ch];
 
 	/* update the status register */
-	sio->status[ch][0] &= ~SIO_RR0_RX_CHAR_AVAILABLE;
+	chan->status[0] &= ~SIO_RR0_RX_CHAR_AVAILABLE;
 
 	/* reset the receive interrupt */
 	sio->int_state[INT_CHA_RECEIVE - 4*ch] &= ~Z80_DAISY_INT;
 	interrupt_check(sio);
 
-	VPRINTF(("%04X:sio_data_r(%c) = %02X\n", activecpu_get_pc(), 'A' + ch, sio->inbuf[ch]));
+	VPRINTF(("%04X:sio_data_r(%c) = %02X\n", activecpu_get_pc(), 'A' + ch, chan->inbuf));
 
-	return sio->inbuf[ch];
+	return chan->inbuf;
 }
 
 
@@ -505,7 +528,8 @@ UINT8 z80sio_d_r(int which, int ch)
 int z80sio_get_dtr(int which, int ch)
 {
 	z80sio *sio = sios + which;
-	return ((sio->regs[ch][5] & SIO_WR5_DTR) != 0);
+	sio_channel *chan = &sio->chan[ch];
+	return ((chan->regs[5] & SIO_WR5_DTR) != 0);
 }
 
 
@@ -517,7 +541,8 @@ int z80sio_get_dtr(int which, int ch)
 int z80sio_get_rts(int which, int ch)
 {
 	z80sio *sio = sios + which;
-	return ((sio->regs[ch][5] & SIO_WR5_RTS) != 0);
+	sio_channel *chan = &sio->chan[ch];
+	return ((chan->regs[5] & SIO_WR5_RTS) != 0);
 }
 
 
@@ -529,6 +554,7 @@ int z80sio_get_rts(int which, int ch)
 static void change_input_line(int param)
 {
 	z80sio *sio = sios + ((param >> 1) & 0x3f);
+	sio_channel *chan = &sio->chan[param & 1];
 	UINT8 line = (param >> 8) & 0xff;
 	int state = (param >> 7) & 1;
 	int ch = param & 1;
@@ -537,15 +563,15 @@ static void change_input_line(int param)
 	VPRINTF(("sio_change_input_line(%c, %s) = %d\n", 'A' + ch, (line == SIO_RR0_CTS) ? "CTS" : "DCD", state));
 
 	/* remember the old value */
-	old = sio->status[ch][0];
+	old = chan->status[0];
 
 	/* set the bit in the status register */
-	sio->status[ch][0] &= ~line;
+	chan->status[0] &= ~line;
 	if (state)
-		sio->status[ch][0] |= line;
+		chan->status[0] |= line;
 
 	/* if state change interrupts are enabled, signal */
-	if (((old ^ sio->status[ch][0]) & line) && (sio->regs[ch][1] & SIO_WR1_STATUSINT_ENABLE))
+	if (((old ^ chan->status[0]) & line) && (chan->regs[1] & SIO_WR1_STATUSINT_ENABLE))
 	{
 		sio->int_state[INT_CHA_STATUS - 4*ch] |= Z80_DAISY_INT;
 		interrupt_check(sio);
@@ -585,34 +611,98 @@ void z80sio_set_dcd(int which, int ch, int state)
 void z80sio_receive_data(int which, int ch, UINT8 data)
 {
 	z80sio *sio = sios + which;
+	sio_channel *chan = &sio->chan[ch];
+	int newinptr;
 
-	VPRINTF(("sio_receive_data(%c) = %02x\n", 'A' + ch, data));
-
-	/* if rx not enabled, just ignore it */
-	if (!(sio->regs[ch][3] & SIO_WR3_RX_ENABLE))
+	/* put it on the queue */
+	newinptr = (chan->receive_inptr + 1) % ARRAY_LENGTH(chan->receive_buffer);
+	if (newinptr != chan->receive_outptr)
 	{
-		VPRINTF(("  (ignored because receive is disabled)\n"));
-		return;
+		chan->receive_buffer[chan->receive_inptr] = data;
+		chan->receive_inptr = newinptr;
 	}
+	else
+		logerror("z80sio_receive_data: buffer overrun\n");
+}
 
-	/* stash the data and update the status */
-	sio->inbuf[ch] = data;
-	sio->status[ch][0] |= SIO_RR0_RX_CHAR_AVAILABLE;
 
-	/* update our interrupt state */
-	switch (sio->regs[ch][1] & SIO_WR1_RXINT_MASK)
+/*-------------------------------------------------
+    serial_callback - callback to pump
+    data through
+-------------------------------------------------*/
+
+static void serial_callback(int param)
+{
+	z80sio *sio = sios + (param >> 1);
+	sio_channel *chan = &sio->chan[param & 1];
+	int ch = param & 1;
+	int data = -1;
+
+	/* first perform any outstanding transmits */
+	if (chan->outbuf != -1)
 	{
-		case SIO_WR1_RXINT_FIRST:
-			if (!sio->int_on_next_rx[ch])
-				break;
+		VPRINTF(("serial_callback(%c): Transmitting %02x\n", 'A' + ch, chan->outbuf));
 
-		case SIO_WR1_RXINT_ALL_NOPARITY:
-		case SIO_WR1_RXINT_ALL_PARITY:
-			sio->int_state[INT_CHA_RECEIVE - 4*ch] |= Z80_DAISY_INT;
+		/* actually transmit the character */
+		if (sio->transmit_cb != NULL)
+			(*sio->transmit_cb)(ch, chan->outbuf);
+
+		/* update the status register */
+		chan->status[0] |= SIO_RR0_TX_BUFFER_EMPTY;
+
+		/* set the transmit buffer empty interrupt if enabled */
+		if (chan->regs[1] & SIO_WR1_TXINT_ENABLE)
+		{
+			sio->int_state[INT_CHA_TRANSMIT - 4*ch] |= Z80_DAISY_INT;
 			interrupt_check(sio);
-			break;
+		}
+
+		/* reset the output buffer */
+		chan->outbuf = -1;
 	}
-	sio->int_on_next_rx[ch] = FALSE;
+
+	/* ask the polling callback if there is data to receive */
+	if (sio->receive_poll_cb != NULL)
+		data = (*sio->receive_poll_cb)(ch);
+
+	/* if we have buffered data, pull it */
+	if (chan->receive_inptr != chan->receive_outptr)
+	{
+		data = chan->receive_buffer[chan->receive_outptr];
+		chan->receive_outptr = (chan->receive_outptr + 1) % ARRAY_LENGTH(chan->receive_buffer);
+	}
+
+	/* if we have data, receive it */
+	if (data != -1)
+	{
+		VPRINTF(("serial_callback(%c): Receiving %02x\n", 'A' + ch, data));
+
+		/* if rx not enabled, just ignore it */
+		if (!(chan->regs[3] & SIO_WR3_RX_ENABLE))
+		{
+			VPRINTF(("  (ignored because receive is disabled)\n"));
+			return;
+		}
+
+		/* stash the data and update the status */
+		chan->inbuf = data;
+		chan->status[0] |= SIO_RR0_RX_CHAR_AVAILABLE;
+
+		/* update our interrupt state */
+		switch (chan->regs[1] & SIO_WR1_RXINT_MASK)
+		{
+			case SIO_WR1_RXINT_FIRST:
+				if (!chan->int_on_next_rx)
+					break;
+
+			case SIO_WR1_RXINT_ALL_NOPARITY:
+			case SIO_WR1_RXINT_ALL_PARITY:
+				sio->int_state[INT_CHA_RECEIVE - 4*ch] |= Z80_DAISY_INT;
+				interrupt_check(sio);
+				break;
+		}
+		chan->int_on_next_rx = FALSE;
+	}
 }
 
 
@@ -680,12 +770,12 @@ int z80sio_irq_ack(int which)
 			/* clear interrupt, switch to the IEO state, and update the IRQs */
 			sio->int_state[inum] = Z80_DAISY_IEO;
 			interrupt_check(sio);
-			return sio->regs[1][2] + inum * 2;
+			return sio->chan[1].regs[2] + inum * 2;
 		}
 	}
 
 	logerror("z80sio_irq_ack: failed to find an interrupt to ack!\n");
-	return sio->regs[1][2];
+	return sio->chan[1].regs[2];
 }
 
 

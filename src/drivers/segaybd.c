@@ -360,26 +360,6 @@ static WRITE16_HANDLER( analog_w )
 
 /*************************************
  *
- *  Rail Chase Custom video
- *
- *************************************/
-
-static VIDEO_UPDATE( rchase )
-{
-	int x1 = readinputportbytag("ADC0");
-	int y1 = readinputportbytag("ADC1");
-	int x2 = readinputportbytag("ADC2");
-	int y2 = readinputportbytag("ADC3");
-	video_update_yboard(machine, screen, bitmap, cliprect);
-	draw_crosshair(bitmap, x1 * (Machine->screen[0].width - 1) / 255, y1 * (Machine->screen[0].height - 1) / 255, cliprect, 0);
-	draw_crosshair(bitmap, x2 * (Machine->screen[0].width - 1) / 255, y2 * (Machine->screen[0].height - 1) / 255, cliprect, 1);
-	return 0;
-}
-
-
-
-/*************************************
- *
  *  Capacitor-backed RAM
  *
  *************************************/
@@ -986,8 +966,8 @@ static MACHINE_DRIVER_START( yboard )
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_portmap,0)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(1000000 * (262 - 224) / (262 * 60)))
 
 	MDRV_MACHINE_RESET(yboard)
 	MDRV_NVRAM_HANDLER(yboard)
@@ -995,8 +975,9 @@ static MACHINE_DRIVER_START( yboard )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(40*8, 28*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 	MDRV_PALETTE_LENGTH(8192*3)
 
 	MDRV_VIDEO_START(yboard)
@@ -1014,12 +995,6 @@ static MACHINE_DRIVER_START( yboard )
 	MDRV_SOUND_CONFIG(segapcm_interface)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
 	MDRV_SOUND_ROUTE(1, "right", 1.0)
-MACHINE_DRIVER_END
-
-
-MACHINE_DRIVER_START( rchase )
-	MDRV_IMPORT_FROM(yboard)
-	MDRV_VIDEO_UPDATE(rchase)
 MACHINE_DRIVER_END
 
 
@@ -1827,5 +1802,5 @@ GAME( 1988, pdrift,   0,       yboard, pdrift,   generic_yboard, ROT0, "Sega", "
 GAME( 1988, pdrifta,  pdrift,  yboard, pdrift,   generic_yboard, ROT0, "Sega", "Power Drift (World)", GAME_SUPPORTS_SAVE )
 GAME( 1988, pdrifte,  pdrift,  yboard, pdrifte,  generic_yboard, ROT0, "Sega", "Power Drift (World, Earlier)", GAME_SUPPORTS_SAVE )
 GAME( 1988, pdriftj,  pdrift,  yboard, pdriftj,  generic_yboard, ROT0, "Sega", "Power Drift (Japan)", GAME_SUPPORTS_SAVE )
-GAME( 1991, rchase,   0,       rchase, rchase,   generic_yboard, ROT0, "Sega", "Rail Chase (Japan)", GAME_SUPPORTS_SAVE )
+GAME( 1991, rchase,   0,       yboard, rchase,   generic_yboard, ROT0, "Sega", "Rail Chase (Japan)", GAME_SUPPORTS_SAVE )
 GAME( 1991, strkfgtr, 0,       yboard, strkfgtr, generic_yboard, ROT0, "Sega", "Strike Fighter (Japan)", GAME_SUPPORTS_SAVE )

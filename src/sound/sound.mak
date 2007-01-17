@@ -514,6 +514,15 @@ SOUNDOBJS += $(OBJ)/sound/sp0250.o
 endif
 
 
+#-------------------------------------------------
+# S14001A speech synthesizer
+#-------------------------------------------------
+
+SOUNDDEFS += -DHAS_S14001A=$(if $(filter S14001A,$(SOUNDS)),1,0)
+
+ifneq ($(filter S14001A,$(SOUNDS)),)
+SOUNDOBJS += $(OBJ)/sound/s14001a.o
+endif
 
 #-------------------------------------------------
 # Texas Instruments SN76477 analog chip

@@ -303,3 +303,45 @@ int utf16f_from_uchar(utf16_char *utf16string, size_t count, unicode_char uchar)
 		utf16string[1] = FLIPENDIAN_INT16(buf[1]);
 	return rc;
 }
+
+
+/*-------------------------------------------------
+    utf8_previous_char - return a pointer to the
+    previous character in a string
+-------------------------------------------------*/
+
+const char *utf8_previous_char(const char *utf8string)
+{
+	while ((*--utf8string & 0xc0) == 0x80)
+		;
+	return utf8string;
+}
+
+
+/*-------------------------------------------------
+    utf8_is_valid_string - return true if the
+    given string is a properly formed sequence of
+    UTF-8 characters
+-------------------------------------------------*/
+
+int utf8_is_valid_string(const char *utf8string)
+{
+	int remaining_length = strlen(utf8string);
+
+	while (*utf8string != 0)
+	{
+		unicode_char uchar = 0;
+		int charlen;
+
+		/* extract the current character and verify it */
+		charlen = uchar_from_utf8(&uchar, utf8string, remaining_length);
+		if (charlen <= 0 || uchar == 0 || !uchar_isvalid(uchar))
+			return FALSE;
+
+		/* advance */
+		utf8string += charlen;
+		remaining_length -= charlen;
+	}
+
+	return TRUE;
+}

@@ -623,16 +623,16 @@ static void plot_pixel_rgb(mame_bitmap *bitmap, int x, int y , int color)
 {
 	//565 to 555
 	color=(color&0x1f)|((color>>1)&0x7fe0);
-	if (Machine->color_depth == 32)
+	if (bitmap->bpp == 32)
 	{
 		UINT32 cb=(color&0x1f)<<3;
 		UINT32 cg=(color&0x3e0)>>2;
 		UINT32 cr=(color&0x7c00)>>7;
-		((UINT32 *)bitmap->line[y])[x] = cb | (cg<<8) | (cr<<16);
+		*BITMAP_ADDR32(bitmap, y, x) = cb | (cg<<8) | (cr<<16);
 	}
 	else
 	{
-		((UINT16 *)bitmap->line[y])[x] = color;
+		*BITMAP_ADDR16(bitmap, y, x) = color;
 	}
 }
 
@@ -827,16 +827,17 @@ static MACHINE_DRIVER_START( crystal )
 	MDRV_CPU_PROGRAM_MAP(crystal_mem,0)
  	MDRV_CPU_VBLANK_INT(crystal_interrupt,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_RESET(crystal)
 
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_RGB15)
 	MDRV_SCREEN_SIZE(320, 240)
-	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_SCREEN_VISIBLE_AREA(0, 319, 0, 239)
 	MDRV_PALETTE_LENGTH(8192)
 
 	MDRV_VIDEO_START(crystal)

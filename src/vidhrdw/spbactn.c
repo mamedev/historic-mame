@@ -177,8 +177,8 @@ static int draw_sprites(mame_bitmap *bitmap, int priority)
 VIDEO_START( spbactn )
 {
 	/* allocate bitmaps */
-	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
-	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
+	tile_bitmap_bg = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
+	tile_bitmap_fg = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
 
 	if (!tile_bitmap_bg || !tile_bitmap_fg)
 		return 1;

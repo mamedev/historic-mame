@@ -63,6 +63,10 @@ int utf8_from_uchar(char *utf8string, size_t count, unicode_char uchar);
 int utf16_from_uchar(utf16_char *utf16string, size_t count, unicode_char uchar);
 int utf16f_from_uchar(utf16_char *utf16string, size_t count, unicode_char uchar);
 
+/* misc UTF-8 helpers */
+const char *utf8_previous_char(const char *utf8string);
+int utf8_is_valid_string(const char *utf8string);
+
 
 
 /***************************************************************************

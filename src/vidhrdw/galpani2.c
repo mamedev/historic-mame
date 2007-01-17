@@ -131,10 +131,10 @@ PALETTE_INIT( galpani2 )
 
 VIDEO_START( galpani2 )
 {
-	if ((galpani2_bg15_bitmap  = auto_bitmap_alloc_depth(256*8, 256, 16)) == 0)	return 1;
+	if ((galpani2_bg15_bitmap  = auto_bitmap_alloc_format(256*8, 256, BITMAP_FORMAT_INDEXED16)) == 0)	return 1;
 
-	if ((galpani2_bg8_bitmap_0 = auto_bitmap_alloc_depth(512, 256, 16)) == 0)	return 1;
-	if ((galpani2_bg8_bitmap_1 = auto_bitmap_alloc_depth(512, 256, 16)) == 0)	return 1;
+	if ((galpani2_bg8_bitmap_0 = auto_bitmap_alloc_format(512, 256, BITMAP_FORMAT_INDEXED16)) == 0)	return 1;
+	if ((galpani2_bg8_bitmap_1 = auto_bitmap_alloc_format(512, 256, BITMAP_FORMAT_INDEXED16)) == 0)	return 1;
 
 	return video_start_kaneko16_sprites(machine);
 }

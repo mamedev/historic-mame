@@ -2603,7 +2603,6 @@ VIDEO_START( namcos22s )
 
 VIDEO_UPDATE( namcos22s )
 {
-	int beamx,beamy;
 	UINT32 bgColor;
 	UpdateVideoMixer();
 	bgColor = (mixer.rBackColor<<16)|(mixer.gBackColor<<8)|mixer.bBackColor;
@@ -2615,13 +2614,6 @@ VIDEO_UPDATE( namcos22s )
    RenderScene( bitmap );
 	DrawTranslucentCharacters( bitmap, cliprect );
 	ApplyGamma( bitmap );
-
-	if( namcos22_gametype == NAMCOS22_TIME_CRISIS )
-	{
-		beamx = ((readinputport(1))*640)/256;
-		beamy = ((readinputport(2))*480)/256;
-		draw_crosshair( bitmap, beamx, beamy, cliprect, 0 );
-	}
 
 #ifdef MAME_DEBUG
    if( code_pressed(KEYCODE_D) )

@@ -200,16 +200,17 @@ static MACHINE_DRIVER_START( yard )
 	MDRV_CPU_PROGRAM_MAP(yard_map, 0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
-	MDRV_FRAMES_PER_SECOND(57)
-	MDRV_VBLANK_DURATION(1790)
+	MDRV_SCREEN_REFRESH_RATE(57)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(1790))
 	/* accurate frequency, measured on a Moon Patrol board, is 56.75Hz.
        the Lode Runner manual (similar but different hardware)
        talks about 55Hz and 1790ms vblank duration. */
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256+16+256)
 	MDRV_COLORTABLE_LENGTH(32*8+32*8)

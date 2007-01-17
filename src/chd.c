@@ -161,6 +161,11 @@ struct _chd_file
 	struct MD5Context		vermd5; 		/* running MD5 during verification */
 	struct sha1_ctx			versha1; 		/* running SHA1 during verification */
 	UINT32					verhunk;		/* next hunk we will verify */
+
+	osd_work_queue *		workqueue;		/* pointer to work queue for async operations */
+	osd_work_item *			workitem;		/* active work item, or NULL if none */
+	UINT32					async_hunknum;	/* hunk index for asynchronous operations */
+	void *					async_buffer;	/* buffer pointer for asynchronous operations */
 };
 
 
@@ -190,6 +195,10 @@ static const UINT8 nullsha1[CHD_SHA1_BYTES] = { 0 };
 /***************************************************************************
     PROTOTYPES
 ***************************************************************************/
+
+/* internal async operations */
+static void *async_read_callback(void *param);
+static void *async_write_callback(void *param);
 
 /* internal header operations */
 static chd_error header_validate(const chd_header *header);
@@ -404,6 +413,51 @@ INLINE void map_extract_old(const UINT8 *base, map_entry *entry, UINT32 hunkbyte
 #else
 	entry->offset = (entry->offset << 20) >> 20;
 #endif
+}
+
+
+/*-------------------------------------------------
+    queue_async_operation - queue a new work
+    item
+-------------------------------------------------*/
+
+INLINE int queue_async_operation(chd_file *chd, osd_work_callback callback)
+{
+	/* if no queue yet, create one on the fly */
+	if (chd->workqueue == NULL)
+	{
+		chd->workqueue = osd_work_queue_alloc(WORK_QUEUE_FLAG_IO);
+		if (chd->workqueue == NULL)
+			return FALSE;
+	}
+
+	/* make sure we cleared out the previous item */
+	assert(chd->workitem == NULL);
+
+	/* create a new work item to run the job */
+	chd->workitem = osd_work_item_queue(chd->workqueue, callback, chd);
+	if (chd->workitem == NULL)
+		return FALSE;
+
+	return TRUE;
+}
+
+
+/*-------------------------------------------------
+    wait_for_pending_async - wait for any pending
+    async
+-------------------------------------------------*/
+
+INLINE void wait_for_pending_async(chd_file *chd)
+{
+	/* if something is pending, wait for it */
+	if (chd->workitem != NULL)
+	{
+		/* 10 seconds should be enough for anything! */
+		int wait_successful = osd_work_item_wait(chd->workitem, 10 * osd_ticks_per_second());
+		assert(wait_successful);
+		(void)wait_successful;
+	}
 }
 
 
@@ -674,6 +728,15 @@ void chd_close(chd_file *chd)
 	if (chd == NULL || chd->cookie != COOKIE_VALUE)
 		return;
 
+	/* wait for any pending async operations */
+	wait_for_pending_async(chd);
+
+	/* kill the work queue and any work item */
+	if (chd->workitem != NULL)
+		osd_work_item_release(chd->workitem);
+	if (chd->workqueue != NULL)
+		osd_work_queue_free(chd->workqueue);
+
 	/* deinit the codec */
 	if (chd->codecintf != NULL && chd->codecintf->free != NULL)
 		(*chd->codecintf->free)(chd);
@@ -691,6 +754,10 @@ void chd_close(chd_file *chd)
 	/* free the hunk map */
 	if (chd->map != NULL)
 		free(chd->map);
+
+	/* free the CRC table */
+	if (chd->crctable != NULL)
+		free(chd->crctable);
 
 	/* free the CRC map */
 	if (chd->crcmap != NULL)
@@ -854,8 +921,6 @@ cleanup:
 
 chd_error chd_read(chd_file *chd, UINT32 hunknum, void *buffer)
 {
-	chd_error err = CHDERR_NONE;
-
 	/* punt if NULL or invalid */
 	if (chd == NULL || chd->cookie != COOKIE_VALUE)
 		return CHDERR_INVALID_PARAMETER;
@@ -864,38 +929,42 @@ chd_error chd_read(chd_file *chd, UINT32 hunknum, void *buffer)
 	if (hunknum >= chd->header.totalhunks)
 		return CHDERR_HUNK_OUT_OF_RANGE;
 
-	/* track the max */
-	if (hunknum > chd->maxhunk)
-		chd->maxhunk = hunknum;
+	/* wait for any pending async operations */
+	wait_for_pending_async(chd);
 
-	/* if the hunk is not cached, load and decompress it */
-	if (chd->cachehunk != hunknum)
-	{
-		err = hunk_read_into_cache(chd, hunknum);
-		if (err != CHDERR_NONE)
-			return err;
-	}
-
-	/* now copy the data from the cache */
-	if (buffer != NULL)
-	memcpy(buffer, chd->cache, chd->header.hunkbytes);
-	return CHDERR_NONE;
+	/* perform the read */
+	return hunk_read_into_memory(chd, hunknum, buffer);
 }
 
 
 /*-------------------------------------------------
-    chd_get_cache_ptr - return a pointer to the
-    internal cache
+    chd_read_async - read a single hunk from the
+    CHD file asynchronously
 -------------------------------------------------*/
 
-const void *chd_get_cache_ptr(chd_file *chd)
+chd_error chd_read_async(chd_file *chd, UINT32 hunknum, void *buffer)
 {
 	/* punt if NULL or invalid */
 	if (chd == NULL || chd->cookie != COOKIE_VALUE)
-		return NULL;
+		return CHDERR_INVALID_PARAMETER;
 
-	/* return the pointer */
-	return chd->cache;
+	/* if we're past the end, fail */
+	if (hunknum >= chd->header.totalhunks)
+		return CHDERR_HUNK_OUT_OF_RANGE;
+
+	/* wait for any pending async operations */
+	wait_for_pending_async(chd);
+
+	/* set the async parameters */
+	chd->async_hunknum = hunknum;
+	chd->async_buffer = buffer;
+
+	/* queue the work item */
+	if (queue_async_operation(chd, async_read_callback))
+		return CHDERR_OPERATION_PENDING;
+
+	/* if we fail, fall back on the sync version */
+	return chd_read(chd, hunknum, buffer);
 }
 
 
@@ -914,12 +983,68 @@ chd_error chd_write(chd_file *chd, UINT32 hunknum, const void *buffer)
 	if (hunknum >= chd->header.totalhunks)
 		return CHDERR_HUNK_OUT_OF_RANGE;
 
-	/* track the max */
-	if (hunknum > chd->maxhunk)
-		chd->maxhunk = hunknum;
+	/* wait for any pending async operations */
+	wait_for_pending_async(chd);
 
 	/* then write out the hunk */
 	return hunk_write_from_memory(chd, hunknum, buffer);
+}
+
+
+/*-------------------------------------------------
+    chd_write_async - write a single hunk to the
+    CHD file asynchronously
+-------------------------------------------------*/
+
+chd_error chd_write_async(chd_file *chd, UINT32 hunknum, const void *buffer)
+{
+	/* punt if NULL or invalid */
+	if (chd == NULL || chd->cookie != COOKIE_VALUE)
+		return CHDERR_INVALID_PARAMETER;
+
+	/* if we're past the end, fail */
+	if (hunknum >= chd->header.totalhunks)
+		return CHDERR_HUNK_OUT_OF_RANGE;
+
+	/* wait for any pending async operations */
+	wait_for_pending_async(chd);
+
+	/* set the async parameters */
+	chd->async_hunknum = hunknum;
+	chd->async_buffer = (void *)buffer;
+
+	/* queue the work item */
+	if (queue_async_operation(chd, async_write_callback))
+		return CHDERR_OPERATION_PENDING;
+
+	/* if we fail, fall back on the sync version */
+	return chd_write(chd, hunknum, buffer);
+}
+
+
+/*-------------------------------------------------
+    chd_async_complete - get the result of a
+    completed work item and clear it out of the
+    system
+-------------------------------------------------*/
+
+chd_error chd_async_complete(chd_file *chd)
+{
+	void *result;
+
+	/* if nothing present, return an error */
+	if (chd->workitem == NULL)
+		return CHDERR_NO_ASYNC_OPERATION;
+
+	/* wait for the work to complete */
+	wait_for_pending_async(chd);
+
+	/* get the result and free the work item */
+	result = osd_work_item_result(chd->workitem);
+	osd_work_item_release(chd->workitem);
+	chd->workitem = NULL;
+
+	return (chd_error)result;
 }
 
 
@@ -938,6 +1063,9 @@ chd_error chd_get_metadata(chd_file *chd, UINT32 searchtag, UINT32 searchindex, 
 	metadata_entry metaentry;
 	chd_error err;
 	UINT32 count;
+
+	/* wait for any pending async operations */
+	wait_for_pending_async(chd);
 
 	/* if we didn't find it, just return */
 	err = metadata_find_entry(chd, searchtag, searchindex, &metaentry);
@@ -1005,6 +1133,9 @@ chd_error chd_set_metadata(chd_file *chd, UINT32 metatag, UINT32 metaindex, cons
 	/* must write at least 1 byte */
 	if (inputlen < 1)
 		return CHDERR_INVALID_PARAMETER;
+
+	/* wait for any pending async operations */
+	wait_for_pending_async(chd);
 
 	/* find the entry if it already exists */
 	err = metadata_find_entry(chd, metatag, metaindex, &metaentry);
@@ -1143,6 +1274,9 @@ chd_error chd_compress_begin(chd_file *chd)
 	if (chd == NULL)
 		return CHDERR_INVALID_PARAMETER;
 
+	/* wait for any pending async operations */
+	wait_for_pending_async(chd);
+
 	/* mark the CHD writeable and write the updated header */
 	chd->header.flags |= CHDFLAGS_IS_WRITEABLE;
 	err = header_write(chd->file, &chd->header);
@@ -1174,11 +1308,21 @@ chd_error chd_compress_hunk(chd_file *chd, const void *data, double *curratio)
 	UINT32 thishunk = chd->comphunk++;
 	UINT64 sourceoffset = (UINT64)thishunk * (UINT64)chd->header.hunkbytes;
 	UINT32 bytestochecksum;
+	const void *crcdata;
 	chd_error err;
 
 	/* error if in the wrong state */
 	if (!chd->compressing)
 		return CHDERR_INVALID_STATE;
+
+	/* write out the hunk */
+	err = hunk_write_from_memory(chd, thishunk, data);
+	if (err != CHDERR_NONE)
+		return err;
+
+	/* if we are lossy, then we need to use the decompressed version in */
+	/* the cache as our MD5/SHA1 source */
+	crcdata = chd->codecintf->lossy ? chd->cache : data;
 
 	/* update the MD5/SHA1 */
 	bytestochecksum = chd->header.hunkbytes;
@@ -1191,14 +1335,9 @@ chd_error chd_compress_hunk(chd_file *chd, const void *data, double *curratio)
 	}
 	if (bytestochecksum > 0)
 	{
-		MD5Update(&chd->compmd5, data, bytestochecksum);
-		sha1_update(&chd->compsha1, bytestochecksum, data);
+		MD5Update(&chd->compmd5, crcdata, bytestochecksum);
+		sha1_update(&chd->compsha1, bytestochecksum, crcdata);
 	}
-
-	/* write out the hunk */
-	err = hunk_write_from_memory(chd, thishunk, data);
-	if (err != CHDERR_NONE)
-		return err;
 
 	/* update our CRC map */
 	if ((chd->map[thishunk].flags & MAP_ENTRY_FLAG_TYPE_MASK) != MAP_ENTRY_TYPE_SELF_HUNK &&
@@ -1263,6 +1402,9 @@ chd_error chd_verify_begin(chd_file *chd)
 	if (chd->header.flags & CHDFLAGS_IS_WRITEABLE)
 		return CHDERR_CANT_VERIFY;
 
+	/* wait for any pending async operations */
+	wait_for_pending_async(chd);
+
 	/* init the MD5/SHA1 computations */
 	MD5Init(&chd->vermd5);
 	sha1_init(&chd->versha1);
@@ -1282,6 +1424,7 @@ chd_error chd_verify_hunk(chd_file *chd)
 {
 	UINT32 thishunk = chd->verhunk++;
 	UINT64 hunkoffset = (UINT64)thishunk * (UINT64)chd->header.hunkbytes;
+	map_entry *entry;
 	chd_error err;
 
 	/* error if in the wrong state */
@@ -1303,6 +1446,12 @@ chd_error chd_verify_hunk(chd_file *chd)
 			sha1_update(&chd->versha1, bytestochecksum, chd->cache);
 		}
 	}
+
+	/* validate the CRC if we have one */
+	entry = &chd->map[thishunk];
+	if (!(entry->flags & MAP_ENTRY_FLAG_NO_CRC) && entry->crc != crc32(0, chd->cache, chd->header.hunkbytes))
+		return CHDERR_DECOMPRESSION_ERROR;
+
 	return CHDERR_NONE;
 }
 
@@ -1347,6 +1496,9 @@ chd_error chd_verify_finish(chd_file *chd, UINT8 *finalmd5, UINT8 *finalsha1)
 
 chd_error chd_codec_config(chd_file *chd, int param, void *config)
 {
+	/* wait for any pending async operations */
+	wait_for_pending_async(chd);
+
 	/* if the codec has a configuration callback, call through to it */
 	if (chd->codecintf->config != NULL)
 		return (*chd->codecintf->config)(chd, param, config);
@@ -1370,6 +1522,47 @@ const char *chd_get_codec_name(UINT32 codec)
 			return codec_interfaces[intfnum].compname;
 
 	return "Unknown";
+}
+
+
+
+/***************************************************************************
+    INTERNAL ASYNC OPERATIONS
+***************************************************************************/
+
+/*-------------------------------------------------
+    async_read_callback - asynchronous reading
+    callback
+-------------------------------------------------*/
+
+static void *async_read_callback(void *param)
+{
+	chd_file *chd = param;
+	chd_error err;
+
+	/* read the hunk into the cache */
+	err = hunk_read_into_memory(chd, chd->async_hunknum, chd->async_buffer);
+
+	/* return the error */
+	return (void *)err;
+}
+
+
+/*-------------------------------------------------
+    async_write_callback - asynchronous writing
+    callback
+-------------------------------------------------*/
+
+static void *async_write_callback(void *param)
+{
+	chd_file *chd = param;
+	chd_error err;
+
+	/* write the hunk from memory */
+	err = hunk_write_from_memory(chd, chd->async_hunknum, chd->async_buffer);
+
+	/* return the error */
+	return (void *)err;
 }
 
 
@@ -1584,6 +1777,10 @@ static chd_error hunk_read_into_cache(chd_file *chd, UINT32 hunknum)
 {
 	chd_error err;
 
+	/* track the max */
+	if (hunknum > chd->maxhunk)
+		chd->maxhunk = hunknum;
+
 	/* if we're already in the cache, we're done */
 	if (chd->cachehunk == hunknum)
 		return CHDERR_NONE;
@@ -1608,8 +1805,8 @@ static chd_error hunk_read_into_cache(chd_file *chd, UINT32 hunknum)
 static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *dest)
 {
 	map_entry *entry = &chd->map[hunknum];
-	UINT32 bytes;
 	chd_error err;
+	UINT32 bytes;
 
 	/* switch off the entry type */
 	switch (entry->flags & MAP_ENTRY_FLAG_TYPE_MASK)
@@ -1657,10 +1854,6 @@ static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *des
 				return err;
 			break;
 	}
-
-	/* validate the CRC if we have one */
-	if (!(entry->flags & MAP_ENTRY_FLAG_NO_CRC) && entry->crc != crc32(0, &dest[0], chd->header.hunkbytes))
-		return CHDERR_DECOMPRESSION_ERROR;
 	return CHDERR_NONE;
 }
 
@@ -1679,46 +1872,54 @@ static chd_error hunk_write_from_memory(chd_file *chd, UINT32 hunknum, const UIN
 	UINT32 bytes = 0, match;
 	chd_error err;
 
-	/* first compute the CRC */
+	/* track the max */
+	if (hunknum > chd->maxhunk)
+		chd->maxhunk = hunknum;
+
+	/* first compute the CRC of the original data */
 	newentry.crc = crc32(0, &src[0], chd->header.hunkbytes);
 
-	/* some extra stuff for zlib+ compression */
-	if (chd->header.compression == CHDCOMPRESSION_ZLIB_PLUS)
+	/* if we're not a lossy codec, compute the CRC and look for matches */
+	if (!chd->codecintf->lossy)
 	{
-		/* see if we can mini-compress first */
-		for (bytes = 8; bytes < chd->header.hunkbytes; bytes++)
-			if (src[bytes] != src[bytes - 8])
-				break;
-
-		/* if so, we don't need to write any data */
-		if (bytes == chd->header.hunkbytes)
+		/* some extra stuff for zlib+ compression */
+		if (chd->header.compression >= CHDCOMPRESSION_ZLIB_PLUS)
 		{
-			newentry.offset = get_bigendian_uint64(&src[0]);
-			newentry.length = 0;
-			newentry.flags = MAP_ENTRY_TYPE_MINI;
-			goto write_entry;
-		}
+			/* see if we can mini-compress first */
+			for (bytes = 8; bytes < chd->header.hunkbytes; bytes++)
+				if (src[bytes] != src[bytes - 8])
+					break;
 
-		/* otherwise, see if we can find a match in the current file */
-		match = crcmap_find_hunk(chd, hunknum, newentry.crc, &src[0]);
-		if (match != NO_MATCH)
-		{
-			newentry.offset = match;
-			newentry.length = 0;
-			newentry.flags = MAP_ENTRY_TYPE_SELF_HUNK;
-			goto write_entry;
-		}
+			/* if so, we don't need to write any data */
+			if (bytes == chd->header.hunkbytes)
+			{
+				newentry.offset = get_bigendian_uint64(&src[0]);
+				newentry.length = 0;
+				newentry.flags = MAP_ENTRY_TYPE_MINI;
+				goto write_entry;
+			}
 
-		/* if we have a parent, see if we can find a match in there */
-		if (chd->header.flags & CHDFLAGS_HAS_PARENT)
-		{
-			match = crcmap_find_hunk(chd->parent, ~0, newentry.crc, &src[0]);
+			/* otherwise, see if we can find a match in the current file */
+			match = crcmap_find_hunk(chd, hunknum, newentry.crc, &src[0]);
 			if (match != NO_MATCH)
 			{
 				newentry.offset = match;
 				newentry.length = 0;
-				newentry.flags = MAP_ENTRY_TYPE_PARENT_HUNK;
+				newentry.flags = MAP_ENTRY_TYPE_SELF_HUNK;
 				goto write_entry;
+			}
+
+			/* if we have a parent, see if we can find a match in there */
+			if (chd->header.flags & CHDFLAGS_HAS_PARENT)
+			{
+				match = crcmap_find_hunk(chd->parent, ~0, newentry.crc, &src[0]);
+				if (match != NO_MATCH)
+				{
+					newentry.offset = match;
+					newentry.length = 0;
+					newentry.flags = MAP_ENTRY_TYPE_PARENT_HUNK;
+					goto write_entry;
+				}
 			}
 		}
 	}
@@ -1728,14 +1929,20 @@ static chd_error hunk_write_from_memory(chd_file *chd, UINT32 hunknum, const UIN
 	if (chd->codecintf->compress != NULL)
 		err = (*chd->codecintf->compress)(chd, src, &bytes);
 
+	/* if that worked, and we're lossy, decompress and CRC the result */
+	if (err == CHDERR_NONE && chd->codecintf->lossy)
+	{
+		err = (*chd->codecintf->decompress)(chd, bytes, chd->cache);
+		if (err == CHDERR_NONE)
+			newentry.crc = crc32(0, chd->cache, chd->header.hunkbytes);
+	}
+
 	/* if we succeeded in compressing the data, replace our data pointer and mark it so */
 	if (err == CHDERR_NONE)
 	{
 		data = chd->compressed;
 		newentry.length = bytes;
 		newentry.flags = MAP_ENTRY_TYPE_COMPRESSED;
-		if (chd->codecintf->lossy)
-			newentry.flags |= MAP_ENTRY_FLAG_NO_CRC;
 	}
 
 	/* otherwise, mark it uncompressed and use the original data */

@@ -126,33 +126,8 @@ static void fantland_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 
 VIDEO_UPDATE( fantland )
 {
-	int portx, porty;
-
 	fillbitmap(bitmap,Machine->pens[0],cliprect);
 	fantland_draw_sprites(bitmap,cliprect);
 
-	// Draw the crosshairs for lightgun games
-
-	if (	(portx = port_tag_to_index("Controls")) > 0	&&
-			((readinputport(portx) & 3) != 3)			)
-		return 0;
-
-	if (	(portx = port_tag_to_index("P1 Lightgun X")) > 0	&&
-			(porty = port_tag_to_index("P1 Lightgun Y")) > 0	)
-	{
-		draw_crosshair(bitmap,
-			readinputport(portx) * 2 - 0x0e,
-			readinputport(porty) * 2 - 0xf8,
-			cliprect,0);
-	}
-
-	if (	(portx = port_tag_to_index("P2 Lightgun X")) > 0	&&
-			(porty = port_tag_to_index("P2 Lightgun Y")) > 0	)
-	{
-		draw_crosshair(bitmap,
-			readinputport(portx) * 2 - 0x0e,
-			readinputport(porty) * 2 - 0xf8,
-			cliprect,1);
-	}
 	return 0;
 }

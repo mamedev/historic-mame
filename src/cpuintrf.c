@@ -1240,9 +1240,6 @@ offs_t activecpu_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 }
 #endif
 
-	/* as of 0.109u5, all disassemblers must support flags */
-	assert((result & DASMFLAG_SUPPORTED) != 0);
-
 	return result;
 }
 

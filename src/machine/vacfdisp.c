@@ -15,8 +15,8 @@
 //                                                                        //
 // TODO: - BFM sys85 seems to use a slightly different vfd to OKI MSC1937 //
 //       - Add 'skew' to display - characters usually slope 20 degrees    //
-//       - Implement display flashing (need precise rate figures          //
-//       - Make display better (convert to segment shapes like LED        //
+//       - Implement display flashing (need precise rate figures)         //
+//       - Make display better (convert to segment shapes like LED)       //
 //                                                                        //
 // Any fixes for this driver should be forwarded to AGEMAME HQ            //
 // (http://www.mameworld.net/agemame/)                                    //
@@ -855,7 +855,7 @@ void plot_vfd(mame_bitmap *bitmap,int vfd,int segs,int color, int col_off )
 
 			if (vfd_get_outputs(vfd)[cursor] & 0x40000)
 				{
-					//activate flashing (unimplemented, as my BD1 datasheet is unreadable on that page)
+					//activate flashing (unimplemented, just toggle on and off)
 				}
 			else
 				{
@@ -867,14 +867,14 @@ void plot_vfd(mame_bitmap *bitmap,int vfd,int segs,int color, int col_off )
 void draw_vfd(mame_bitmap *bitmap,int vfd,int segs,int col_on, int col_off )
 {
 	int cycle,color;
-
 	if (vfds[vfd].type == VFDTYPE_BFMBD1)
 	{
-		if ((segs < 14)||(segs > 14))
+		if (segs != 14)
 		{
 			logerror("BD1 controller only supports 14 segments - defaulting to 14 seg mode \n");
 			segs = 14;
 		}
+
 		color = col_on;
 		plot_vfd(bitmap,vfd,segs,color,col_off );
 	}
@@ -904,4 +904,3 @@ void draw_14seg(mame_bitmap *bitmap,int vfd, int col_on, int col_off )
 {
 	draw_vfd(bitmap,vfd,14,col_on,col_off );
 }
-

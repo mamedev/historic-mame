@@ -253,6 +253,11 @@
  *                         log/linear scale 0=Linear !0=Logarithmic,
  *                         input port number of the potentiometer)
  *
+ *  Note: When using DISC_LOGADJ, the min/max values must be > 0.
+ *        If they are <=0, they will be forced to 1.
+ *        Min can be a higher value then max.
+ *        Min/max is just how the slider is displayed.
+ *
  *  Example config line
  *
  *     DISCRETE_ADJUSTMENT(NODE_01,1,0.0,5.0,DISC_LINADJ,0,5)
@@ -267,7 +272,9 @@
  *
  ***********************************************************************
  *
- * DISCRETE_CONSTANT - Single output, fixed at compile time
+ * DISCRETE_CONSTANT - Single output, fixed at compile time.
+ *                     This is usefull as a placeholder for
+ *                     incomplete circuits.
  *
  *                        .----------.
  *                        |          |
@@ -355,7 +362,8 @@
  *
  *  Declaration syntax
  *
- *       where:  direction: 0 = down, 1 = up
+ *       where:  direction: DISC_COUNT_DOWN = 0 = down
+ *                          DISC_COUNT_UP   = 1 = up
  *
  *               clock type: DISC_CLK_ON_F_EDGE - toggle on falling edge.
  *                           DISC_CLK_ON_R_EDGE - toggle on rising edge.
@@ -1505,7 +1513,10 @@
  *   Trig0 >----ZZZZ--------'  | /
  *                             |/
  *
- * EXAMPLES: see
+ * Note: Trig0 is voltage level, not logic.
+ *       No functions are used so set them to 0, or DISC_OP_AMP_TRIGGER_FUNCTION_NONE.
+ *
+ * EXAMPLES: see Extra Innings
  *
  *          --------------------------------------------------
  *
@@ -2255,7 +2266,7 @@
  *                            to counter circuits.  The Output Type flag is ingnored
  *                            when this flag is used.
  *     DISC_555_OUT_COUNT_R - Same as DISC_555_OUT_COUNT_F but with rising edges.
- *     DISC_555_OUT_ENERGY  - Same SQR, but will help reduce aliasing effects.
+ *     DISC_555_OUT_ENERGY  - Same SQW, but will help reduce aliasing effects.
  *                            This should be used when the 555 squarewave output is used
  *                            as a final output and not as a clock source.
  *                            If the state changes from low to high 1/4 of the way
@@ -2620,6 +2631,9 @@
 #define DISC_CLK_ON_R_EDGE		0x01
 #define DISC_CLK_BY_COUNT		0x02
 #define DISC_CLK_IS_FREQ		0x03
+
+#define DISC_COUNT_DOWN			0
+#define DISC_COUNT_UP			1
 
 #define DISC_COUNTER_IS_7492	0x08
 

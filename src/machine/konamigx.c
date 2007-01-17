@@ -306,20 +306,44 @@ INLINE void K053936GP_copyroz32clip( mame_bitmap *dst_bitmap, mame_bitmap *src_b
 	cy = starty;
 	cx = startx;
 
-	if (blend >=0)
+	if (blend > 0)
 	{
-		dst_base += dst_pitch;
+		dst_base += dst_pitch;		// draw blended
 		starty += incyy;
 		startx += incyx;
 
-		if (!blend)
-			goto DRAW_SOLID;
-		else
-		{
 			esi = drawgfx_alpha_cache.alphas;
 			edi = drawgfx_alpha_cache.alphad;
-			goto DRAW_ALPHA;
+
+		do {
+			do {
+				eax = cy;      ebx = cx;
+				eax >>= 16;    ebx >>= 16;
+				eax &= 0x1fff; ebx &= 0x1fff;
+				eax = (eax<<5) + (eax<<13); //eax *= src_pitch;
+				cy += incxy;   cx += incxx;
+				if (ebx < src_minx || ebx > src_maxx || eax < src_miny || eax > src_maxy) continue;
+
+				eax = src_base[eax+ebx];
+				if (!(eax & cmask)) continue;
+
+				BLEND32_MACRO
 		}
+			while (++ecx);
+
+			ecx = tx;
+			dst_ptr = dst_base; dst_base += dst_pitch;
+			cy = starty; starty += incyy;
+			cx = startx; startx += incyx;
+		} while (--ty);
+	}
+	else	//  draw solid
+	{
+		if (blend == 0)
+		{
+			dst_base += dst_pitch;
+			starty += incyy;
+			startx += incyx;
 	}
 	else
 	{
@@ -345,8 +369,6 @@ INLINE void K053936GP_copyroz32clip( mame_bitmap *dst_bitmap, mame_bitmap *src_b
 		}
 	}
 
-
-	DRAW_SOLID:
 	do {
 		do {
 			eax = cy;      ebx = cx;
@@ -368,31 +390,7 @@ INLINE void K053936GP_copyroz32clip( mame_bitmap *dst_bitmap, mame_bitmap *src_b
 		cy = starty; starty += incyy;
 		cx = startx; startx += incyx;
 	} while (--ty);
-	return;
-
-
-	DRAW_ALPHA:
-	do {
-		do {
-			eax = cy;      ebx = cx;
-			eax >>= 16;    ebx >>= 16;
-			eax &= 0x1fff; ebx &= 0x1fff;
-			eax = (eax<<5) + (eax<<13); //eax *= src_pitch;
-			cy += incxy;   cx += incxx;
-			if (ebx < src_minx || ebx > src_maxx || eax < src_miny || eax > src_maxy) continue;
-
-			eax = src_base[eax+ebx];
-			if (!(eax & cmask)) continue;
-
-			BLEND32_MACRO
 		}
-		while (++ecx);
-
-		ecx = tx;
-		dst_ptr = dst_base; dst_base += dst_pitch;
-		cy = starty; starty += incyy;
-		cx = startx; startx += incyx;
-	} while (--ty);
 }
 
 // adpoted from generic K053936_zoom_draw()

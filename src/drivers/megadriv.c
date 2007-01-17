@@ -3758,7 +3758,7 @@ void genesis_render_videobuffer_to_screenbuffer(int scanline)
 {
 	UINT16*lineptr;
 	int x;
-	lineptr = render_bitmap->line[scanline];
+	lineptr = BITMAP_ADDR16(render_bitmap, scanline, 0);
 
 	if (!MEGADRIVE_REG0C_SHADOW_HIGLIGHT)
 	{
@@ -4425,7 +4425,7 @@ int megadrive_z80irq_hpos = 320;
 					count++;
 					count &=(0xffff>>1);
 
-					lineptr = render_bitmap->line[y*8+yy];
+					lineptr = BITMAP_ADDR16(render_bitmap, y*8+yy, 0);
 
 					//lineptr[x*8+xx*2]   = (dat & 0xf0)>>4;
 					//lineptr[x*8+xx*2+1] = (dat & 0x0f)>>0;
@@ -4501,14 +4501,15 @@ MACHINE_DRIVER_START( megadriv )
 	MDRV_CPU_PROGRAM_MAP(z80_readmem,z80_writemem)
 	/* IRQ handled via the timers */
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(0) // Vblank handled manually.
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(0)) // Vblank handled manually.
 	MDRV_MACHINE_RESET(megadriv_reset)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_RGB15)
 
 	MDRV_SCREEN_SIZE(64*8, 64*8)
-	MDRV_VISIBLE_AREA(0, 32*8-1, 0, 28*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 32*8-1, 0, 28*8-1)
 
 	MDRV_NVRAM_HANDLER(megadriv)
 
@@ -4547,7 +4548,7 @@ MACHINE_DRIVER_END
 MACHINE_DRIVER_START( megadpal )
 	MDRV_IMPORT_FROM(megadriv)
 
-	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_SCREEN_REFRESH_RATE(50)
 MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( _32x )

@@ -603,7 +603,7 @@ VIDEO_START( f3 )
 	pivot_dirty = (UINT8 *)auto_malloc(2048);
 	pf_line_inf = auto_malloc(5 * sizeof(struct f3_playfield_line_inf));
 	sa_line_inf = auto_malloc(1 * sizeof(struct f3_spritealpha_line_inf));
-	pri_alp_bitmap = auto_bitmap_alloc_depth( Machine->screen[0].width, Machine->screen[0].height, -8 );
+	pri_alp_bitmap = auto_bitmap_alloc_format( Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED8 );
 	tile_opaque_sp = (UINT8 *)auto_malloc(Machine->gfx[2]->total_elements);
 	tile_opaque_pf = (UINT8 *)auto_malloc(Machine->gfx[1]->total_elements);
 
@@ -2733,7 +2733,7 @@ INLINE void f3_drawgfx( mame_bitmap *dest_bmp,const gfx_element *gfx,
 
 			if( ex>sx && ey>sy)
 			{ /* skip if inner loop doesn't draw anything */
-//              if (dest_bmp->depth == 32)
+//              if (dest_bmp->bpp == 32)
 				{
 					int y=ey-sy;
 					int x=(ex-sx-1)|(tile_opaque_sp[code % gfx->total_elements]<<4);
@@ -2898,7 +2898,7 @@ INLINE void f3_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 
 			if( ex>sx )
 			{ /* skip if inner loop doesn't draw anything */
-//              if (dest_bmp->depth == 32)
+//              if (dest_bmp->bpp == 32)
 				{
 					int y;
 					for( y=sy; y<ey; y++ )

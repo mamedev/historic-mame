@@ -305,9 +305,6 @@ VIDEO_UPDATE( othunder )
 		// were confirmed to match those stored by the game at $82732, $82734
 		screeny += 2;
 
-		/* player 1 */
-		draw_crosshair(bitmap,screenx,screeny,cliprect,0);
-
 		/* calculate p2 screen co-ords by matching routine at $AA48 */
 		rawx = othunder_ram[0x284c/2];
 		centrex = othunder_ram[0xa04a/2];
@@ -347,9 +344,6 @@ VIDEO_UPDATE( othunder )
 		// fudge y to show in centre of scope/hit sprite, note that screenx, screeny
 		// were confirmed to match those stored by the game at $82736, $82738
 		screeny += 2;
-
-		/* player 2 */
-		draw_crosshair(bitmap,screenx,screeny,cliprect,1);
 	}
 	return 0;
 }

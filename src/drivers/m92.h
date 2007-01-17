@@ -43,7 +43,7 @@
 
 	/* Coin Mode 1, the new one (m72 early games have different Coinage) */ \
 #define IREM_COIN_MODE_1_NEW \
-	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) ) \
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) ) PORT_DIPLOCATION("SW2:5,6,7,8") \
 	PORT_DIPSETTING(    0xa0, DEF_STR( 6C_1C ) ) \
 	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) ) \
 	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) ) \

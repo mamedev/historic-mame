@@ -618,8 +618,8 @@ static MACHINE_DRIVER_START( airbustr )
 	MDRV_CPU_IO_MAP(sound_io_map, 0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)		// nmi are caused by sub cpu writing a sound command
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	// Palette RAM is filled by sub cpu with data supplied by main cpu
 							// Maybe a high value is safer in order to avoid glitches
 	MDRV_MACHINE_RESET(airbustr)
@@ -627,8 +627,9 @@ static MACHINE_DRIVER_START( airbustr )
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(768)
 

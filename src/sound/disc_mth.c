@@ -518,7 +518,7 @@ void dst_integrate_step(node_description *node)
 			iNeg = context->vMaxIn / info->r1;
 			iPos = (DST_INTEGRATE__TRG0 - OP_AMP_NORTON_VBE) / info->r2;
 			if (iPos < 0) iPos = 0;
-			node->output += iPos / discrete_current_context->sample_rate / info->c;
+			node->output += (iPos - iNeg) / discrete_current_context->sample_rate / info->c;
 			break;
 
 		case DISC_INTEGRATE_OP_AMP_2 | DISC_OP_AMP_IS_NORTON:

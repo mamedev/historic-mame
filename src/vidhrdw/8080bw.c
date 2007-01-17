@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "8080bw.h"
-#include <math.h>
 
 static int screen_red;
 static int screen_red_enabled;		/* 1 for games that can turn the screen red */
@@ -16,10 +15,8 @@ static int color_map_select;
 static int background_color;
 static int schaser_sx10_done;
 static UINT8 cloud_pos;
-static UINT8 bowler_bonus_display;
 
 static write8_handler videoram_w_p;
-static UINT32 (*video_update_p)(running_machine *machine,int screen,mame_bitmap *bitmap,const rectangle *cliprect);
 
 static WRITE8_HANDLER( bw_videoram_w );
 static WRITE8_HANDLER( rollingc_videoram_w );
@@ -27,16 +24,11 @@ static WRITE8_HANDLER( schaser_videoram_w );
 static WRITE8_HANDLER( lupin3_videoram_w );
 static WRITE8_HANDLER( polaris_videoram_w );
 static WRITE8_HANDLER( sstrngr2_videoram_w );
-static WRITE8_HANDLER( phantom2_videoram_w );
 static WRITE8_HANDLER( invadpt2_videoram_w );
 static WRITE8_HANDLER( cosmo_videoram_w );
 static WRITE8_HANDLER( shuttlei_videoram_w );
 
 static VIDEO_UPDATE( 8080bw_common );
-static VIDEO_UPDATE( seawolf );
-static VIDEO_UPDATE( blueshrk );
-static VIDEO_UPDATE( desertgu );
-static VIDEO_UPDATE( bowler );
 
 static void plot_pixel_8080(int x, int y, int col);
 
@@ -59,7 +51,6 @@ OVERLAY_END
 DRIVER_INIT( 8080bw )
 {
 	videoram_w_p = bw_videoram_w;
-	video_update_p = video_update_8080bw_common;
 	screen_red = 0;
 	screen_red_enabled = 0;
 	color_map_select = 0;
@@ -142,36 +133,6 @@ DRIVER_INIT( cosmo )
 	videoram_w_p = cosmo_videoram_w;
 }
 
-DRIVER_INIT( seawolf )
-{
-	init_8080bw(machine);
-	video_update_p = video_update_seawolf;
-}
-
-DRIVER_INIT( blueshrk )
-{
-	init_8080bw(machine);
-	video_update_p = video_update_blueshrk;
-}
-
-DRIVER_INIT( desertgu )
-{
-	init_8080bw(machine);
-	video_update_p = video_update_desertgu;
-}
-
-DRIVER_INIT( bowler )
-{
-	init_8080bw(machine);
-	video_update_p = video_update_bowler;
-}
-
-DRIVER_INIT( phantom2 )
-{
-	init_8080bw(machine);
-	videoram_w_p = phantom2_videoram_w;
-}
-
 DRIVER_INIT( indianbt )
 {
 	init_8080bw(machine);
@@ -216,24 +177,6 @@ INTERRUPT_GEN( polaris_interrupt )
 
 		cloud_pos++;
 
-		set_vh_global_attribute(NULL,0);
-	}
-
-	c8080bw_interrupt();
-}
-
-
-INTERRUPT_GEN( phantom2_interrupt )
-{
-	static int cloud_speed;
-
-	cloud_speed++;
-
-	if (cloud_speed >= 2)	/* every 2 frames - no idea of correct */
-	{
-		cloud_speed = 0;
-
-		cloud_pos++;
 		set_vh_global_attribute(NULL,0);
 	}
 
@@ -426,61 +369,6 @@ READ8_HANDLER( schaser_colorram_r )
 }
 
 
-static WRITE8_HANDLER( phantom2_videoram_w )
-{
-	static int CLOUD_SHIFT[] = { 0x01, 0x01, 0x02, 0x02, 0x04, 0x04, 0x08, 0x08,
-	                             0x10, 0x10, 0x20, 0x20, 0x40, 0x40, 0x80, 0x80 };
-
-	int i,col;
-	UINT8 x,y,cloud_x;
-	UINT8 *cloud_region;
-	offs_t cloud_offs;
-
-
-	videoram[offset] = data;
-
-	y = offset / 32;
-	x = (offset % 32) * 8;
-
-
-	cloud_region = memory_region(REGION_PROMS);
-	cloud_offs = ((y - cloud_pos) & 0xff) >> 1 << 4;
-	cloud_x = x - 12;  /* based on screen shots */
-
-
-	for (i = 0; i < 8; i++)
-	{
-		if (data & 0x01)
-		{
-			col = 1;	/* white foreground */
-		}
-		else
-		{
-			UINT8 cloud_data;
-
-
-			cloud_offs = (cloud_offs & 0xfff0) | (cloud_x >> 4);
-			cloud_data = cloud_region[cloud_offs];
-
-			if (cloud_data & (CLOUD_SHIFT[cloud_x & 0x0f]))
-			{
-				col = 2;	/* grey cloud */
-			}
-			else
-			{
-				col = 0;	/* black background */
-			}
-		}
-
-		plot_pixel_8080(x, y, col);
-
-		x++;
-		cloud_x++;
-		data >>= 1;
-	}
-}
-
-
 static WRITE8_HANDLER( shuttlei_videoram_w )
 {
 	int x,y,i;
@@ -501,14 +389,9 @@ static WRITE8_HANDLER( shuttlei_videoram_w )
   the main emulation engine.
 
 ***************************************************************************/
+
+
 VIDEO_UPDATE( 8080bw )
-{
-	video_update_p(machine, screen, bitmap, cliprect);
-	return 0;
-}
-
-
-static VIDEO_UPDATE( 8080bw_common )
 {
 	if (get_vh_global_attribute_changed())
 	{
@@ -520,170 +403,6 @@ static VIDEO_UPDATE( 8080bw_common )
 
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 	return 0;
-}
-
-
-static void draw_sight(mame_bitmap *bitmap,const rectangle *cliprect,int x_center, int y_center)
-{
-	int x,y;
-	int sight_xs;
-	int sight_xc;
-	int sight_xe;
-	int sight_ys;
-	int sight_yc;
-	int sight_ye;
-
-
-	sight_xc = x_center;
-	if( sight_xc < 2 )
-	{
-		sight_xc = 2;
-	}
-	else if( sight_xc > 253 )
-	{
-		sight_xc = 253;
-	}
-
-	sight_yc = y_center;
-	if( sight_yc < 2 )
-	{
-		sight_yc = 2;
-	}
-	else if( sight_yc > 221 )
-	{
-		sight_yc = 221;
-	}
-
-	sight_xs = sight_xc - 20;
-	if( sight_xs < 0 )
-	{
-		sight_xs = 0;
-	}
-	sight_xe = sight_xc + 20;
-	if( sight_xe > 255 )
-	{
-		sight_xe = 255;
-	}
-
-	sight_ys = sight_yc - 20;
-	if( sight_ys < 0 )
-	{
-		sight_ys = 0;
-	}
-	sight_ye = sight_yc + 20;
-	if( sight_ye > 223 )
-	{
-		sight_ye = 223;
-	}
-
-	x = sight_xc;
-	y = sight_yc;
-	if (flip_screen)
-	{
-		x = 255-x;
-		y = 255-y;
-	}
-
-
-	draw_crosshair(bitmap,x,y,cliprect,0);
-}
-
-
-static VIDEO_UPDATE( seawolf )
-{
-	/* update the bitmap (and erase old cross) */
-	video_update_8080bw_common(machine, screen, bitmap, cliprect);
-
-    draw_sight(bitmap,cliprect,((input_port_0_r(0) & 0x1f) * 8) + 4, 63);
-    return 0;
-}
-
-static VIDEO_UPDATE( blueshrk )
-{
-	/* update the bitmap (and erase old cross) */
-	video_update_8080bw_common(machine, screen, bitmap, cliprect);
-
-    draw_sight(bitmap,cliprect,((input_port_0_r(0) & 0x7f) * 2) - 12, 63);
-    return 0;
-}
-
-static VIDEO_UPDATE( desertgu )
-{
-	/* update the bitmap (and erase old cross) */
-	video_update_8080bw_common(machine, screen, bitmap, cliprect);
-
-	draw_sight(bitmap,cliprect,
-			   ((input_port_0_r(0) & 0x7f) * 2) - 30,
-			   ((input_port_2_r(0) & 0x7f) * 2) + 2);
-    return 0;
-}
-
-
-WRITE8_HANDLER( bowler_bonus_display_w )
-{
-	/* Bits 0-6 control which score is lit.
-       Bit 7 appears to be a global enable, but the exact
-       effect is not known. */
-
-	bowler_bonus_display = data;
-}
-
-
-static VIDEO_UPDATE( bowler )
-{
-
-	/* update the bitmap */
-	video_update_8080bw_common(machine, screen, bitmap, cliprect);
-
-
-	/* draw the current bonus value - on the original game this
-       was done using lamps that lit score displays on the bezel. */
-
-/*
-    int x,y,i;
-
-    static const char score_line_1[] = "Bonus 200 400 500 700 500 400 200";
-    static const char score_line_2[] = "      110 220 330 550 330 220 110";
-
-
-    fix me -- this should be done with artwork
-    x = 33 * 8;
-    y = 31 * 8;
-
-    for (i = 0; i < 33; i++)
-    {
-        int col;
-
-
-        col = UI_COLOR_NORMAL;
-
-        if ((i >= 6) && ((i % 4) != 1))
-        {
-            int bit = (i - 6) / 4;
-
-            if (bowler_bonus_display & (1 << bit))
-            {
-                col = UI_COLOR_INVERSE;
-            }
-        }
-
-
-        drawgfx(bitmap,Machine->uifont,
-                score_line_1[i],col,
-                0,1,
-                x,y,
-                cliprect,TRANSPARENCY_NONE,0);
-
-        drawgfx(bitmap,Machine->uifont,
-                score_line_2[i],col,
-                0,1,
-                x+8,y,
-                cliprect,TRANSPARENCY_NONE,0);
-
-        y -= Machine->uifontwidth;
-    }
-*/
-    return 0;
 }
 
 

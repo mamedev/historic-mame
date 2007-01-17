@@ -314,7 +314,7 @@ static int common_start(int multi32)
 	/* allocate the bitmaps (a few extra for multi32) */
 	for (tmap = 0; tmap < 9 + 2 * multi32; tmap++)
 	{
-		layer_data[tmap].bitmap = auto_bitmap_alloc_depth(416, 224, 16);
+		layer_data[tmap].bitmap = auto_bitmap_alloc_format(416, 224, BITMAP_FORMAT_INDEXED16);
 		layer_data[tmap].transparent = auto_malloc(sizeof(layer_data[tmap].transparent[0]) * 256);
 		memset(layer_data[tmap].transparent, 0, sizeof(layer_data[tmap].transparent[0]) * 256);
 	}

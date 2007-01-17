@@ -6,7 +6,7 @@ static UINT32 *eo_vram;
 
 static void plot_pixel_rgb(int x, int y, int color)
 {
-	if (Machine->color_depth == 32)
+	if (bitmaps[eolith_buffer]->bpp == 32)
 	{
 		UINT32 r = (color & 0x001f) << 3;
 		UINT32 g = (color & 0x03e0) >> 2;

@@ -75,7 +75,7 @@
 #include "machine/pckeybrd.h"
 #include "machine/idectrl.h"
 #include "cpu/i386/i386.h"
-#include "sound/dac.h"
+#include "sound/dmadac.h"
 
 #define SPEEDUP_HACKS	1
 
@@ -87,8 +87,6 @@ static UINT8 pal[768];
 static UINT32 *main_ram;
 
 static UINT32 disp_ctrl_reg[256/4];
-
-static int vblank = 0;
 
 
 // Display controller registers
@@ -151,7 +149,7 @@ static void draw_char(mame_bitmap *bitmap, const rectangle *cliprect, const gfx_
 
 	for (j=y; j < y+8; j++)
 	{
-		UINT32 *p = bitmap->line[j];
+		UINT32 *p = BITMAP_ADDR32(bitmap, j, 0);
 		for (i=x; i < x+8; i++)
 		{
 			UINT8 pen = dp[index++];
@@ -206,7 +204,7 @@ static void draw_framebuffer(mame_bitmap *bitmap, const rectangle *cliprect)
 
 		for (j=0; j < frame_height; j++)
 		{
-			UINT32 *p = bitmap->line[j];
+			UINT32 *p = BITMAP_ADDR32(bitmap, j, 0);
 			UINT8 *si = &framebuf[j * line_delta];
 			for (i=0; i < frame_width; i++)
 			{
@@ -228,7 +226,7 @@ static void draw_framebuffer(mame_bitmap *bitmap, const rectangle *cliprect)
 		{
 			for (j=0; j < frame_height; j++)
 			{
-				UINT32 *p = bitmap->line[j];
+				UINT32 *p = BITMAP_ADDR32(bitmap, j, 0);
 				UINT16 *si = &framebuf[j * (line_delta/2)];
 				for (i=0; i < frame_width; i++)
 				{
@@ -246,7 +244,7 @@ static void draw_framebuffer(mame_bitmap *bitmap, const rectangle *cliprect)
 		{
 			for (j=0; j < frame_height; j++)
 			{
-				UINT32 *p = bitmap->line[j];
+				UINT32 *p = BITMAP_ADDR32(bitmap, j, 0);
 				UINT16 *si = &framebuf[j * (line_delta/2)];
 				for (i=0; i < frame_width; i++)
 				{
@@ -308,7 +306,7 @@ static READ32_HANDLER( disp_ctrl_r )
 			r |= 0x40000000;
 
 			if (cpu_getscanline() >= frame_height)
- 			{
+			{
 				r &= ~0x40000000;
 			}
 
@@ -487,6 +485,9 @@ static WRITE32_HANDLER( io20_w )
 
 static UINT8 controls_data = 0;
 static UINT32 parport;
+//static int control_num = 0;
+//static int control_num2 = 0;
+//static int control_read = 0;
 static READ32_HANDLER( parallel_port_r )
 {
 	UINT32 r = 0;
@@ -505,6 +506,8 @@ static READ32_HANDLER( parallel_port_r )
 		{
 			r |= readinputport(2) << 8;
 		}
+
+		//r |= control_read << 8;
 	}
 	if (!(mem_mask & 0x00ff0000))
 	{
@@ -520,7 +523,39 @@ static WRITE32_HANDLER( parallel_port_w )
 
 	if (!(mem_mask & 0x000000ff))
 	{
+	//  if (data == 0x10) printf("\n");
+	//  printf("parallel_port_w: %08X at %08X (%d, %d)\n", data, activecpu_get_pc(), control_num2, control_num);
 		controls_data = data;
+		/*
+        if ((data == 0xff || data == 0x60) && control_num == 1)
+        {
+            control_read = readinputport(0);
+        }
+        if (data == 0x18 && control_num == 2)
+        {
+            control_read = readinputport(1);
+        }
+        if ((data & 0xc0) == 0x40)
+        {
+            control_read = readinputport(2);
+        }
+        if ((data & 0xc0) == 0x50)
+        {
+            control_read = readinputport(3);
+        }
+
+        control_num++;
+
+        if (data == 0x18)
+        {
+            control_num = 0;
+            control_num2++;
+        }
+        if (data == 0x10)
+        {
+            control_num2 = 0;
+        }
+        */
 		//mame_printf_debug("parallel_port_w: %08X, %08X, %08X\n", data, offset, mem_mask);
 	}
 }
@@ -546,6 +581,11 @@ static void cx5510_pci_w(int function, int reg, UINT32 data, UINT32 mem_mask)
 
 /* Analog Devices AD1847 Stereo DAC */
 
+static UINT16 *dacl;
+static UINT16 *dacr;
+static int dacl_ptr = 0;
+static int dacr_ptr = 0;
+
 static void* sound_timer;
 static UINT8 ad1847_regs[16];
 static UINT32 ad1847_sample_counter = 0;
@@ -553,7 +593,13 @@ static UINT32 ad1847_sample_rate;
 static void sound_timer_callback(int num)
 {
 	ad1847_sample_counter = 0;
-	timer_adjust(sound_timer, TIME_IN_MSEC(1), 0, 0);
+	timer_adjust(sound_timer, TIME_IN_MSEC(10), 0, 0);
+
+	dmadac_transfer(0, 1, 0, 1, dacl_ptr, dacl);
+	dmadac_transfer(1, 1, 0, 1, dacr_ptr, dacr);
+
+	dacl_ptr = 0;
+	dacr_ptr = 0;
 }
 
 static const int divide_factor[] = { 3072, 1536, 896, 768, 448, 384, 512, 2560 };
@@ -572,6 +618,8 @@ static void ad1847_reg_write(int reg, UINT8 data)
 			{
 				ad1847_sample_rate = 24576000 / divide_factor[(data >> 1) & 0x7];
 			}
+
+			dmadac_set_frequency(0, 2, ad1847_sample_rate);
 
 			if (data & 0x20)
 			{
@@ -597,7 +645,7 @@ static READ32_HANDLER( ad1847_r )
 	switch (offset)
 	{
 		case 0x14/4:
-			return ad1847_sample_rate - ad1847_sample_counter;
+			return ((ad1847_sample_rate) / 100) - ad1847_sample_counter;
 	}
 	return 0;
 }
@@ -609,13 +657,14 @@ static WRITE32_HANDLER( ad1847_w )
 		if (!(mem_mask & 0xffff0000))
 		{
 			UINT16 ldata = (data >> 16) & 0xffff;
-			DAC_signed_data_16_w(0, ldata ^ 0x8000);
+			dacl[dacl_ptr++] = ldata;
 		}
 		if (!(mem_mask & 0x0000ffff))
 		{
 			UINT16 rdata = data & 0xffff;
-			DAC_signed_data_16_w(1, rdata ^ 0x8000);
+			dacr[dacr_ptr++] = rdata;
 		}
+
 		ad1847_sample_counter++;
 	}
 	else if (offset == 3)
@@ -717,13 +766,13 @@ static MACHINE_RESET(mediagx)
 
 	memcpy(bios_ram, rom, 0x40000);
 
-	sound_timer = timer_alloc(sound_timer_callback);
-	timer_adjust(sound_timer, TIME_IN_MSEC(1), 0, 0);
-}
+	dacl = auto_malloc(65536 * sizeof(INT16));
+	dacr = auto_malloc(65536 * sizeof(INT16));
 
-static INTERRUPT_GEN(mediagx_vblank)
-{
-	vblank ^= 1;
+	sound_timer = timer_alloc(sound_timer_callback);
+	timer_adjust(sound_timer, TIME_IN_MSEC(10), 0, 0);
+
+	dmadac_enable(0, 2, 1);
 }
 
 static MACHINE_DRIVER_START(mediagx)
@@ -732,19 +781,19 @@ static MACHINE_DRIVER_START(mediagx)
 	MDRV_CPU_ADD(MEDIAGX, 166000000)
 	MDRV_CPU_PROGRAM_MAP(mediagx_map, 0)
 	MDRV_CPU_IO_MAP(mediagx_io, 0)
-	MDRV_CPU_VBLANK_INT(mediagx_vblank, 1)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_RESET(mediagx)
 
 	MDRV_NVRAM_HANDLER( mc146818 )
 
  	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_RGB32)
 	MDRV_SCREEN_SIZE(640, 480)
-	MDRV_VISIBLE_AREA(0, 639, 0, 239)
+	MDRV_SCREEN_VISIBLE_AREA(0, 639, 0, 239)
 	MDRV_GFXDECODE(CGA_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(16)
 
@@ -754,10 +803,10 @@ static MACHINE_DRIVER_START(mediagx)
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ADD(DMADAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 
-	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ADD(DMADAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 

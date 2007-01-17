@@ -159,7 +159,6 @@ struct _running_machine
 	pen_t *					pens;				/* remapped palette pen numbers */
 	UINT16 *				game_colortable;	/* lookup table used to map gfx pen numbers to color numbers */
 	pen_t *					remapped_colortable;/* the above, already remapped through Machine->pens */
-	int						color_depth;		/* video color depth: 16, 15 or 32 */
 	pen_t *					shadow_table;		/* table for looking up a shadowed pen */
 
 	/* audio-related information */

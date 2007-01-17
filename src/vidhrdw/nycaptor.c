@@ -304,10 +304,6 @@ VIDEO_UPDATE( nycaptor )
     tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_FRONT|0,0);
   break;
  }
- if(nyc_gametype==1)
- 	draw_crosshair(bitmap,readinputport(5),255-readinputport(6),cliprect,0);
- else
- 	draw_crosshair(bitmap,readinputport(5),readinputport(6),cliprect,0);
 	return 0;
 }
 

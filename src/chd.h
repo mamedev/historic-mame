@@ -12,7 +12,7 @@
 #ifndef __CHD_H__
 #define __CHD_H__
 
-#include "mamecore.h"
+#include "osdcore.h"
 
 
 /***************************************************************************
@@ -147,7 +147,9 @@ enum _chd_error
 	CHDERR_UNSUPPORTED_VERSION,
 	CHDERR_VERIFY_INCOMPLETE,
 	CHDERR_INVALID_METADATA,
-	CHDERR_INVALID_STATE
+	CHDERR_INVALID_STATE,
+	CHDERR_OPERATION_PENDING,
+	CHDERR_NO_ASYNC_OPERATION
 };
 typedef enum _chd_error chd_error;
 
@@ -249,11 +251,17 @@ chd_error chd_set_header(const char *filename, const chd_header *header);
 /* read one hunk from the CHD file */
 chd_error chd_read(chd_file *chd, UINT32 hunknum, void *buffer);
 
-/* return a pointer to the internal cache */
-const void *chd_get_cache_ptr(chd_file *chd);
+/* read one hunk from the CHD file asynchronously */
+chd_error chd_read_async(chd_file *chd, UINT32 hunknum, void *buffer);
 
 /* write one hunk to a CHD file */
 chd_error chd_write(chd_file *chd, UINT32 hunknum, const void *buffer);
+
+/* write one hunk to a CHD file asynchronously */
+chd_error chd_write_async(chd_file *chd, UINT32 hunknum, const void *buffer);
+
+/* wait for a previously issued async read/write to complete and return the error */
+chd_error chd_async_complete(chd_file *chd);
 
 
 

@@ -31,7 +31,7 @@
     specific pens (P1 to P3). When you are working on bitmaps at the pixel level,
     *always* use Machine->pens to map the color numbers. *Never* use constants.
     For example if you want to make pixel (x,y) of color 3, do:
-    bitmap->line[y][x] = Machine->pens[3];
+    *BITMAP_ADDR(bitmap, <type>, y, x) = Machine->pens[3];
 
 
     Lookup table

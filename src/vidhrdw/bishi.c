@@ -25,7 +25,7 @@ static void bishi_tile_callback(int layer, int *code, int *color)
 
 VIDEO_START(bishi)
 {
-	if (Machine->color_depth != 32) return 1; // ensure correct bpp to avoid crashing in-game
+	assert(machine->screen[0].format == BITMAP_FORMAT_RGB32);
 
 	K055555_vh_start();
 	K054338_vh_start();

@@ -175,8 +175,6 @@ WRITE16_HANDLER( lethalj_blitter_w )
 
 VIDEO_UPDATE( lethalj )
 {
-	int beamx, beamy;
-
 	/* blank palette: fill with white */
 	if (blank_palette)
 		fillbitmap(bitmap, 0x7fff, cliprect);
@@ -193,14 +191,6 @@ VIDEO_UPDATE( lethalj )
 				*dest++ = *source++ & 0x7fff;
 		}
 	}
-
-	/* draw player 1's crosshair */
-	get_crosshair_xy(0, &beamx, &beamy);
-	draw_crosshair(bitmap, beamx, beamy, cliprect, 0);
-
-	/* draw player 2's crosshair */
-	get_crosshair_xy(1, &beamx, &beamy);
-	draw_crosshair(bitmap, beamx, beamy, cliprect, 1);
 
 	if (cliprect->max_y == Machine->screen[0].visarea.max_y)
 		blank_palette = 0;

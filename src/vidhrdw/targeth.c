@@ -152,19 +152,5 @@ VIDEO_UPDATE( targeth )
 	tilemap_draw(bitmap,cliprect,pant[0],0,0);
 	targeth_draw_sprites(bitmap,cliprect);
 
-	/* draw crosshairs */
-	{
-		int posx, posy;
-
-		/* 1P Gun */
-		posx = readinputport(0) & 0x1ff;
-		posy = readinputport(1) & 0x0ff;
-		draw_crosshair(bitmap, posx - 0x17, posy + 1, cliprect, 0);
-
-		/* 2P Gun */
-		posx = readinputport(2) & 0x1ff;
-		posy = readinputport(3) & 0x0ff;
-		draw_crosshair(bitmap, posx - 0x17, posy + 1, cliprect, 1);
-	}
 	return 0;
 }

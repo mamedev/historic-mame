@@ -104,9 +104,6 @@ static void oneshot_drawcrosshairs( mame_bitmap *bitmap, const rectangle *clipre
     if (gun_y_p1 < 0)
         gun_y_p1=0;
 
-    /* draw crosshair */
-    draw_crosshair( bitmap, xpos, ypos, cliprect, 0 );
-
 
     /* get gun raw coordonates (player 2) */
     gun_x_p2 = (readinputport(7) & 0xff) * 320 / 256;
@@ -118,9 +115,6 @@ static void oneshot_drawcrosshairs( mame_bitmap *bitmap, const rectangle *clipre
     gun_x_p2 += gun_x_shift-0x0a;
     if (gun_x_p2 < 0)
         gun_x_p2=0;
-
-    /* draw crosshair */
-    draw_crosshair( bitmap, xpos, ypos, cliprect, 1 );
 }
 
 static void oneshot_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )

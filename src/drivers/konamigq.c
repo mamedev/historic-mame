@@ -216,16 +216,6 @@ static READ32_HANDLER( pcmram_r )
 
 /* Video */
 
-static VIDEO_UPDATE( konamigq )
-{
-	video_update_psx( machine, screen, bitmap, cliprect );
-
-	draw_crosshair( bitmap, GUNX( 5 ), GUNY( 6 ), cliprect, 0 );
-	draw_crosshair( bitmap, GUNX( 7 ), GUNY( 8 ), cliprect, 1 );
-	draw_crosshair( bitmap, GUNX( 9 ), GUNY( 10 ), cliprect, 2 );
-	return 0;
-}
-
 static ADDRESS_MAP_START( konamigq_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x003fffff) AM_RAM	AM_SHARE(1) AM_BASE(&g_p_n_psxram) AM_SIZE(&g_n_psxramsize) /* ram */
 	AM_RANGE(0x1f000000, 0x1f00001f) AM_READWRITE(am53cf96_r, am53cf96_w)
@@ -432,8 +422,8 @@ static MACHINE_DRIVER_START( konamigq )
 	MDRV_CPU_PROGRAM_MAP( sndreadmem, sndwritemem )
 	MDRV_CPU_PERIODIC_INT( irq2_line_hold, TIME_IN_HZ(480) )
 
-	MDRV_FRAMES_PER_SECOND( 60 )
-	MDRV_VBLANK_DURATION( 0 )
+	MDRV_SCREEN_REFRESH_RATE( 60 )
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC( 0 ))
 
 	MDRV_MACHINE_START( konamigq )
 	MDRV_MACHINE_RESET( konamigq )
@@ -441,13 +431,14 @@ static MACHINE_DRIVER_START( konamigq )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
+	MDRV_SCREEN_VISIBLE_AREA( 0, 639, 0, 479 )
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type1 )
-	MDRV_VIDEO_UPDATE( konamigq )
+	MDRV_VIDEO_UPDATE( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")

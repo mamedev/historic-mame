@@ -159,7 +159,7 @@ void scsihd_read_data(SCSIHd *our_this, int bytes, UINT8 *pData)
 			{
 				while (bytes > 0)
 				{
-					if (!hard_disk_read(our_this->disk, our_this->lba, 1, pData))
+					if (!hard_disk_read(our_this->disk, our_this->lba,  pData))
 					{
 						logerror("SCSIHD: HD read error!\n");
 					}
@@ -212,7 +212,7 @@ void scsihd_write_data(SCSIHd *our_this, int bytes, UINT8 *pData)
 			{
 				while (bytes > 0)
 				{
-					if (!hard_disk_write(our_this->disk, our_this->lba, 1, pData))
+					if (!hard_disk_write(our_this->disk, our_this->lba, pData))
 					{
 						logerror("SCSIHD: HD write error!\n");
 					}

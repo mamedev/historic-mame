@@ -2278,7 +2278,7 @@ static int render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UIN
 		}
 
 		/* allocate a new bitmap */
-		scaled->bitmap = bitmap_alloc_depth(dwidth, dheight, 32);
+		scaled->bitmap = bitmap_alloc_format(dwidth, dheight, BITMAP_FORMAT_ARGB32);
 		scaled->seqid = ++texture->curseq;
 
 		/* let the scaler do the work */

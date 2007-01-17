@@ -152,8 +152,8 @@ VIDEO_START( atarigt )
 		return 1;
 
 	/* allocate temp bitmaps */
-	pf_bitmap = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
-	an_bitmap = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
+	pf_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
+	an_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
 	if (!pf_bitmap || !an_bitmap)
 		return 1;
 

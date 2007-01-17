@@ -423,7 +423,7 @@ float ui_get_line_height(void)
     single character
 -------------------------------------------------*/
 
-float ui_get_char_width(UINT16 ch)
+float ui_get_char_width(unicode_char ch)
 {
 	return render_font_get_char_width(ui_font, ui_get_line_height(), render_get_ui_aspect(), ch);
 }
@@ -436,7 +436,7 @@ float ui_get_char_width(UINT16 ch)
 
 float ui_get_string_width(const char *s)
 {
-	return render_font_get_string_width(ui_font, ui_get_line_height(), render_get_ui_aspect(), s);
+	return render_font_get_utf8string_width(ui_font, ui_get_line_height(), render_get_ui_aspect(), s);
 }
 
 
@@ -476,8 +476,9 @@ void ui_draw_text(const char *buf, float x, float y)
 void ui_draw_text_full(const char *origs, float x, float y, float wrapwidth, int justify, int wrap, int draw, rgb_t fgcolor, rgb_t bgcolor, float *totalwidth, float *totalheight)
 {
 	float lineheight = ui_get_line_height();
-	const UINT8 *s = (const UINT8 *)origs;
-	const UINT8 *linestart;
+	const char *ends = origs + strlen(origs);
+	const char *s = origs;
+	const char *linestart;
 	float cury = y;
 	float maxwidth = 0;
 
@@ -488,18 +489,25 @@ void ui_draw_text_full(const char *origs, float x, float y, float wrapwidth, int
 		return;
 
 	/* loop over lines */
-	while (*s)
+	while (*s != 0)
 	{
 		const char *lastspace = NULL;
 		int line_justify = justify;
+		unicode_char schar;
+		int scharcount;
 		float lastspace_width = 0;
 		float curwidth = 0;
 		float curx = x;
 
+		/* get the current character */
+		scharcount = uchar_from_utf8(&schar, s, ends - s);
+		if (scharcount == -1)
+			break;
+
 		/* if the line starts with a tab character, center it regardless */
-		if (*s == '\t')
+		if (schar == '\t')
 		{
-			s++;
+			s += scharcount;
 			line_justify = JUSTIFY_CENTER;
 		}
 
@@ -507,22 +515,27 @@ void ui_draw_text_full(const char *origs, float x, float y, float wrapwidth, int
 		linestart = s;
 
 		/* loop while we have characters and are less than the wrapwidth */
-		while (*s && curwidth <= wrapwidth)
+		while (*s != 0 && curwidth <= wrapwidth)
 		{
+			/* get the current chcaracter */
+			scharcount = uchar_from_utf8(&schar, s, ends - s);
+			if (scharcount == -1)
+				break;
+
 			/* if we hit a space, remember the location and the width there */
-			if (*s == ' ')
+			if (schar == ' ')
 			{
 				lastspace = s;
 				lastspace_width = curwidth;
 			}
 
 			/* if we hit a newline, stop immediately */
-			else if (*s == '\n')
+			else if (schar == '\n')
 				break;
 
 			/* add the width of this character and advance */
-			curwidth += ui_get_char_width(*s);
-			s++;
+			curwidth += ui_get_char_width(schar);
+			s += scharcount;
 		}
 
 		/* if we accumulated too much for the current width, we need to back off */
@@ -541,8 +554,13 @@ void ui_draw_text_full(const char *origs, float x, float y, float wrapwidth, int
 				/* if we didn't hit a space, back up one character */
 				else if (s > linestart)
 				{
-					s--;
-					curwidth -= ui_get_char_width(*s);
+					/* get the previous character */
+					s = (const char *)utf8_previous_char(s);
+					scharcount = uchar_from_utf8(&schar, s, ends - s);
+					if (scharcount == -1)
+						break;
+
+					curwidth -= ui_get_char_width(schar);
 				}
 			}
 
@@ -555,8 +573,13 @@ void ui_draw_text_full(const char *origs, float x, float y, float wrapwidth, int
 				/* while we are above the wrap width, back up one character */
 				while (curwidth > wrapwidth && s > linestart)
 				{
-					s--;
-					curwidth -= ui_get_char_width(*s);
+					/* get the previous character */
+					s = (const char *)utf8_previous_char(s);
+					scharcount = uchar_from_utf8(&schar, s, ends - s);
+					if (scharcount == -1)
+						break;
+
+					curwidth -= ui_get_char_width(schar);
 				}
 			}
 		}
@@ -578,12 +601,18 @@ void ui_draw_text_full(const char *origs, float x, float y, float wrapwidth, int
 		/* loop from the line start and add the characters */
 		while (linestart < s)
 		{
+			/* get the current character */
+			unicode_char linechar;
+			int linecharcount = uchar_from_utf8(&linechar, linestart, ends - linestart);
+			if (linecharcount == -1)
+				break;
+
 			if (draw != DRAW_NONE)
 			{
-				render_ui_add_char(curx, cury, lineheight, render_get_ui_aspect(), fgcolor, ui_font, *linestart);
-				curx += ui_get_char_width(*linestart);
+				render_ui_add_char(curx, cury, lineheight, render_get_ui_aspect(), fgcolor, ui_font, linechar);
+				curx += ui_get_char_width(linechar);
 			}
-			linestart++;
+			linestart += linecharcount;
 		}
 
 		/* append ellipses if needed */
@@ -605,10 +634,20 @@ void ui_draw_text_full(const char *origs, float x, float y, float wrapwidth, int
 		cury += lineheight;
 
 		/* skip past any spaces at the beginning of the next line */
-		if (*s == '\n')
-			s++;
+		scharcount = uchar_from_utf8(&schar, s, ends - s);
+		if (scharcount == -1)
+			break;
+
+		if (schar == '\n')
+			s += scharcount;
 		else
-			while (*s && isspace(*s)) s++;
+			while (*s && isspace(schar))
+			{
+				s += scharcount;
+				scharcount = uchar_from_utf8(&schar, s, ends - s);
+				if (scharcount == -1)
+					break;
+			}
 	}
 
 	/* report the width and height of the resulting space */
@@ -1187,7 +1226,7 @@ static UINT32 handler_ingame(UINT32 state)
 
 	/* toggle crosshair display */
 	if (input_ui_pressed(IPT_UI_TOGGLE_CROSSHAIR))
-		drawgfx_toggle_crosshair();
+		video_crosshair_toggle();
 
 	return 0;
 }

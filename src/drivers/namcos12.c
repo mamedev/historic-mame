@@ -1359,25 +1359,6 @@ static int guny( int port )
 	return Machine->screen[0].visarea.min_y + y;
 }
 
-static void s12_draw_crosshair( mame_bitmap *bitmap, const char *xtag, const char *ytag, const rectangle *cliprect, int player )
-{
-	int xindex = port_tag_to_index( xtag );
-	int yindex = port_tag_to_index( ytag );
-	if( xindex != -1 && yindex != -1 )
-	{
-		draw_crosshair( bitmap, gunx( xindex ), guny( yindex ), cliprect, player );
-	}
-}
-
-static VIDEO_UPDATE( coh700g )
-{
-	video_update_psx( machine, screen, bitmap, cliprect );
-
-	s12_draw_crosshair( bitmap, "IN3", "IN4", cliprect, 0 );
-	s12_draw_crosshair( bitmap, "IN5", "IN6", cliprect, 1 );
-	return 0;
-}
-
 static DRIVER_INIT( namcos12 )
 {
 	psx_driver_init();
@@ -1442,8 +1423,8 @@ static MACHINE_DRIVER_START( coh700 )
 	MDRV_CPU_IO_MAP( s12h8iomap, 0 )
 	MDRV_CPU_VBLANK_INT( irq1_line_pulse, 1 );
 
-	MDRV_FRAMES_PER_SECOND( 60 )
-	MDRV_VBLANK_DURATION( 0 )
+	MDRV_SCREEN_REFRESH_RATE( 60 )
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC( 0 ))
 
 	MDRV_MACHINE_START( namcos12 )
 	MDRV_MACHINE_RESET( namcos12 )
@@ -1451,8 +1432,9 @@ static MACHINE_DRIVER_START( coh700 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
+	MDRV_SCREEN_VISIBLE_AREA( 0, 639, 0, 479 )
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
@@ -1468,12 +1450,6 @@ static MACHINE_DRIVER_START( coh700 )
 	MDRV_SOUND_ROUTE(1, "left", 1.00)
 	MDRV_SOUND_ROUTE(2, "right", 1.00)
 	MDRV_SOUND_ROUTE(3, "left", 1.00)
-MACHINE_DRIVER_END
-
-static MACHINE_DRIVER_START( coh700g )
-	MDRV_IMPORT_FROM( coh700 )
-
-	MDRV_VIDEO_UPDATE( coh700g )
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( namcos12 )
@@ -2194,16 +2170,16 @@ GAME( 1998, tenkomor,  0,        coh700,   namcos12, namcos12, ROT90, "Namco",  
 GAME( 1998, tenkomoj,  tenkomor, coh700,   namcos12, namcos12, ROT90, "Namco",        "Tenkomori Shooting (TKM1/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC036 */
 GAME( 1998, fgtlayer,  0,        coh700,   namcos12, namcos12, ROT0, "Arika/Namco",   "Fighting Layer (FTL0/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC037 */
 GAME( 1999, pacapp,    0,        coh700,   namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion (PPP1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC038 */
-GAME( 1999, ptblank2,  0,        coh700g,  ptblank2, ptblank2, ROT0, "Namco",         "Point Blank 2 (GNB5/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC042 */
+GAME( 1999, ptblank2,  0,        coh700,   ptblank2, ptblank2, ROT0, "Namco",         "Point Blank 2 (GNB5/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC042 */
 GAME( 1999, sws99,     0,        coh700,   namcos12, namcos12, ROT0, "Namco",         "Super World Stadium '99 (SS91/VER.A3)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC043 */
 GAME( 1999, tektagt,   0,        coh700,   namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG3/VER.C1)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC044 */
 GAME( 1999, tektagta,  tektagt,  coh700,   namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG3/VER.B)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC044 */
 GAME( 1999, tektagtb,  tektagt,  coh700,   namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG1/VER.B)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC044 */
 GAME( 1999, tektagtc,  tektagt,  coh700,   namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG1/VER.A3)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC044 */
-GAME( 1999, ghlpanic,  0,        coh700g,  ghlpanic, ghlpanic, ROT0, "Namco",         "Ghoul Panic (OB2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC045 */
+GAME( 1999, ghlpanic,  0,        coh700,   ghlpanic, ghlpanic, ROT0, "Namco",         "Ghoul Panic (OB2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC045 */
 GAME( 1999, pacapp2,   0,        coh700,   namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion 2 (PKS1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC046 */
 GAME( 1999, mrdrillr,  0,        coh700,   namcos12, namcos12, ROT0, "Namco",         "Mr Driller (DRI1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC048 */
 GAME( 1999, pacappsp,  0,        coh700,   namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion Special (PSP1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC052 */
 GAME( 1999, aquarush,  0,        coh700,   namcos12, namcos12, ROT0, "Namco",         "Aqua Rush (AQ1/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC053 */
-GAME( 1999, golgo13,   0,        coh700g,  golgo13,  golgo13,  ROT0, "Raizing/Namco", "Golgo 13 (GLG1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC054 */
-GAME( 1999, g13knd,    0,        coh700g,  golgo13,  golgo13,  ROT0, "Raizing/Namco", "Golgo 13 Kiseki no Dandou (GLS1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC059 */
+GAME( 1999, golgo13,   0,        coh700,   golgo13,  golgo13,  ROT0, "Raizing/Namco", "Golgo 13 (GLG1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC054 */
+GAME( 1999, g13knd,    0,        coh700,   golgo13,  golgo13,  ROT0, "Raizing/Namco", "Golgo 13 Kiseki no Dandou (GLS1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC059 */

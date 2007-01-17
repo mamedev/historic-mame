@@ -746,7 +746,7 @@ static int sprite_init_cave(void)
 		cave_spritetype2 = 0;
 	}
 
-	if(!(sprite_zbuf = auto_bitmap_alloc_depth( Machine->screen[0].width, Machine->screen[0].height, 16 ))) return 1;
+	if(!(sprite_zbuf = auto_bitmap_alloc_format( Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16 ))) return 1;
 	blit.baseaddr_zbuf = sprite_zbuf->line[0];
 	blit.line_offset_zbuf = ((UINT8 *)sprite_zbuf->line[1])-((UINT8 *)sprite_zbuf->line[0]);
 

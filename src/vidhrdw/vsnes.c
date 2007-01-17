@@ -66,17 +66,6 @@ VIDEO_UPDATE( vsnes )
 {
 	/* render the ppu */
 	ppu2c0x_render( 0, bitmap, 0, 0, 0, 0 );
-
-		/* if this is a gun game, draw a simple crosshair */
-		if ( vsnes_gun_controller )
-		{
-			int x_center = readinputport( 4 );
-			int y_center = readinputport( 5 );
-
-			draw_crosshair(bitmap,x_center,y_center,&Machine->screen[0].visarea,0);
-
-		}
-
 	return 0;
 }
 

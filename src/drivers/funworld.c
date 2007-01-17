@@ -1263,15 +1263,16 @@ static MACHINE_DRIVER_START( funworld )
 	MDRV_CPU_PROGRAM_MAP(funworld_map, 0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse, 1)
 
-	MDRV_FRAMES_PER_SECOND(50)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(50)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE((124+1)*4, (30+1)*8)		// Taken from MC6845 init, registers 00 & 04. Normally programmed with (value-1).
-	MDRV_VISIBLE_AREA(0*4, 96*4-1, 0*8, 29*8-1)	// Taken from MC6845 init, registers 01 & 06.
+	MDRV_SCREEN_VISIBLE_AREA(0*4, 96*4-1, 0*8, 29*8-1)	// Taken from MC6845 init, registers 01 & 06.
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
@@ -1306,8 +1307,8 @@ static MACHINE_DRIVER_START( magiccrd )
 	MDRV_CPU_PROGRAM_MAP(magiccrd_map, 0)
 
 	MDRV_SCREEN_SIZE((123+1)*4, (36+1)*8)			// Taken from MC6845 init, registers 00 & 04. Normally programmed with (value-1).
-	MDRV_VISIBLE_AREA(0*4, 112*4-1, 0*8, 34*8-1)	// Taken from MC6845 init, registers 01 & 06.
-//  MDRV_VISIBLE_AREA(0*4, 98*4-1, 0*8, 32*8-1)     // adjusted to screen for testing purposes.
+	MDRV_SCREEN_VISIBLE_AREA(0*4, 112*4-1, 0*8, 34*8-1)	// Taken from MC6845 init, registers 01 & 06.
+//  MDRV_SCREEN_VISIBLE_AREA(0*4, 98*4-1, 0*8, 32*8-1)     // adjusted to screen for testing purposes.
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_VIDEO_START(magiccrd)

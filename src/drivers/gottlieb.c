@@ -1558,16 +1558,17 @@ static MACHINE_DRIVER_START( gottlieb )
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(gottlieb_sound_readmem,gottlieb_sound_writemem)
 								/* NMIs are triggered by the Votrax SC-01 */
-	MDRV_FRAMES_PER_SECOND(61)
-	MDRV_VBLANK_DURATION(1018)	/* frames per second, vblank duration */
+	MDRV_SCREEN_REFRESH_RATE(61)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(1018)	/* frames per second, vblank duration */)
 
 	MDRV_MACHINE_RESET(gottlieb)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(charROM_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(16)
 
@@ -1638,16 +1639,17 @@ static MACHINE_DRIVER_START( gottlieb2 )
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(stooges_sound2_readmem,stooges_sound2_writemem)
 
-	MDRV_FRAMES_PER_SECOND(61)
-	MDRV_VBLANK_DURATION(1018)	/* frames per second, vblank duration */
+	MDRV_SCREEN_REFRESH_RATE(61)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(1018)	/* frames per second, vblank duration */)
 
 	MDRV_MACHINE_RESET(gottlieb)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(charROM_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(16)
 

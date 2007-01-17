@@ -57,7 +57,11 @@
 
 /* macro for the RC time constant on a 74LS123 with C > 1000pF */
 /* R is in ohms, C is in farads */
-#define TIME_OF_74LS123(r,c)	(0.45 * (double)(r) * ((double)(c))
+#define TIME_OF_74LS123(r,c)	(0.45 * (double)(r) * ((double)(c)))
+
+/* macro for the RC time constant on a 555 timer IC */
+/* R is in ohms, C is in farads */
+#define TIME_OF_555(r,c)	(1.1 * (double)(r) * ((double)(c)))
 
 /* macros that map all allocations to provide file/line/functions to the callee */
 #define mame_timer_alloc(c)				_mame_timer_alloc(c, __FILE__, __LINE__, #c)

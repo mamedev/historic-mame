@@ -583,14 +583,15 @@ static MACHINE_DRIVER_START( csk227it )
 	MDRV_CPU_IO_MAP(csk227_map,0)
 	MDRV_CPU_VBLANK_INT(cska_interrupt,6)
 
-	MDRV_FRAMES_PER_SECOND(57)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(57)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_MACHINE_RESET(cpk)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 64*8-1, 0, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
 	MDRV_COLORTABLE_LENGTH(2048)
@@ -648,6 +649,48 @@ ROM_START( csk234it )
 	ROM_LOAD( "7.234",   0x0000, 0x10000, CRC(ae6dd4ad) SHA1(4772d5c150d64d1ef3b68e16214f594eea0b3c1b) )
 ROM_END
 
+/*
+
+Stelle e Cubi
+
+-- most of the roms on this seem to be the wrong size / missing data
+   but its appears to be a hack based on Champion Skill
+
+1x Z84c0006
+1x 12mhz OSC
+1x U6295 sound chip
+1x Actel FPGA (gfx chip)
+
+ROMs
+Note    1x Battery
+5x banks of dipswitch
+
+
+--
+
+This doesn't attempt to decode the gfx.
+
+*/
+ROM_START( stellecu )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code */
+	/* there is data at 0x18000 which is probably mapped somewhere */
+	ROM_LOAD( "u35.bin",   0x0000, 0x20000, CRC(914b7c59) SHA1(3275b5016524467199f32d653c757bfe4f9cfc60) )
+
+	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE )
+	/* seems to be missing half the gfx */
+	ROM_LOAD( "u23.bin",   0x0000, 0x40000, BAD_DUMP CRC(9d95757d) SHA1(f7f44d684f1f3a5b1e9c0a82f4377c6d79eb4214) )
+
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
+	/* seems to be missing half the gfx */
+	ROM_LOAD( "u25.bin",   0x0000, 0x40000, BAD_DUMP CRC(63094010) SHA1(a781f1c529167dd0ab411c66b72105fc19e32f02) )
+
+	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_ERASE00 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Oki Samples */
+	/* missing sample tables at start of rom */
+	ROM_LOAD( "u15.bin",   0x0000, 0x40000, BAD_DUMP CRC(72e3e9c1) SHA1(6a8fb93059bee5a4e4b4deb9fee4b5869e53983b) )
+ROM_END
+
 /*  Decode a simple PAL encryption
  */
 
@@ -669,3 +712,5 @@ static DRIVER_INIT( cska )
 
 GAME( 198?, csk227it, 0,        csk227it, csk227, cska, ROT0, "IGS", "Champion Skill (with Ability)", GAME_NO_SOUND )               /* SU 062 */
 GAME( 198?, csk234it, csk227it, csk234it, csk234, cska, ROT0, "IGS", "Champion Skill (Ability, Poker & Symbols)", GAME_NO_SOUND )   /* SU 062 */
+
+GAME( 1998, stellecu, 0,        csk234it, csk234, 0,    ROT0, "Sure", "Stelle e Cubi (Italy)", GAME_NOT_WORKING|GAME_NO_SOUND )

@@ -427,7 +427,6 @@ static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int scr
 static void update_screen(mame_bitmap *bitmap, const rectangle *cliprect, int scroll_offset)
 {
 	int y, sy;
-	int beamx, beamy;
 
 	/* draw any dirty scanlines from the VRAM directly */
 	sy = scroll_offset + cliprect->min_y;
@@ -448,15 +447,6 @@ static void update_screen(mame_bitmap *bitmap, const rectangle *cliprect, int sc
 
 	/* draw the sprites */
 	draw_sprites(bitmap, cliprect, scroll_offset);
-
-	/* draw the crosshair (but not for topsecret) */
-	if (!exidy440_topsecret)
-	{
-		beamx = ((input_port_4_r(0) & 0xff) * 320) >> 8;
-		beamy = ((input_port_5_r(0) & 0xff) * 240) >> 8;
-
-		draw_crosshair(bitmap, beamx, beamy, cliprect, 0);
-	}
 }
 
 

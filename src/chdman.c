@@ -602,6 +602,8 @@ static int do_createcd(int argc, char *argv[], int param)
 	err = chd_compress_finish(chd);
 	if (err != CHDERR_NONE)
 		fprintf(stderr, "Error during compression finalization: %s\n", error_string(err));
+	else
+		progress(TRUE, "Compression complete ... final ratio = %d%%            \n", (int)(100.0 * ratio));
 
 cleanup:
 	if (cache != NULL)

@@ -1,6 +1,6 @@
 /*
 ADP (Merkur?) games from '90 running on similar hardware.
-(68k + HD63484 + 2149)
+(68k + HD63484 + YM2149)
 
 Skeleton driver by TS -  analog at op.pl
 
@@ -11,13 +11,11 @@ TODO:
  - protection in Fashion Gambler (NVRam based?)
 
 Supported games :
-- Skat TV         ("COPYRIGHT BY ADP LUEBBECKE GERMANY 1994")
+- Quick Jack      ("COPYRIGHT BY ADP LUEBBECKE GERMANY 1993")
+- Skat TV           ("COPYRIGHT BY ADP LUEBBECKE GERMANY 1994")
 - Skat TV v. TS3  ("COPYRIGHT BY ADP LUEBBECKE GERMANY 1995")
 - Fashion Gambler ("COPYRIGHT BY ADP LUEBBECKE GERMANY 1997")
-- Backgammon      ("COPYRIGHT BY ADP LUEBBECKE GERMANY 1994")
-
-Not dumped games:
-- Quick Jack
+- Backgammon        ("COPYRIGHT BY ADP LUEBBECKE GERMANY 1994")
 
 
 
@@ -48,7 +46,7 @@ Parts:
  KM681000ALP7       - 128K X 8 Bit Low Power CMOS Static RAM
  OKIM62X42B         - Real-time Clock ic With Built-in Crystal
  MAX691CPE          - P Reset ic With Watchdog And Battery Switchover
- X          - 8MHz xtal
+ X                    - 8MHz xtal
  3V Bat             - Lithium 3V power module
 
 Video Board:
@@ -139,7 +137,6 @@ There's also (external) JAMMA adapter - 4th board filled with resistors and diod
 #include "driver.h"
 #include "sound/ay8910.h"
 
-
 static ADDRESS_MAP_START( skattv_mem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_ROM
 	AM_RANGE(0xfc0000, 0xffffff) AM_RAM
@@ -162,12 +159,13 @@ INPUT_PORTS_END
 static MACHINE_DRIVER_START( skattv )
 	MDRV_CPU_ADD_TAG("main", M68000, 8000000)
 	MDRV_CPU_PROGRAM_MAP(skattv_mem, 0)
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(640, 480)
-	MDRV_VISIBLE_AREA(0, 640-1, 0, 480-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 640-1, 0, 480-1)
 	MDRV_PALETTE_LENGTH(0x100)
 
 	MDRV_VIDEO_START(skattv)
@@ -178,6 +176,16 @@ static MACHINE_DRIVER_START( skattv )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
 MACHINE_DRIVER_END
+
+ROM_START( quickjac )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "quick_jack_index_a.1.u2.bin", 0x00000, 0x10000, CRC(c2fba6fe) SHA1(f79e5913f9ded1e370cc54dd55860263b9c51d61) )
+	ROM_LOAD16_BYTE( "quick_jack_index_a.2.u6.bin", 0x00001, 0x10000, CRC(210cb89b) SHA1(8eac60d40b60e845f9c02fee6c447f125ba5d1ab) )
+
+	ROM_REGION( 0x40000, REGION_GFX1, 0 )
+	ROM_LOAD16_BYTE( "quick_jack_video_inde_a.1.u2.bin", 0x00000, 0x20000, CRC(73c27fc6) SHA1(12429bc0009b7754e08d2b6a5e1cd8251ab66e2d) )
+	ROM_LOAD16_BYTE( "quick_jack_video_inde_a.2.u6.bin", 0x00001, 0x20000, CRC(61d55be2) SHA1(bc17dc91fd1ef0f862eb0d7dbbbfa354a8403eb8) )
+ROM_END
 
 ROM_START( skattv )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
@@ -225,6 +233,7 @@ ROM_START( fashiong )
 ROM_END
 
 GAME( 1990, backgamn,        0, skattv,    skattv,    0, ROT0,  "ADP", "Backgammon", GAME_NOT_WORKING )
+GAME( 1993, quickjac,        0, skattv,    skattv,    0, ROT0,  "ADP", "Quick Jack", GAME_NOT_WORKING )
 GAME( 1994, skattv,          0, skattv,    skattv,    0, ROT0,  "ADP", "Skat TV", GAME_NOT_WORKING )
 GAME( 1995, skattva,    skattv, skattv,    skattv,    0, ROT0,  "ADP", "Skat TV (version TS3)", GAME_NOT_WORKING )
 GAME( 1997, fashiong,        0, skattv,    skattv,    0, ROT0,  "ADP", "Fashion Gambler", GAME_NOT_WORKING )

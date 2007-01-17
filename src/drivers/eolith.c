@@ -45,6 +45,10 @@
  - emulate Hidden Catch 3 touch screen (which has force feedback as well)
  - sound & sound cpu
 
+ Original Bugs:
+ - Hidden Catch 3: the text shown when you start a game is flipped or
+                   clipped wrongly
+
  *********************************************************************/
 
 #include "driver.h"
@@ -245,15 +249,16 @@ static MACHINE_DRIVER_START( eolith45 )
 
 	/* sound cpu */
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_NVRAM_HANDLER(eolith)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_RGB15)
 	MDRV_SCREEN_SIZE(512, 512)
-	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_SCREEN_VISIBLE_AREA(0, 319, 0, 239)
 
 	MDRV_VIDEO_START(eolith)
 	MDRV_VIDEO_UPDATE(eolith)

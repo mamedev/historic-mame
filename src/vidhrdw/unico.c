@@ -380,18 +380,6 @@ if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
 	/* Sprites are drawn last, using pdrawgfx */
 	if (layers_ctrl & 8)	unico_draw_sprites(bitmap,cliprect);
 
-	/* Draw the gunsight for ligth gun games */
-	if (unico_has_lightgun) {
-		draw_crosshair(bitmap,
-			readinputport(6)*384/256,
-			readinputport(5)*224/256,
-			cliprect,0);
-
-		draw_crosshair(bitmap,
-			readinputport(4)*384/256,
-			readinputport(3)*224/256,
-			cliprect,1);
-	}
 	return 0;
 }
 
@@ -431,18 +419,6 @@ if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
 	/* Sprites are drawn last, using pdrawgfx */
 	if (layers_ctrl & 8)	unico_draw_sprites32(bitmap,cliprect);
 
-	/* Draw the gunsight for ligth gun games */
-	if (unico_has_lightgun) {
-		draw_crosshair(bitmap,
-			readinputport(6)*384/256,
-			readinputport(5)*224/256,
-			cliprect,0);
-
-		draw_crosshair(bitmap,
-			readinputport(4)*384/256,
-			readinputport(3)*224/256,
-			cliprect,1);
-	}
 	return 0;
 }
 

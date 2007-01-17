@@ -32,8 +32,8 @@ A000-BFFF  |R/W| D D D D D D D D | ?window into character RAM/ROM?
 -----------+---+-----------------+-----------------------------------------
 C000-DFFF  |?/W| D D D D D D D D | I/O registers
 C000       | W | ? ? ? ? ? ? D D | program ROM page select
-                                   controls what portion of the eprom is mapped
-                                   at 0000 - 7FFFF
+                                   controls what portion of the eprom is
+                                   mapped at 0000 - 7FFFF
 
                                    _______________________________________
                                    bit1 | bit0 | Address in eprom        |
@@ -62,7 +62,8 @@ C101       |R/W| ? ? ? ? ? ? ? D | Vertical Blanking IRQ enable
 C102       |R/W| ? ? ? ? ? ? ? D | Pre Vertical Blanking IRQ enable
            |   |                 |  bit0  0 = disabled
            |   |                 |        1 = enabled,
-           |   |                 |            generate IRQ 100 cycles before VBL
+           |   |                 |            generate IRQ 100 cycles
+           |   |                 |            before  VBL
 -----------+---+-----------------+-----------------------------------------
 C103       | R | ? ? ? D D D D D | IRQ status
            |   |                 |
@@ -213,7 +214,6 @@ VIDEO_RESET( adder2 )
 		memory_configure_bank(2, 0, 4, &rom[0x00000], 0x08000);
 
 		memory_set_bank(2,0&0x03);
-
 	}
 }
 
@@ -239,7 +239,6 @@ VIDEO_START( adder2 )
 
 	if ( !tilemap1 ) return 1;
 
-
 	return 0;
 }
 
@@ -259,9 +258,13 @@ VIDEO_UPDATE( adder2 )
 
 	if (screen == 1)
 	{
-		if ( adder2_show_alpha_display )
+		if ( adder2_show_alpha_display )//Configuration switch on, indicating VFD present
 		{
 			draw_14seg(bitmap,0,3,1);
+		}
+		else
+		{
+			draw_14seg(bitmap,0,0,0);//Keep receiving the data, but show nothing, like real h/w
 		}
 	}
 	return 0;
@@ -306,7 +309,6 @@ MACHINE_RESET( adder2_init_vid )
 	// reset the board //////////////////////////////////////////////////////
 
 	on_scorpion2_reset();
-
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -534,7 +536,7 @@ ADDRESS_MAP_START( adder2_memmap, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xC101, 0xC101) AM_READ(  adder2_vbl_ctrl_r )
 	AM_RANGE(0xC103, 0xC103) AM_READ(  adder2_irq_r );			// IRQ latch read
 
-  // MC6850 compatible uart connected to main (scorpion2) board /////////////////////////////////////
+	// MC6850 compatible uart connected to main (scorpion2) board ///////////////////////////////////////
 
 	AM_RANGE(0xC200, 0xC200) AM_READ(  adder2_uart_ctrl_r );	// 6850 compatible uart control reg read
 	AM_RANGE(0xC200, 0xC200) AM_WRITE( adder2_uart_ctrl_w );	// 6850 compatible uart control reg write

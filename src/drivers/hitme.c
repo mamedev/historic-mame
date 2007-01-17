@@ -96,7 +96,7 @@ static VIDEO_UPDATE(hitme)
 			/* invert pixels until we run out */
 			for (xx = 0; xx < 8 && inv; xx++, inv--)
 			{
-				UINT16 *dest = (UINT16 *)bitmap->line[y*10] + x*8 + xx;
+				UINT16 *dest = BITMAP_ADDR16(bitmap, y*10, x*8 + xx);
 				dest[0*dy] ^= 1;
 				dest[1*dy] ^= 1;
 				dest[2*dy] ^= 1;
@@ -308,13 +308,14 @@ static MACHINE_DRIVER_START( hitme )
 	MDRV_CPU_PROGRAM_MAP(hitme_map,0)
 	MDRV_CPU_IO_MAP(hitme_portmap,0)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(40*8, 19*10)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 19*10-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 40*8-1, 0*8, 19*10-1)
 	MDRV_GFXDECODE(hitme_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
 
@@ -343,7 +344,7 @@ static MACHINE_DRIVER_START( barricad )
 
 	/* video hardware */
 	MDRV_SCREEN_SIZE(32*8, 24*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 24*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 0*8, 24*8-1)
 	MDRV_GFXDECODE(barricad_gfxdecodeinfo)
 
 	MDRV_VIDEO_START(barricad)

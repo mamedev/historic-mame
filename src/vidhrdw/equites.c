@@ -218,7 +218,7 @@ VIDEO_START( splndrbt )
 	unsigned char *buf8ptr;
 	int i;
 
-	if (Machine->color_depth > 16) return(-1);
+	assert(machine->screen[0].format == BITMAP_FORMAT_INDEXED16);
 
 	halfclip = Machine->screen[0].visarea;
 	i = halfclip.max_y - halfclip.min_y + 1;

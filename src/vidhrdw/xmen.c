@@ -69,8 +69,8 @@ VIDEO_START( xmen6p )
 	if (K053247_vh_start(REGION_GFX2,53,-2,NORMAL_PLANE_ORDER,xmen_sprite_callback))
 		return 1;
 
-	screen_left = auto_bitmap_alloc_depth(64*8, 32*8, 16);
-	screen_right = auto_bitmap_alloc_depth(64*8, 32*8, 16);
+	screen_left = auto_bitmap_alloc_format(64*8, 32*8, BITMAP_FORMAT_INDEXED16);
+	screen_right = auto_bitmap_alloc_format(64*8, 32*8, BITMAP_FORMAT_INDEXED16);
 
 	return 0;
 }

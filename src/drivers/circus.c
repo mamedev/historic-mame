@@ -274,13 +274,14 @@ static MACHINE_DRIVER_START( circus )
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_FRAMES_PER_SECOND(57)
-	MDRV_VBLANK_DURATION(3500)  /* frames per second, vblank duration (complete guess) */
+	MDRV_SCREEN_REFRESH_RATE(57)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(3500)  /* frames per second, vblank duration (complete guess) */)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
 
@@ -308,13 +309,14 @@ static MACHINE_DRIVER_START( robotbwl )
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_FRAMES_PER_SECOND(57)
-	MDRV_VBLANK_DURATION(3500)  /* frames per second, vblank duration (complete guess) */
+	MDRV_SCREEN_REFRESH_RATE(57)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(3500)  /* frames per second, vblank duration (complete guess) */)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(robotbwl_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
 
@@ -341,13 +343,14 @@ static MACHINE_DRIVER_START( crash )
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
 
-	MDRV_FRAMES_PER_SECOND(57)
-	MDRV_VBLANK_DURATION(3500)  /* frames per second, vblank duration (complete guess) */
+	MDRV_SCREEN_REFRESH_RATE(57)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(3500)  /* frames per second, vblank duration (complete guess) */)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
 
@@ -374,13 +377,14 @@ static MACHINE_DRIVER_START( ripcord )
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	//MDRV_CPU_VBLANK_INT(ripcord_interrupt,1) //AT
 
-	MDRV_FRAMES_PER_SECOND(57)
-	MDRV_VBLANK_DURATION(3500)  /* frames per second, vblank duration (complete guess) */
+	MDRV_SCREEN_REFRESH_RATE(57)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(3500)  /* frames per second, vblank duration (complete guess) */)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 31*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
 

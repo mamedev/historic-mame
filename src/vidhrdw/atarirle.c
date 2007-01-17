@@ -342,8 +342,8 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 	memset(mo->spriteram, 0, sizeof(mo->spriteram[0]) * mo->spriteramsize);
 
 	/* allocate bitmaps */
-	mo->vram[0][0] = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
-	mo->vram[0][1] = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
+	mo->vram[0][0] = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
+	mo->vram[0][1] = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
 	if (!mo->vram[0][0] || !mo->vram[0][1])
 		return 0;
 	fillbitmap(mo->vram[0][0], 0, NULL);
@@ -352,8 +352,8 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 	/* allocate alternate bitmaps if needed */
 	if (mo->vrammask.mask != 0)
 	{
-		mo->vram[1][0] = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
-		mo->vram[1][1] = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
+		mo->vram[1][0] = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
+		mo->vram[1][1] = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
 		if (!mo->vram[1][0] || !mo->vram[1][1])
 			return 0;
 		fillbitmap(mo->vram[1][0], 0, NULL);
@@ -929,17 +929,11 @@ void draw_rle(struct atarirle_data *mo, mame_bitmap *bitmap, int code, int color
 		return;
 
 	/* 16-bit case */
-	if (bitmap->depth == 16)
-	{
-		if (!hflip)
-			draw_rle_zoom(bitmap, info, palettebase, x, y, xscale << 4, yscale << 4, clip);
-		else
-			draw_rle_zoom_hflip(bitmap, info, palettebase, x, y, xscale << 4, yscale << 4, clip);
-	}
-
-	/* other cases */
+	assert(bitmap->bpp == 16);
+	if (!hflip)
+		draw_rle_zoom(bitmap, info, palettebase, x, y, xscale << 4, yscale << 4, clip);
 	else
-		logerror("Unsupported bitmap depth = %d\n", bitmap->depth);
+		draw_rle_zoom_hflip(bitmap, info, palettebase, x, y, xscale << 4, yscale << 4, clip);
 }
 
 

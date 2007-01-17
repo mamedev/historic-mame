@@ -95,7 +95,7 @@ static render_texture *get_vector_texture(float dx, float dy, float intensity)
 		return tex->texture;
 
 	height = lbucket * VECTOR_WIDTH_DENOM / TEXTURE_LENGTH_BUCKETS;
-	tex->bitmap = bitmap_alloc_depth(TEXTURE_WIDTH, height, 32);
+	tex->bitmap = bitmap_alloc_format(TEXTURE_WIDTH, height, BITMAP_FORMAT_ARGB32);
 	fillbitmap(tex->bitmap, NULL, MAKE_ARGB(0xff,0xff,0xff,0xff));
 
 	totalint = 1.0f;

@@ -539,10 +539,11 @@ READ16_HANDLER (ASIC28_r16)
 
 		case 0x21: // PhotoY2k spritenum conversion 3/4
 			if(!ASIC28RCNT) {
+				extern const unsigned int pgmy2ks[];
 				photoy2k_trf[2] = val & 0xffff;
 				logerror("ASIC28: PhotoY2K spr3 %04x %06x (%06x)\n", val & 0xffff, photoy2k_trf[1], activecpu_get_pc());
 				if(photoy2k_trf[0] < 0x3c00)
-					photoy2k_soff = photoy2k_trf[0] * 0x7c;
+					photoy2k_soff = pgmy2ks[photoy2k_trf[0]];
 				else
 					photoy2k_soff = 0;
 				logerror("ASIC28: spriteval %04x, %06x -> %06x\n", photoy2k_trf[0], (photoy2k_trf[2]<<16)|photoy2k_trf[1], photoy2k_soff);

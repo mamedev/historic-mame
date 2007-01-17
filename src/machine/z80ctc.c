@@ -1,6 +1,6 @@
 /***************************************************************************
 
-    Z80 CTC implementation
+    Z80 CTC (Z8430) implementation
 
     based on original version (c) 1997, Tatsuyuki Satoh
 
@@ -76,6 +76,7 @@
     TYPE DEFINITIONS
 ***************************************************************************/
 
+typedef struct _z80ctc z80ctc;
 struct _z80ctc
 {
 	UINT8 vector;				/* interrupt vector */
@@ -85,14 +86,13 @@ struct _z80ctc
 	void (*intr)(int which);	/* interrupt callback */
 	write8_handler zc[4];		/* zero crossing callbacks */
 	UINT8 notimer;				/* no timer masks */
-	UINT8 mode[4];				/* current mode */
+	UINT16 mode[4];				/* current mode */
 	UINT16 tconst[4];			/* time constant */
 	UINT16 down[4];				/* down counter (clock mode only) */
 	UINT8 extclk[4];			/* current signal from the external clock */
 	void *timer[4];				/* array of active timers */
 	UINT8 int_state[4];			/* interrupt status (for daisy chain) */
 };
-typedef struct _z80ctc z80ctc;
 
 
 
@@ -320,7 +320,7 @@ UINT8 z80ctc_r(int which, int ch)
 	z80ctc *ctc = ctcs + which;
 
 	/* if we're in counter mode, just return the count */
-	if ((ctc->mode[ch] & MODE) == MODE_COUNTER)
+	if ((ctc->mode[ch] & MODE) == MODE_COUNTER || (ctc->mode[ch] & WAITING_FOR_TRIG))
 		return ctc->down[ch];
 
 	/* else compute the down counter value */

@@ -767,9 +767,8 @@ VIDEO_UPDATE( ygv608 )
 
 		if( work_bitmap )
 			bitmap_free( work_bitmap );
-		work_bitmap = bitmap_alloc_depth( Machine->screen[0].width,
-										  Machine->screen[0].height,
-										  Machine->color_depth );
+		work_bitmap = bitmap_alloc( Machine->screen[0].width,
+										  Machine->screen[0].height );
 
 		// reset resize flag
 		ygv608.screen_resize = 0;

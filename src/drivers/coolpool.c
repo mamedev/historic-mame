@@ -101,7 +101,7 @@ static VIDEO_UPDATE( amerdart )
 	/* loop over scanlines */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		UINT16 *dest = &((UINT16 *)bitmap->line[y])[cliprect->min_x];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, cliprect->min_x);
 
 		/* render 4bpp data */
 		for (x = cliprect->min_x; x <= cliprect->max_x; x += 4)
@@ -165,7 +165,7 @@ static VIDEO_UPDATE( coolpool )
 	/* loop over scanlines */
 	for (y = startscan; y <= endscan; y++)
 	{
-		UINT16 *dest = &((UINT16 *)bitmap->line[y])[cliprect->min_x];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, cliprect->min_x);
 
 		/* if we're in outer bands, just clear */
 		if (y < Machine->screen[0].visarea.min_y + scanoffs || y > Machine->screen[0].visarea.max_y - scanoffs)
@@ -788,15 +788,16 @@ MACHINE_DRIVER_START( amerdart )
 	MDRV_CPU_FLAGS(CPU_DISABLE)
 	MDRV_CPU_PROGRAM_MAP(amerdart_dsp_map,0)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_MACHINE_RESET(amerdart)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(320, 261)	/* ??? */
-	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 320-1, 0, 240-1)
 	MDRV_PALETTE_LENGTH(16)
 
 	MDRV_VIDEO_UPDATE(amerdart)
@@ -820,15 +821,16 @@ static MACHINE_DRIVER_START( coolpool )
 	MDRV_CPU_PROGRAM_MAP(dsp_program_map,0)
 	MDRV_CPU_IO_MAP(dsp_io_map,0)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(1000000 * (261 - 240) / (261 * 60))
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(1000000 * (261 - 240) / (261 * 60)))
 	MDRV_MACHINE_RESET(coolpool)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(320, 261)	/* ??? */
-	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 320-1, 0, 240-1)
 	MDRV_PALETTE_LENGTH(256)
 
 	MDRV_VIDEO_UPDATE(coolpool)

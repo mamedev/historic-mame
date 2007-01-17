@@ -845,7 +845,7 @@ static void read_sector_done(int which)
 
 	/* now do the read */
 	if (ide->disk)
-		count = hard_disk_read(ide->disk, lba, 1, ide->buffer);
+		count = hard_disk_read(ide->disk, lba, ide->buffer);
 
 	/* by default, mark the buffer ready and the seek complete */
 	if (!ide->verify_only)
@@ -1037,7 +1037,7 @@ static void write_sector_done(int which)
 
 	/* now do the write */
 	if (ide->disk)
-		count = hard_disk_write(ide->disk, lba, 1, ide->buffer);
+		count = hard_disk_write(ide->disk, lba, ide->buffer);
 
 	/* by default, mark the buffer ready and the seek complete */
 	ide->status |= IDE_STATUS_BUFFER_READY;

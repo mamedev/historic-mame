@@ -269,7 +269,7 @@ VIDEO_START( berlwall )
 
 	/* Render the hi-color static backgrounds held in the ROMs */
 
-	if ((kaneko16_bg15_bitmap = auto_bitmap_alloc_depth(256 * 32, 256 * 1, 16)) == 0)
+	if ((kaneko16_bg15_bitmap = auto_bitmap_alloc_format(256 * 32, 256 * 1, BITMAP_FORMAT_INDEXED16)) == 0)
 		return 1;
 
 /*

@@ -3742,7 +3742,7 @@ int K053247_vh_start(int gfx_memory_region, int dx, int dy, int plane0,int plane
 	}
 
 #if VERBOSE
-	if (Machine->color_depth == 32)
+	if (Machine->screen[0].format == BITMAP_FORMAT_RGB32)
 	{
 		if ((Machine->drv->video_attributes & (VIDEO_HAS_SHADOWS|VIDEO_HAS_HIGHLIGHTS)) != VIDEO_HAS_SHADOWS+VIDEO_HAS_HIGHLIGHTS)
 			popmessage("driver missing SHADOWS or HIGHLIGHTS flag");
@@ -4218,11 +4218,11 @@ void K053247_sprites_draw(mame_bitmap *bitmap,const rectangle *cliprect) //*
 	/*
         safeguard older drivers missing any of the following video attributes:
 
-        VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS
+        VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS
     */
 	if (Machine->drv->video_attributes & VIDEO_HAS_SHADOWS)
 	{
-		if (Machine->color_depth == 32 && (Machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS))
+		if (bitmap->bpp == 32 && (Machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS))
 			shdmask = 3; // enable all shadows and highlights
 		else
 			shdmask = 0; // enable default shadows
@@ -7309,7 +7309,7 @@ void K054338_fill_solid_bg(mame_bitmap *bitmap)
 	for (y = 0; y < bitmap->height; y++)
 	{
 		pLine = (UINT32 *)bitmap->base;
-		pLine += ((bitmap->rowbytes / 4)*y);
+		pLine += (bitmap->rowpixels*y);
 		for (x = 0; x < bitmap->width; x++)
 			*pLine++ = bgcolor;
 	}
@@ -7654,7 +7654,7 @@ static void K053250_pdraw_scanline8(
 		const UINT8 *src,pen_t *pens,int transparent_pen,UINT32 orient,int pri)
 {
 	/* 8bpp destination */
-	if (bitmap->depth == 8)
+	if (bitmap->bpp == 8)
 	{
 		/* adjust in case we're oddly oriented */
 		ADJUST_FOR_ORIENTATION(UINT8, orient, bitmap, priority_bitmap, x, y);
@@ -7711,7 +7711,7 @@ static void K053250_pdraw_scanline8(
 	}
 
 	/* 16bpp destination */
-	else if(bitmap->depth == 15 || bitmap->depth == 16)
+	else if(bitmap->bpp == 16)
 	{
 		/* adjust in case we're oddly oriented */
 		ADJUST_FOR_ORIENTATION(UINT16, orient, bitmap, priority_bitmap, x, y);

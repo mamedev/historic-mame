@@ -8,7 +8,7 @@
 #include "driver.h"
 #include "includes/berzerk.h"
 #include "sound/samples.h"
-
+#include "sound/s14001a.h"
 
 static ADDRESS_MAP_START( berzerk_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_ROM
@@ -283,6 +283,11 @@ INPUT_PORTS_START( frenzy )
 	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("Stats") PORT_CODE(KEYCODE_F1)
 INPUT_PORTS_END
 
+static struct S14001A_interface berzerk_s14001a_interface =
+{
+	REGION_SOUND1,				/* where to find the voice data */
+	(2500000/16/8)				/* CPU clock divided by 16 divided by a programmable TTL setup */
+};
 
 static MACHINE_DRIVER_START( berzerk )
 
@@ -292,16 +297,17 @@ static MACHINE_DRIVER_START( berzerk )
 	MDRV_CPU_IO_MAP(port_map,0)
 	MDRV_CPU_VBLANK_INT(berzerk_interrupt,8)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(2500)  /* Needs to be long enough so 2 of the 8 */
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(2500)  /* Needs to be long enough so 2 of the 8 */)
 								/* interrupts fall inside the VBLANK */
 	MDRV_MACHINE_RESET(berzerk)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_VISIBLE_AREA(0, 256-1, 32, 256-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 256-1, 32, 256-1)
 	MDRV_PALETTE_LENGTH(16)
 
 	MDRV_PALETTE_INIT(berzerk)
@@ -310,6 +316,10 @@ static MACHINE_DRIVER_START( berzerk )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(S14001A, 0)
+	MDRV_SOUND_CONFIG(berzerk_s14001a_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(berzerk_samples_interface)

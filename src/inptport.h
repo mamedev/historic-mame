@@ -53,6 +53,15 @@ enum
 };
 
 
+/* crosshair types */
+enum
+{
+	CROSSHAIR_AXIS_NONE = 0,
+	CROSSHAIR_AXIS_X,
+	CROSSHAIR_AXIS_Y
+};
+
+
 /* groups for input ports */
 enum
 {
@@ -316,6 +325,7 @@ enum
 	INPUT_TOKEN_SENSITIVITY,
 	INPUT_TOKEN_KEYDELTA,
 	INPUT_TOKEN_CENTERDELTA,
+	INPUT_TOKEN_CROSSHAIR,
 	INPUT_TOKEN_UNUSED,
 	INPUT_TOKEN_CUSTOM,
 	INPUT_TOKEN_DIPNAME,
@@ -522,6 +532,10 @@ struct _input_port_entry
 		INT32	centerdelta;	/* delta to apply each frame no digital inputs are pressed */
 		UINT8	reverse;		/* reverse the sense of the analog axis */
 		UINT8	reset;			/* always preload in->default for relative axes, returning only deltas */
+		UINT8	crossaxis;		/* crosshair axis */
+		float	crossscale;		/* crosshair scale */
+		float	crossoffset;	/* crosshair offset */
+		float	crossaltaxis;	/* crosshair alternate axis value */
 		input_seq incseq;		/* increment sequence */
 		input_seq decseq;		/* decrement sequence */
 	} analog;
@@ -685,6 +699,10 @@ struct _inp_header
 #define PORT_CENTERDELTA(delta_) \
 	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CENTERDELTA, delta_),
 
+#define PORT_CROSSHAIR(axis, scale, offset, altaxis) \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CROSSHAIR, (axis) | ((INT32)((altaxis) * 65536.0f) << 8)), \
+	INPUT_PORT_UINT32_PAIR((INT32)((scale) * 65536.0f), (INT32)((offset) * 65536.0f)),
+
 /* custom callbacks */
 #define PORT_CUSTOM(callback_, param_) \
 	INPUT_PORT_UINT32(INPUT_TOKEN_CUSTOM), INPUT_PORT_PTR(callback_), INPUT_PORT_PTR(param_),
@@ -750,6 +768,16 @@ struct _inp_header
 
 #define PORT_SERVICE_NO_TOGGLE(mask,default)	\
 	PORT_BIT(    mask, mask & default, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode ))
+
+#define PORT_DIPUNUSED_DIPLOC(mask,default,loc)	\
+	PORT_BIT(    mask, mask & default, IPT_DIPSWITCH_NAME ) PORT_NAME( DEF_STR( Unused )) PORT_TOGGLE PORT_DIPLOCATION(loc)	\
+	PORT_DIPSETTING(    mask & default, DEF_STR( Off ) )	\
+	PORT_DIPSETTING(    mask &~default, DEF_STR( On ) )
+
+#define PORT_DIPUNUSED(mask,default)	\
+	PORT_BIT(    mask, mask & default, IPT_DIPSWITCH_NAME ) PORT_NAME( DEF_STR( Unused )) PORT_TOGGLE	\
+	PORT_DIPSETTING(    mask & default, DEF_STR( Off ) )	\
+	PORT_DIPSETTING(    mask &~default, DEF_STR( On ) )
 
 
 

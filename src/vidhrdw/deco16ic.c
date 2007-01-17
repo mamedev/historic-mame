@@ -528,7 +528,7 @@ WRITE16_HANDLER( deco16_pf4_data_w )
 
 static int deco16_video_init(int pf12_only, int split, int full_width)
 {
-	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->screen[0].width, Machine->screen[0].height, -8 );
+	sprite_priority_bitmap = auto_bitmap_alloc_format( Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED8 );
 
 	pf1_tilemap_16x16 =	tilemap_create(get_pf1_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,64,32);
 	pf1_tilemap_8x8 =	tilemap_create(get_pf1_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
@@ -616,7 +616,7 @@ int deco16_2_video_init_half_width(void) /* 2 times playfield generator chips */
 int deco_allocate_sprite_bitmap(void)
 {
 	/* Allow sprite bitmap to be used by Deco32 games as well */
-	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->screen[0].width, Machine->screen[0].height, -8 );
+	sprite_priority_bitmap = auto_bitmap_alloc_format( Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED8 );
 
 	return (sprite_priority_bitmap!=0);
 }

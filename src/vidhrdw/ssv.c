@@ -412,9 +412,6 @@ WRITE16_HANDLER( paletteram16_xrgb_swap_word_w )
 	b = data1 & 0xff;
 
 	palette_set_color(Machine, offset>>1, r, g, b);
-
-	if (!(Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN))
-		popmessage("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
 }
 
 /***************************************************************************
@@ -1147,17 +1144,6 @@ VIDEO_UPDATE( gdfs )
 	tilemap_set_scrolly(gdfs_tmap,0,gdfs_tmapscroll[0x10/2]);
 	tilemap_draw(bitmap,cliprect, gdfs_tmap, 0, 0);
 
-#if 0
-	draw_crosshair(bitmap,
-		Machine->screen[0].visarea.min_x + ((Machine->screen[0].visarea.max_x - Machine->screen[0].visarea.min_x) * readinputport(5)) / 255,
-		Machine->screen[0].visarea.min_y + ((Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y) * readinputport(6)) / 255,
-		cliprect,0);
-
-	draw_crosshair(bitmap,
-		Machine->screen[0].visarea.min_x + ((Machine->screen[0].visarea.max_x - Machine->screen[0].visarea.min_x) * readinputport(7)) / 255,
-		Machine->screen[0].visarea.min_y + ((Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y) * readinputport(8)) / 255,
-		cliprect,1);
-#endif
 	return 0;
 }
 

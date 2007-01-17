@@ -28,7 +28,6 @@ struct dss_adjustment_context
 	double		pscale;
 	double		min;
 	double		scale;
-	double		lastval;
 };
 
 
@@ -126,11 +125,10 @@ void dss_adjustment_step(node_description *node)
 
 			context->lastpval = rawportval;
 			if (DSS_ADJUSTMENT__LOG == 0)
-				context->lastval = scaledval;
+				node->output = scaledval;
 			else
-				context->lastval = pow(10, scaledval);
+				node->output = pow(10, scaledval);
 		}
-		node->output = context->lastval;
 	}
 	else
 	{
@@ -141,6 +139,7 @@ void dss_adjustment_step(node_description *node)
 void dss_adjustment_reset(node_description *node)
 {
 	struct dss_adjustment_context *context = node->context;
+	double min, max;
 
 	context->port = DSS_ADJUSTMENT__PORT;
 	context->lastpval = 0x7fffffff;
@@ -157,10 +156,12 @@ void dss_adjustment_reset(node_description *node)
 	/* logarithmic scale */
 	else
 	{
-		context->min = log10(DSS_ADJUSTMENT__MIN);
-		context->scale = log10(DSS_ADJUSTMENT__MAX) - log10(DSS_ADJUSTMENT__MIN);
+		/* force minimum and maximum to be > 0 */
+		min = (DSS_ADJUSTMENT__MIN > 0) ? DSS_ADJUSTMENT__MIN : 1;
+		max = (DSS_ADJUSTMENT__MAX > 0) ? DSS_ADJUSTMENT__MAX : 1;
+		context->min = log10(min);
+		context->scale = log10(max) - log10(min);
 	}
-	context->lastval = 0;
 
 	dss_adjustment_step(node);
 }

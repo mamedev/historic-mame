@@ -662,7 +662,7 @@ static void update_fps(mame_time emutime)
 		{
 			mame_file_error filerr;
 			mame_file *fp;
-			char name[10];
+			char name[20];
 
 			// make a filename with an underscore prefix
 			sprintf(name, "_%.8s.png", Machine->gamedrv->name);

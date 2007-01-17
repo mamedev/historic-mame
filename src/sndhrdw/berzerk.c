@@ -19,7 +19,7 @@
 #include "driver.h"
 #include "includes/berzerk.h"
 #include "sound/samples.h"
-
+#include "sound/s14001a.h"
 
 static const char *sample_names[] =
 {
@@ -80,15 +80,11 @@ static const char *sample_names[] =
 
 /* berzerk sound */
 static int lastnoise = 0;
-static int lastvoice = 0;
 
 /* sound controls */
 static int berzerknoisemulate = 0;
-static float voicevolume = 1.0;
-static long samplefrequency = 22320;
 static int voice_playing;
 static int deathsound = 0;          /* trigger for playing collision sound */
-static int nextdata5 = -1;
 
 static void berzerk_sh_update(int param)
 {
@@ -101,6 +97,8 @@ static void berzerk_sh_update(int param)
 static void berzerk_sh_start(void)
 {
 	int i;
+
+	S14001A_rst_0_w(0);
 
 	berzerknoisemulate = 1;
 
@@ -115,186 +113,75 @@ static void berzerk_sh_start(void)
 
 WRITE8_HANDLER( berzerk_sound_w )
 {
-	int noise = 0;
-	int voice = 0;
-	int voicefrequency = 0;
-
-/* Throw out all the non-need sound info. (for the moment) */
-
-	if (offset < 3) return;
-
-/* Decode message for voice samples */
-
-	if (offset==4)
+	switch(offset)
 	{
-		if ((data & 0x40) == 0)
+	case 0: case 1: case 2: case 3: /*printf("6840 write ignored\n");*/ break;
+	case 4: /* Decode message for voice samples */
+	      if ((data&0xC0)==0x00) /* select word input */
 		{
-			voice = data;
-			voice_playing = 0;
-		}
-		else
-		{
-			/* We should use the volume and frequency on the voice samples */
-			voicevolume = ((data & 0x38) >> 3) ? 1.0 : 0;
-
-			voicefrequency = (data & 0x07);
-#ifdef VOICE_PITCH_MODULATION
-			switch(voicefrequency)
+		  if (!S14001A_bsy_0_r()) /* if s14001a is not busy... */
+		    {
+#if 0
+		      mame_printf_debug("not busy, triggering S14001A core with %x\n", data);
+		      mame_printf_debug("S14001a word play command: ");
+		      switch(data)
 			{
-			case 0 : samplefrequency = 17640; break;
-			case 1 : samplefrequency = 19404; break;
-			case 2 : samplefrequency = 20947; break;
-			case 3 : samplefrequency = 22050; break;
-			case 4 : samplefrequency = 26019; break;
-			case 5 : samplefrequency = 27783; break;
-			case 6 : samplefrequency = 31250; break;
-			case 7 : samplefrequency = 34700; break;
-			default: samplefrequency = 22050; break;
+			case 0: mame_printf_debug("help\n"); break;
+			case 1: mame_printf_debug("kill\n"); break;
+			case 2: mame_printf_debug("attack\n"); break;
+			case 3: mame_printf_debug("charge\n"); break;
+			case 4: mame_printf_debug("got\n"); break;
+			case 5: mame_printf_debug("shoot\n"); break;
+			case 6: mame_printf_debug("get\n"); break;
+			case 7: mame_printf_debug("is\n"); break;
+			case 8: mame_printf_debug("alert\n"); break;
+			case 9: mame_printf_debug("detected\n"); break;
+			case 10: mame_printf_debug("the\n"); break;
+			case 11: mame_printf_debug("in\n"); break;
+			case 12: mame_printf_debug("it\n"); break;
+			case 13: mame_printf_debug("there\n"); break;
+			case 14: mame_printf_debug("where\n"); break;
+			case 15: mame_printf_debug("humanoid\n"); break;
+			case 16: mame_printf_debug("coins\n"); break;
+			case 17: mame_printf_debug("pocket\n"); break;
+			case 18: mame_printf_debug("intruder\n"); break;
+			case 19: mame_printf_debug("no\n"); break;
+			case 20: mame_printf_debug("escape\n"); break;
+			case 21: mame_printf_debug("destroy\n"); break;
+			case 22: mame_printf_debug("must\n"); break;
+			case 23: mame_printf_debug("not\n"); break;
+			case 24: mame_printf_debug("chicken\n"); break;
+			case 25: mame_printf_debug("fight\n"); break;
+			case 26: mame_printf_debug("like\n"); break;
+			case 27: mame_printf_debug("a\n"); break;
+			case 28: mame_printf_debug("robot\n"); break;
+			default: mame_printf_debug("ERROR: data %2x; you should NOT see this!\n", data); break;
 			}
 #endif
-			return;
+		      S14001A_reg_0_w(data & 0x3f);
+		      S14001A_rst_0_w(1);
+		      S14001A_rst_0_w(0);
+		      break;
+		    }
+//        else { printf("S14001A busy, ignoring write\n"); break; }
 		}
+	      else if ((data&0xC0)==0x40) /* VSU-1000 control write */
+		{
+		  /* volume and frequency control goes here */
+		  mame_printf_debug("TODO: VSU-1000 Control write (ignored for now)\n");
+		  break;
+		}
+	      else { mame_printf_debug("bogus write ignored\n"); break; } /* vsu-1000 ignores these writes entirely */
+	case 5: /*printf("6840 write ignored\n");*/ break;
+	case 6: /*printf("SB-1000 control write ignored\n");*/ break;
+	case 7: /*printf("6840 write ignored\n");*/ break;
+	default: mame_printf_debug("you should never see this/n"); break;
 	}
-
-/* Check for player fire sample reset */
-
-	if ((offset==3) || (offset==5))
-	{
-		if (lastnoise==70)
-		{
-			if ((offset==3) && (data==172))
-			{
-				nextdata5 = 25;
-				return;
-			}
-
-			if (offset==5)
-			{
-				if (data==nextdata5)
-				{
-#ifdef FAKE_DEATH_SOUND
-					deathsound = 1; /* trigger death sound */
-#else
-					deathsound = 2; /* trigger death sound */
-#endif
-					lastnoise = 64; /* reset death sound */
-				}
-
-				nextdata5 = -1;
-			}
-
-			return;
-		}
-
-		if (lastnoise==69)
-		{
-			if ((offset==3) && (data==50))
-			{
-				nextdata5 = 50;
-				return;
-			}
-
-			if (offset==5)
-			{
-				if (data==nextdata5)
-				{
-					lastnoise = 64; /* reset laser sound */
-				}
-
-				nextdata5 = -1;
-			}
-		}
-
-		return;
-	}
-
-/* Check to see what game sound should be playing */
-
-	if ((data > 60) && (data < 72) && (offset==6))
-		noise = data;
-	else
-		noise = lastnoise;
-
-/* One day I'll do this... */
-
-	if (berzerknoisemulate)
-	{
-		return;
-		if (voicefrequency != 1750*(4-noise))
-		{
-			voicefrequency = 1750*(4-noise);
-			voicevolume = 0.33*noise;
-		}
-
-		if (noise)
-		{
-			sample_set_freq(2,voicefrequency);
-			sample_set_volume(2,voicevolume);
-		}
-		else
-		{
-			sample_set_volume(2,0);
-			voicevolume = 0;
-		}
-	}
-	else
-	{
-		if ((offset==6) && (lastnoise != noise))  /* Game sound effects */
-		{
-			switch (noise)
-			{
-			case 69 : /* shot sample */
-				sample_start(1,30,0);
-				break;
-			case 70 : /* baddie laser */
-logerror("Trying death sound");
-				switch(deathsound)
-				{
-				case 1 :
-					sample_start(2,33,0);
-					deathsound=0;
-					break;
-				case 2 :
-					sample_start(DEATH_CHANNEL,34,0);
-					deathsound=3;
-					break;
-				case 0 :
-					sample_start(2,31,0);
-					break;
-				}
-				break;
-			case 71 : /* kill baddie */
-				sample_start(3,32,0);
-				break;
-			default :
-				break;
-			}
-		}
-		lastnoise = noise;           /* make sure we only play the sound once */
-
-		if (offset==4)               /* Game voice sounds */
-		{
-			if (deathsound<2)	       /* no voices for real death sound */
-			{
-				if (lastvoice==24 && voice==27)
-				{
-					lastvoice=voice;    /* catch for the 'chicken ayye' problem */
-					return;
-				}
-				sample_start(VOICE_CHANNEL,voice,0);
-#ifdef VOICE_PITCH_MODULATION
-				sample_set_freq(VOICE_CHANNEL,samplefrequency);
-#endif
-				lastvoice=voice;
-			}
-		}
-	} /* End of berzerknoisemulate */
 }
-
 
 READ8_HANDLER( berzerk_sound_r )
 {
-	if ( offset == 4 && voice_playing )
+	if ( offset == 4 && !S14001A_bsy_0_r() )
 	{
 		return 0x40;
 	}

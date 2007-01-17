@@ -1984,7 +1984,7 @@ static MACHINE_DRIVER_START( scramble )
 	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)	/* 3.072 MHz */
 	MDRV_CPU_PROGRAM_MAP(scramble_readmem,scramble_writemem)
 
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+	MDRV_SCREEN_REFRESH_RATE(16000.0/132/2)
 
 	MDRV_CPU_ADD_TAG("audio", Z80, 14318000/8)	/* 1.78975 MHz */
 	/* audio CPU */
@@ -1995,8 +1995,9 @@ static MACHINE_DRIVER_START( scramble )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(scramble_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2+1)	/* 32 for characters, 64 for stars, 2 for bullets, 0/1 for background */
 	MDRV_COLORTABLE_LENGTH(8*4)
@@ -2279,7 +2280,7 @@ static MACHINE_DRIVER_START( sfx )
 	MDRV_MACHINE_RESET(sfx)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(2*8, 30*8-1, 2*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(2*8, 30*8-1, 2*8, 30*8-1)
 	MDRV_PALETTE_LENGTH(32+64+2+8)	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */
 	MDRV_GFXDECODE(sfx_gfxdecodeinfo)
 	MDRV_PALETTE_INIT(turtles)
@@ -2322,7 +2323,7 @@ static MACHINE_DRIVER_START( monsterz )
 	MDRV_MACHINE_RESET(monsterz)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(2*8, 30*8-1, 2*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(2*8, 30*8-1, 2*8, 30*8-1)
 	MDRV_PALETTE_LENGTH(32+64+2+8)	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */
 	MDRV_GFXDECODE(sfx_gfxdecodeinfo)
 	MDRV_PALETTE_INIT(turtles)
@@ -2397,7 +2398,7 @@ static MACHINE_DRIVER_START( hunchbks )
 	MDRV_CPU_IO_MAP(hunchbks_readport,0)
 	MDRV_CPU_VBLANK_INT(hunchbks_vh_interrupt,1)
 
-	MDRV_VBLANK_DURATION(2500)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(2500))
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32+64+2+0)	/* 32 for characters, 64 for stars, 2 for bullets */
@@ -2450,13 +2451,14 @@ static MACHINE_DRIVER_START( ad2083 )
 	MDRV_MACHINE_START(ad2083)
 	MDRV_MACHINE_RESET(galaxian)
 
-	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(16000.0/132/2)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(ad2083_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2+8)	/* 32 for characters, 64 for stars, 2 for bullets, 8 for background */
 

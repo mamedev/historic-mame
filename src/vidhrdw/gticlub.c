@@ -165,7 +165,7 @@ int K001005_init(void)
 	if (!K001005_bitmap)
 		return 1;
 
-	K001005_zbuffer = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 32);
+	K001005_zbuffer = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED32);
 	if (!K001005_zbuffer)
 		return 1;
 

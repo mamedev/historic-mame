@@ -41,7 +41,7 @@ VIDEO_START(moo)
 {
 	int offsx, offsy;
 
-	if (Machine->color_depth != 32) return 1; // ensure correct bpp to avoid crashing in-game
+	assert(machine->screen[0].format == BITMAP_FORMAT_RGB32);
 
 	alpha_enabled = 0;
 

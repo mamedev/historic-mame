@@ -45,8 +45,6 @@ WRITE32_HANDLER( jaguar_serial_w );
 
 /*----------- defined in vidhrdw/jaguar.c -----------*/
 
-extern UINT8 cojag_draw_crosshair;
-
 void jaguar_gpu_suspend(void);
 void jaguar_gpu_resume(void);
 

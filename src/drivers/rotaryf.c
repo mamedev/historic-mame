@@ -12,6 +12,7 @@ driver by Barry Rodewald
 
 #include "driver.h"
 #include "8080bw.h"
+#include "mw8080bw.h"
 #include "cpu/i8085/i8085.h"
 
 
@@ -128,28 +129,22 @@ static MACHINE_DRIVER_START( rotaryf )
 	MDRV_CPU_PROGRAM_MAP(rotaryf_readmem,rotaryf_writemem)
 	MDRV_CPU_IO_MAP(rotaryf_readport,rotaryf_writeport)
 	MDRV_CPU_VBLANK_INT(rotaryf_interrupt,5)
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
 	MDRV_PALETTE_LENGTH(2)
 	MDRV_PALETTE_INIT(rotaryf)
 	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(8080bw)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_IMPORT_FROM(invaders_sound)
 
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(invaders_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(SN76477, 0)
-	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 ROM_START( rotaryf )

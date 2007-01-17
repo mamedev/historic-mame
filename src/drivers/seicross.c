@@ -410,8 +410,8 @@ static MACHINE_DRIVER_START( nvram )
 	MDRV_CPU_ADD_TAG("mcu", NSC8105, 6000000/4)	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(mcu_nvram_map,0)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION	/* frames per second, vblank duration */)
 	MDRV_INTERLEAVE(20)	/* 20 CPU slices per frame - an high value to ensure proper */
 						/* synchronization of the CPUs */
 	MDRV_MACHINE_RESET(friskyt)
@@ -419,8 +419,9 @@ static MACHINE_DRIVER_START( nvram )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(64)
 

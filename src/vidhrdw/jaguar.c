@@ -182,16 +182,6 @@ enum
 
 /*************************************
  *
- *  Global variables
- *
- *************************************/
-
-UINT8 cojag_draw_crosshair;
-
-
-
-/*************************************
- *
  *  Local variables
  *
  *************************************/
@@ -771,20 +761,6 @@ VIDEO_UPDATE( cojag )
 
 	/* render the object list */
 	process_object_list(bitmap, cliprect);
-
-	/* render the crosshair */
-	if (cojag_draw_crosshair)
-	{
-		int beamx, beamy;
-
-		/* draw player 1's crosshair */
-		get_crosshair_xy(0, &beamx, &beamy);
-		draw_crosshair(bitmap, beamx, beamy, cliprect, 0);
-
-		/* draw player 2's crosshair */
-		get_crosshair_xy(1, &beamx, &beamy);
-		draw_crosshair(bitmap, beamx, beamy, cliprect, 1);
-	}
 	return 0;
 }
 

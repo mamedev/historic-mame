@@ -15,6 +15,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include "uitext.h"
+#include "unicode.h"
 #include <zlib.h>
 
 
@@ -586,39 +587,57 @@ static int validate_cpu(int drivnum, const machine_config *drv, const UINT32 *re
 static int validate_display(int drivnum, const machine_config *drv)
 {
 	const game_driver *driver = drivers[drivnum];
+	int palette_modes = FALSE;
 	int error = FALSE;
+	int scrnum;
+
+	/* loop over screens */
+	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
+		if (drv->screen[scrnum].tag != NULL)
+		{
+			/* sanity check dimensions */
+			if ((drv->screen[scrnum].defstate.width <= 0) || (drv->screen[scrnum].defstate.height <= 0))
+			{
+				mame_printf_error("%s: %s screen %d has invalid display dimensions\n", driver->source_file, driver->name, scrnum);
+				error = TRUE;
+			}
+
+			/* sanity check screen formats */
+			if (drv->screen[scrnum].defstate.format != BITMAP_FORMAT_INDEXED16 &&
+				drv->screen[scrnum].defstate.format != BITMAP_FORMAT_RGB15 &&
+				drv->screen[scrnum].defstate.format != BITMAP_FORMAT_RGB32)
+			{
+				mame_printf_error("%s: %s screen %d has unsupported format\n", driver->source_file, driver->name, scrnum);
+				error = TRUE;
+			}
+			if (drv->screen[scrnum].defstate.format == BITMAP_FORMAT_INDEXED16)
+				palette_modes = TRUE;
+
+			/* sanity check display area */
+			if (!(drv->video_attributes & VIDEO_TYPE_VECTOR))
+			{
+				if ((drv->screen[scrnum].defstate.visarea.max_x < drv->screen[scrnum].defstate.visarea.min_x)
+					|| (drv->screen[scrnum].defstate.visarea.max_y < drv->screen[scrnum].defstate.visarea.min_y)
+					|| (drv->screen[scrnum].defstate.visarea.max_x >= drv->screen[scrnum].defstate.width)
+					|| (drv->screen[scrnum].defstate.visarea.max_y >= drv->screen[scrnum].defstate.height))
+				{
+					mame_printf_error("%s: %s screen %d has an invalid display area\n", driver->source_file, driver->name, scrnum);
+					error = TRUE;
+				}
+			}
+
+			/* check for zero frame rate */
+			if (drv->screen[scrnum].defstate.refresh == 0)
+			{
+				mame_printf_error("%s: %s screen %d has a zero refresh rate\n", driver->source_file, driver->name, scrnum);
+				error = TRUE;
+			}
+		}
 
 	/* check for empty palette */
-	if (drv->total_colors == 0 && !(drv->video_attributes & VIDEO_RGB_DIRECT))
+	if (palette_modes && drv->total_colors == 0)
 	{
 		mame_printf_error("%s: %s has zero palette entries\n", driver->source_file, driver->name);
-		error = TRUE;
-	}
-
-	/* sanity check dimensions */
-	if ((drv->screen[0].defstate.width <= 0) || (drv->screen[0].defstate.height <= 0))
-	{
-		mame_printf_error("%s: %s has invalid display dimensions\n", driver->source_file, driver->name);
-		error = TRUE;
-	}
-
-	/* sanity check display area */
-	if (!(drv->video_attributes & VIDEO_TYPE_VECTOR))
-	{
-		if ((drv->screen[0].defstate.visarea.max_x < drv->screen[0].defstate.visarea.min_x)
-			|| (drv->screen[0].defstate.visarea.max_y < drv->screen[0].defstate.visarea.min_y)
-			|| (drv->screen[0].defstate.visarea.max_x >= drv->screen[0].defstate.width)
-			|| (drv->screen[0].defstate.visarea.max_y >= drv->screen[0].defstate.height))
-		{
-			mame_printf_error("%s: %s has an invalid display area\n", driver->source_file, driver->name);
-			error = TRUE;
-		}
-	}
-
-	/* check for zero frame rate */
-	if (drv->screen[0].defstate.refresh == 0)
-	{
-		mame_printf_error("%s: %s has a zero refresh rate\n", driver->source_file, driver->name);
 		error = TRUE;
 	}
 
@@ -759,6 +778,13 @@ static int validate_inputs(int drivnum, const machine_config *drv, input_port_en
 		if (inp->name[0] && inp->name[strlen(inp->name) - 1] == ' ')
 		{
 			mame_printf_error("%s: %s input '%s' has trailing spaces\n", driver->source_file, driver->name, inp->name);
+			error = TRUE;
+		}
+
+		/* check for invalid UTF-8 */
+		if (!utf8_is_valid_string(inp->name))
+		{
+			mame_printf_error("%s: %s input '%s' has invalid characters\n", driver->source_file, driver->name, inp->name);
 			error = TRUE;
 		}
 

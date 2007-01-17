@@ -60,8 +60,8 @@ static const char *mame_default_text[] =
 	HISTORYNAME " not available",
 
 	/* special characters */
-	"\xab",
-	"\xbb",
+	"\xc2\xab",
+	"\xc2\xbb",
 	"(more)",
 	"(more)",
 	"",

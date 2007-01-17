@@ -79,7 +79,7 @@ DrawRozHelper(
 {
 	tilemap_set_palette_offset( tmap, rozInfo->color );
 
-	if( bitmap->depth == 15 || bitmap->depth == 16 )
+	if( bitmap->bpp == 16 )
 	{
 		UINT32 size_mask = rozInfo->size-1;
 		mame_bitmap *srcbitmap = tilemap_get_pixmap( tmap );
@@ -323,53 +323,6 @@ READ16_HANDLER( namcos2_sprite_ram_r )
 
 /**************************************************************************/
 
-static void
-DrawCrossshair( mame_bitmap *bitmap, const rectangle *cliprect )
-{
-	int x1port, y1port, x2port, y2port;
-	int beamx, beamy;
-
-	switch( namcos2_gametype )
-	{
-	case NAMCOS2_GOLLY_GHOST:
-		x1port = 0;
-		y1port = 1;
-		x2port = 2;
-		y2port = 3;
-		break;
-	case NAMCOS2_BUBBLE_TROUBLE:
-		x1port = 0;
-		y1port = 1;
-		x2port = 2;
-		y2port = 3;
-		break;
-	case NAMCOS2_LUCKY_AND_WILD:
-		x1port = 4;
-		y1port = 2;
-		x2port = 3;
-		y2port = 1;
-		break;
-	case NAMCOS2_STEEL_GUNNER_2:
-		x1port = 4;
-		x2port = 5;
-		y1port = 6;
-		y2port = 7;
-		break;
-	default:
-		return;
-	}
-
-	beamx = readinputport(2+x1port)*bitmap->width/256;
-	beamy = readinputport(2+y1port)*bitmap->height/256;
-	draw_crosshair( bitmap, beamx, beamy, cliprect, 0 );
-
-	beamx = readinputport(2+x2port)*bitmap->width/256;
-	beamy = readinputport(2+y2port)*bitmap->height/256;
-	draw_crosshair( bitmap, beamx, beamy, cliprect, 1 );
-}
-
-/**************************************************************************/
-
 VIDEO_START( namcos2 )
 {
 	if( namco_tilemap_init(2,memory_region(REGION_GFX4),TilemapCB)==0 )
@@ -424,7 +377,6 @@ VIDEO_UPDATE( namcos2_default )
 			namcos2_draw_sprites( bitmap, &clip, pri/2, namcos2_gfx_ctrl );
 		}
 	}
-	DrawCrossshair( bitmap,&clip );
 	return 0;
 }
 
@@ -504,7 +456,6 @@ VIDEO_UPDATE( luckywld )
 		}
 		namco_obj_draw( bitmap, &clip, pri );
 	}
-	DrawCrossshair( bitmap,&clip );
 	return 0;
 }
 
@@ -534,7 +485,6 @@ VIDEO_UPDATE( sgunner )
 		namco_tilemap_draw( bitmap, &clip, pri );
 		namco_obj_draw( bitmap, &clip, pri );
 	}
-	DrawCrossshair( bitmap,&clip );
 	return 0;
 }
 

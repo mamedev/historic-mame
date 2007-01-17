@@ -42,6 +42,7 @@ struct _screen_state
 	rectangle		visarea;					/* visible area (HBLANK end/start, VBLANK end/start) */
 	float			refresh;					/* refresh rate */
 	double			vblank;						/* duration of a VBLANK */
+	mame_bitmap_format format;					/* bitmap format */
 };
 
 
@@ -64,6 +65,7 @@ struct _screen_config
     current performance
 -------------------------------------------------*/
 
+/* In mamecore.h: typedef struct _performance_info performance_info; */
 struct _performance_info
 {
 	double			game_speed_percent;			/* % of full speed */
@@ -71,7 +73,6 @@ struct _performance_info
 	int				vector_updates_last_second; /* # of vector updates last second */
 	int				partial_updates_this_frame; /* # of partial updates last frame */
 };
-/* In mamecore.h: typedef struct _performance_info performance_info; */
 
 
 
@@ -86,6 +87,21 @@ int video_init(running_machine *machine);
 
 /* core VBLANK callback */
 void video_vblank_start(void);
+
+/* reset the partial updating for a frame; generally only called by cpuexec.c */
+void video_reset_partial_updates(void);
+
+/* are we skipping the current frame? */
+int video_skip_this_frame(void);
+
+/* update the screen, handling frame skipping and rendering */
+void video_frame_update(void);
+
+/* return current performance data */
+const performance_info *mame_get_performance_info(void);
+
+
+/* ----- screens ----- */
 
 /* set the resolution of a screen */
 void video_screen_configure(int scrnum, int width, int height, const rectangle *visarea, float refresh);
@@ -106,18 +122,6 @@ int video_screen_get_hblank(int scrnum);
 
 /* return the time when the beam will reach a particular H,V position */
 mame_time video_screen_get_time_until_pos(int scrnum, int vpos, int hpos);
-
-/* reset the partial updating for a frame; generally only called by cpuexec.c */
-void video_reset_partial_updates(void);
-
-/* are we skipping the current frame? */
-int video_skip_this_frame(void);
-
-/* update the screen, handling frame skipping and rendering */
-void video_frame_update(void);
-
-/* return current performance data */
-const performance_info *mame_get_performance_info(void);
 
 
 /* ----- snapshots ----- */
@@ -140,10 +144,17 @@ void video_movie_end_recording(void);
 /* ----- bitmap allocation ----- */
 
 /* bitmap allocation */
-#define bitmap_alloc(w,h) bitmap_alloc_depth(w, h, Machine->color_depth)
-#define auto_bitmap_alloc(w,h) auto_bitmap_alloc_depth(w, h, Machine->color_depth)
-mame_bitmap *bitmap_alloc_depth(int width, int height, int depth);
-mame_bitmap *auto_bitmap_alloc_depth(int width, int height, int depth);
+#define bitmap_alloc(w,h) bitmap_alloc_format(w, h, BITMAP_FORMAT_INVALID)
+#define auto_bitmap_alloc(w,h) auto_bitmap_alloc_format(w, h, BITMAP_FORMAT_INVALID)
+
+mame_bitmap *bitmap_alloc_format(int width, int height, mame_bitmap_format format);
+mame_bitmap *auto_bitmap_alloc_format(int width, int height, mame_bitmap_format format);
 void bitmap_free(mame_bitmap *bitmap);
+int bitmap_format_to_bpp(mame_bitmap_format format);
+
+
+/* ----- crosshair rendering ----- */
+
+void video_crosshair_toggle(void);
 
 #endif	/* __VIDEO_H__ */

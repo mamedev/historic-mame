@@ -111,6 +111,7 @@ enum
 	SOUND_SID6581,
 	SOUND_SID8580,
 	SOUND_SP0256,
+	SOUND_S14001A,
 
 	/* filters start here */
 	SOUND_FILTER_VOLUME,

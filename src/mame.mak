@@ -133,7 +133,7 @@ CPUS += GMS30C2116
 #CPUS += GMS30C2216
 #CPUS += GMS30C2232
 CPUS += I386
-#CPUS += I486
+CPUS += I486
 CPUS += PENTIUM
 CPUS += MEDIAGX
 CPUS += I960
@@ -169,6 +169,7 @@ CPUS += TLCS90
 # CPUS += TMS7000_EXL
 # CPUS += SM8500
 # CPUS += V30MZ
+
 
 
 #-------------------------------------------------
@@ -255,6 +256,12 @@ SOUNDS += ES8712
 SOUNDS += RF5C400
 SOUNDS += SPEAKER
 SOUNDS += CDP1869
+SOUNDS += S14001A
+SOUNDS += BEEP
+#SOUNDS += WAVE
+#SOUNDS += SID6581
+#SOUNDS += SID8580
+#SOUNDS += SP0256
 
 
 
@@ -731,6 +738,7 @@ $(OBJ)/igs.a: \
 	$(OBJ)/drivers/tarzan.o \
 	$(OBJ)/machine/pgmcrypt.o \
 	$(OBJ)/machine/pgmprot.o \
+	$(OBJ)/machine/pgmy2ks.o \
 
 $(OBJ)/irem.a: \
 	$(OBJ)/drivers/m62.o $(OBJ)/vidhrdw/m62.o \
@@ -900,6 +908,7 @@ $(OBJ)/midcoin.a: \
 $(OBJ)/midw8080.a: \
 	$(OBJ)/drivers/8080bw.o $(OBJ)/machine/8080bw.o $(OBJ)/sndhrdw/8080bw.o $(OBJ)/vidhrdw/8080bw.o \
 	$(OBJ)/drivers/m79amb.o $(OBJ)/vidhrdw/m79amb.o \
+	$(OBJ)/drivers/mw8080bw.o $(OBJ)/sndhrdw/mw8080bw.o $(OBJ)/vidhrdw/mw8080bw.o \
 	$(OBJ)/drivers/rotaryf.o \
 	$(OBJ)/drivers/sspeedr.o $(OBJ)/vidhrdw/sspeedr.o \
 
@@ -1092,6 +1101,7 @@ $(OBJ)/rare.a: \
 $(OBJ)/sanritsu.a: \
 	$(OBJ)/drivers/appoooh.o $(OBJ)/vidhrdw/appoooh.o \
 	$(OBJ)/drivers/bankp.o $(OBJ)/vidhrdw/bankp.o \
+	$(OBJ)/drivers/chinsan.o \
 	$(OBJ)/drivers/drmicro.o $(OBJ)/vidhrdw/drmicro.o \
 	$(OBJ)/drivers/mayumi.o $(OBJ)/vidhrdw/mayumi.o \
 	$(OBJ)/drivers/mermaid.o $(OBJ)/vidhrdw/mermaid.o \
@@ -1210,6 +1220,7 @@ $(OBJ)/snk.a: \
 $(OBJ)/stern.a: \
 	$(OBJ)/drivers/astinvad.o $(OBJ)/sndhrdw/astinvad.o $(OBJ)/vidhrdw/astinvad.o \
 	$(OBJ)/drivers/berzerk.o $(OBJ)/machine/berzerk.o $(OBJ)/sndhrdw/berzerk.o $(OBJ)/vidhrdw/berzerk.o \
+	$(OBJ)/drivers/cliffhgr.o $(OBJ)/sndhrdw/cliffhgr.o \
 	$(OBJ)/drivers/mazerbla.o \
 	$(OBJ)/drivers/supdrapo.o \
 
@@ -1473,6 +1484,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/cybertnk.o \
 	$(OBJ)/drivers/dcheese.o $(OBJ)/vidhrdw/dcheese.o \
 	$(OBJ)/drivers/dgpix.o \
+	$(OBJ)/drivers/discoboy.o \
 	$(OBJ)/drivers/dorachan.o $(OBJ)/vidhrdw/dorachan.o \
 	$(OBJ)/drivers/dreamwld.o \
 	$(OBJ)/drivers/dribling.o $(OBJ)/vidhrdw/dribling.o \
@@ -1520,6 +1532,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/oneshot.o $(OBJ)/vidhrdw/oneshot.o \
 	$(OBJ)/drivers/onetwo.o \
 	$(OBJ)/drivers/othldrby.o $(OBJ)/vidhrdw/othldrby.o \
+	$(OBJ)/drivers/pangofun.o \
 	$(OBJ)/drivers/pasha2.o \
 	$(OBJ)/drivers/pass.o $(OBJ)/vidhrdw/pass.o \
 	$(OBJ)/drivers/pipeline.o \
@@ -1539,6 +1552,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/sprcros2.o $(OBJ)/vidhrdw/sprcros2.o \
 	$(OBJ)/drivers/ssfindo.o \
 	$(OBJ)/drivers/ssingles.o \
+	$(OBJ)/drivers/steaser.o \
 	$(OBJ)/drivers/starspnr.o \
 	$(OBJ)/drivers/statriv2.o \
 	$(OBJ)/drivers/supertnk.o \
@@ -1569,10 +1583,7 @@ $(OBJ)/misc.a: \
 # layout dependencies
 #-------------------------------------------------
 
-$(OBJ)/drivers/8080bw.o:	$(OBJ)/layout/clowns.lh \
-							$(OBJ)/layout/invaders.lh \
-							$(OBJ)/layout/invad2ct.lh \
-							$(OBJ)/layout/invrvnge.lh
+$(OBJ)/drivers/8080bw.o:	$(OBJ)/layout/invrvnge.lh
 
 $(OBJ)/drivers/atarifb.o:	$(OBJ)/layout/atarifb.lh \
 							$(OBJ)/layout/atarifb4.lh \
@@ -1582,7 +1593,15 @@ $(OBJ)/drivers/avalnche.o:	$(OBJ)/layout/avalnche.lh
 
 $(OBJ)/drivers/bzone.o:		$(OBJ)/layout/bzone.lh
 
-$(OBJ)/drivers/bfm_sc2.o:	$(OBJ)/layout/bfm_sc2.lh
+$(OBJ)/drivers/bfm_sc2.o:	$(OBJ)/layout/bfm_sc2.lh \
+							$(OBJ)/layout/gldncrwn.lh \
+							$(OBJ)/layout/quintoon.lh \
+							$(OBJ)/layout/paradice.lh \
+							$(OBJ)/layout/pyramid.lh \
+							$(OBJ)/layout/pokio.lh \
+							$(OBJ)/layout/slots.lh \
+							$(OBJ)/layout/sltblgpo.lh \
+							$(OBJ)/layout/sltblgtk.lh
 
 $(OBJ)/drivers/cardline.o:	$(OBJ)/layout/cardline.lh
 
@@ -1606,6 +1625,10 @@ $(OBJ)/drivers/lazercmd.o:	$(OBJ)/layout/lazercmd.lh
 $(OBJ)/drivers/maxaflex.o:	$(OBJ)/layout/maxaflex.lh
 
 $(OBJ)/drivers/mpu4.o:		$(OBJ)/layout/mpu4.lh \
+
+$(OBJ)/drivers/mw8080bw.o:	$(OBJ)/layout/clowns.lh \
+				$(OBJ)/layout/invaders.lh \
+				$(OBJ)/layout/invad2ct.lh
 
 $(OBJ)/drivers/meadows.o:	$(OBJ)/layout/deadeye.lh \
 							$(OBJ)/layout/gypsyjug.lh

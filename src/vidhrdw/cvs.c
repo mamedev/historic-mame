@@ -406,24 +406,24 @@ VIDEO_START( cvs )
 
     /* Need 3 bitmaps for 2636 chips */
 
-	if ((s2636_1_bitmap = auto_bitmap_alloc_depth(Machine->screen[0].width,Machine->screen[0].height,8)) == 0)
+	if ((s2636_1_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8)) == 0)
 		return 1;
 
-	if ((s2636_2_bitmap = auto_bitmap_alloc_depth(Machine->screen[0].width,Machine->screen[0].height,8)) == 0)
+	if ((s2636_2_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8)) == 0)
 		return 1;
 
-	if ((s2636_3_bitmap = auto_bitmap_alloc_depth(Machine->screen[0].width,Machine->screen[0].height,8)) == 0)
+	if ((s2636_3_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8)) == 0)
 		return 1;
 
     /* 3 bitmaps for collision detection */
 
-	if ((collision_bitmap = auto_bitmap_alloc_depth(Machine->screen[0].width,Machine->screen[0].height,8)) == 0)
+	if ((collision_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8)) == 0)
 		return 1;
 
-	if ((collision_background = auto_bitmap_alloc_depth(Machine->screen[0].width,Machine->screen[0].height,8)) == 0)
+	if ((collision_background = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8)) == 0)
 		return 1;
 
-	if ((scrolled_background = auto_bitmap_alloc_depth(Machine->screen[0].width,Machine->screen[0].height,8)) == 0)
+	if ((scrolled_background = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8)) == 0)
 		return 1;
 
 	return 0;
@@ -588,7 +588,6 @@ VIDEO_UPDATE( cvs )
 
     /* Update 2636 images */
 
-	if (bitmap->depth == 16)
     {
         UINT32 S1,S2,S3,SB,pen;
 
@@ -611,59 +610,6 @@ VIDEO_UPDATE( cvs )
                  if(pen)
                  {
              	    UINT16 *address = (UINT16 *)dst;
-				    if (pen & 0xff000000) address[BL3] = Machine->pens[(pen >> 24) & 15];
-				    if (pen & 0x00ff0000) address[BL2] = Machine->pens[(pen >> 16) & 15];
-				    if (pen & 0x0000ff00) address[BL1] = Machine->pens[(pen >>  8) & 15];
-				    if (pen & 0x000000ff) address[BL0] = Machine->pens[(pen & 15)];
-
-                    /* Collision Detection */
-
-                    SB = 0;
-				    if (spb[BL3] != Machine->pens[0]) SB =  0x08000000;
-				    if (spb[BL2] != Machine->pens[0]) SB |= 0x00080000;
-				    if (spb[BL1] != Machine->pens[0]) SB |= 0x00000800;
-				    if (spb[BL0] != Machine->pens[0]) SB |= 0x00000008;
-
-       	            if (S1 & S2) CollisionRegister |= 1;
-       	            if (S2 & S3) CollisionRegister |= 2;
-    			    if (S1 & S3) CollisionRegister |= 4;
-
-                    if (SB)
-                    {
-    			        if (S1 & SB) CollisionRegister |= 16;
-   			            if (S2 & SB) CollisionRegister |= 32;
-       	                if (S3 & SB) CollisionRegister |= 64;
-                    }
-                 }
-
-           	     dst++;
-                 spb+=4;
-            }
-        }
-    }
-    else
-	{
-        for(sx=255;sx>7;sx--)
-        {
-	        UINT32 *sp1 = (UINT32 *)s2636_1_bitmap->line[sx];
-	        UINT32 *sp2 = (UINT32 *)s2636_2_bitmap->line[sx];
-	        UINT32 *sp3 = (UINT32 *)s2636_3_bitmap->line[sx];
-            UINT32 *dst = (UINT32 *)bitmap->line[sx];
-	        UINT8  *spb = (UINT8  *)scrolled_background->line[sx];
-
-            UINT32 S1,S2,S3,SB,pen;
-
-            for(offs=0;offs<62;offs++)
-            {
-        	     S1 = (*sp1++);
-                 S2 = (*sp2++);
-                 S3 = (*sp3++);
-
-        	     pen = S1 | S2 | S3;
-
-                 if(pen)
-                 {
-             	    UINT8 *address = (UINT8 *)dst;
 				    if (pen & 0xff000000) address[BL3] = Machine->pens[(pen >> 24) & 15];
 				    if (pen & 0x00ff0000) address[BL2] = Machine->pens[(pen >> 16) & 15];
 				    if (pen & 0x0000ff00) address[BL1] = Machine->pens[(pen >>  8) & 15];

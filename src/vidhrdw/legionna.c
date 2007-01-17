@@ -5,6 +5,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 UINT16 *legionna_back_data,*legionna_fore_data,*legionna_mid_data,*legionna_scrollram16,*legionna_textram;
 
@@ -13,13 +14,21 @@ static tilemap *background_layer,*foreground_layer,*midground_layer,*text_layer;
 
 /******************************************************************************/
 
-static UINT16 gfx_bank = 0;
+static UINT16 back_gfx_bank = 0,fore_gfx_bank = 0,mid_gfx_bank = 0;
+UINT8 pri_n;
 
 void heatbrl_setgfxbank(UINT16 data)
 {
-	gfx_bank = (data &0x4000) >> 2;
+	back_gfx_bank = (data &0x4000) >> 2;
 }
 
+/*xxx- --- ---- ---- banking*/
+void denjinmk_setgfxbank(UINT16 data)
+{
+	fore_gfx_bank = (data &0x2000) >> 1;//???
+	back_gfx_bank = (data &0x4000) >> 2;
+	mid_gfx_bank  = (data &0x8000) >> 3;//???
+}
 
 WRITE16_HANDLER( legionna_control_w )
 {
@@ -83,7 +92,7 @@ static void get_back_tile_info(int tile_index)
 	int color=(tile>>12)&0xf;
 
 	tile &= 0xfff;
-	tile |= gfx_bank;		/* Heatbrl uses banking */
+	tile |= back_gfx_bank;		/* Heatbrl uses banking */
 
 	SET_TILE_INFO(1,tile,color,0)
 }
@@ -94,6 +103,17 @@ static void get_mid_tile_info(int tile_index)
 	int color=(tile>>12)&0xf;
 
 	tile &= 0xfff;
+
+	SET_TILE_INFO(5,tile,color,0)
+}
+
+static void get_mid_tile_info_denji(int tile_index)
+{
+	int tile=legionna_mid_data[tile_index];
+	int color=(tile>>12)&0xf;
+
+	tile &= 0xfff;
+	tile |= mid_gfx_bank;
 
 	SET_TILE_INFO(5,tile,color,0)
 }
@@ -121,6 +141,17 @@ static void get_fore_tile_info(int tile_index)	/* this is giving bad tiles... */
 	SET_TILE_INFO(4,tile,color,0)
 }
 
+static void get_fore_tile_info_denji(int tile_index)
+{
+	int tile=legionna_fore_data[tile_index];
+	int color=(tile>>12)&0xf;
+
+	tile &= 0xfff;
+	tile |= fore_gfx_bank;
+
+	SET_TILE_INFO(4,tile,color,0)
+}
+
 static void get_text_tile_info(int tile_index)
 {
 	int tile = legionna_textram[tile_index];
@@ -143,10 +174,34 @@ VIDEO_START( legionna )
 
 	legionna_scrollram16 = auto_malloc(0x60);
 
+	if (!legionna_scrollram16)	return 1;
+
 	tilemap_set_transparent_pen(background_layer,15);
 	tilemap_set_transparent_pen(midground_layer,15);
 	tilemap_set_transparent_pen(foreground_layer,15);
 	tilemap_set_transparent_pen(text_layer,15);
+
+	return 0;
+}
+
+VIDEO_START( denjinmk )
+{
+	background_layer = tilemap_create(get_back_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	foreground_layer = tilemap_create(get_fore_tile_info_denji,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	midground_layer =  tilemap_create(get_mid_tile_info_denji, tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	text_layer =       tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,64,32);
+
+	if (!background_layer || !foreground_layer || !midground_layer || !text_layer)
+		return 1;
+
+	legionna_scrollram16 = auto_malloc(0x60);
+
+	if (!legionna_scrollram16)	return 1;
+
+	tilemap_set_transparent_pen(background_layer,15);
+	tilemap_set_transparent_pen(midground_layer,15);
+	tilemap_set_transparent_pen(foreground_layer,15);
+	tilemap_set_transparent_pen(text_layer,7);//?
 
 	return 0;
 }
@@ -162,6 +217,8 @@ VIDEO_START( cupsoc )
 		return 1;
 
 	legionna_scrollram16 = auto_malloc(0x60);
+
+	if (!legionna_scrollram16)	return 1;
 
 	tilemap_set_transparent_pen(background_layer,15);
 	tilemap_set_transparent_pen(midground_layer,15);
@@ -185,10 +242,10 @@ VIDEO_START( cupsoc )
     +0   ..x..... ........  Flip y ???
     +0   ...xxx.. ........  Width: do this many tiles horizontally
     +0   ......xx x.......  Height: do this many tiles vertically
-    +0   ........ .?......  unused ?
+    +0   ........ .x......  Tile bank,used in Denjin Makai
     +0   ........ ..xxxxxx  Color bank
 
-    +1   .x...... ........  Priority? (1=high?)
+    +1   xx...... ........  Priority? (1=high?)
     +1   ..xxxxxx xxxxxxxx  Tile number
     +2   xxxxxxxx xxxxxxxx  X coordinate (signed)
     +3   xxxxxxxx xxxxxxxx  Y coordinate (signed)
@@ -197,7 +254,7 @@ VIDEO_START( cupsoc )
 
 static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int pri)
 {
-	int offs,fx,fy,x,y,color,sprite;
+	int offs,fx,fy,x,y,color,sprite,cur_pri;
 	int dx,dy,ax,ay;
 
 	for (offs = 0x400-4;offs >= 0;offs -= 4)
@@ -205,10 +262,13 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int pri)
 		UINT16 data = spriteram16[offs];
 		if (!(data &0x8000)) continue;
 
+		cur_pri = (spriteram16[offs+1] & 0xc000) >> 14;
+		if (cur_pri!=pri) continue;
+
 		sprite = spriteram16[offs+1];
-		if ((sprite>>14)!=pri) continue;
 
 		sprite &= 0x3fff;
+		if(data & 0x40) sprite |= 0x4000;//tile banking,used in Denjin Makai
 
 		y = spriteram16[offs+3];
 		x = spriteram16[offs+2];
@@ -220,71 +280,100 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int pri)
 
 		color = (data &0x3f) + 0x40;
 		fx =  (data &0x4000) >> 14;
-		fy =  (data &0x2000) >> 13;	/* ??? */
+		fy =  (data &0x2000) >> 13;
 		dy = ((data &0x0380) >> 7)  + 1;
 		dx = ((data &0x1c00) >> 10) + 1;
 
 		if (!fx)
 		{
-			for (ax=0; ax<dx; ax++)
-				for (ay=0; ay<dy; ay++)
-				{
-					drawgfx(bitmap,Machine->gfx[3],
-					sprite++,
-					color,fx,fy,x+ax*16,y+ay*16,
-					cliprect,TRANSPARENCY_PEN,15);
-				}
+			if(!fy)
+			{
+				for (ax=0; ax<dx; ax++)
+					for (ay=0; ay<dy; ay++)
+					{
+						drawgfx(bitmap,Machine->gfx[3],
+						sprite++,
+						color,fx,fy,x+ax*16,y+ay*16,
+						cliprect,TRANSPARENCY_PEN,15);
+					}
+			}
+			else
+			{
+				for (ax=0; ax<dx; ax++)
+					for (ay=0; ay<dy; ay++)
+					{
+						drawgfx(bitmap,Machine->gfx[3],
+						sprite++,
+						color,fx,fy,x+ax*16,y+(dy-ay-1)*16,
+						cliprect,TRANSPARENCY_PEN,15);
+					}
+			}
 		}
 		else
 		{
-			for (ax=0; ax<dx; ax++)
-				for (ay=0; ay<dy; ay++)
-				{
-					drawgfx(bitmap,Machine->gfx[3],
-					sprite++,
-					color,fx,fy,x+(dx-ax-1)*16,y+ay*16,
-					cliprect,TRANSPARENCY_PEN,15);
-				}
+			if(!fy)
+			{
+				for (ax=0; ax<dx; ax++)
+					for (ay=0; ay<dy; ay++)
+					{
+						drawgfx(bitmap,Machine->gfx[3],
+						sprite++,
+						color,fx,fy,x+(dx-ax-1)*16,y+ay*16,
+						cliprect,TRANSPARENCY_PEN,15);
+					}
+			}
+			else
+			{
+				for (ax=0; ax<dx; ax++)
+					for (ay=0; ay<dy; ay++)
+					{
+						drawgfx(bitmap,Machine->gfx[3],
+						sprite++,
+						color,fx,fy,x+(dx-ax-1)*16,y+(dy-ay-1)*16,
+						cliprect,TRANSPARENCY_PEN,15);
+					}
+			}
 		}
 	}
 }
 
+#define LAYER_DB 0
 
 VIDEO_UPDATE( legionna )
 {
-#ifdef MAME_DEBUG
+#if LAYER_DB
 	static int dislayer[5];	/* Layer toggles to help get the layers correct */
 #endif
 
-#ifdef MAME_DEBUG
-	if (code_pressed_memory (KEYCODE_Z))
+#if LAYER_DB
+if (code_pressed_memory (KEYCODE_Z))
 	{
 		dislayer[0] ^= 1;
-		popmessage("bg0: %01x",dislayer[0]);
+		ui_popup("bg0: %01x",dislayer[0]);
 	}
 
 	if (code_pressed_memory (KEYCODE_X))
 	{
 		dislayer[1] ^= 1;
-		popmessage("bg1: %01x",dislayer[1]);
+		ui_popup("bg1: %01x",dislayer[1]);
 	}
 
 	if (code_pressed_memory (KEYCODE_C))
 	{
 		dislayer[2] ^= 1;
-		popmessage("bg2: %01x",dislayer[2]);
+		ui_popup("bg2: %01x",dislayer[2]);
 	}
 
 	if (code_pressed_memory (KEYCODE_V))
 	{
 		dislayer[3] ^= 1;
-		popmessage("sprites: %01x",dislayer[3]);
+		ui_popup("sprites: %01x",dislayer[3]);
 	}
 
 	if (code_pressed_memory (KEYCODE_B))
 	{
 		dislayer[4] ^= 1;
-		popmessage("text: %01x",dislayer[4]);
+		ui_popup("text: %01x",dislayer[4]);
 	}
 #endif
 
@@ -300,37 +389,44 @@ VIDEO_UPDATE( legionna )
 
 	fillbitmap(bitmap,get_black_pen(machine),cliprect);	/* wrong color? */
 
-#ifdef MAME_DEBUG
+#if LAYER_DB
 	if (dislayer[2]==0)
 #endif
 	tilemap_draw(bitmap,cliprect,foreground_layer,TILEMAP_IGNORE_TRANSPARENCY,0);
 
-#ifdef MAME_DEBUG
+#if LAYER_DB
 	if (dislayer[1]==0)
 #endif
 	tilemap_draw(bitmap,cliprect,midground_layer,0,0);
 
-#ifdef MAME_DEBUG
+	draw_sprites(bitmap,cliprect,3);
+#if LAYER_DB
 	if (dislayer[0]==0)
 #endif
 	tilemap_draw(bitmap,cliprect,background_layer,0,0);
-
 	draw_sprites(bitmap,cliprect,2);
 	draw_sprites(bitmap,cliprect,1);
 	draw_sprites(bitmap,cliprect,0);
-	draw_sprites(bitmap,cliprect,3);
 
-#ifdef MAME_DEBUG
+#if LAYER_DB
 	if (dislayer[4]==0)
 #endif
 	tilemap_draw(bitmap,cliprect,text_layer,0,0);
+
 	return 0;
 }
 
 VIDEO_UPDATE( godzilla )
 {
-	tilemap_set_scrollx( text_layer, 0, 0 );
-	tilemap_set_scrolly( text_layer, 0, 112 );
+//  tilemap_set_scrollx( text_layer, 0, 0 );
+//  tilemap_set_scrolly( text_layer, 0, 112 );
+	/* Setup the tilemaps */
+	tilemap_set_scrollx( background_layer, 0, legionna_scrollram16[0] );
+	tilemap_set_scrolly( background_layer, 0, legionna_scrollram16[1] );
+	tilemap_set_scrollx( midground_layer,  0, legionna_scrollram16[2] );
+	tilemap_set_scrolly( midground_layer,  0, legionna_scrollram16[3] );
+	tilemap_set_scrollx( foreground_layer, 0, legionna_scrollram16[4] );
+	tilemap_set_scrolly( foreground_layer, 0, legionna_scrollram16[5] );
 
 	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
@@ -342,6 +438,7 @@ VIDEO_UPDATE( godzilla )
 	draw_sprites(bitmap,cliprect,0);
 	draw_sprites(bitmap,cliprect,3);
 	tilemap_draw(bitmap,cliprect,text_layer,0,0);
+
 	return 0;
 }
 
@@ -354,19 +451,30 @@ VIDEO_UPDATE( sdgndmrb )
 	tilemap_set_scrolly( midground_layer,  0, legionna_scrollram16[3] );
 	tilemap_set_scrollx( foreground_layer, 0, legionna_scrollram16[4] );
 	tilemap_set_scrolly( foreground_layer, 0, legionna_scrollram16[5] );
-//  tilemap_set_scrollx( text_layer, 0, 128 /* legionna_scrollram16[6] */);
-//  tilemap_set_scrolly( text_layer, 0, 0 /* legionna_scrollram16[7] */ );
+  	tilemap_set_scrollx( text_layer, 0,  legionna_scrollram16[6] );
+  	tilemap_set_scrolly( text_layer, 0,  legionna_scrollram16[7] );
 
 	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
-	tilemap_draw(bitmap,cliprect,background_layer,0,0);
+	if(!(pri_n & 1))
+		tilemap_draw(bitmap,cliprect,background_layer,0,0);
 	draw_sprites(bitmap,cliprect,2);
-	tilemap_draw(bitmap,cliprect,midground_layer,0,0);
+
+	if(!(pri_n & 2))
+		tilemap_draw(bitmap,cliprect,midground_layer,0,0);
+
 	draw_sprites(bitmap,cliprect,1);
-	tilemap_draw(bitmap,cliprect,foreground_layer,0,0);
+
+	if(!(pri_n & 4))
+		tilemap_draw(bitmap,cliprect,foreground_layer,0,0);
+
 	draw_sprites(bitmap,cliprect,0);
+
 	draw_sprites(bitmap,cliprect,3);
-	tilemap_draw(bitmap,cliprect,text_layer,0,0);
+
+	if(!(pri_n & 8))
+		tilemap_draw(bitmap,cliprect,text_layer,0,0);
+
 	return 0;
 }
 

@@ -251,10 +251,10 @@ void *_auto_malloc(size_t size, const char *file, int line)
     auto_strdup - allocate auto-freeing string
 -------------------------------------------------*/
 
-char *auto_strdup(const char *str)
+char *_auto_strdup(const char *str, const char *file, int line)
 {
 	assert_always(str != NULL, "auto_strdup() requires non-NULL str");
-	return strcpy(auto_malloc(strlen(str) + 1), str);
+	return strcpy(_auto_malloc(strlen(str) + 1, file, line), str);
 }
 
 
@@ -263,9 +263,9 @@ char *auto_strdup(const char *str)
     string if str is null
 -------------------------------------------------*/
 
-char *auto_strdup_allow_null(const char *str)
+char *_auto_strdup_allow_null(const char *str, const char *file, int line)
 {
-	return (str != NULL) ? auto_strdup(str) : NULL;
+	return (str != NULL) ? _auto_strdup(str, file, line) : NULL;
 }
 
 

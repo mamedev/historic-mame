@@ -125,7 +125,7 @@ VIDEO_START( model3 )
 	if (!bitmap3d)
 		return 1;
 
-	zbuffer = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 32);
+	zbuffer = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED32);
 	if (!zbuffer)
 		return 1;
 
@@ -421,16 +421,6 @@ VIDEO_UPDATE( model3 )
 		draw_layer(bitmap3d, cliprect, 0, (model3_layer_enable >> 0) & 0x1);
 	}
 	//copy_screen(bitmap, cliprect);
-
-	if(model3_draw_crosshair) {
-		int gun1_x, gun1_y, gun2_x, gun2_y;
-		gun1_x = readinputport(5);
-		gun1_y = readinputport(6);
-		gun2_x = readinputport(7);
-		gun2_y = readinputport(8);
-		draw_crosshair(bitmap, gun1_x, gun1_y, cliprect, 0);
-		draw_crosshair(bitmap, gun2_x, gun2_y, cliprect, 1);
-	}
 
 	//draw_texture_sheet(bitmap, cliprect);
 

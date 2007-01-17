@@ -214,9 +214,5 @@ void osd_joystick_end_calibration(void);
 int osd_uchar_from_osdchar(UINT32 /* unicode_char */ *uchar, const char *osdchar, size_t count);
 
 
-#ifdef MESS
-/* this is here to follow the current mame file hierarchy style */
-#include "osd_mess.h"
-#endif
 
 #endif	/* __OSDEPEND_H__ */

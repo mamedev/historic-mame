@@ -3377,16 +3377,17 @@ static MACHINE_DRIVER_START( ssv )
 	MDRV_CPU_ADD_TAG("main", V60, 16000000) /* Based on STA-0001 & STA-0001B System boards */
 	MDRV_CPU_VBLANK_INT(ssv_interrupt,2)	/* Vblank */
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	/* we use cpu_getvblank */
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION	/* we use cpu_getvblank */)
 
 	MDRV_MACHINE_RESET(ssv)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 
 	MDRV_SCREEN_SIZE(0x180, 0x100)
-	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
 	MDRV_GFXDECODE(ssv_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x8000)
 	MDRV_VIDEO_START(ssv)
@@ -3412,7 +3413,7 @@ static MACHINE_DRIVER_START( drifto94 )
 	MDRV_NVRAM_HANDLER(ssv)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 4, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 4, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -3427,7 +3428,7 @@ static MACHINE_DRIVER_START( gdfs )
 	MDRV_NVRAM_HANDLER(gdfs)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
 
 	MDRV_GFXDECODE(gdfs_gfxdecodeinfo)
 	MDRV_VIDEO_START(gdfs)
@@ -3443,7 +3444,7 @@ static MACHINE_DRIVER_START( hypreact )
 	MDRV_CPU_PROGRAM_MAP(hypreact_readmem, hypreact_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(8, 0x148-1, 16, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(8, 0x148-1, 16, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -3455,7 +3456,7 @@ static MACHINE_DRIVER_START( hypreac2 )
 	MDRV_CPU_PROGRAM_MAP(hypreac2_readmem, hypreac2_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 8, 0xf8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 8, 0xf8-1)
 MACHINE_DRIVER_END
 
 
@@ -3467,7 +3468,7 @@ static MACHINE_DRIVER_START( janjans1 )
 	MDRV_CPU_PROGRAM_MAP(janjans1_readmem, janjans1_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -3479,7 +3480,7 @@ static MACHINE_DRIVER_START( keithlcy )
 	MDRV_CPU_PROGRAM_MAP(keithlcy_readmem, keithlcy_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 4, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 4, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -3493,7 +3494,7 @@ static MACHINE_DRIVER_START( meosism )
 	MDRV_NVRAM_HANDLER(ssv)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -3505,7 +3506,7 @@ static MACHINE_DRIVER_START( mslider )
 	MDRV_CPU_PROGRAM_MAP(mslider_readmem, mslider_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -3517,7 +3518,7 @@ static MACHINE_DRIVER_START( ryorioh )
 	MDRV_CPU_PROGRAM_MAP(ryorioh_readmem, ryorioh_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -3529,7 +3530,7 @@ static MACHINE_DRIVER_START( srmp4 )
 	MDRV_CPU_PROGRAM_MAP(srmp4_readmem, srmp4_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 4, 0xf4-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 4, 0xf4-1)
 MACHINE_DRIVER_END
 
 
@@ -3541,7 +3542,7 @@ static MACHINE_DRIVER_START( srmp7 )
 	MDRV_CPU_PROGRAM_MAP(srmp7_readmem, srmp7_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -3554,7 +3555,7 @@ static MACHINE_DRIVER_START( stmblade )
 
 	MDRV_NVRAM_HANDLER(ssv)
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x158-1, 0, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x158-1, 0, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -3566,14 +3567,14 @@ static MACHINE_DRIVER_START( survarts )
 	MDRV_CPU_PROGRAM_MAP(survarts_readmem, survarts_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 4, 0xf4-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 4, 0xf4-1)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( dynagear )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(survarts)
 	/* video hardware */
-	MDRV_VISIBLE_AREA(8, 0x158-16-1, 0, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(8, 0x158-16-1, 0, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -3587,7 +3588,7 @@ static MACHINE_DRIVER_START( eaglshot )
 	MDRV_NVRAM_HANDLER(ssv)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x140-1, 8, 0xe8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x140-1, 8, 0xe8-1)
 
 	MDRV_GFXDECODE(eaglshot_gfxdecodeinfo)
 	MDRV_VIDEO_START(eaglshot)
@@ -3605,7 +3606,7 @@ static MACHINE_DRIVER_START( sxyreact )
 	MDRV_NVRAM_HANDLER(ssv)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -3617,7 +3618,7 @@ static MACHINE_DRIVER_START( twineag2 )
 	MDRV_CPU_PROGRAM_MAP(twineag2_readmem, twineag2_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
 MACHINE_DRIVER_END
 
 
@@ -3629,7 +3630,7 @@ static MACHINE_DRIVER_START( ultrax )
 	MDRV_CPU_PROGRAM_MAP(ultrax_readmem, ultrax_writemem)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( jsk )
@@ -3643,7 +3644,7 @@ static MACHINE_DRIVER_START( jsk )
 	MDRV_CPU_PROGRAM_MAP(jsk_mem, 0)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 0x150-1, 0, 0xf0-1)
 MACHINE_DRIVER_END
 
 

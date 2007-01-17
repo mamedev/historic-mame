@@ -1757,6 +1757,15 @@ static void input_port_detokenize(input_port_init_params *param, const input_por
 				ipt += INPUT_PORT_PAIR_TOKENS;
 				break;
 
+			case INPUT_TOKEN_CROSSHAIR:
+				port->analog.crossaxis = INPUT_PORT_PAIR_ITEM(--ipt, 1) & 0xff;
+				port->analog.crossaltaxis = (float)((INT32)INPUT_PORT_PAIR_ITEM(ipt, 1) >> 8) / 65536.0f;
+				ipt += INPUT_PORT_PAIR_TOKENS;
+				port->analog.crossscale = (float)(INT32)INPUT_PORT_PAIR_ITEM(ipt, 0) / 65536.0f;
+				port->analog.crossoffset = (float)(INT32)INPUT_PORT_PAIR_ITEM(ipt, 1) / 65536.0f;
+				ipt += INPUT_PORT_PAIR_TOKENS;
+				break;
+
 			/* custom callbacks */
 			case INPUT_TOKEN_CUSTOM:
 				port->custom = (UINT32 (*)(void *))*ipt++;
@@ -1939,6 +1948,18 @@ input_port_entry *input_port_initialize(input_port_init_params *iip, UINT32 type
 	port->type = type;
 	port->mask = mask;
 	port->default_value = defval;
+
+	/* automatically attach crosshairs to lightguns */
+	if (port->type == IPT_LIGHTGUN_X)
+	{
+		port->analog.crossaxis = CROSSHAIR_AXIS_X;
+		port->analog.crossscale = 1.0f;
+	}
+	else if (port->type == IPT_LIGHTGUN_Y)
+	{
+		port->analog.crossaxis = CROSSHAIR_AXIS_Y;
+		port->analog.crossscale = 1.0f;
+	}
 
 	/* sets up default port codes */
 	switch (port->type)

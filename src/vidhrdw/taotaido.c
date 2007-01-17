@@ -88,7 +88,7 @@ static void taotaido_drawsprite( UINT16 spriteno, mame_bitmap *bitmap, const rec
 			/* this indirection is a bit different to the other video system games */
 			int realtile;
 
-			realtile = taotaido_spriteram2_older[tile];
+			realtile = taotaido_spriteram2_older[tile&0x7fff];
 
 			if (realtile > 0x3fff)
 			{

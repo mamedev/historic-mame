@@ -1071,9 +1071,9 @@ VIDEO_START( nslasher )
 	pf1a_tilemap =0;
 	dirty_palette = auto_malloc(4096);
 
-	sprite0_mix_bitmap=auto_bitmap_alloc_depth( Machine->screen[0].width, Machine->screen[0].height, -16 );
-	sprite1_mix_bitmap=auto_bitmap_alloc_depth( Machine->screen[0].width, Machine->screen[0].height, -16 );
-	tilemap_alpha_bitmap=auto_bitmap_alloc_depth( Machine->screen[0].width, Machine->screen[0].height, -16 );
+	sprite0_mix_bitmap=auto_bitmap_alloc_format( Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16 );
+	sprite1_mix_bitmap=auto_bitmap_alloc_format( Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16 );
+	tilemap_alpha_bitmap=auto_bitmap_alloc_format( Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16 );
 
 	if (!sprite1_mix_bitmap || !sprite0_mix_bitmap || !tilemap_alpha_bitmap || !pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
 		return 1;

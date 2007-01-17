@@ -440,16 +440,17 @@ static MACHINE_DRIVER_START( decocass )
 	MDRV_CPU_PROGRAM_MAP(decocass_mcu_readmem,decocass_mcu_writemem)
 	MDRV_CPU_IO_MAP(decocass_mcu_readport,decocass_mcu_writeport)
 
-	MDRV_FRAMES_PER_SECOND(57)
-	MDRV_VBLANK_DURATION(3072)		/* frames per second, vblank duration */
+	MDRV_SCREEN_REFRESH_RATE(57)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(3072)		/* frames per second, vblank duration */)
 	MDRV_INTERLEAVE(7)				/* interleave CPUs */
 
 	MDRV_MACHINE_RESET(decocass)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(1*8, 31*8-1, 1*8, 31*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(decocass_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32)
 	MDRV_COLORTABLE_LENGTH(32+2*8+2*4)
@@ -698,7 +699,7 @@ static MACHINE_DRIVER_START( czeroize )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
 	MDRV_MACHINE_RESET(czeroize)
-	MDRV_VISIBLE_AREA(1*8, 32*8-1, 1*8, 31*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(1*8, 32*8-1, 1*8, 31*8-1)
 MACHINE_DRIVER_END
 
 

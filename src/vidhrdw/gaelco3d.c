@@ -51,7 +51,7 @@ VIDEO_START( gaelco3d )
 	if (!screenbits)
 		return 1;
 
-	zbuffer = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
+	zbuffer = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
 	if (!zbuffer)
 		return 1;
 

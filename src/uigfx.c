@@ -690,7 +690,7 @@ static void gfxset_update_bitmap(ui_gfx_state *state, int xcells, int ycells, gf
 	cellypix = 1 + ((state->gfxset.rotate[set] & ORIENTATION_SWAP_XY) ? gfx->width : gfx->height);
 
 	/* realloc the bitmap if it is too small */
-	if (state->bitmap == NULL || state->texture == NULL || state->bitmap->depth != 32 || state->bitmap->width != cellxpix * xcells || state->bitmap->height != cellypix * ycells)
+	if (state->bitmap == NULL || state->texture == NULL || state->bitmap->bpp != 32 || state->bitmap->width != cellxpix * xcells || state->bitmap->height != cellypix * ycells)
 	{
 		/* free the old stuff */
 		if (state->bitmap != NULL)
@@ -699,7 +699,7 @@ static void gfxset_update_bitmap(ui_gfx_state *state, int xcells, int ycells, gf
 			render_texture_free(state->texture);
 
 		/* allocate new stuff */
-		state->bitmap = bitmap_alloc_depth(cellxpix * xcells, cellypix * ycells, 32);
+		state->bitmap = bitmap_alloc_format(cellxpix * xcells, cellypix * ycells, BITMAP_FORMAT_ARGB32);
 		state->texture = render_texture_alloc(state->bitmap, NULL, 0, TEXFORMAT_ARGB32, NULL, NULL);
 
 		/* force a redraw */
@@ -1037,22 +1037,24 @@ static void tilemap_handle_keys(ui_gfx_state *state, int viswidth, int visheight
 
 static void tilemap_update_bitmap(ui_gfx_state *state, int width, int height)
 {
-	int format;
+	mame_bitmap_format screen_format = Machine->screen[0].format;
+	int screen_texformat;
+
+	/* convert the screen format to a texture format */
+	switch (screen_format)
+	{
+		case BITMAP_FORMAT_INDEXED16:	screen_texformat = TEXFORMAT_PALETTE16;		break;
+		case BITMAP_FORMAT_RGB15:		screen_texformat = TEXFORMAT_RGB15;			break;
+		case BITMAP_FORMAT_RGB32:		screen_texformat = TEXFORMAT_RGB32;			break;
+		default:						fatalerror("Invalid bitmap format!");		break;
+	}
 
 	/* swap the coordinates back if they were talking about a rotated surface */
 	if (state->tilemap.rotate & ORIENTATION_SWAP_XY)
 		{ UINT32 temp = width; width = height; height = temp; }
 
-	/* pick our texture format */
-	if (Machine->color_depth == 16)
-		format = TEXFORMAT_PALETTE16;
-	else if (Machine->color_depth == 15)
-		format = TEXFORMAT_RGB15;
-	else
-		format = TEXFORMAT_RGB32;
-
 	/* realloc the bitmap if it is too small */
-	if (state->bitmap == NULL || state->texture == NULL || state->bitmap->depth != Machine->color_depth || state->bitmap->width != width || state->bitmap->height != height)
+	if (state->bitmap == NULL || state->texture == NULL || state->bitmap->format != screen_format || state->bitmap->width != width || state->bitmap->height != height)
 	{
 		/* free the old stuff */
 		if (state->bitmap != NULL)
@@ -1061,8 +1063,8 @@ static void tilemap_update_bitmap(ui_gfx_state *state, int width, int height)
 			render_texture_free(state->texture);
 
 		/* allocate new stuff */
-		state->bitmap = bitmap_alloc_depth(width, height, Machine->color_depth);
-		state->texture = render_texture_alloc(state->bitmap, NULL, 0, format, NULL, NULL);
+		state->bitmap = bitmap_alloc_format(width, height, screen_format);
+		state->texture = render_texture_alloc(state->bitmap, NULL, 0, screen_texformat, NULL, NULL);
 
 		/* force a redraw */
 		state->bitmap_dirty = TRUE;
@@ -1074,7 +1076,7 @@ static void tilemap_update_bitmap(ui_gfx_state *state, int width, int height)
 		tilemap_nb_draw(state->bitmap, state->tilemap.which, state->tilemap.xoffs, state->tilemap.yoffs);
 
 		/* reset the texture to force an update */
-		render_texture_set_bitmap(state->texture, state->bitmap, NULL, 0, format);
+		render_texture_set_bitmap(state->texture, state->bitmap, NULL, 0, screen_texformat);
 		state->bitmap_dirty = FALSE;
 	}
 }

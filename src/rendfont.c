@@ -233,7 +233,7 @@ INLINE const char *next_line(const char *ptr)
     in a font, expanding if necessary
 -------------------------------------------------*/
 
-INLINE render_font_char *get_char(render_font *font, UINT16 chnum)
+INLINE render_font_char *get_char(render_font *font, unicode_char chnum)
 {
 	static render_font_char dummy_char;
 	render_font_char *chtable;
@@ -340,13 +340,13 @@ static void render_font_char_expand(render_font *font, render_font_char *ch)
 		return;
 
 	/* allocate a new bitmap of the size we need */
-	ch->bitmap = bitmap_alloc_depth(ch->bmwidth, font->height, 32);
+	ch->bitmap = bitmap_alloc_format(ch->bmwidth, font->height, BITMAP_FORMAT_ARGB32);
 
 	/* extract the data */
 	for (y = 0; y < ch->bmheight; y++)
 	{
 		int desty = y + font->height + font->yoffs - ch->yoffs - ch->bmheight;
-		UINT32 *dest = (desty >= 0 && desty < font->height) ? (UINT32 *)ch->bitmap->line[desty] : NULL;
+		UINT32 *dest = (desty >= 0 && desty < font->height) ? BITMAP_ADDR32(ch->bitmap, desty, 0) : NULL;
 
 		/* text format */
 		if (font->format == FONT_FORMAT_TEXT)
@@ -418,7 +418,7 @@ static void render_font_char_expand(render_font *font, render_font_char *ch)
     the bounds of the final bitmap
 -------------------------------------------------*/
 
-render_texture *render_font_get_char_texture_and_bounds(render_font *font, float height, float aspect, UINT16 chnum, render_bounds *bounds)
+render_texture *render_font_get_char_texture_and_bounds(render_font *font, float height, float aspect, unicode_char chnum, render_bounds *bounds)
 {
 	render_font_char *ch = get_char(font, chnum);
 	float scale = font->scale * height;
@@ -441,7 +441,7 @@ render_texture *render_font_get_char_texture_and_bounds(render_font *font, float
     string to a bitmap
 -------------------------------------------------*/
 
-void render_font_get_scaled_bitmap_and_bounds(render_font *font, mame_bitmap *dest, float height, float aspect, UINT16 chnum, rectangle *bounds)
+void render_font_get_scaled_bitmap_and_bounds(render_font *font, mame_bitmap *dest, float height, float aspect, unicode_char chnum, rectangle *bounds)
 {
 	render_font_char *ch = get_char(font, chnum);
 	float scale = font->scale * height;
@@ -476,7 +476,7 @@ void render_font_get_scaled_bitmap_and_bounds(render_font *font, mame_bitmap *de
     a character at the given height
 -------------------------------------------------*/
 
-float render_font_get_char_width(render_font *font, float height, float aspect, UINT16 ch)
+float render_font_get_char_width(render_font *font, float height, float aspect, unicode_char ch)
 {
 	return (float)get_char(font, ch)->width * font->scale * height * aspect;
 }
@@ -502,18 +502,28 @@ float render_font_get_string_width(render_font *font, float height, float aspect
 
 
 /*-------------------------------------------------
-    render_font_wstring_width - return the width of
-    a wide-char string at the given height
+    render_font_get_utf8string_width - return the
+    width of a UTF8-encoded string at the given
+    height
 -------------------------------------------------*/
 
-float render_font_get_wstring_width(render_font *font, float height, float aspect, const UINT16 *wstring)
+float render_font_get_utf8string_width(render_font *font, float height, float aspect, const char *utf8string)
 {
-	const UINT16 *ptr;
+	int length = strlen(utf8string);
+	unicode_char uchar;
 	int totwidth = 0;
+	int count = 0;
+	int offset;
 
 	/* loop over the string and accumulate widths */
-	for (ptr = wstring; *ptr != 0; ptr++)
-		totwidth += get_char(font, *ptr)->width;
+	for (offset = 0; offset < length; offset += count)
+	{
+		count = uchar_from_utf8(&uchar, utf8string + offset, length - offset);
+		if (count == -1)
+			break;
+		if (uchar < 0x10000)
+			totwidth += get_char(font, uchar)->width;
+	}
 
 	/* scale the final result based on height */
 	return (float)totwidth * font->scale * height * aspect;

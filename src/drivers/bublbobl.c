@@ -751,14 +751,15 @@ static MACHINE_DRIVER_START( tokio )
 	/* audio CPU */	// 3 MHz
 	MDRV_CPU_PROGRAM_MAP(tokio_sound_map, 0) // NMIs are triggered by the main CPU, IRQs are triggered by the YM2203
 
-	MDRV_FRAMES_PER_SECOND(VSYNC)	// 59.185606 Hz
-	MDRV_VBLANK_DURATION(VBLANK) 	// 2560 us
+	MDRV_SCREEN_REFRESH_RATE(VSYNC)	// 59.185606 Hz
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(VBLANK)) 	// 2560 us
 	MDRV_INTERLEAVE(100) // 100 CPU slices per frame - a high value to ensure proper synchronization of the CPUs
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256)
 
@@ -800,14 +801,15 @@ static MACHINE_DRIVER_START( bublbobl )
 	MDRV_CPU_VBLANK_INT(bublbobl_m68705_interrupt, 2) // ??? should come from the same clock which latches the INT pin on the second Z80
 #endif
 
-	MDRV_FRAMES_PER_SECOND(VSYNC)	// 59.185606 Hz
-	MDRV_VBLANK_DURATION(VBLANK) 	// 2560 us
+	MDRV_SCREEN_REFRESH_RATE(VSYNC)	// 59.185606 Hz
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(VBLANK)) 	// 2560 us
 	MDRV_INTERLEAVE(100) // 100 CPU slices per frame - a high value to ensure proper synchronization of the CPUs
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256)
 

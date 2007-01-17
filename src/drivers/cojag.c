@@ -954,16 +954,17 @@ MACHINE_DRIVER_START( cojagr3k )
 	MDRV_CPU_CONFIG(dsp_config)
 	MDRV_CPU_PROGRAM_MAP(dsp_map,0)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_RESET(cojag)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(42*8, 30*8)
-	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
 	MDRV_PALETTE_LENGTH(65534)
 
 	MDRV_VIDEO_START(cojag)
@@ -984,7 +985,7 @@ MACHINE_DRIVER_START( r3knarrow )
 	MDRV_IMPORT_FROM(cojagr3k)
 
 	/* video hardware */
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 40*8-1, 0*8, 30*8-1)
 MACHINE_DRIVER_END
 
 
@@ -1002,16 +1003,17 @@ MACHINE_DRIVER_START( cojag68k )
 	MDRV_CPU_CONFIG(dsp_config)
 	MDRV_CPU_PROGRAM_MAP(dsp_map,0)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_RESET(cojag)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(40*8, 30*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 40*8-1, 0*8, 30*8-1)
 	MDRV_PALETTE_LENGTH(65534)
 
 	MDRV_VIDEO_START(cojag)
@@ -1221,11 +1223,10 @@ ROM_END
  *
  *************************************/
 
-static void cojag_common_init(UINT8 crosshair, UINT16 gpu_jump_offs, UINT16 spin_pc)
+static void cojag_common_init(UINT16 gpu_jump_offs, UINT16 spin_pc)
 {
 	/* copy over the ROM */
 	cojag_is_r3000 = (Machine->drv->cpu[0].cpu_type == CPU_R3000BE);
-	cojag_draw_crosshair = crosshair;
 
 	/* install synchronization hooks for GPU */
 	if (cojag_is_r3000)
@@ -1246,7 +1247,7 @@ static void cojag_common_init(UINT8 crosshair, UINT16 gpu_jump_offs, UINT16 spin
 
 static DRIVER_INIT( area51a )
 {
-	cojag_common_init(1, 0x5c4, 0x5a0);
+	cojag_common_init(0x5c4, 0x5a0);
 
 #if ENABLE_SPEEDUP_HACKS
 	/* install speedup for main CPU */
@@ -1257,7 +1258,7 @@ static DRIVER_INIT( area51a )
 
 static DRIVER_INIT( area51 )
 {
-	cojag_common_init(1, 0x0c0, 0x09e);
+	cojag_common_init(0x0c0, 0x09e);
 
 #if ENABLE_SPEEDUP_HACKS
 	/* install speedup for main CPU */
@@ -1268,7 +1269,7 @@ static DRIVER_INIT( area51 )
 
 static DRIVER_INIT( maxforce )
 {
-	cojag_common_init(1, 0x0c0, 0x09e);
+	cojag_common_init(0x0c0, 0x09e);
 
 	/* patch the protection */
 	rom_base[0x220/4] = 0x03e00008;
@@ -1283,7 +1284,7 @@ static DRIVER_INIT( maxforce )
 
 static DRIVER_INIT( area51mx )
 {
-	cojag_common_init(1, 0x0c0, 0x09e);
+	cojag_common_init(0x0c0, 0x09e);
 
 	/* patch the protection */
 	rom_base[0x418/4] = 0x4e754e75;
@@ -1297,7 +1298,7 @@ static DRIVER_INIT( area51mx )
 
 static DRIVER_INIT( a51mxr3k )
 {
-	cojag_common_init(1, 0x0c0, 0x09e);
+	cojag_common_init(0x0c0, 0x09e);
 
 	/* patch the protection */
 	rom_base[0x220/4] = 0x03e00008;
@@ -1312,7 +1313,7 @@ static DRIVER_INIT( a51mxr3k )
 
 static DRIVER_INIT( fishfren )
 {
-	cojag_common_init(0, 0x578, 0x554);
+	cojag_common_init(0x578, 0x554);
 
 #if ENABLE_SPEEDUP_HACKS
 	/* install speedup for main CPU */
@@ -1324,7 +1325,7 @@ static DRIVER_INIT( fishfren )
 
 static DRIVER_INIT( freezeat )
 {
-	cojag_common_init(0, 0x0bc, 0x09c);
+	cojag_common_init(0x0bc, 0x09c);
 
 #if ENABLE_SPEEDUP_HACKS
 	/* install speedup for main CPU */
@@ -1337,7 +1338,7 @@ static DRIVER_INIT( freezeat )
 
 static DRIVER_INIT( vcircle )
 {
-	cojag_common_init(0, 0x5c0, 0x5a0);
+	cojag_common_init(0x5c0, 0x5a0);
 
 #if ENABLE_SPEEDUP_HACKS
 	/* install speedup for main CPU */

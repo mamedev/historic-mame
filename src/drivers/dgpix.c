@@ -135,18 +135,18 @@ static WRITE32_HANDLER( flash_w )
 
 static void plot_pixel_rgb(int x, int y, int color)
 {
-	if (Machine->color_depth == 32)
+	if (bitmaps[vbuffer]->bpp == 32)
 	{
 		UINT32 b = (color & 0x001f) << 3;
 		UINT32 g = (color & 0x03e0) >> 2;
 		UINT32 r = (color & 0x7c00) >> 7;
-		((UINT32 *)bitmaps[vbuffer]->line[y])[x] = b | (g<<8) | (r<<16);
+		*BITMAP_ADDR32(bitmaps[vbuffer], y, x) = b | (g<<8) | (r<<16);
 	}
 	else
 	{
 		/* color is BGR; convert to RGB */
 		color = ((color & 0x1f) << 10) | (color & 0x3e0) | ((color & 0x7c00) >> 10);
-		((UINT16 *)bitmaps[vbuffer]->line[y])[x] = color;
+		*BITMAP_ADDR16(bitmaps[vbuffer], y, x) = color;
 	}
 }
 
@@ -319,15 +319,16 @@ static MACHINE_DRIVER_START( dgpix )
     running at 16.9MHz
 */
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_NVRAM_HANDLER(flashroms)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_RGB15)
 	MDRV_SCREEN_SIZE(512, 256)
-	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_SCREEN_VISIBLE_AREA(0, 319, 0, 239)
 	MDRV_PALETTE_LENGTH(32768)
 
 	MDRV_VIDEO_START(dgpix)

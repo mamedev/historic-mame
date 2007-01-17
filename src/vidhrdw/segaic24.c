@@ -535,7 +535,7 @@ void sys24_tile_draw(mame_bitmap *bitmap, const rectangle *cliprect, int layer, 
 					 UINT16, UINT8, int, int, int, int, int, int, int);
 		int win = layer & 1;
 
-		if(Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+		if(bitmap->format != BITMAP_FORMAT_INDEXED16)
 			draw = sys24_tile_draw_rect_rgb;
 		else
 			draw = sys24_tile_draw_rect;
@@ -791,7 +791,7 @@ void sys24_sprite_draw(mame_bitmap *bitmap, const rectangle *cliprect, const int
 		flipy = source[4] & 0x8000;
 		sy = 1 << ((source[4] & 0x7000) >> 12);
 
-		pix = sys24_sprite_ram + (source[3] & 0x7fff)* 0x8;
+		pix = &sys24_sprite_ram[(source[3] & 0x3fff)* 0x8];
 		for(px=0; px<8; px++) {
 			int c;
 			c              = pix[px] >> 8;

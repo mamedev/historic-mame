@@ -243,7 +243,7 @@ static int copper_execute_next(int xpos)
 #if GUESS_COPPER_OFFSET
 			return xpos + COPPER_CYCLES_TO_PIXELS(1 + wait_offset);
 #else
-			return xpos + COPPER_CYCLES_TO_PIXELS(1 + 2);
+			return xpos + COPPER_CYCLES_TO_PIXELS(1 + 3);
 #endif
 		}
 
@@ -703,11 +703,13 @@ void amiga_render_scanline(int scanline)
 			odelay = CUSTOM_REG(REG_BPLCON1) & 0xf;
 			edelay = ( CUSTOM_REG(REG_BPLCON1) >> 4 ) & 0x0f;
 
+#if 0 /* Fixes NZS scrolling, but breaks Arcadia hires boot menu */
 			if ( CUSTOM_REG(REG_DDFSTRT) & 0x04 )
 			{
 				odelay = ( odelay + 8 ) & 0x0f;
 				edelay = ( edelay + 8 ) & 0x0f;
 			}
+#endif
 
 			obitoffs = 15 + odelay;
 			ebitoffs = 15 + edelay;

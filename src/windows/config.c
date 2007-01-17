@@ -94,15 +94,18 @@ static char *extract_path(const char *name, char *dest, int destsize);
 static const options_entry windows_opts[] =
 {
 	// core commands
+	{ NULL,                       NULL,       OPTION_HEADER,     "CORE COMMANDS" },
 	{ "help;h;?",                 "0",        OPTION_COMMAND,    "show help message" },
 	{ "validate;valid",           "0",        OPTION_COMMAND,    "perform driver validation on all game drivers" },
 
 	// configuration commands
+	{ NULL,                       NULL,       OPTION_HEADER,     "CONFIGURATION COMMANDS" },
 	{ "createconfig;cc",          "0",        OPTION_COMMAND,    "create the default configuration file" },
 	{ "showconfig;sc",            "0",        OPTION_COMMAND,    "display running parameters" },
 	{ "showusage;su",             "0",        OPTION_COMMAND,    "show this help" },
 
 	// frontend commands
+	{ NULL,                       NULL,       OPTION_HEADER,     "FRONTEND COMMANDS" },
 	{ "listxml;lx",               "0",        OPTION_COMMAND,    "all available info on driver in XML format" },
 	{ "listfull;ll",              "0",        OPTION_COMMAND,    "short name, full name" },
 	{ "listsource;ls",            "0",        OPTION_COMMAND,    "driver sourcefile" },

@@ -1056,8 +1056,6 @@ VIDEO_UPDATE( spacegun )
 		--screenx;
 		screeny += 15;
 
-		draw_crosshair(bitmap,screenx,screeny,cliprect,0);
-
 		/* calculate p2 screen co-ords by matching routine at $196EA */
 		rawx = taitoz_sharedram[0xd98/2];
 		centrex = taitoz_sharedram[0x2a/2];
@@ -1102,8 +1100,6 @@ VIDEO_UPDATE( spacegun )
            are confirmed to match those stored by the game at $317544, $317546 */
 		--screenx;
 		screeny += 15;
-
-		draw_crosshair(bitmap,screenx,screeny,cliprect,1);
 	}
 	return 0;
 }

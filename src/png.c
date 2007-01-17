@@ -865,49 +865,52 @@ static png_error convert_bitmap_to_image_rgb(png_info *pnginfo, const mame_bitma
 	/* copy in the pixels, specifying a NULL filter */
 	for (y = 0; y < pnginfo->height; y++)
 	{
-		UINT32 *src32 = (UINT32 *)bitmap->base + y * bitmap->rowpixels;
-		UINT16 *src16 = (UINT16 *)bitmap->base + y * bitmap->rowpixels;
+		UINT32 *src32 = BITMAP_ADDR32(bitmap, y, 0);
+		UINT16 *src16 = BITMAP_ADDR16(bitmap, y, 0);
 		UINT8 *dst = pnginfo->image + y * (rowbytes + 1);
 
 		/* store the filter byte, then copy the data */
 		*dst++ = 0;
 
-		/* based on the bitmap depth, we need to translate */
-		switch (bitmap->depth)
+		/* 16bpp palettized format */
+		if (bitmap->format == BITMAP_FORMAT_INDEXED16)
 		{
-			/* 16bpp palettized */
-			case 16:
-				for (x = 0; x < pnginfo->width; x++)
-				{
-					rgb_t color = palette[*src16++];
-					*dst++ = RGB_RED(color);
-					*dst++ = RGB_GREEN(color);
-					*dst++ = RGB_BLUE(color);
-				}
-				break;
-
-			/* 15-bit RGB direct */
-			case 15:
-				for (x = 0; x < pnginfo->width; x++)
-				{
-					UINT16 raw = *src16++;
-					*dst++ = pal5bit(raw >> 10);
-					*dst++ = pal5bit(raw >> 5);
-					*dst++ = pal5bit(raw >> 0);
-				}
-				break;
-
-			/* 32-bit RGB direct */
-			case 32:
-				for (x = 0; x < pnginfo->width; x++)
-				{
-					UINT32 raw = *src32++;
-					*dst++ = RGB_RED(raw);
-					*dst++ = RGB_GREEN(raw);
-					*dst++ = RGB_BLUE(raw);
-				}
-				break;
+			for (x = 0; x < pnginfo->width; x++)
+			{
+				rgb_t color = palette[*src16++];
+				*dst++ = RGB_RED(color);
+				*dst++ = RGB_GREEN(color);
+				*dst++ = RGB_BLUE(color);
+			}
 		}
+
+		/* RGB formats */
+		else if (bitmap->format == BITMAP_FORMAT_RGB15)
+		{
+			for (x = 0; x < pnginfo->width; x++)
+			{
+				UINT16 raw = *src16++;
+				*dst++ = pal5bit(raw >> 10);
+				*dst++ = pal5bit(raw >> 5);
+				*dst++ = pal5bit(raw >> 0);
+			}
+		}
+
+		/* 32-bit RGB direct */
+		else if (bitmap->format == BITMAP_FORMAT_RGB32)
+		{
+			for (x = 0; x < pnginfo->width; x++)
+			{
+				UINT32 raw = *src32++;
+				*dst++ = RGB_RED(raw);
+				*dst++ = RGB_GREEN(raw);
+				*dst++ = RGB_BLUE(raw);
+			}
+		}
+
+		/* unsupported format */
+		else
+			fatalerror("convert_bitmap_to_image_rgb: Unsupported bitmap format");
 	}
 
 	return PNGERR_NONE;
@@ -926,10 +929,12 @@ static png_error write_png_stream(void *fp, png_info *pnginfo, const mame_bitmap
 	png_error error;
 
 	/* create an unfiltered image in either palette or RGB form */
-	if (bitmap->depth == 16 && palette_length <= 256)
+	if (bitmap->format == BITMAP_FORMAT_INDEXED16 && palette_length <= 256)
 		error = convert_bitmap_to_image_palette(pnginfo, bitmap, palette_length, palette);
-	else
+	else if (bitmap->format == BITMAP_FORMAT_RGB15 || bitmap->format == BITMAP_FORMAT_RGB32)
 		error = convert_bitmap_to_image_rgb(pnginfo, bitmap, palette_length, palette);
+	else
+		fatalerror("write_png_stream: Unsupported bitmap format");
 	if (error != PNGERR_NONE)
 		goto handle_error;
 

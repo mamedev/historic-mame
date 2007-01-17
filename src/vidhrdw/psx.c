@@ -292,7 +292,7 @@ static void DebugMeshInit( void )
 	m_b_debugclear = 1;
 	m_n_debugcoord = 0;
 	m_n_debugskip = 0;
-	debugmesh = auto_bitmap_alloc_depth( Machine->screen[0].width, Machine->screen[0].height, 16 );
+	debugmesh = auto_bitmap_alloc_format( Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16 );
 }
 
 static void DebugMesh( int n_coordx, int n_coordy )

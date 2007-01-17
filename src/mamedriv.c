@@ -1078,7 +1078,7 @@ const game_driver * const drivers[] =
 	DRIVER( clowns )	/* 630 [1978] */
 	DRIVER( clowns1 )	/* 630 [1978] */
 				/* 640 - Space Walk [1978] */
-	DRIVER( einnings )	/* 642 [1978] Midway */
+	DRIVER( einning )	/* 642 [1978] Midway */
 	DRIVER( shuffle )	/* 643 [1978] */
 	DRIVER( dogpatch )	/* 644 [1977] */
 	DRIVER( spcenctr )	/* 645 (c) 1980 Midway */
@@ -3380,6 +3380,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( sspiritj ) 	/* (c) 1988 */
 	DRIVER( sspirtfc )	/* (c) 1988 (protected) */
 	DRIVER( gground )	/* (c) 1988 (FD1094, decrypted) */
+	DRIVER( ggroundj )	/* (c) 1988 (FD1094, decrypted) */
 	DRIVER( crkdown )	/* (c) 1989 (FD1094, decrypted) */
 	DRIVER( crkdownj )	/* (c) 1989 (FD1094, decrypted) */
 	DRIVER( sgmast )	/* (c) 1989 (protected) */
@@ -3393,6 +3394,7 @@ Sep.1994 Quiz Ghost Hunter
 
 	/* ROM based */
 	DRIVER( dcclub )	/* (c) 1991 */
+	DRIVER( dcclubj )	/* (c) 1991 */
 	DRIVER( mahmajn )	/* (c) 1992 */
 	DRIVER( qgh )		/* (c) 1994 */
 	DRIVER( quizmeku )	/* (c) 1994 */
@@ -3997,7 +3999,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bcstry )	/* (c) 1997 SemiCom */
 	DRIVER( bcstrya )	/* (c) 1997 SemiCom */
 	DRIVER( semibase )	/* (c) 1997 SemiCom */
-	DRIVER( semiquiz )	/* (c) 1998 SemiCom */
+	DRIVER( dquizgo )	/* (c) 1998 SemiCom */
 	DRIVER( suprtrio )	/* (c) 1994 GameAce */
 	DRIVER( lemmings )	/* prototype (c) 1991 Data East USA (US) */
 				/* MAQ ?? */
@@ -5502,6 +5504,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* Other Stern */
 	DRIVER( supdrapo )
+	DRIVER( cliffhgr )
+	DRIVER( cliffhga )
+	DRIVER( goaltogo )
 
 	/* GamePlan games */
 	DRIVER( toratora )	/* (c) 1980 Game Plan */
@@ -6719,6 +6724,7 @@ Other Sun games
 	DRIVER( moonlght )	/* bootleg */
 	DRIVER( csk227it )	/* (c) 198? IGS */
 	DRIVER( csk234it )	/* (c) 198? IGS */
+	DRIVER( stellecu )	/* (c) 1998 */
 	DRIVER( iqblock )	/* (c) 1993 */
 	DRIVER( grndtour )	/* (c) 1993 */
 	DRIVER( cabaret )
@@ -6812,6 +6818,7 @@ Other Sun games
 	DRIVER( robowrb )	/* bootleg */
 	DRIVER( bankp )		/* (c) 1984 Sega,  made by Sanritsu */
 	DRIVER( mjkjidai )	/* (c) 1986 Sanritsu */
+	DRIVER( chinsan )	/* (c) 1987 Sanritsu */
 	DRIVER( mayumi )	/* (c) 1988 Victory L.L.C.,  made by Sanritsu */
 
 	/* Rare games */
@@ -6972,6 +6979,7 @@ Other Sun games
 
 	/* ADP games */
 	DRIVER( backgamn )	/* (c) 1990 */
+	DRIVER( quickjac )	/* (c) 1993 */
 	DRIVER( skattv )	/* (c) 1994 */
 	DRIVER( skattva )	/* (c) 1995 */
 	DRIVER( fashiong )	/* (c) 1997 */
@@ -7011,6 +7019,12 @@ Other Sun games
 	DRIVER( dlairc )
 	DRIVER( dlairb )
 	DRIVER( dlaira )
+	DRIVER( dleuro )
+	DRIVER( dlital )
+	DRIVER( spaceace )
+	DRIVER( spaceaa2 )
+	DRIVER( spaceaa )
+	DRIVER( saeuro )
 	DRIVER( aztarac )	/* (c) 1983 Centuri (vector game) */
 	DRIVER( mole )		/* (c) 1982 Yachiyo Electronics, Ltd. */
 	DRIVER( thehand )	/* (c) 1981 T.I.C. */
@@ -7347,5 +7361,8 @@ Other Sun games
 	DRIVER( livequiz )	/* (c) 1999 Andamiro */
 	DRIVER( cowrace )	/* (c) 19?? unknown */
 	DRIVER( mjsiyoub )	/* (c) 1986 Visco */
+	DRIVER( discoboy )	/* (c) 1993 Soft Art Co. */
+	DRIVER( steaser )
+	DRIVER( pangofun )	/* (c) 1995 InfoCube */
 
 #endif	/* DRIVER_RECURSIVE */

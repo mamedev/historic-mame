@@ -916,6 +916,8 @@ void mame_printf_log(const char *format, ...)
     to the OSD layer
 -------------------------------------------------*/
 
+DECL_NORETURN static void fatalerror_common(running_machine *machine, int exitcode, const char *buffer) ATTR_NORETURN;
+
 static void fatalerror_common(running_machine *machine, int exitcode, const char *buffer)
 {
 	/* output and return */
@@ -1122,10 +1124,7 @@ static running_machine *create_machine(int game)
 		memset(machine->driver_data, 0, machine->drv->driver_data_size);
 	}
 
-	/* determine the color depth */
-	machine->color_depth = 16;
-	if (machine->drv->video_attributes & VIDEO_RGB_DIRECT)
-		machine->color_depth = (machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN) ? 32 : 15;
+	/* configure all screens to be the default */
 	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
 		machine->screen[scrnum] = machine->drv->screen[scrnum].defstate;
 

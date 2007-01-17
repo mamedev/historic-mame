@@ -50,10 +50,40 @@ non-existent area reads in log - maybe because of bad reads from
 the COP.
 
 
+Denjin Makai
+------------
+
+Palette Ram format correct,but color offset wrong?
+Probably protection related,game updates paletteram with rom data...
+
+Need a sound kludge to start.
+
+Sprite GFX ROM order wrong,causes wrong sprite graphics.
+
+
+Godzilla
+--------
+
+The COP-MCU appears to write to the work ram area,otherwise it resets in mid-animation
+of the title screen.
+
+
 Preliminary COP MCU memory map
 ------------------------------
 
-0x400-0x5ff   Protection related
+0x400-0x5ff   Protection related:
+0x400         Sprite parameter (color)
+0x414-0x412   Sprite DMA source address
+0x478         Layer clearance (?)
+0x48e         X limiter (SD Gundam)
+0x48c         Y limiter (SD Gundam)
+0x4c0-0x4a0   COP reg 0
+0x4c2-0x4a2   COP reg 1
+0x4c4-0x4a4   COP reg 2
+0x4c6-0x4a6   COP reg 3
+0x580(r)      Hit Check (bit 1 & bit 0)
+0x590-0x59c(r)BCD number
+0x5b0         DMA bit flag (bit 1)
 0x600-0x6ff   Includes standard screen control words
 0x700-0x7ff   Includes standard Seibu sound system
 
@@ -61,9 +91,11 @@ Preliminary COP MCU memory map
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
 #include "sound/3812intf.h"
+#include "cpu/m68000/m68000.h"
 
 extern WRITE16_HANDLER( legionna_background_w );
 extern WRITE16_HANDLER( legionna_foreground_w );
@@ -73,13 +105,16 @@ extern WRITE16_HANDLER( legionna_control_w );
 
 extern VIDEO_START( legionna );
 extern VIDEO_START( cupsoc );
+extern VIDEO_START( denjinmk );
 extern VIDEO_UPDATE( legionna );
 extern VIDEO_UPDATE( godzilla );
 extern VIDEO_UPDATE( sdgndmrb );
 void heatbrl_setgfxbank(UINT16 data);
+void denjinmk_setgfxbank(UINT16 data);
 
 extern UINT16 *legionna_back_data,*legionna_fore_data,*legionna_mid_data,*legionna_scrollram16,*legionna_textram;
 static UINT16 *mcu_ram;
+extern UINT8 pri_n;
 
 static WRITE16_HANDLER( legionna_paletteram16_w )	/* xBBBBxRRRRxGGGGx */
 {
@@ -88,6 +123,7 @@ static WRITE16_HANDLER( legionna_paletteram16_w )	/* xBBBBxRRRRxGGGGx */
 	a = paletteram16[offset];
 	palette_set_color(Machine,offset,pal4bit(a >> 1),pal4bit(a >> 6),pal4bit(a >> 11));
 }
+
 
 /* Mcu reads in attract in Legionnaire game demo
 
@@ -133,6 +169,7 @@ CPU0 PC 0085ba unknown MCU write offset: 0211 data: 0000
 CPU0 PC 0085be unknown MCU read offset: 02ca
 CPU0 PC 0085ee unknown MCU read offset: 02c9
 CPU0 PC 008622 unknown MCU read offset: 02c8
+[Protection BCD,see protection_bcd_jsr()]
 
 (ii) This happens a few times:
 
@@ -153,6 +190,8 @@ CPU0 PC 001932 unknown MCU read offset: 02da
 CPU0 PC 001938 unknown MCU read offset: 02d8
 CPU0 PC 001976 unknown MCU write offset: 0280 data: 3bb0
 
+
+
 (iii) Later on this happens a lot:
 
 CPU0 PC 0017ac unknown MCU write offset: 0260 data: c61c
@@ -171,7 +210,185 @@ CPU0 PC 001a9e unknown MCU read offset: 02c0
 CPU0 PC 001aa6 unknown MCU read offset: 02c2
 CPU0 PC 001ab2 unknown MCU read offset: 02c1
 
+write to $500 these values to determine the kind of sub-routine to do
+hit_check
+a180
+a980
+b100
+b900
+|| b880 (heatbrl)
+
+movement protection
+8100
+8900
+
+00DB2A: D6A8 0048                add.l   ($48,A0), D3
+00DB2E: D8A8 0044                add.l   ($44,A0), D4
+00DB32: 0C83 FFF0 0000           cmpi.l  #-$100000, D3
+00DB38: 6D2E                     blt     $db68
+00DB3A: 0C83 0100 0000           cmpi.l  #$1000000, D3
+00DB40: 6C26                     bge     $db68
+00DB42: 2143 003C                move.l  D3, ($3c,A0)
+00DB46: 0C84 FFF0 0000           cmpi.l  #-$100000, D4
+00DB4C: 6D1A                     blt     $db68
+00DB4E: 0C84 0100 0000           cmpi.l  #$1000000, D4
+00DB54: 6E12                     bgt     $db68
+00DB56: 2144 0038                move.l  D4, ($38,A0)
+00DB5A: 3168 003C 0022           move.w  ($3c,A0), ($22,A0)
+00DB60: 3168 0038 0024           move.w  ($38,A0), ($24,A0)
+00DB66: 4E75                     rts
+
+
+sprite DMA
+
 */
+/*Movement protection*//*Legionnaire,Heated Barrel*/
+static UINT32 ram_addr[2],rom_addr[2];
+/*Sprite DMA protection*//*SD Gundam*/
+static UINT8 dma_status;
+static UINT32 dma_src,dma_dst;
+static UINT16 prot_data[2],dma_size;
+/*Number protection*//*Heated Barrel,SD Gundam,Godzilla,Denjin Makai*/
+static UINT32 prot_bcd[4];
+/*Hit check protection*//*Legionnaire,Heated Barrel,SD Gundam*/
+static UINT8 xy_check;
+static UINT32 hit_check_x,hit_check_y;
+
+
+
+#define CRT_MODE(_x_,_y_,_flip_) \
+	{ \
+	screen_state *state = &Machine->screen[0]; \
+	rectangle visarea = state->visarea; \
+	visarea.min_x = 0; \
+	visarea.max_x = _x_-1; \
+	visarea.min_y = 0; \
+	visarea.max_y = _y_-1; \
+	video_screen_configure(0, _x_, _y_, &visarea, state->refresh ); \
+	flip_screen_set(_flip_); \
+	} \
+
+/*TODO: numbers over 65535?*/
+static UINT32 protection_bcd_jsr(UINT16 prot_data)
+{
+	UINT32 res,bcd_data;
+
+	res = 0;
+	bcd_data = prot_data;
+	while(bcd_data > 0)
+	{
+		if(bcd_data > 999)
+		{
+			res+=0x01000000;
+			bcd_data-=1000;
+		}
+		else if(bcd_data > 99)
+		{
+			res+=0x00010000;
+			bcd_data-=100;
+		}
+		else if(bcd_data > 9)
+		{
+			res+=0x00000100;
+			bcd_data-=10;
+		}
+		else
+		{
+			res++;
+			bcd_data--;
+		}
+	}
+
+	return res & 0x0f0f0f0f;
+}
+
+/*TODO: -move x-axis limits,to calculate basing on the screen xy-axis values*/
+/*      -the second value should be end of calculation (in other words,check everything between the two values) */
+#define PLAYER 0
+#define ENEMY 1
+static void protection_move_jsr(UINT32 work_ram,UINT8 k)
+{
+	static UINT32 move_data,x_data,y_data;
+	/*Read the movement data to execute*/
+	move_data = ((program_read_word(work_ram+0x34)<<16) & 0xffff0000) |
+	             (program_read_word(work_ram+0x36) & 0xffff);
+
+	/*Read the x/y axis of the sprite to change*/
+	x_data = (program_read_word(work_ram+0x8));
+	y_data = (program_read_word(work_ram+0x4));
+	/*it's bit sensitive AFAIK*/
+	/*move_data hi-word on player
+      $17 = walk floor
+      $1b = jump
+      $30 = ?
+    */
+	/*Check the kind of movement that we need to execute*/
+	switch(k & 1)
+	{
+		case PLAYER:
+			switch(move_data & 0xffff)
+			{
+				case 0x0000: x_data++; break; //right
+				case 0x0040: y_data++; break; //down
+				case 0x00c0: y_data--; break; //up
+				case 0x0080: x_data--; break; //left
+				case 0x00a0: y_data--; x_data--; break; //up-left
+				case 0x0060: y_data++; x_data--; break; //down-left
+				case 0x0020: y_data++; x_data++; break; //down-right
+				case 0x00e0: y_data--; x_data++; break; //up-right
+			}
+			break;
+		/*wrong...*/
+		case ENEMY:
+			switch(move_data & 0xffff)
+			{
+				case 0x0000: x_data++; break; //right
+				case 0x0040: y_data++; break; //down
+				case 0x00c0: y_data--; break; //up
+				case 0x0080: x_data--; break; //left
+				case 0x00a0: y_data--; x_data--; break; //up-left
+				case 0x0060: y_data++; x_data--; break; //down-left
+				case 0x0020: y_data++; x_data++; break; //down-right
+				case 0x00e0: y_data--; x_data++; break; //up-right
+				default:
+					popmessage("%08x",move_data);
+				break;
+			}
+			break;
+	}
+	/*Write the new values to the sprite x/y data*/
+	program_write_word(work_ram+0x8,x_data);
+	program_write_word(work_ram+0x4,y_data);
+}
+
+static void protection_move2_jsr(void)
+{
+//  static UINT32 move_data;
+	//...
+}
+
+static UINT16 hit_check;
+
+static void protection_hit_jsr(UINT32 work_ram1,UINT32 work_ram2)
+{
+	static UINT16 x1,y1,x2,y2/*,hit1,hit2*/;
+	x1 = (program_read_word(work_ram1+0x8));
+	y1 = (program_read_word(work_ram1+0x4));
+	//hit1 = (program_read_word(work_ram1-));//this sprite is attacking
+	x2 = (program_read_word(work_ram2+0x8));
+	y2 = (program_read_word(work_ram2+0x4));
+	//hit2 = (program_read_word());
+
+	popmessage("%08x:x=%04x y=%04x %08x:x=%04x y=%04x",work_ram1,x1,y1,work_ram2,x2,y2);
+
+	if((x1 >= (x2-0x80)) &&
+	   (x1 <= (x2+0x80)) &&
+	   (y1 >= (y1-3))  &&
+	   (y1 <= (y2+3)))
+		hit_check = 0;
+	else
+		hit_check = 0xffff;
+}
 
 static READ16_HANDLER( mcu_r )
 {
@@ -184,22 +401,22 @@ static READ16_HANDLER( mcu_r )
 			return (rand() &0xffff);
 
 		case (0x582/2):	/* read PC $3594 */
-			return (rand() &0xffff);
+			return (0);
 
 		case (0x584/2):	/* read PC $3588 */
-			return (rand() &0xffff);
+			return (0);
 
 		case (0x586/2):	/* read PC $35a0 */
-			return (rand() &0xffff);
+			return (0);
 
 		case (0x588/2):	/* read PC $3580 */
-			return (rand() &0xffff);
+			return hit_check;
 
 		case (0x5b0/2):	/* bit 15 is branched on a few times in the $3300 area */
-			return (rand() &0xffff);
+			return (0);
 
 		case (0x5b4/2):	/* read and stored in ram before +0x5b0 bit 15 tested */
-			return (rand() &0xffff);
+			return (0);
 
 		/* Non-protection reads */
 
@@ -227,7 +444,7 @@ static READ16_HANDLER( mcu_r )
 			return input_port_3_word_r(0,0);
 
 	}
-logerror("CPU0 PC %06x unknown MCU read offset: %04x\n",activecpu_get_previouspc(),offset);
+//logerror("CPU0 PC %06x unknown MCU read offset: %04x\n",activecpu_get_previouspc(),offset);
 
 	return mcu_ram[offset];
 }
@@ -238,6 +455,92 @@ static WRITE16_HANDLER( mcu_w )
 
 	switch (offset)
 	{
+
+		case (0x4c0/2):
+		{
+			/*---- ---- ---- ---- xxxx xxxx xxxx xxxx*/
+			prot_data[0] = mcu_ram[offset];
+			ram_addr[0] = (prot_data[0]&0xffff)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		case (0x4a0/2):
+		{
+			/*xxxx xxxx xxxx xxxx ---- ---- ---- ----*/
+			prot_data[1] = mcu_ram[offset];
+			ram_addr[0] = (prot_data[0]&0xffff)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		case (0x4c2/2):
+		{
+			/*---- ---- ---- ---- xxxx xxxx xxxx xxxx*/
+			prot_data[0] = mcu_ram[offset];
+			ram_addr[1] = (prot_data[0]&0xffff)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		case (0x4a2/2):
+		{
+			/*xxxx xxxx xxxx xxxx ---- ---- ---- ----*/
+			prot_data[1] = mcu_ram[offset];
+			ram_addr[1] = (prot_data[0]&0xffff)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		case (0x4c4/2):
+		{
+			/*---- ---- ---- ---- xxxx xxxx xxxx xxxx*/
+			prot_data[0] = mcu_ram[offset];
+			rom_addr[0] = (prot_data[0]&0xffff)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		case (0x4a4/2):
+		{
+			/*xxxx xxxx xxxx xxxx ---- ---- ---- ----*/
+			prot_data[1] = mcu_ram[offset];
+			rom_addr[0] = (prot_data[0]&0xffff)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		case (0x4c6/2):
+		{
+			/*---- ---- ---- ---- xxxx xxxx xxxx xxxx*/
+			prot_data[0] = mcu_ram[offset];
+			rom_addr[1] = (prot_data[0]&0xffff)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		case (0x4a6/2):
+		{
+			/*xxxx xxxx xxxx xxxx ---- ---- ---- ----*/
+			prot_data[1] = mcu_ram[offset];
+			rom_addr[1] = (prot_data[0]&0xffff)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		case (0x500/2):
+		{
+			/*Movement protection*/
+			if(mcu_ram[0x500/2] == 0x8900 || mcu_ram[0x500/2] == 0x0205)
+			{
+				static UINT16 xy_data[2];
+				static UINT8 k;
+				xy_data[0] = program_read_word(rom_addr[0]);
+				xy_data[1] = program_read_word(rom_addr[1]);
+				k = (mcu_ram[0x500/2] == 0x0205) ? ENEMY : PLAYER;
+				protection_move_jsr(ram_addr[0],k);
+				//protection_move_jsr(ram_addr[1]); //???
+				//popmessage("%08x %08x %04x %04x",ram_addr[0],ram_addr[1],xy_data[0],xy_data[1]);
+			}
+			else if(mcu_ram[0x500/2] == 0x3bb0 || mcu_ram[0x500/2] == 0x138e)
+			{
+				protection_hit_jsr(ram_addr[0],ram_addr[1]);
+			}
+			break;
+		}
+
 		// 61a bit 0 is flipscreen
 		// 61c probably layer disables, like Dcon
 		// 620 - 62a scroll control;  is there a layer priority switch...?
@@ -292,8 +595,8 @@ static WRITE16_HANDLER( mcu_w )
 			seibu_main_word_w(6,mcu_ram[offset],0xff00);
 			break;
 		}
-		default:
-logerror("CPU0 PC %06x unknown MCU write offset: %04x data: %04x\n",activecpu_get_previouspc(),offset,data);
+//      default:
+//logerror("CPU0 PC %06x unknown MCU write offset: %04x data: %04x\n",activecpu_get_previouspc(),offset,data);
 	}
 }
 
@@ -304,28 +607,50 @@ static READ16_HANDLER( cop2_mcu_r )
 		/* Protection is not understood */
 
 		case (0x580/2):	/* read PC $1a9e */
-			return (rand() &0xffff);
+			return (3);
 
 		case (0x582/2):	/* read PC $1ab2 */
-			return (rand() &0xffff);
+			return (3);
 
 		case (0x584/2):	/* read PC $1aa6 */
-			return (rand() &0xffff);
+			return (3);
 
-		case (0x590/2):	/* read PC $8622 */
-			return (rand() &0xffff);
-
-		case (0x592/2):	/* read PC $85ee */
-			return (rand() &0xffff);
-
-		case (0x594/2):	/* read PC $85be */
-			return (rand() &0xffff);
+		/*number protection*/
+		case (0x590/2):
+		{
+			/*BCD read*/
+			return (prot_bcd[0] & 0xffff) + 0x3030;
+		}
+		case (0x592/2):
+		{
+			return ((prot_bcd[0] & 0xffff0000) >> 16) + 0x3030;
+		}
+		case (0x594/2):
+		{
+			return (prot_bcd[1] & 0xffff) + 0x3030;
+		}
+		case (0x596/2):
+		{
+			return ((prot_bcd[1] & 0xffff0000) >> 16) + 0x3030;
+		}
+		case (0x598/2):
+		{
+			return 0x3030;
+		}
+		case (0x59a/2):
+		{
+			return 0x3030;
+		}
+		case (0x59c/2):
+		{
+			return 0x3030;
+		}
 
 		case (0x5b0/2):	/* bit 15 is branched on a few times in the $1938 area */
-			return (rand() &0xffff);
+			return (mcu_ram[offset]);
 
 		case (0x5b4/2):	/* read at $1932 and stored in ram before +0x5b0 bit 15 tested */
-			return (rand() &0xffff);
+			return (0);
 
 		/* Non-protection reads */
 
@@ -353,7 +678,7 @@ static READ16_HANDLER( cop2_mcu_r )
 			return input_port_3_word_r(0,0);
 
 	}
-logerror("CPU0 PC %06x unknown MCU read offset: %04x\n",activecpu_get_previouspc(),offset);
+//logerror("CPU0 PC %06x unknown MCU read offset: %04x\n",activecpu_get_previouspc(),offset);
 
 	return mcu_ram[offset];
 }
@@ -370,9 +695,59 @@ static WRITE16_HANDLER( cop2_mcu_w )
 			break;
 		}
 
+		/*"Number protection" sub-routine*/
+		case (0x420/2):
+		{
+			//coin counter write
+			//popmessage("%04x",mcu_ram[offset]);
+			prot_bcd[0] = protection_bcd_jsr(mcu_ram[offset]);
+			//prot_bcd = mcu_ram[offset] - 0x22;
+			break;
+		}
+		case (0x422/2):
+		{
+			prot_bcd[1] = protection_bcd_jsr(mcu_ram[offset]);
+			break;
+		}
+
+
+		case (0x478/2):
+		{
+			static UINT16 i;
+			/*
+            AM_RANGE(0x100800, 0x100fff) AM_WRITE(legionna_background_w) AM_BASE(&legionna_back_data)
+            AM_RANGE(0x101000, 0x1017ff) AM_WRITE(legionna_foreground_w) AM_BASE(&legionna_fore_data)
+            AM_RANGE(0x101800, 0x101fff) AM_WRITE(legionna_midground_w) AM_BASE(&legionna_mid_data)
+            AM_RANGE(0x102000, 0x102fff) AM_WRITE(legionna_text_w) AM_BASE(&legionna_textram)
+            */
+			switch(mcu_ram[offset])
+			{
+				/*layer clearance*/
+				case 0x4080:
+				/*text layer*/
+				for(i=0;i<0x1000;i+=2)
+					program_write_word(i+0x102000,0x0000);
+				/*background layer*/
+				for(i=0;i<0x800;i+=2)
+					program_write_word(i+0x100800,0x0000);
+
+				break;
+				case 0x4100: break;
+				case 0x41c0: break;
+				//default: popmessage("%04x",mcu_ram[offset]);
+			}
+			break;
+		}
 		// 65a bit 0 is flipscreen
 		// 65c probably layer disables, like Dcon? Used on screen when you press P1-4 start (values 13, 11, 0 seen)
 		// 660 - 66a scroll control;  is there a layer priority switch...?
+
+		case (0x500/2):
+		{
+			if(mcu_ram[offset] == 0x8900)
+				protection_move2_jsr();
+			break;
+		}
 
 		case (0x660/2):
 		{
@@ -429,80 +804,275 @@ logerror("CPU0 PC %06x unknown MCU write offset: %04x data: %04x\n",activecpu_ge
 	}
 }
 
-static READ16_HANDLER( godzilla_cop_mcu_r )
+/*
+player-1 priorities list:
+1086d8: show this sprite (bit 15)
+1086dc: lives (BCD,bits 3,2,1,0)
+1086de: energy bar (upper byte)
+1086e0: walk animation (lower byte)
+1086ec: "death" status (bit 15)
+1086f4: sprite y axis
+1086f0: sprite x axis
+
+Sprite DMA TODO:
+-sprite priorities,likely to be a protection issue because in-game sprites MUST
+ be behind the foreground layer but the attract mode logos (the ones used when
+ the story is explained) should be above it.They both use 0 as priority number.
+-sprites at the very left border disappears.
+-some bullets STILL remains on screen?
+-3rd mid-boss disappears (0x1f0),2nd boss lasers wrong positioning
+
+spriteram DMA [1]
+001DE4: 3086                     move.w  D6, (A0) ;$100400,color + other stuff
+001DE6: 2440                     movea.l D0, A2
+001DE8: 0269 0004 0002           andi.w  #$4, ($2,A1)
+001DEE: 3152 000C                move.w  (A2), ($c,A0) ;DMA size
+001DF2: 3145 0002                move.w  D5, ($2,A0)
+001DF6: 0245 0040                andi.w  #$40, D5
+001DFA: 2009                     move.l  A1, D0
+001DFC: 3140 00C0                move.w  D0, ($c0,A0) ;RAM -> $1004c0 (work ram index?)
+001E00: 4840                     swap    D0
+001E02: 3140 00A0                move.w  D0, ($a0,A0) ;RAM -> $1004a0
+001E06: 200A                     move.l  A2, D0
+001E08: 3140 0014                move.w  D0, ($14,A0) ;$ROM lo -> $100414 src
+001E0C: 4840                     swap    D0
+001E0E: 3140 0012                move.w  D0, ($12,A0) ;$ROM hi -> $100412
+001E12: 2679 0010 8116           movea.l $108116.l, A3 ;points to dst spriteram
+001E18: 3839 0010 810A           move.w  $10810a.l, D4 ;spriteram index
+001E1E: 260B                     move.l  A3, D3
+001E20: 3143 00C8                move.w  D3, ($c8,A0) ;sets the dst spriteram
+001E24: 4843                     swap    D3
+001E26: 3143 00A8                move.w  D3, ($a8,A0)
+001E2A: 45EA 0004                lea     ($4,A2), A2
+//at this point we're ready for DMAing
+001E2E: 317C A180 0100           move.w  #$a180, ($100,A0) ;<-DMA parameters!?
+001E34: 317C 6980 0102           move.w  #$6980, ($102,A0) ;<-""
+001E3A: 317C C480 0102           move.w  #$c480, ($102,A0) ;<-""
+001E40: 317C 0000 0010           move.w  #$0, ($10,A0)     ;<-""
+001E46: 302A 0002                move.w  ($2,A2), D0
+001E4A: 816B 0006                or.w    D0, ($6,A3)
+001E4E: 45EA 0006                lea     ($6,A2), A2
+001E52: 302B 0008                move.w  ($8,A3), D0
+001E56: B079 0010 8112           cmp.w   $108112.l, D0
+001E5C: 6E00 0054                bgt     $1eb2
+001E60: B079 0010 8110           cmp.w   $108110.l, D0
+001E66: 6D00 004A                blt     $1eb2
+001E6A: 026B 7FFF 000A           andi.w  #$7fff, ($a,A3)
+001E70: 8B6B 0004                or.w    D5, ($4,A3)
+001E74: 47EB 0008                lea     ($8,A3), A3
+001E78: 260B                     move.l  A3, D3
+001E7A: 3143 00C8                move.w  D3, ($c8,A0)
+001E7E: 4843                     swap    D3
+001E80: 3143 00A8                move.w  D3, ($a8,A0)
+001E84: 5244                     addq.w  #1, D4
+001E86: B879 0010 8114           cmp.w   $108114.l, D4
+001E8C: 6500 000C                bcs     $1e9a
+001E90: 0069 0002 0002           ori.w   #$2, ($2,A1)
+001E96: 6000 000C                bra     $1ea4
+//Note: I believe the above program is there just for protection copy
+001E9A: 3028 01B0                move.w  ($1b0,A0), D0 ;bit 1 = DMA job finished
+001E9E: 0240 0002                andi.w  #$2, D0
+001EA2: 6790                     beq     $1e34
+001EA4: 33C4 0010 810A           move.w  D4, $10810a.l
+001EAA: 23CB 0010 8116           move.l  A3, $108116.l
+001EB0: 4E75                     rts
+
+x/y check [2]
+002030: E58D                     lsl.l   #2, D5
+002032: 0685 0003 0000           addi.l  #$30000, D5
+002038: 33C5 0010 04C4           move.w  D5, $1004c4.l
+00203E: 4845                     swap    D5
+002040: 33C5 0010 04A4           move.w  D5, $1004a4.l
+002046: E58E                     lsl.l   #2, D6
+002048: 0686 0003 0000           addi.l  #$30000, D6
+00204E: 33C6 0010 04C6           move.w  D6, $1004c6.l
+002054: 4846                     swap    D6
+002056: 33C6 0010 04A6           move.w  D6, $1004a6.l
+00205C: 33FC A180 0010 0500      move.w  #$a180, $100500.l
+002064: 33FC B100 0010 0500      move.w  #$b100, $100500.l
+00206C: 33FC A980 0010 0500      move.w  #$a980, $100500.l
+002074: 33FC B900 0010 0500      move.w  #$b900, $100500.l
+00207C: 4E75                     rts
+[...]
+//then reads at $580
+
+*/
+
+static UINT16 s_i;
+
+static void dma_transfer(void)
 {
-	switch (offset)
+	static UINT16 rel_xy;
+	static UINT16 abs_x,abs_y;
+	static UINT16 param;
+
+	//for(s_i = dma_size;s_i > 0;s_i--)
 	{
-		/* Protection is not understood */
-
-		/* Non-protection reads */
-
-		case (0x7c8/2):	/* seibu sound */
-			return seibu_main_word_r(2,0);
-
-		case (0x7cc/2):
-			return seibu_main_word_r(3,0);
-
-		case (0x7d4/2):
-			return seibu_main_word_r(5,0);
-
-		/* Inputs */
-
-		case (0x740/2):
-			return input_port_1_word_r(0,0);
-
-		case (0x744/2):
-			return input_port_2_word_r(0,0);
-
-		case (0x748/2):
-			return input_port_4_word_r(0,0);
-
-		case (0x74c/2):
-			return input_port_3_word_r(0,0);
-
+		/*Sprite Color*/
+		param = program_read_word(0x100400) & 0x3f;
+		/*Write the entire parameters [offs+0]*/
+		program_write_word(dma_dst,program_read_word(dma_src) + param);
+		/*Sprite Priority (guess)*/
+		//param = ((program_read_word(0x100400) & 0x40) ? 0x4000 : 0);
+		/*Write the sprite number [offs+1]*/
+		program_write_word(dma_dst+2,program_read_word(dma_src+2));
+		/*Sprite Relative x/y coords*/
+		rel_xy = program_read_word(dma_src+4); /*???*/
+		/*temporary hardwired,it should point to 0x4c0/0x4a0*/
+		abs_x = (program_read_word(0x110008) - program_read_word(0x10048e));
+		abs_y = (program_read_word(0x110004) - program_read_word(0x10048c));
+		program_write_word(dma_dst+4,((rel_xy & 0x7f) + (abs_x) - ((rel_xy & 0x80) ? 0x80 : 0)) & 0x1ff);
+		program_write_word(dma_dst+6,(((rel_xy & 0x7f00) >> 8) + (abs_y) + (0x10) - ((rel_xy & 0x8000) ? 0x80 : 0)) & 0x1ff);
+		dma_dst+=8;
+		dma_src+=6;
 	}
-//logerror("CPU0 PC %06x unknown MCU read offset: %04x\n",activecpu_get_previouspc(),offset);
-
-	return mcu_ram[offset];
 }
 
-static WRITE16_HANDLER( godzilla_cop_mcu_w )
-{
-	COMBINE_DATA(&mcu_ram[offset]);
+#define SRC_P_XY(_val1_,_val2_,_val3_,_val4_) \
+	xsrc[0] = program_read_word(src + _val1_); \
+	xsrc[1] = program_read_word(src + _val2_); \
+	ysrc[0] = program_read_word(src + _val3_); \
+	ysrc[1] = program_read_word(src + _val4_); \
 
-	switch (offset)
-	{
-		case (0x7c0/2):	/* seibu(0) */
-		{
-			seibu_main_word_w(0,mcu_ram[offset],0xff00);
-			break;
-		}
-		case (0x7c4/2):	/* seibu(1) */
-		{
-			seibu_main_word_w(1,mcu_ram[offset],0xff00);
-			break;
-		}
-		case (0x7d0/2):	/* seibu(4) */
-		{
-			seibu_main_word_w(4,mcu_ram[offset],0xff00);
-			break;
-		}
-		case (0x7d8/2):	/* seibu(6) */
-		{
-			seibu_main_word_w(6,mcu_ram[offset],0xff00);
-			break;
-		}
-//      default:
-//      logerror("CPU0 PC %06x MCU write offset: %04x data: %04x\n",activecpu_get_previouspc(),offset*2,data);
-	}
+#define DST_P_XY(_val1_,_val2_,_val3_,_val4_) \
+	xdst[0] = program_read_word(dst + _val1_); \
+	xdst[1] = program_read_word(dst + _val2_); \
+	ydst[0] = program_read_word(dst + _val3_); \
+	ydst[1] = program_read_word(dst + _val4_); \
+
+#define SRC_E0_XY(_val1_,_val2_) \
+	xsrc[0] = program_read_word(src + _val1_); \
+	ysrc[0] = program_read_word(src + _val2_); \
+
+#define DST_E0_XY(_val1_,_val2_) \
+	xdst[0] = program_read_word(dst + _val1_); \
+	ydst[0] = program_read_word(dst + _val2_); \
+
+#define SRC_E1_XY(_val1_,_val2_) \
+	xsrc[1] = xsrc[0]+_val1_; ysrc[1] = ysrc[0]+_val2_; \
+
+#define DST_E1_XY(_val1_,_val2_) \
+	xdst[1] = xdst[0]+_val1_; ydst[1] = ydst[0]+_val2_; \
+
+#define XY_CHECK \
+	if((xdst[0] <= xsrc[0] && xdst[1] >= xsrc[0]) && \
+	   (ydst[0] <= ysrc[0] && ydst[1] >= ysrc[0])) \
+		xy_check = 0; \
+	else \
+		xy_check = 3; \
+
+
+/*
+    switch(program_read_word(hit_check_x))
+    {
+        case 0xb4: xparam = 0x0c/2; break;
+        case 0xb8: xparam = 0x10/2; break;
+        case 0xbc: xparam = 0x14/2; break;
+        case 0xc0: xparam = 0x18/2; break;
+        case 0xc4: xparam = 0x1c/2; break;
+        case 0xd4: xparam = 0x20/2; break;
+        ...
+        case 0xb0: xparam = 0x08/2;
+        case 0xac: xparam = 0x04/2;
+    }
+*/
+static UINT16 check_calc(UINT16 param)
+{
+	UINT16 num,i;
+
+	i = param;
+	i-=0xac;
+	i/=4;
+	num = (0x4/2);
+	for(;i>0;i--)
+		num+=(0x4/2);
+
+	return num;
+}
+
+static UINT16 hit_check_jsr(void)
+{
+	static INT16 xsrc,xdst,ysrc,ydst,xparam,yparam;
+	xsrc = (program_read_word(0x110008));
+	ysrc = (program_read_word(0x110004));
+	xdst = (program_read_word(0x110048));
+	ydst = (program_read_word(0x110044));
+
+	/*Here we check the destination sprite width*/
+	/*0x4a4/0x4c4*/
+	xparam = check_calc(program_read_word(hit_check_x));
+	/*Here we check the destination sprite height*/
+	/*0x4a6/0x4c6*/
+	yparam = check_calc(program_read_word(hit_check_y));
+
+	if(!xparam || !yparam)
+		popmessage("SRC:%04x %04x DST:%04x %04x V:%08x %08x",xsrc,ysrc,xdst,ydst,program_read_word(hit_check_x),program_read_word(hit_check_y));
+	if(xdst >= (xsrc-xparam) && ydst >= (ysrc-yparam) &&
+	   xdst <= (xsrc+xparam) && ydst <= (ysrc+yparam))
+		return 0;//sprites collide
+	else
+		return 3;//sprites do not collide
 }
 
 static READ16_HANDLER( sdgndmrb_cop_mcu_r )
 {
 	switch (offset)
 	{
-		/* Non-protection reads */
+		/*hit protection*/
+		case (0x580/2):
+		{
+			/*PC=ce96*/
+			/*---- ---- ---- --xx used bits*/
+			//if(!xy_check)
+			//{
+			//  xy_check = 3;
+			//  return 0;
+			//}
+			//else return 3;
+			return xy_check;
+		}
 
+		/*number protection*/
+		case (0x590/2):
+		{
+			/*BCD read*/
+			return (prot_bcd[0] & 0xffff) + 0x3030;
+		}
+		case (0x592/2):
+		{
+			return ((prot_bcd[0] & 0xffff0000) >> 16) + 0x3030;
+		}
+		case (0x594/2):
+		{
+			return (prot_bcd[1] & 0xffff) + 0x3030;
+		}
+		case (0x596/2):
+		{
+			return ((prot_bcd[1] & 0xffff0000) >> 16) + 0x3030;
+		}
+		case (0x598/2):
+		{
+			return (prot_bcd[2] & 0xffff) + 0x3030;
+		}
+		case (0x59a/2):
+		{
+			return ((prot_bcd[2] & 0xffff0000) >> 16) + 0x3030;
+		}
+		case (0x59c/2):
+		{
+			return 0x3030;
+		}
+
+		case (0x5b0/2):
+			/*check if the DMA has been finished*/
+			if(dma_status == 1)
+			{
+				dma_status = 0;
+				return 2;
+			}
+			return mcu_ram[offset];
+
+		/* Non-protection reads */
 		case (0x708/2):	/* seibu sound */
 			return seibu_main_word_r(2,0);
 
@@ -530,8 +1100,11 @@ static READ16_HANDLER( sdgndmrb_cop_mcu_r )
 			return input_port_5_word_r(0,0);
 	}
 //  return rand();
-//  logerror("CPU0 PC %06x MCU read offset: %04x\n",activecpu_get_previouspc(),offset*2);
-//  popmessage("CPU0 PC %06x MCU read offset: %04x",activecpu_get_previouspc(),offset*2);
+  	if(offset > (0x500/2) && offset < (0x600/2))
+  	{
+  		logerror("CPU0 PC %06x MCU read offset: %04x\n",activecpu_get_previouspc(),offset*2);
+		//popmessage("PC %06x MCU read: %04x",activecpu_get_previouspc(),offset*2);
+	}
 
 	return mcu_ram[offset];
 }
@@ -542,6 +1115,256 @@ static WRITE16_HANDLER( sdgndmrb_cop_mcu_w )
 
 	switch (offset)
 	{
+		case (0x478/2):
+		{
+			static UINT16 i;
+			/*
+            AM_RANGE(0x100800, 0x100fff) AM_WRITE(legionna_background_w) AM_BASE(&legionna_back_data)
+            AM_RANGE(0x101000, 0x1017ff) AM_WRITE(legionna_foreground_w) AM_BASE(&legionna_fore_data)
+            AM_RANGE(0x101800, 0x101fff) AM_WRITE(legionna_midground_w) AM_BASE(&legionna_mid_data)
+            AM_RANGE(0x102000, 0x102fff) AM_WRITE(legionna_text_w) AM_BASE(&legionna_textram)
+            */
+			switch(mcu_ram[offset])
+			{
+				/*txt layer clearance*/
+				case 0x4080:
+				for(i=0;i<0x1000;i+=2)
+					program_write_word(i+0x102000,0x0000);
+				break;
+				case 0x4100: break;
+				case 0x41c0: break;
+				//default: popmessage("%04x",mcu_ram[offset]);
+			}
+			break;
+		}
+
+		/*The following two transfers the index of the work ram that should be picked up,
+          Both of them are united into one index of 32-bits*/
+
+		/*DMA source address*/
+		case (0x414/2):
+		{
+			/*---- ---- ---- ---- xxxx xxxx xxxx xxxx*/
+			prot_data[0] = mcu_ram[offset];
+			dma_src = (prot_data[0]&0xffff)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		case (0x412/2):
+		{
+			/*xxxx xxxx xxxx xxxx ---- ---- ---- ----*/
+			prot_data[1] = mcu_ram[offset];
+			dma_src = (prot_data[0]&0xffff)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		/*Hit Check x address*/
+		case (0x4c4/2):
+		{
+			/*---- ---- ---- ---- xxxx xxxx xxxx xxxx*/
+			prot_data[0] = mcu_ram[offset];
+			hit_check_x = (prot_data[0]&0xffff)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		case (0x4a4/2):
+		{
+			/*xxxx xxxx xxxx xxxx ---- ---- ---- ----*/
+			prot_data[1] = mcu_ram[offset];
+			hit_check_x = (prot_data[0]&0xffff)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		/*Hit Check y address*/
+		case (0x4c6/2):
+		{
+			/*---- ---- ---- ---- xxxx xxxx xxxx xxxx*/
+			prot_data[0] = mcu_ram[offset];
+			hit_check_y = (prot_data[0]&0xffff)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		case (0x4a6/2):
+		{
+			/*xxxx xxxx xxxx xxxx ---- ---- ---- ----*/
+			prot_data[1] = mcu_ram[offset];
+			hit_check_y = (prot_data[0]&0xffff)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		/*DMA destination address*/
+		case (0x4c8/2):
+		{
+			/*---- ---- ---- ---- xxxx xxxx xxxx xxxx*/
+			prot_data[0] = mcu_ram[offset];
+			dma_dst = ((prot_data[0]&0xffff)+4)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		case (0x4a8/2):
+		{
+			/*xxxx xxxx xxxx xxxx ---- ---- ---- ----*/
+			prot_data[1] = mcu_ram[offset];
+			dma_dst = ((prot_data[0]&0xffff)+4)|((prot_data[1]&0xffff)<<16);
+			break;
+		}
+
+		/*"Number protection" sub-routine*/
+		case (0x420/2):
+		{
+			//coin counter write
+			//popmessage("%04x",mcu_ram[offset]);
+			prot_bcd[0] = protection_bcd_jsr(mcu_ram[offset]);
+			//prot_bcd = mcu_ram[offset] - 0x22;
+			break;
+		}
+
+		case (0x422/2):
+		{
+			prot_bcd[1] = protection_bcd_jsr(mcu_ram[offset]);
+			break;
+		}
+
+		case (0x424/2):
+		{
+			prot_bcd[2] = protection_bcd_jsr(mcu_ram[offset]);
+			break;
+		}
+
+		/*sprite ram clear(Guess)*/
+		case (0x47e/2):
+		{
+			static UINT16 i;
+			if(mcu_ram[0x47e/2] == 0x118)
+			{
+				for(i=0;i<0x800;i+=2)
+					program_write_word((0x107000 | i),0x0000);
+			}
+			break;
+		}
+
+		case (0x40c/2):
+		{
+			dma_size = mcu_ram[offset];
+			break;
+		}
+
+		case (0x500/2):
+		{
+			switch(mcu_ram[0x500/2])
+			{
+				case 0xa180:/*do the job [1]*/
+				{
+					//popmessage("%08x %08x %04x",dma_src,dma_dst,dma_size);
+					/*fix the offset for easier reading*/
+					dma_src+=4;
+					//dma_dst+=4;
+					s_i = dma_size;
+					//dma_dst+=((program_read_word(0x110000) & 0x000f) * 8);
+					//program_write_word(0x1004c8,dma_dst & 0xffff);
+					//dma_status = 1;
+					break;
+				}
+				case 0xb900:
+				{
+					/*$30000*/
+					/*$30010*/
+					/*$30020*/
+					/*$30030*/
+					/*$30040*/
+					/*vectors points to a ROM value (probably of the COP rom),
+                      use these values to calculate the right spriteram vector in work RAM*/
+					/*
+                        x1 is the left border of the sprite
+                        x2 is the right border of the sprite
+                        y1 is the up border of the sprite
+                        y2 is the bottom border of the sprite
+                        example p1 sprite:
+                        x1 = 108620 = +0x00 #0x108620 + 0x1c + src(30000=0xb4)
+                        x2 = 108620 = +0x10 #0x108620 + 0x2c + src(30000=0xb4)
+                        y1 = 108620 = +0x04 #0x108620 + 0x20 + src
+                        y2 = 108620 = +0x14 #0x108620 + 0x30 + src
+                        example mini-boss sprite:
+                        x1  = 109a70 = 0x108620 + 0x1c + dst(300ac=0x160)
+                        #x2 = 108700 = 0x108620 + 0x2c + dst(300ac=0x160)
+                        y1  = 109a74 = 0x108620 + 0x20 + dst
+                        #y2 = 108704 = 0x108620 + 0x30 + dst
+                    */
+					#if 0
+					/*this variable should be removed when we have the entire table*/
+					static UINT8 debug_av;
+					debug_av = 0;
+					static INT16 xsrc[2],ysrc[2],xdst[2],ydst[2];
+					static UINT32 src,dst;
+
+					switch(hit_check_y & 0xfffff)
+					{
+						case 0x30000: dst = 0x1082e0; DST_P_XY(0x00,0x18,0x02,0x1a); break; /*Player 1*/
+						case 0x30020: dst = 0x1081d0; DST_E0_XY(0x00,0x02); break;
+						default: debug_av = 1; break; /*Unk*/
+					}
+
+					/*debug code*/
+					if(debug_av == 1)
+					{
+						xy_check = 1;
+						popmessage("%08x %08x",hit_check_x,hit_check_y);
+						return;
+					}
+					/*...*/
+
+					switch(hit_check_x & 0xfffff)
+					{
+						/*Power-Ups*/
+						case 0x30010:
+							for(src = 0x108140;src <= 0x108300;src+=8)
+							{
+								SRC_E0_XY(0x00,0x02);
+								XY_CHECK;
+								popmessage("DST: %d %d %d %d SRC: %d %d | %04x",xdst[0],xdst[1],ydst[0],ydst[1],xsrc[0],ysrc[0],xy_check);
+								if(xy_check == 0)
+									return;
+							}
+							break;
+						/*Enemy touch*/
+						case 0x30020:
+							src = 0x108340;
+							SRC_E0_XY(0x00,0x02);
+							XY_CHECK;
+							break;
+						default: debug_av = 1; break; /*Unk*/
+					}
+
+					/*debug code*/
+					if(debug_av == 1)
+					{
+						xy_check = 1;
+						popmessage("%08x %08x",hit_check_x,hit_check_x);
+						return;
+					}
+					/*...*/
+					#else
+					xy_check = hit_check_jsr();
+					#endif
+					break;
+				}
+				default:
+					logerror("DMA CMD 0x500 with parameter = %04x PC = %08x\n",mcu_ram[offset],activecpu_get_previouspc());
+			}
+			break;
+		}
+
+		case (0x502/2):
+		{
+			if(mcu_ram[0x502/2] == 0xc480)
+			{
+				dma_transfer();
+				s_i--;
+				if(s_i == 0)
+					dma_status = 1;
+			}
+			break;
+		}
 
 		/* TODO: tilemaps x-axis are offset,we use a temporary kludge for now */
 		case (0x620/2):
@@ -582,6 +1405,20 @@ static WRITE16_HANDLER( sdgndmrb_cop_mcu_w )
 		case (0x634/2):
 		case (0x636/2):
 			break;
+		/*Layer Enable,bit wise active low*/
+		case (0x61c/2):
+		{
+			/*
+            ---x ---- (used in test mode)
+            ---- x--- Text Layer
+            ---- -x-- Foreground Layer
+            ---- --x- Midground Layer
+            ---- ---x Background Layer
+            */
+			pri_n = mcu_ram[offset] & 0xf;
+			break;
+		}
+
 		/* Text Layer scroll registers */
 		case (0x638/2):
 		{
@@ -593,13 +1430,42 @@ static WRITE16_HANDLER( sdgndmrb_cop_mcu_w )
 			legionna_scrollram16[7] = mcu_ram[offset];
 			break;
 		}
-		/* OBJ scroll register,seems unused by this game. */
+		/*C.R.T. Controller (note:game calls it OBJ register)*/
 		case (0x644/2):
+			{
+				/*
+                data = setting
+                0x01e = 320x256
+                0x0e1 = 320x256 REVERSE
+                0x016 = 320x240
+                0x0e9 = 320x240 REVERSE
+                0x004 = 320x224
+                0x10b = 320x224 REVERSE
+                It is like to be per cases and not per bits.
+                */
+				switch(data)
+				{
+					case 0x0000:
+					case 0x0003:
+					case 0x001e: CRT_MODE(320,224,0); break;
+					case 0x00e1: CRT_MODE(320,224,1); break;
+					case 0x0016: CRT_MODE(320,256,0); break;
+					case 0x00e9: CRT_MODE(320,256,1); break;
+					case 0x0004: CRT_MODE(320,240,0); break;
+					case 0x00fb: CRT_MODE(320,240,1); break;
+					default:
+					#ifdef MAME_DEBUG
+					popmessage("Warning: Undefined CRT Mode %04x",data);
+					#endif
+					CRT_MODE(320,256,0);
+				}
+			}
 			break;
 
 		/* Seems a mirror for the choices in the test menu... */
 		case (0x67c/2):
 		case (0x680/2):
+			break;
 		case (0x6fc/2):
 			break;
 
@@ -630,6 +1496,770 @@ static WRITE16_HANDLER( sdgndmrb_cop_mcu_w )
 	}
 }
 
+static READ16_HANDLER( denjinmk_cop_mcu_r )
+{
+	switch (offset)
+	{
+		/*number protection*/
+		case (0x590/2):
+		{
+			/*BCD read*/
+			return (prot_bcd[0] & 0xffff) + 0x3030;
+		}
+		case (0x592/2):
+		{
+			return ((prot_bcd[0] & 0xffff0000) >> 16) + 0x3030;
+		}
+		case (0x594/2):
+		{
+			return 0x3030;
+		}
+		case (0x596/2):
+		{
+			return 0x3030;
+		}
+		case (0x598/2):
+		{
+			return 0x3030;
+		}
+		case (0x59a/2):
+		{
+			return 0x3030;
+		}
+		case (0x59c/2):
+		{
+			return 0x3030;
+		}
+
+		/* Non-protection reads */
+
+		case (0x708/2):	/* seibu sound */
+			return seibu_main_word_r(2,0);
+
+		case (0x70c/2):
+			return seibu_main_word_r(3,0);
+
+		case (0x714/2):
+			return seibu_main_word_r(5,0);
+
+		/* Inputs */
+
+		case (0x740/2):
+			return input_port_1_word_r(0,0);
+
+		case (0x744/2):
+			return input_port_2_word_r(0,0);
+
+		case (0x748/2):
+			return input_port_4_word_r(0,0);
+
+		case (0x74c/2):
+			return input_port_3_word_r(0,0);
+
+	}
+//logerror("CPU0 PC %06x unknown MCU read offset: %04x\n",activecpu_get_previouspc(),offset);
+
+	return mcu_ram[offset];
+}
+
+static WRITE16_HANDLER( denjinmk_cop_mcu_w )
+{
+	COMBINE_DATA(&mcu_ram[offset]);
+
+	switch (offset)
+	{
+		/*"Number protection" sub-routine*/
+		case (0x420/2):
+		{
+			//coin counter write
+			//popmessage("%04x",mcu_ram[offset]);
+			prot_bcd[0] = protection_bcd_jsr(mcu_ram[offset]);
+			//prot_bcd = mcu_ram[offset] - 0x22;
+			break;
+		}
+
+
+		case (0x470/2):
+		{
+			denjinmk_setgfxbank( mcu_ram[offset] );
+			break;
+		}
+		case (0x620/2):
+		{
+			legionna_scrollram16[0] = mcu_ram[offset];
+			break;
+		}
+		case (0x622/2):
+		{
+			legionna_scrollram16[1] = mcu_ram[offset];
+			break;
+		}
+		case (0x624/2):
+		{
+			legionna_scrollram16[2] = mcu_ram[offset];
+			break;
+		}
+		case (0x626/2):
+		{
+			legionna_scrollram16[3] = mcu_ram[offset];
+			break;
+		}
+		case (0x628/2):
+		{
+			legionna_scrollram16[4] = mcu_ram[offset];
+			break;
+		}
+		case (0x62a/2):
+		{
+			legionna_scrollram16[5] = mcu_ram[offset];
+			break;
+		}
+		case (0x700/2):	/* seibu(0) */
+		{
+			seibu_main_word_w(0,mcu_ram[offset],0xff00);
+			break;
+		}
+		case (0x704/2):	/* seibu(1) */
+		{
+			seibu_main_word_w(1,mcu_ram[offset],0xff00);
+			break;
+		}
+		case (0x710/2):	/* seibu(4) */
+		{
+			seibu_main_word_w(4,mcu_ram[offset],0xff00);
+			break;
+		}
+		case (0x718/2):	/* seibu(6) */
+		{
+			seibu_main_word_w(6,mcu_ram[offset],0xff00);
+			break;
+		}
+	    //  default:
+	    //  if(offset >= (0x700/2) && offset < (0x800/2))
+  	    //printf("CPU0 PC %06x MCU write offset: %04x data: %04x\n",activecpu_get_previouspc(),offset*2,data);
+	}
+}
+
+static READ16_HANDLER( godzilla_cop_mcu_r )
+{
+	switch (offset)
+	{
+		/*number protection*/
+		case (0x590/2):
+		{
+			/*BCD read*/
+			return (prot_bcd[0] & 0xffff) + 0x3030;
+		}
+		case (0x592/2):
+		{
+			return ((prot_bcd[0] & 0xffff0000) >> 16) + 0x3030;
+		}
+		case (0x594/2):
+		{
+			return 0x3030;
+		}
+		case (0x596/2):
+		{
+			return 0x3030;
+		}
+		case (0x598/2):
+		{
+			return 0x3030;
+		}
+		case (0x59a/2):
+		{
+			return 0x3030;
+		}
+		case (0x59c/2):
+		{
+			return 0x3030;
+		}
+
+		/* Non-protection reads */
+
+		case (0x7c8/2):	/* seibu sound */
+			return seibu_main_word_r(2,0);
+
+		case (0x7cc/2):
+			return seibu_main_word_r(3,0);
+
+		case (0x7d4/2):
+			return seibu_main_word_r(5,0);
+
+		/* Inputs */
+
+		case (0x740/2):
+			return input_port_1_word_r(0,0);
+
+		case (0x744/2):
+			return input_port_2_word_r(0,0);
+
+		case (0x748/2):
+			return input_port_4_word_r(0,0);
+
+		case (0x74c/2):
+			return input_port_3_word_r(0,0);
+
+	}
+//  if(offset >= (0x400/2) && offset < (0x600/2) && offset != (0x5a4/2))
+//  popmessage("CPU0 PC %06x unknown MCU read offset: %04x\n",activecpu_get_previouspc(),offset*2);
+
+	return mcu_ram[offset];
+}
+
+static WRITE16_HANDLER( godzilla_cop_mcu_w )
+{
+	COMBINE_DATA(&mcu_ram[offset]);
+
+	switch (offset)
+	{
+		/*"Number protection" sub-routine*/
+		case (0x420/2):
+		{
+			//coin counter write
+			//popmessage("%04x",mcu_ram[offset]);
+			prot_bcd[0] = protection_bcd_jsr(mcu_ram[offset]);
+			//prot_bcd = mcu_ram[offset] - 0x22;
+			break;
+		}
+
+		case (0x478/2):
+		{
+			static UINT16 i;
+			/*
+            */
+			switch(mcu_ram[offset])
+			{
+				/*txt layer clearance*/
+				case 0x40a0:
+				for(i=0;i<0x1000;i+=2)
+					program_write_word(i+0x102800,0x0000);
+				break;
+				case 0x4040: break;
+				case 0x4140: break;
+				case 0x4180: break;
+				case 0x4100: break;
+				case 0x41c0: break;
+				//default: popmessage("%04x",mcu_ram[offset]);
+			}
+			break;
+		}
+
+		case (0x620/2):
+		{
+			legionna_scrollram16[0] = mcu_ram[offset];
+			break;
+		}
+		case (0x622/2):
+		{
+			legionna_scrollram16[1] = mcu_ram[offset];
+			break;
+		}
+		case (0x624/2):
+		{
+			legionna_scrollram16[2] = mcu_ram[offset];
+			break;
+		}
+		case (0x626/2):
+		{
+			legionna_scrollram16[3] = mcu_ram[offset];
+			break;
+		}
+		case (0x628/2):
+		{
+			legionna_scrollram16[4] = mcu_ram[offset];
+			break;
+		}
+		case (0x62a/2):
+		{
+			legionna_scrollram16[5] = mcu_ram[offset];
+			break;
+		}
+
+		case (0x7c0/2):	/* seibu(0) */
+		{
+			seibu_main_word_w(0,mcu_ram[offset],0xff00);
+			break;
+		}
+		case (0x7c4/2):	/* seibu(1) */
+		{
+			seibu_main_word_w(1,mcu_ram[offset],0xff00);
+			break;
+		}
+		case (0x7d0/2):	/* seibu(4) */
+		{
+			seibu_main_word_w(4,mcu_ram[offset],0xff00);
+			break;
+		}
+		case (0x7d8/2):	/* seibu(6) */
+		{
+			seibu_main_word_w(6,mcu_ram[offset],0xff00);
+			break;
+		}
+//      default:
+//      logerror("CPU0 PC %06x MCU write offset: %04x data: %04x\n",activecpu_get_previouspc(),offset*2,data);
+	}
+}
+
+static READ16_HANDLER( copdx_0_r )
+{
+	switch(offset)
+	{
+		//case (0x47e/2):
+		//case (0x5b0/2):
+		//case (0x5b4/2):
+		//  return mcu_ram[offset];
+
+		case (0x700/2):
+			return input_port_1_word_r(0,0);
+
+		case (0x704/2):
+			return input_port_2_word_r(0,0);
+
+		case (0x708/2):
+			return input_port_4_word_r(0,0);
+
+		case (0x70c/2):
+			return input_port_3_word_r(0,0);
+
+		case (0x71c/2):
+			return input_port_5_word_r(0,0);
+
+		case (0x748/2):	/* seibu sound */
+			return seibu_main_word_r(2,0);
+		case (0x74c/2):
+			return seibu_main_word_r(3,0);
+		case (0x754/2):
+			return seibu_main_word_r(5,0);
+
+	}
+
+	//logerror("COP has read at PC=%06x offset = %04x\n",activecpu_get_pc(),offset*2);
+
+	return mcu_ram[offset];
+}
+
+static UINT16 cop_fct;
+static UINT32 cop_reg[8];
+
+/*This is version 1,so some stuff is different (less complex)*/
+static void cop_run(void)
+{
+	switch(cop_fct)
+	{
+		/*???*/
+		case 0x8100:
+		{
+			UINT32 src = cop_reg[0];
+			program_write_word(src+0x36,0xffc0);
+			break;
+		}
+		case 0x8900:
+		{
+			UINT32 src = cop_reg[0];
+			program_write_word(src+0x36,0xff80);
+			break;
+		}
+		/*Right*/
+		case 0x0205:
+		{
+			UINT32 src = cop_reg[0];
+			INT16 y = program_read_word(src+0x4);
+			INT16 x = program_read_word(src+0x8);
+			INT16 y_rel = program_read_word(src+0x10);
+			INT16 x_rel = program_read_word(src+0x14);
+			program_write_word(src+0x4,(y+y_rel));
+			program_write_word(src+0x8,(x+x_rel));
+			/*printf("%08x %08x %08x %08x %08x\n",cop_reg[0],
+                                           program_read_word(cop_reg[0]+0x4),
+                                           program_read_word(cop_reg[0]+0x8),
+                                           program_read_word(cop_reg[0]+0x10),
+                                           program_read_word(cop_reg[0]+0x14));*/
+			break;
+		}
+		/*???*/
+		case 0x3bb0:
+		{
+			//UINT32 dst = cop_reg[0];
+			//UINT32 dst = cop_reg[1];
+			//program_write_word(dst,  rand()/*program_read_word(src)*/);
+			//program_write_word(dst+2,rand()/*program_read_word(src+2)*/);
+			//program_write_word(dst+4,rand()/*program_read_word(src+4)*/);
+			//program_write_word(dst+6,rand()/*program_read_word(src+6)*/);
+			//printf("%04x\n",cop_reg[0]);
+			break;
+		}
+		default:
+			//printf("%04x\n",cop_fct);
+			break;
+	}
+}
+//tmp_data[1] = mcu_ram[offset];
+//cop_reg[0] = (prot_data[0]&0xffff)|((prot_data[1]&0xffff)<<16);
+
+static void cop_reg_w(UINT16 data,UINT8 offset,UINT8 mask)
+{
+	if(mask)
+		cop_reg[offset] = ((data&0xffff)<<16) | (cop_reg[offset]&0xffff);
+	else
+		cop_reg[offset] = (cop_reg[offset]&0xffff0000) | (data&0xffff);
+
+	//popmessage("%08x",cop_reg[offset]);
+}
+
+static WRITE16_HANDLER( copdx_0_w )
+{
+	COMBINE_DATA(&mcu_ram[offset]);
+
+	switch(offset)
+	{
+		case (0x4a0/2):
+		case (0x4a2/2):
+		case (0x4a4/2):
+		case (0x4a6/2):
+		case (0x4a8/2):
+		case (0x4aa/2):
+		case (0x4ac/2):
+		case (0x4ae/2):
+		case (0x4c0/2):
+		case (0x4c2/2):
+		case (0x4c4/2):
+		case (0x4c6/2):
+		case (0x4c8/2):
+		case (0x4ca/2):
+		case (0x4cc/2):
+		case (0x4ce/2):
+			cop_reg_w(mcu_ram[offset],offset & 0x000f, (offset < (0x4b0/2)) ? 1 : 0);
+			break;
+		/*layer clearance,but the bootleg doesn't send values,so this function is an
+          original left-over.*/
+		case (0x478/2):
+		{
+			/*
+    AM_RANGE(0x100800, 0x100fff) AM_READWRITE(MRA16_RAM,legionna_background_w) AM_BASE(&legionna_back_data)
+    AM_RANGE(0x101000, 0x1017ff) AM_READWRITE(MRA16_RAM,legionna_foreground_w) AM_BASE(&legionna_fore_data)
+    AM_RANGE(0x101800, 0x101fff) AM_READWRITE(MRA16_RAM,legionna_midground_w) AM_BASE(&legionna_mid_data)
+    AM_RANGE(0x102000, 0x102fff) AM_READWRITE(MRA16_RAM,legionna_text_w) AM_BASE(&legionna_textram)
+            */
+			break;
+		}
+		case (0x500/2):
+		{
+			cop_fct = mcu_ram[offset];
+			cop_run();
+			break;
+		}
+		case (0x604/2):
+		{
+			//C.R.T. Controller
+			/*
+            data = setting
+            0x01e = 320x256         ---- ---x xxx-
+            0x0e1 = 320x256 REVERSE ---- xxx- ---x
+            0x016 = 320x240         ---- ---x -xx-
+            0x0e9 = 320x240 REVERSE ---- xxx- x--x
+            0x004 = 320x224         ---- ---- -x--
+            0x10b = 320x224 REVERSE ---x ---- x-xx
+            For now we use this by cases and not per bits.
+            */
+
+			switch(data)
+			{
+				case 0x0000:
+				case 0x001e: CRT_MODE(320,256,0); break;
+				case 0x00e1: CRT_MODE(320,256,1); break;
+				case 0x0016: CRT_MODE(320,240,0); break;
+				case 0x00e9: CRT_MODE(320,240,1); break;
+				case 0x0004: CRT_MODE(320,224,0); break;
+				case 0x010b: CRT_MODE(320,224,1); break;
+				default:
+				#ifdef MAME_DEBUG
+				popmessage("Warning: Undefined CRT Mode %04x",data);
+				#endif
+				CRT_MODE(320,256,0);
+			}
+			break;
+		}
+		/*TODO: what's going on here,some scroll values aren't sent in these locations
+                but somewhere else?*/
+		case (0x62c/2):
+		{
+			legionna_scrollram16[0] = mcu_ram[offset];
+			break;
+		}
+		case (0x62e/2):
+		{
+			legionna_scrollram16[1] = mcu_ram[offset];
+			break;
+		}
+		case (0x630/2):
+		{
+			legionna_scrollram16[2] = mcu_ram[offset];
+			break;
+		}
+		case (0x632/2):
+		{
+			legionna_scrollram16[3] = mcu_ram[offset];
+			break;
+		}
+		case (0x634/2):
+		{
+			legionna_scrollram16[4] = mcu_ram[offset];
+			break;
+		}
+		case (0x636/2):
+		{
+			legionna_scrollram16[5] = mcu_ram[offset];
+			break;
+		}
+		case (0x638/2):
+		{
+			legionna_scrollram16[6] = mcu_ram[offset];
+			break;
+		}
+		case (0x63a/2):
+		{
+			legionna_scrollram16[7] = mcu_ram[offset];
+			break;
+		}
+		/*video regs (not scrollram,something else)*/
+		//case (0x660/2):
+		//case (0x662/2):
+		//case (0x664/2):
+		//case (0x666/2):
+		//case (0x668/2):
+		//case (0x66a/2):
+		//case (0x66c/2):
+		//case (0x66e/2):
+		//  break;
+
+		case (0x740/2):	/* seibu(0) */
+		{
+			seibu_main_word_w(0,mcu_ram[offset],0xff00);
+			break;
+		}
+		case (0x744/2):	/* seibu(1) */
+		{
+			seibu_main_word_w(1,mcu_ram[offset],0xff00);
+			break;
+		}
+		case (0x750/2):	/* seibu(4) */
+		{
+			seibu_main_word_w(4,mcu_ram[offset],0xff00);
+			break;
+		}
+		case (0x758/2):	/* seibu(6) */
+		{
+			seibu_main_word_w(6,mcu_ram[offset],0xff00);
+			break;
+		}
+	}
+	//usrintf_showmessage("COP:write at PC=%06x offset = %04x data %04x\n",activecpu_get_pc(),offset*2,data);
+}
+
+static READ16_HANDLER( copdxbl_0_r )
+{
+	switch(offset)
+	{
+		//case (0x47e/2):
+		//case (0x5b0/2):
+		//case (0x5b4/2):
+		//  return mcu_ram[offset];
+
+		case (0x700/2):
+			return input_port_1_word_r(0,0);
+
+		case (0x704/2):
+			return input_port_2_word_r(0,0);
+
+		case (0x708/2):
+			return input_port_4_word_r(0,0);
+
+		case (0x70c/2):
+			return input_port_3_word_r(0,0);
+
+		case (0x71c/2):
+			return input_port_5_word_r(0,0);
+#if 0
+		case (0x748/2):	/* seibu sound */
+			return seibu_main_word_r(2,0);
+		case (0x74c/2):
+			return seibu_main_word_r(3,0);
+		case (0x754/2):
+			return seibu_main_word_r(5,0);
+			#endif
+
+	}
+
+	//logerror("COP has read at PC=%06x offset = %04x\n",activecpu_get_pc(),offset*2);
+
+	return mcu_ram[offset];
+}
+
+static WRITE16_HANDLER( copdxbl_0_w )
+{
+	COMBINE_DATA(&mcu_ram[offset]);
+
+	switch(offset)
+	{
+		case (0x4a0/2):
+		case (0x4a2/2):
+		case (0x4a4/2):
+		case (0x4a6/2):
+		case (0x4a8/2):
+		case (0x4aa/2):
+		case (0x4ac/2):
+		case (0x4ae/2):
+		case (0x4c0/2):
+		case (0x4c2/2):
+		case (0x4c4/2):
+		case (0x4c6/2):
+		case (0x4c8/2):
+		case (0x4ca/2):
+		case (0x4cc/2):
+		case (0x4ce/2):
+			cop_reg_w(mcu_ram[offset],offset & 0x000f, (offset < (0x4b0/2)) ? 1 : 0);
+			break;
+		/*layer clearance,but the bootleg doesn't send values,so this function
+          is an original left-over.*/
+		case (0x478/2):
+		{
+			/*
+    AM_RANGE(0x100800, 0x100fff) AM_READWRITE(MRA16_RAM,legionna_background_w) AM_BASE(&legionna_back_data)
+    AM_RANGE(0x101000, 0x1017ff) AM_READWRITE(MRA16_RAM,legionna_foreground_w) AM_BASE(&legionna_fore_data)
+    AM_RANGE(0x101800, 0x101fff) AM_READWRITE(MRA16_RAM,legionna_midground_w) AM_BASE(&legionna_mid_data)
+    AM_RANGE(0x102000, 0x102fff) AM_READWRITE(MRA16_RAM,legionna_text_w) AM_BASE(&legionna_textram)
+            */
+			break;
+		}
+		case (0x500/2):
+		{
+			cop_fct = mcu_ram[offset];
+			cop_run();
+			break;
+		}
+		case (0x604/2):
+		{
+			//C.R.T. Controller
+			/*
+            data = setting
+            0x01e = 320x256         ---- ---x xxx-
+            0x0e1 = 320x256 REVERSE ---- xxx- ---x
+            0x016 = 320x240         ---- ---x -xx-
+            0x0e9 = 320x240 REVERSE ---- xxx- x--x
+            0x004 = 320x224         ---- ---- -x--
+            0x10b = 320x224 REVERSE ---x ---- x-xx
+            For now we use this by cases and not per bits.
+            */
+
+			switch(data)
+			{
+				case 0x0000:
+				case 0x001e: CRT_MODE(320,256,0); break;
+				case 0x00e1: CRT_MODE(320,256,1); break;
+				case 0x0016: CRT_MODE(320,240,0); break;
+				case 0x00e9: CRT_MODE(320,240,1); break;
+				case 0x0004: CRT_MODE(320,224,0); break;
+				case 0x010b: CRT_MODE(320,224,1); break;
+				default:
+				#ifdef MAME_DEBUG
+				popmessage("Warning: Undefined CRT Mode %04x",data);
+				#endif
+				CRT_MODE(320,256,0);
+			}
+			break;
+		}
+		/*TODO: kludge on x-axis.*/
+		case (0x660/2):
+		{
+			legionna_scrollram16[0] = mcu_ram[offset] - 0x1f0;
+			break;
+		}
+		case (0x662/2):
+		{
+			legionna_scrollram16[1] = mcu_ram[offset];
+			break;
+		}
+		case (0x664/2):
+		{
+			legionna_scrollram16[2] = mcu_ram[offset] - 0x1f0;
+			break;
+		}
+		case (0x666/2):
+		{
+			legionna_scrollram16[3] = mcu_ram[offset];
+			break;
+		}
+		case (0x668/2):
+		{
+			legionna_scrollram16[4] = mcu_ram[offset] - 0x1f0;
+			break;
+		}
+		case (0x66a/2):
+		{
+			legionna_scrollram16[5] = mcu_ram[offset];
+			break;
+		}
+		case (0x66c/2):
+		{
+			legionna_scrollram16[6] = mcu_ram[offset] - 0x1f0;
+			break;
+		}
+		case (0x66e/2):
+		{
+			legionna_scrollram16[7] = mcu_ram[offset];
+			break;
+		}
+		/*WRONG*/
+		case (0x65c/2):
+		{
+			soundlatch_w(1,data&0xff);
+			cpunum_set_input_line( 1, INPUT_LINE_NMI, PULSE_LINE );
+			break;
+		}
+		/*video regs (not scrollram,something else)*/
+		//case (0x660/2):
+		//case (0x662/2):
+		//case (0x664/2):
+		//case (0x666/2):
+		//case (0x668/2):
+		//case (0x66a/2):
+		//case (0x66c/2):
+		//case (0x66e/2):
+		//  break;
+		/*bootleg sound HW*/
+		/*case (0x740/2):
+        {
+            soundlatch_w(1,data&0x00ff);
+            cpunum_set_input_line( 1, INPUT_LINE_NMI, PULSE_LINE );
+            break;
+        }*/
+		#if 0
+		case (0x740/2):	/* seibu(0) */
+		{
+			seibu_main_word_w(0,mcu_ram[offset],0xff00);
+			break;
+		}
+		case (0x744/2):	/* seibu(1) */
+		{
+			seibu_main_word_w(1,mcu_ram[offset],0xff00);
+			break;
+		}
+		case (0x750/2):	/* seibu(4) */
+		{
+			seibu_main_word_w(4,mcu_ram[offset],0xff00);
+			break;
+		}
+		case (0x758/2):	/* seibu(6) */
+		{
+			seibu_main_word_w(6,mcu_ram[offset],0xff00);
+			break;
+		}
+		#endif
+	}
+	//usrintf_showmessage("COP:write at PC=%06x offset = %04x data %04x\n",activecpu_get_pc(),offset*2,data);
+}
+
 /*****************************************************************************/
 
 static ADDRESS_MAP_START( legionna_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -650,7 +2280,7 @@ static ADDRESS_MAP_START( legionna_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x105000, 0x105fff) AM_READ(MRA16_RAM)	/* spriteram */
 	AM_RANGE(0x106000, 0x106fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x107000, 0x107fff) AM_READ(MRA16_RAM)	/* palette */
-	AM_RANGE(0x108000, 0x113fff) AM_READ(MRA16_RAM)	/* main ram */
+	AM_RANGE(0x108000, 0x11ffff) AM_READ(MRA16_RAM)	/* main ram */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( legionna_writemem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -672,7 +2302,7 @@ static ADDRESS_MAP_START( legionna_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x105000, 0x105fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x106000, 0x106fff) AM_WRITE(MWA16_RAM)	/* is this used outside inits ?? */
 	AM_RANGE(0x107000, 0x107fff) AM_WRITE(legionna_paletteram16_w) AM_BASE(&paletteram16)	/* palette xRRRRxGGGGxBBBBx ? */
-	AM_RANGE(0x108000, 0x113fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x108000, 0x11ffff) AM_WRITE(MWA16_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( heatbrl_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -702,29 +2332,61 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( godzilla_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x100000, 0x1007ff) AM_READ(godzilla_cop_mcu_r)	/* COP mcu */
-	AM_RANGE(0x101000, 0x1017ff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x101800, 0x101fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x100800, 0x100fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x101000, 0x101fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x102000, 0x102fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x103000, 0x103fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x104000, 0x104fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x105000, 0x107fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x105000, 0x106fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x107000, 0x107fff) AM_READ(MRA16_RAM) /*Ani-DSP ram*/
 	AM_RANGE(0x108000, 0x11ffff) AM_READ(MRA16_RAM)	/* main ram */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( godzilla_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x1007ff) AM_WRITE(godzilla_cop_mcu_w) AM_BASE(&mcu_ram)	/* COP mcu */
-	AM_RANGE(0x101000, 0x1017ff) AM_WRITE(legionna_background_w) AM_BASE(&legionna_back_data)
-	AM_RANGE(0x101800, 0x101fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x102000, 0x102fff) AM_WRITE(legionna_text_w) AM_BASE(&legionna_textram)
-	AM_RANGE(0x103000, 0x1037ff) AM_WRITE(legionna_midground_w) AM_BASE(&legionna_mid_data)
-	AM_RANGE(0x103800, 0x103fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x100800, 0x100fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x101000, 0x101fff) AM_WRITE(legionna_background_w) AM_BASE(&legionna_back_data)
+	AM_RANGE(0x102000, 0x1027ff) AM_WRITE(legionna_midground_w) AM_BASE(&legionna_mid_data)
+	AM_RANGE(0x102800, 0x1037ff) AM_WRITE(legionna_text_w) AM_BASE(&legionna_textram)
+	AM_RANGE(0x103800, 0x103fff) AM_WRITE(legionna_foreground_w) AM_BASE(&legionna_fore_data)
 	AM_RANGE(0x104000, 0x104fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x105000, 0x105fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x106000, 0x1067ff) AM_WRITE(legionna_foreground_w) AM_BASE(&legionna_fore_data)
+	AM_RANGE(0x106000, 0x1067ff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x106800, 0x106fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x107000, 0x107fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x107000, 0x107fff) AM_WRITE(MWA16_RAM) /*Ani-DSP ram*/
 	AM_RANGE(0x108000, 0x11ffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( denjinmk_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x1007ff) AM_READ(denjinmk_cop_mcu_r)	/* COP mcu */
+	AM_RANGE(0x100800, 0x100fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x101000, 0x101fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x102000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x104000, 0x104fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x105000, 0x105fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x106000, 0x106fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x107000, 0x107fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x108000, 0x11dfff) AM_READ(MRA16_RAM)	/* main ram */
+	AM_RANGE(0x11e000, 0x11efff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x11f000, 0x11ffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( denjinmk_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x1007ff) AM_WRITE(denjinmk_cop_mcu_w) AM_BASE(&mcu_ram)	/* COP mcu */
+	AM_RANGE(0x100800, 0x100fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x101000, 0x1017ff) AM_WRITE(legionna_background_w) AM_BASE(&legionna_back_data)
+	AM_RANGE(0x101800, 0x101fff) AM_WRITE(legionna_foreground_w) AM_BASE(&legionna_fore_data)
+	AM_RANGE(0x102000, 0x1027ff) AM_WRITE(legionna_midground_w) AM_BASE(&legionna_mid_data)
+	AM_RANGE(0x102800, 0x103fff) AM_WRITE(legionna_text_w) AM_BASE(&legionna_textram)
+	AM_RANGE(0x104000, 0x104fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x105000, 0x105fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x106000, 0x107fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x108000, 0x11dfff) AM_WRITE(MWA16_RAM)	/* main ram */
+	AM_RANGE(0x11e000, 0x11efff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x11f000, 0x11ffff) AM_WRITE(MWA16_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sdgndmrb_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -734,8 +2396,8 @@ static ADDRESS_MAP_START( sdgndmrb_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x101000, 0x1017ff) AM_READ(MRA16_RAM)	/* 32x16 bg layer, 16x16 tiles */
 	AM_RANGE(0x101800, 0x101fff) AM_READ(MRA16_RAM)	/* 32x16 bg layer, 16x16 tiles */
 	AM_RANGE(0x102000, 0x102fff) AM_READ(MRA16_RAM)	/* 64x32 text/front layer, 8x8 tiles */
-	AM_RANGE(0x103000, 0x103fff) AM_READ(MRA16_RAM)	/* spriteram */
-	AM_RANGE(0x104000, 0x104fff) AM_READ(MRA16_RAM)	/* palette */
+	AM_RANGE(0x103000, 0x103fff) AM_READ(MRA16_RAM)	/* palette */
+	AM_RANGE(0x104000, 0x104fff) AM_READ(MRA16_RAM)	/* palette mirror */
 	AM_RANGE(0x105000, 0x105fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x107000, 0x107fff) AM_READ(MRA16_RAM)	/* extra spriteram? */
 	AM_RANGE(0x108000, 0x11ffff) AM_READ(MRA16_RAM)	/* main ram */
@@ -756,33 +2418,48 @@ static ADDRESS_MAP_START( sdgndmrb_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x108000, 0x11ffff) AM_WRITE(MWA16_RAM)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( cupsoc_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x100000, 0x1007ff) AM_READ(sdgndmrb_cop_mcu_r)	/* COP mcu */
-	AM_RANGE(0x100800, 0x100fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x101000, 0x101fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x102000, 0x102fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x103000, 0x103fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x104000, 0x104fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x105000, 0x105fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x106000, 0x106fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x107000, 0x107fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x108000, 0x11ffff) AM_READ(MRA16_RAM)
+static ADDRESS_MAP_START( cupsoc_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM
+	AM_RANGE(0x100000, 0x1007ff) AM_READWRITE(copdx_0_r,copdx_0_w) AM_BASE(&mcu_ram)
+	AM_RANGE(0x100800, 0x100fff) AM_READWRITE(MRA16_RAM,legionna_background_w) AM_BASE(&legionna_back_data)
+	AM_RANGE(0x101000, 0x1017ff) AM_READWRITE(MRA16_RAM,legionna_foreground_w) AM_BASE(&legionna_fore_data)
+	AM_RANGE(0x101800, 0x101fff) AM_READWRITE(MRA16_RAM,legionna_midground_w) AM_BASE(&legionna_mid_data)
+	AM_RANGE(0x102000, 0x102fff) AM_READWRITE(MRA16_RAM,legionna_text_w) AM_BASE(&legionna_textram)
+	AM_RANGE(0x103000, 0x103fff) AM_READWRITE(MRA16_RAM,paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x104000, 0x104fff) AM_READWRITE(MRA16_RAM,paletteram16_xBBBBBGGGGGRRRRR_word_w) /*<according to the debug mode,there is a DMA that copies from here to the paletteram>*/
+	AM_RANGE(0x105000, 0x106fff) AM_RAM
+	AM_RANGE(0x107000, 0x1077ff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x107800, 0x107fff) AM_RAM /*Ani Dsp(?) Ram*/
+	AM_RANGE(0x108000, 0x10ffff) AM_RAM
+	AM_RANGE(0x110000, 0x119fff) AM_RAM
+	AM_RANGE(0x11a000, 0x11dfff) AM_RAM//AM_READWRITE(copdxbl_1_r,copdxbl_1_w) AM_BASE(&work_ram)/*shared with the COP MCU too!*/
+	AM_RANGE(0x11e000, 0x11ffff) AM_RAM /*Stack Ram*/
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( cupsoc_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x1007ff) AM_WRITE(sdgndmrb_cop_mcu_w) AM_BASE(&mcu_ram)	/* COP mcu */
-	AM_RANGE(0x100800, 0x100fff) AM_WRITE(legionna_background_w) AM_BASE(&legionna_back_data)
-	AM_RANGE(0x101000, 0x1017ff) AM_WRITE(legionna_foreground_w) AM_BASE(&legionna_fore_data)
-	AM_RANGE(0x101800, 0x101fff) AM_WRITE(legionna_midground_w) AM_BASE(&legionna_mid_data)
-	AM_RANGE(0x102000, 0x102fff) AM_WRITE(legionna_text_w) AM_BASE(&legionna_textram)
-	AM_RANGE(0x103000, 0x103fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x104000, 0x104fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x105000, 0x105fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x106000, 0x106fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x107000, 0x107fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x108000, 0x11ffff) AM_WRITE(MWA16_RAM)
+static ADDRESS_MAP_START( cupsocbl_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM
+	AM_RANGE(0x100000, 0x1007ff) AM_READWRITE(copdxbl_0_r,copdxbl_0_w) AM_BASE(&mcu_ram)
+	AM_RANGE(0x100800, 0x100fff) AM_READWRITE(MRA16_RAM,legionna_background_w) AM_BASE(&legionna_back_data)
+	AM_RANGE(0x101000, 0x1017ff) AM_READWRITE(MRA16_RAM,legionna_foreground_w) AM_BASE(&legionna_fore_data)
+	AM_RANGE(0x101800, 0x101fff) AM_READWRITE(MRA16_RAM,legionna_midground_w) AM_BASE(&legionna_mid_data)
+	AM_RANGE(0x102000, 0x102fff) AM_READWRITE(MRA16_RAM,legionna_text_w) AM_BASE(&legionna_textram)
+	AM_RANGE(0x103000, 0x103fff) AM_READWRITE(MRA16_RAM,paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x104000, 0x104fff) AM_READWRITE(MRA16_RAM,paletteram16_xBBBBBGGGGGRRRRR_word_w) /*<according to the debug mode,there is a DMA that copies from here to the paletteram>*/
+	AM_RANGE(0x105000, 0x106fff) AM_RAM
+	AM_RANGE(0x107000, 0x1077ff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x107800, 0x107fff) AM_RAM /*Ani Dsp(?) Ram*/
+	AM_RANGE(0x108000, 0x10ffff) AM_RAM
+	AM_RANGE(0x110000, 0x119fff) AM_RAM
+	AM_RANGE(0x11a000, 0x11dfff) AM_RAM//AM_READWRITE(copdxbl_1_r,copdxbl_1_w) AM_BASE(&work_ram)/*shared with the COP MCU too!*/
+	AM_RANGE(0x11e000, 0x11ffff) AM_RAM /*Stack Ram*/
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( cupsocbl_sound_mem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x87ff) AM_RAM
+	AM_RANGE(0x9000, 0x9000) AM_READWRITE(OKIM6295_status_0_r, OKIM6295_data_0_w)
+	AM_RANGE(0x9800, 0x9800) AM_READWRITE(OKIM6295_status_1_r, OKIM6295_data_1_w)
+	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 /*****************************************************************************/
@@ -1134,7 +2811,7 @@ INPUT_PORTS_START( sdgndmrb )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW,  IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW,  IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW,  IPT_BUTTON3 ) PORT_PLAYER(1) //debug button
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
@@ -1275,27 +2952,26 @@ INPUT_PORTS_START( cupsoc )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW,  IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW,  IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW,  IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW,  IPT_COIN1 )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW,  IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW,  IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW,  IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW,  IPT_COIN2 )
 
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN ) //TEST
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE2 )
+	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0xfc00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
@@ -1304,16 +2980,16 @@ INPUT_PORTS_START( cupsoc )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW,  IPT_BUTTON1  ) PORT_PLAYER(3)
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW,  IPT_BUTTON2  ) PORT_PLAYER(3)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW,  IPT_BUTTON3 ) PORT_PLAYER(3)
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW,  IPT_UNKNOWN ) //TEST
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(4)
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(4)
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(4)
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(4)
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW,  IPT_BUTTON1 ) PORT_PLAYER(4)
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW,  IPT_BUTTON2 ) PORT_PLAYER(4)
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW,  IPT_BUTTON3 ) PORT_PLAYER(4)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW,  IPT_SERVICE1 )
 
 	PORT_START
 	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
@@ -1426,6 +3102,17 @@ static const gfx_decode heatbrl_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static const gfx_decode sdgndmrb_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &heatbrl_charlayout,    48*16, 16 },
+	{ REGION_GFX3, 0, &legionna_tilelayout,    0*16, 16 },
+	{ REGION_GFX4, 0, &legionna_char2layout,  32*16, 16 },	/* unused */
+	{ REGION_GFX2, 0, &legionna_spritelayout,  0*16, 8*16 },
+	{ REGION_GFX5, 0, &legionna_tilelayout,   32*16, 16 },
+	{ REGION_GFX6, 0, &legionna_tilelayout,   16*16, 16 },
+	{ -1 } /* end of array */
+};
+
 /*****************************************************************************/
 
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
@@ -1444,15 +3131,15 @@ static MACHINE_DRIVER_START( legionna )
 
 	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
 	MDRV_MACHINE_RESET(seibu_sound_1)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(legionna_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(128*16)
 
@@ -1473,15 +3160,15 @@ static MACHINE_DRIVER_START( heatbrl )
 
 	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
 	MDRV_MACHINE_RESET(seibu_sound_1)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(heatbrl_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(128*16)
 
@@ -1501,19 +3188,47 @@ static MACHINE_DRIVER_START( godzilla )
 
 	SEIBU2_SOUND_SYSTEM_CPU(14318180/4)
 
-	MDRV_FRAMES_PER_SECOND(61)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_RESET(seibu_sound_1)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
+	MDRV_SCREEN_REFRESH_RATE(61)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(heatbrl_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128*16)
+
+	MDRV_VIDEO_START(legionna)
+	MDRV_VIDEO_UPDATE(godzilla)
+
+	/* sound hardware */
+	SEIBU_SOUND_SYSTEM_YM2151_INTERFACE(14318180/4,1320000,1)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( denjinmk )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 20000000/2)
+	MDRV_CPU_PROGRAM_MAP(denjinmk_readmem,denjinmk_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	SEIBU2_SOUND_SYSTEM_CPU(14318180/4)
 
 	MDRV_MACHINE_RESET(seibu_sound_1)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_SCREEN_REFRESH_RATE(61)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 40*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(heatbrl_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(128*16)
 
-	MDRV_VIDEO_START(legionna)
+	MDRV_VIDEO_START(denjinmk)
 	MDRV_VIDEO_UPDATE(godzilla)
 
 	/* sound hardware */
@@ -1529,16 +3244,16 @@ static MACHINE_DRIVER_START( sdgndmrb )
 
 	SEIBU2_SOUND_SYSTEM_CPU(14318180/4)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
 	MDRV_MACHINE_RESET(seibu_sound_1)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(heatbrl_gfxdecodeinfo)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 40*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(sdgndmrb_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(128*16)
 
 	MDRV_VIDEO_START(legionna)
@@ -1548,24 +3263,25 @@ static MACHINE_DRIVER_START( sdgndmrb )
 	SEIBU_SOUND_SYSTEM_YM2151_INTERFACE(14318180/4,1320000,1)
 MACHINE_DRIVER_END
 
+
 static MACHINE_DRIVER_START( cupsoc )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,20000000/2)
-	MDRV_CPU_PROGRAM_MAP(cupsoc_readmem,cupsoc_writemem)
+	MDRV_CPU_PROGRAM_MAP(cupsoc_mem,0)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)/* VBL */
 
 	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_RESET(seibu_sound_1)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(heatbrl_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(128*16)
 
@@ -1574,6 +3290,47 @@ static MACHINE_DRIVER_START( cupsoc )
 
 	/* sound hardware */
 	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE(14318180/4,8000,1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cupsocbl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,12000000)
+	MDRV_CPU_PROGRAM_MAP(cupsocbl_mem,0)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1) /* VBL */
+
+	/*Different Sound hardware*/
+	//SEIBU_SOUND_SYSTEM_CPU(14318180/4)
+	MDRV_CPU_ADD(Z80,14318180/4)
+	MDRV_CPU_PROGRAM_MAP(cupsocbl_sound_mem,0)
+	//MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	//MDRV_MACHINE_INIT(seibu_sound_1)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 40*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(heatbrl_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128*16)
+
+	MDRV_VIDEO_START(cupsoc)
+	MDRV_VIDEO_UPDATE(sdgndmrb)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2_pin7high)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -1823,10 +3580,10 @@ ROM_START( godzilla )
 	ROM_LOAD( "10.615",       0x010000, 0x010000, CRC(9c22bc13) SHA1(a94d9ed63ee1f5e358ebcaf517e6a1c986fa5d96) )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "obj1.748",     0x000000, 0x100000, CRC(146bacb0) SHA1(1331f04f3d9e6236cec7524e9da1782ed1916ff7) )
-	ROM_LOAD( "obj2.756",     0x100000, 0x100000, CRC(91c2a6a5) SHA1(0e9d9d94c3d99a54c6f9f99270e65682eb0a8b6a) )
-	ROM_LOAD( "obj3.743",     0x200000, 0x100000, CRC(5af0114e) SHA1(9362de9ade6db67ab0e3a2dfea580e688bbf7729) )
-	ROM_LOAD( "obj4.757",     0x300000, 0x100000, CRC(7448b054) SHA1(5c08319329eb8c90b63e5393c0011bc39911ebbb) )
+	ROM_LOAD( "obj1.748",     0x300000, 0x100000, CRC(146bacb0) SHA1(1331f04f3d9e6236cec7524e9da1782ed1916ff7) )
+	ROM_LOAD( "obj2.756",     0x200000, 0x100000, CRC(91c2a6a5) SHA1(0e9d9d94c3d99a54c6f9f99270e65682eb0a8b6a) )
+	ROM_LOAD( "obj3.743",     0x100000, 0x100000, CRC(5af0114e) SHA1(9362de9ade6db67ab0e3a2dfea580e688bbf7729) )
+	ROM_LOAD( "obj4.757",     0x000000, 0x100000, CRC(7448b054) SHA1(5c08319329eb8c90b63e5393c0011bc39911ebbb) )
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* MBK tiles */
 	ROM_LOAD( "bg1.618",      0x000000, 0x100000, CRC(78fbbb84) SHA1(b1f5d4041bb88c5b2a561949239b11c3fd7c5fbc) )
@@ -1940,10 +3697,10 @@ ROM_START( denjinmk )
 	ROM_LOAD( "rom8.615",       0x010000, 0x010000, CRC(cc36af0d) SHA1(69c2ae38f03be79be4d138fcc73a6a86407eb285) )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "obj-0-3.748",     0x000000, 0x100000, CRC(3dcc7b04) SHA1(3c3ad5ddc18a42046348dcb54e65f6173c003d72) )
-	ROM_LOAD( "obj-4-5.756",     0x100000, 0x100000, CRC(01f8d4e6) SHA1(25b69da693be8c3404f750b419c330a7a56e88ec) )
-	ROM_LOAD( "obj-6-7.743",     0x200000, 0x100000, CRC(e5805757) SHA1(9d392c27eef7c1fcda560dac17ba9d7ae2287ac8) )
-	ROM_LOAD( "obj-8-9.757",     0x300000, 0x100000, CRC(c8f7e1c9) SHA1(a746d187b50a0ecdd5a7f687a2601e5dc8bfe272) )
+/**/ROM_LOAD( "obj-0-3.748",     0x000000, 0x100000, CRC(3dcc7b04) SHA1(3c3ad5ddc18a42046348dcb54e65f6173c003d72) )
+	ROM_LOAD( "obj-8-9.757",     0x100000, 0x100000, CRC(c8f7e1c9) SHA1(a746d187b50a0ecdd5a7f687a2601e5dc8bfe272) )
+	ROM_LOAD( "obj-4-5.756",     0x200000, 0x100000, CRC(01f8d4e6) SHA1(25b69da693be8c3404f750b419c330a7a56e88ec) )
+	ROM_LOAD( "obj-6-7.743",     0x300000, 0x100000, CRC(e5805757) SHA1(9d392c27eef7c1fcda560dac17ba9d7ae2287ac8) )
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* MBK tiles */
 	ROM_LOAD( "bg-1-ab.618",      0x000000, 0x100000, CRC(eaad151a) SHA1(bdd1d83ee8497efe20f21baf873e786446372bcb) )
@@ -1955,7 +3712,7 @@ ROM_START( denjinmk )
 	ROM_LOAD( "bg-3-ab.619",      0x000000, 0x100000,  CRC(de7366ee) SHA1(0c3969d15f3cd963e579d4164b6e0a6b4012c9c6) )
 
 	ROM_REGION( 0x100000, REGION_GFX6, ROMREGION_DISPOSE )	/* LBK tiles */
-	ROM_COPY( REGION_GFX3, 0x00000, 0x00000, 0x100000 )
+	ROM_COPY( REGION_GFX4, 0x00000, 0x00000, 0x100000 )
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "rom6.922",      0x000000, 0x040000, CRC(09e13213) SHA1(9500e057104c6b83da0467938e46d9efa2f49f4c) )
@@ -2047,7 +3804,8 @@ ROM_START( sdgndmrb )
 	ROM_LOAD( "rb-bg-2.619",  0x000000, 0x100000, CRC(a9b5c85e) SHA1(0ae044e05730e8080d94f1f6758f8dd051b03c41) )
 
 	ROM_REGION( 0x100000, REGION_GFX6, ROMREGION_DISPOSE )
-	ROM_COPY( REGION_GFX5, 0x00000, 0x00000, 0x100000 )
+//#define ROM_COPY(rgn,srcoffset,offset,length)
+	ROM_COPY( REGION_GFX3, 0x80000, 0x00000, 0x80000 )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	 /* ADPCM samples */
 	ROM_LOAD( "rb-ad.922",    0x000000, 0x020000, CRC(a364cb42) SHA1(c527b39a1627ecee20a2c4df4cf2b5f2ba729081) )
@@ -2158,6 +3916,86 @@ ROM_START( olysoc92 )
 	ROM_LOAD( "seibu8.7a",    0x000000, 0x040000, CRC(6f594808) SHA1(218aa12068aa587c7656355f6a6b86d97c868774) )
 ROM_END
 
+/*
+
+Seibu Cup Soccer - Seibu - Bootleg
+
+2 boards
+
+1st board
+
+(snd)
+1 x z80
+1 x oki 6295
+sc_01 (prg)
+sc_02 and sc_03 (data)
+
+(prg)
+1 x 68000
+sc_04 and sc_05
+
+(gfx)
+2 x ti tpc1020
+from sc_06 to sc_11
+
+2nd board
+
+(gfx)
+1 x actel pl84c
+from sc_12 to sc_15
+
+*/
+
+ROM_START( cupsocbl )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "sc_04.bin", 0x00001, 0x80000, CRC(22566087) SHA1(4392f46ca50cc9947823a5190aa25f5e9654aa0d) )
+	ROM_LOAD16_BYTE( "sc_05.bin", 0x00000, 0x80000, CRC(2f977dff) SHA1(4d8d6e7d06ce17bb7292072965911f8b1f1067e2) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Z80 code */
+	/*First part is full of $FF,a bad dump?*/
+	ROM_LOAD( "sc_01.bin",    0x000000, 0x08000, CRC(cea39d6d) SHA1(f0b79c03ffafdd1e57673d6d4836becbe415110b) )
+	ROM_CONTINUE(			  0x000000, 0x08000 )
+
+	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "seibu6.7x",    0x000000, 0x010000, CRC(21c1e1b8) SHA1(30928c8ef98bf32ba0bf795ddadba1c95fcffe9d) )
+	ROM_LOAD( "seibu5.7y",    0x010000, 0x010000, CRC(955d9fd7) SHA1(782451e8e85f7ba285d6cacd9d3fdcf48bde60bc) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "obj.8c",       0x000000, 0x100000, CRC(e2377895) SHA1(1d1c7f31a08a464139cdaf383a5e1ade0717dc9f) )
+	ROM_RELOAD(               0x100000, 0x100000 )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* MBK tiles */
+	ROM_LOAD( "back-1.4y",    0x000000, 0x100000, CRC(3dfea0ec) SHA1(8f41d267e488e07831946ef898d593897f10bfe2) )
+
+	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE )	/* not used */
+	ROM_COPY(REGION_GFX3,0x00000,0x00000,0x100000)
+
+	ROM_REGION( 0x080000, REGION_GFX5, ROMREGION_DISPOSE )	/* BK3 tiles */
+	ROM_LOAD( "back-2.6y",    0x000000, 0x080000, CRC(e07712af) SHA1(2a0285d6a1e0141838e898252b8d922a6263b05f) )
+
+	ROM_REGION( 0x080000, REGION_GFX6, ROMREGION_DISPOSE )	/* LBK tiles */
+	ROM_COPY( REGION_GFX5, 0x00000, 0x00000, 0x080000 )
+
+	/*bootleg GFX roms,for now load the original roms*/
+	ROM_REGION( 0x500000, REGION_USER2, 0 )
+	ROM_LOAD( "sc_07.bin", 0x000000, 0x080000, CRC(dcb29d01) SHA1(72b4234622605f0ab03f21fdb6a61c6dac36000d) )
+	ROM_LOAD( "sc_06.bin", 0x080000, 0x080000, CRC(2dc70e05) SHA1(f1d0beb8428a7e1d7c7818e6719abdc543b2fa80) )
+	ROM_LOAD( "sc_13.bin", 0x100000, 0x010000, CRC(229bddd8) SHA1(0924bf29db9c5a970546f154e7752697fdce6a58) )
+	ROM_LOAD( "sc_12.bin", 0x110000, 0x010000, CRC(dabfa826) SHA1(0db587c846755491b169ef7751ba8e7cdc2607e6) )
+	ROM_LOAD( "sc_08.bin", 0x200000, 0x080000, CRC(637120f3) SHA1(b4b2ad192e46ff80d4cb440d7fb6dac215a353ed) )
+	ROM_LOAD( "sc_09.bin", 0x280000, 0x080000, CRC(695b6342) SHA1(dfccb43789021ba2568b9284ae61e64f7f89b152) )
+	ROM_LOAD( "sc_14.bin", 0x300000, 0x080000, CRC(566086c2) SHA1(b7d09ce978f99ecc0d1975b31330ed49317701d5) )
+	ROM_LOAD( "sc_15.bin", 0x380000, 0x080000, CRC(8fd87e65) SHA1(acc9fd0289fa9ab60bec16d3e642039380e5180a) )
+	ROM_LOAD( "sc_10.bin", 0x400000, 0x080000, CRC(27e172b8) SHA1(ed86db2f42c8061607d46f2407b0130aaf692a02) )
+	ROM_LOAD( "sc_11.bin", 0x480000, 0x080000, CRC(0cd5ca5e) SHA1(a59665e543e9383355de2576e6693348ec356591) )
+
+	ROM_REGION( 0x020000, REGION_SOUND2, 0 )	/* ADPCM samples */
+	ROM_LOAD( "sc_02.bin",    0x000000, 0x20000, CRC(a70d4f03) SHA1(c2482e624c8a828a94206a36d10c1021ad8ca1d0) )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) // sound related ?
+	ROM_LOAD( "sc_03.bin",    0x000000, 0x080000, CRC(6e254d12) SHA1(857779dbd276b688201a8ea3afd5817e38acad2e) )
+ROM_END
+
 static DRIVER_INIT( legionna )
 {
 	/* Unscramble gfx: quarters 1&2 swapped, quarters 3&4 swapped */
@@ -2178,6 +4016,18 @@ static DRIVER_INIT( legionna )
 	}
 }
 
+#define CUPSOC_DEBUG_MODE 1
+
+static DRIVER_INIT( cupsoc )
+{
+	#if CUPSOC_DEBUG_MODE
+	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU1);
+
+	/*Press p1 button 3 to enter into debug mode during gameplay*/
+	ROM[0xffffb/2] = 0x0000;
+	ROM[0xffff7/2] = 0x0000;
+	#endif
+}
 
 
 GAME( 1992, legionna, 0,        legionna, legionna, legionna, ROT0, "Tad", "Legionnaire (World)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
@@ -2188,9 +4038,10 @@ GAME( 1992, heatbrlo, heatbrl,  heatbrl,  heatbrl,  0,        ROT0, "Tad", "Heat
 GAME( 1992, heatbrlu, heatbrl,  heatbrl,  heatbrl,  0,        ROT0, "Tad", "Heated Barrel (US)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 
 GAME( 1993, godzilla, 0,        godzilla, godzilla, 0,        ROT0, "Banpresto", "Godzilla", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1993, denjinmk, 0,        godzilla, godzilla, 0,        ROT0, "Banpresto", "Denjin Makai", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1993, sdgndmrb, 0,        sdgndmrb, sdgndmrb, 0,	       ROT0, "Banpresto", "SD Gundam Sangokushi Rainbow Tairiku Senki", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1993, sdgndmrb, 0,        sdgndmrb, sdgndmrb, 0, 		  ROT0, "Banpresto", "SD Gundam Sangokushi Rainbow Tairiku Senki", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1993, denjinmk, 0,        denjinmk, godzilla, 0,        ROT0, "Banpresto", "Denjin Makai", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 
 GAME( 1992, cupsoc,   0,        cupsoc,  cupsoc,    0,        ROT0, "Seibu", "Seibu Cup Soccer", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAME( 1992, cupsoc2,  cupsoc,   cupsoc,  cupsoc,    0,        ROT0, "Seibu", "Seibu Cup Soccer (set 2)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAME( 1992, olysoc92, cupsoc,   cupsoc,  cupsoc,    0,        ROT0, "Seibu", "Olympic Soccer '92", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1992, cupsocbl, cupsoc,   cupsocbl, cupsoc,   cupsoc, ROT0, "bootleg", "Seibu Cup Soccer (bootleg)", GAME_NOT_WORKING | GAME_NO_SOUND )

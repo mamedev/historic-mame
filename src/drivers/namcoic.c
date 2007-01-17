@@ -271,7 +271,7 @@ static void zdrawgfxzoom(
 		int scalex, int scaley, int zpos )
 {
 	if (!scalex || !scaley) return;
-	if (dest_bmp->depth == 15 || dest_bmp->depth == 16)
+	if (dest_bmp->bpp == 16)
 	{
 		if( gfx && gfx->colortable )
 		{
@@ -348,8 +348,8 @@ static void zdrawgfxzoom(
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-								UINT8 *pri = priority_bitmap->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(priority_bitmap, y, 0);
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
 								{
@@ -1186,7 +1186,7 @@ DrawRozHelper(
 	const struct RozParam *rozInfo )
 {
 
-	if( bitmap->depth == 15 || bitmap->depth == 16 )
+	if( bitmap->bpp == 16 )
 	{
 		UINT32 size_mask = rozInfo->size-1;
 		mame_bitmap *srcbitmap = tilemap_get_pixmap( tmap );
@@ -1200,14 +1200,14 @@ DrawRozHelper(
 			int x = sx;
 			UINT32 cx = startx;
 			UINT32 cy = starty;
-			UINT16 *dest = ((UINT16 *)bitmap->line[sy]) + sx;
+			UINT16 *dest = BITMAP_ADDR16(bitmap, sy, sx);
 			while( x <= clip->max_x )
 			{
 				UINT32 xpos = (((cx>>16)&size_mask) + rozInfo->left)&0xfff;
 				UINT32 ypos = (((cy>>16)&size_mask) + rozInfo->top)&0xfff;
-				if( ((UINT8 *)transparency_bitmap->line[ypos])[xpos]&TILE_FLAG_FG_OPAQUE )
+				if( *BITMAP_ADDR8(transparency_bitmap, ypos, xpos)&TILE_FLAG_FG_OPAQUE )
 				{
-					*dest = ((UINT16 *)srcbitmap->line[ypos])[xpos]+rozInfo->color;
+					*dest = *BITMAP_ADDR16(srcbitmap,ypos,xpos)+rozInfo->color;
 				}
 				cx += rozInfo->incxx;
 				cy += rozInfo->incxy;
@@ -1647,11 +1647,11 @@ namco_road_draw( mame_bitmap *bitmap, const rectangle *cliprect, int pri )
 			if( zoomx )
 			{
 				unsigned sourcey = mpRoadRAM[0x1fc00/2+i+15]+yscroll;
-				const UINT16 *pSourceGfx = pSourceBitmap->line[sourcey&(ROAD_TILEMAP_HEIGHT-1)];
+				const UINT16 *pSourceGfx = BITMAP_ADDR16(pSourceBitmap, sourcey&(ROAD_TILEMAP_HEIGHT-1), 0);
 				unsigned dsourcex = (ROAD_TILEMAP_WIDTH<<16)/zoomx;
 				if( dsourcex )
 				{
-					UINT16 *pDest = bitmap->line[i];
+					UINT16 *pDest = BITMAP_ADDR16(bitmap, i, 0);
 					unsigned sourcex = 0;
 					int numpixels = (44*ROAD_TILE_SIZE<<16)/dsourcex;
 					int clipPixels;

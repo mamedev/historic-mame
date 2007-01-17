@@ -898,16 +898,17 @@ static MACHINE_DRIVER_START( coh100 )
 	MDRV_CPU_PROGRAM_MAP( namcos11_map, 0 )
 	MDRV_CPU_VBLANK_INT( namcos11_vblank, 1 )
 
-	MDRV_FRAMES_PER_SECOND( 60 )
-	MDRV_VBLANK_DURATION( 0 )
+	MDRV_SCREEN_REFRESH_RATE( 60 )
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC( 0 ))
 
 	MDRV_MACHINE_RESET( namcos11 )
 	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
+	MDRV_SCREEN_VISIBLE_AREA( 0, 639, 0, 479 )
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
@@ -942,20 +943,6 @@ static int lightguny( const char *tag )
 	y /= ( portmax - portmin );
 	return Machine->screen[0].visarea.min_y + y;
 }
-
-static VIDEO_UPDATE( lightgun )
-{
-	video_update_psx( machine, screen, bitmap, cliprect );
-
-	draw_crosshair( bitmap, lightgunx( "GUN1X" ), lightguny( "GUN1Y" ), cliprect, 0 );
-	draw_crosshair( bitmap, lightgunx( "GUN2X" ), lightguny( "GUN2Y" ), cliprect, 1 );
-	return 0;
-}
-
-static MACHINE_DRIVER_START( coh110g )
-	MDRV_IMPORT_FROM( coh110 )
-	MDRV_VIDEO_UPDATE( lightgun )
-MACHINE_DRIVER_END
 
 INPUT_PORTS_START( namcos11 )
 	PORT_START_TAG( "SWITCH" )
@@ -1711,4 +1698,4 @@ GAME( 1996, danceyes,  0,        coh110, namcos11, namcos11, ROT0, "Namco", "Dan
 GAME( 1996, pocketrc,  0,        coh110, pocketrc, namcos11, ROT0, "Namco", "Pocket Racer (PKR1/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1997, starswep,  0,        coh110, namcos11, namcos11, ROT0, "Axela/Namco", "Star Sweep (STP1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1998, myangel3,  0,        coh110, myangel3, namcos11, ROT0, "Namco", "Kosodate Quiz My Angel 3 (KQT1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1999, ptblnk2a,  ptblank2, coh110g, ptblnk2a, namcos11, ROT0, "Namco", "Point Blank 2 (GNB3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1999, ptblnk2a,  ptblank2, coh110, ptblnk2a, namcos11, ROT0, "Namco", "Point Blank 2 (GNB3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

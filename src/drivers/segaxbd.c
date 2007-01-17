@@ -443,19 +443,6 @@ static WRITE16_HANDLER( loffire_sync0_w )
 }
 
 
-static VIDEO_UPDATE( loffire )
-{
-	int x1 = readinputportbytag("ADC0");
-	int y1 = readinputportbytag("ADC1");
-	int x2 = readinputportbytag("ADC2");
-	int y2 = readinputportbytag("ADC3");
-	video_update_xboard(machine, screen, bitmap, cliprect);
-	draw_crosshair(bitmap, x1 * (Machine->screen[0].width - 1) / 255, y1 * (Machine->screen[0].height - 1) / 255, cliprect, 0);
-	draw_crosshair(bitmap, x2 * (Machine->screen[0].width - 1) / 255, y2 * (Machine->screen[0].height - 1) / 255, cliprect, 1);
-	return 0;
-}
-
-
 
 /*************************************
  *
@@ -1131,8 +1118,8 @@ static MACHINE_DRIVER_START( xboard )
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_portmap,0)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(1000000 * (262 - 224) / (262 * 60)))
 
 	MDRV_MACHINE_RESET(xboard)
 	MDRV_NVRAM_HANDLER(xboard)
@@ -1140,8 +1127,9 @@ static MACHINE_DRIVER_START( xboard )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(40*8, 28*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(8192*3)
 
@@ -1169,13 +1157,6 @@ MACHINE_DRIVER_START( smgp )
 	MDRV_CPU_ADD_TAG("comm", Z80, 4000000)
 	MDRV_CPU_PROGRAM_MAP(smgp_comm_map,0)
 	MDRV_CPU_IO_MAP(smgp_comm_portmap,0)
-MACHINE_DRIVER_END
-
-
-MACHINE_DRIVER_START( loffire )
-	MDRV_IMPORT_FROM(xboard)
-//  MDRV_INTERLEAVE(1750)
-	MDRV_VIDEO_UPDATE(loffire)
 MACHINE_DRIVER_END
 
 
@@ -2408,9 +2389,9 @@ GAME( 1987, aburner2, 0,        xboard,  aburner2, aburner2,       ROT0, "Sega",
 GAME( 1987, aburner,  aburner2, xboard,  aburner,  aburner2,       ROT0, "Sega", "After Burner (Japan)", 0 )
 GAME( 1987, thndrbld, 0,        xboard,  thndrbld, generic_xboard, ROT0, "Sega", "Thunder Blade (upright, FD1094 317-0056)", 0 )
 GAME( 1987, thndrbd1, thndrbld, xboard,  thndrbd1, generic_xboard, ROT0, "Sega", "Thunder Blade (deluxe/standing, unprotected)", 0 )
-GAME( 1989, loffire,  0,        loffire, loffire,  loffire,        ROT0, "Sega", "Line of Fire / Bakudan Yarou (World, FD1094 317-0136)", 0 )
-GAME( 1989, loffireu, loffire,  loffire, loffire,  loffire,        ROT0, "Sega", "Line of Fire / Bakudan Yarou (US, FD1094 317-0135)", 0 )
-GAME( 1989, loffirej, loffire,  loffire, loffire,  loffire,        ROT0, "Sega", "Line of Fire / Bakudan Yarou (Japan, FD1094 317-0134)", 0 )
+GAME( 1989, loffire,  0,        xboard,  loffire,  loffire,        ROT0, "Sega", "Line of Fire / Bakudan Yarou (World, FD1094 317-0136)", 0 )
+GAME( 1989, loffireu, loffire,  xboard,  loffire,  loffire,        ROT0, "Sega", "Line of Fire / Bakudan Yarou (US, FD1094 317-0135)", 0 )
+GAME( 1989, loffirej, loffire,  xboard,  loffire,  loffire,        ROT0, "Sega", "Line of Fire / Bakudan Yarou (Japan, FD1094 317-0134)", 0 )
 GAME( 1989, rachero,  0,        xboard,  rachero,  generic_xboard, ROT0, "Sega", "Racing Hero (FD1094 317-0144)", 0 )
 GAME( 1989, smgp,     0,        smgp,    smgp,     smgp,           ROT0, "Sega", "Super Monaco GP (set 8, World, Rev B, 'Twin', FD1094 317-0126a)", 0 )
 GAME( 1989, smgp6,    smgp,     smgp,    smgp,     smgp,           ROT0, "Sega", "Super Monaco GP (set 7, World, Rev A, FD1094 317-0126a)", 0 )

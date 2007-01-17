@@ -309,15 +309,6 @@ static const gfx_decode goal92_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static const gfx_decode cupsocbl_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &layout_16x16x4_2,	   0*16, 8*16 }, // Sprites
-	{ REGION_GFX2, 0, &layout_8x8x4,	      48*16,   16 }, // Text Layer
-	{ REGION_GFX3, 0, &layout_16x16x4,	       0*16,   16 }, // BG Layer
-	{ REGION_GFX4, 0, &layout_16x16x4,	      16*16,   16 }, // Mid Layer
-	{ REGION_GFX4, 0, &layout_16x16x4,  	  32*16,   16 }, // FG Layer
-	{ -1 } /* end of array */
-};
 
 static MACHINE_DRIVER_START( goal92 )
 
@@ -331,13 +322,14 @@ static MACHINE_DRIVER_START( goal92 )
 	MDRV_CPU_PROGRAM_MAP(sound_cpu,0)
 								/* IRQs are triggered by the main CPU */
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1) // black border at bottom is a game bug...
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1) // black border at bottom is a game bug...
 	MDRV_GFXDECODE(goal92_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(128*16)
 
@@ -358,39 +350,6 @@ static MACHINE_DRIVER_START( goal92 )
 	MDRV_SOUND_ADD(MSM5205, 384000)
 	MDRV_SOUND_CONFIG(msm5205_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
-MACHINE_DRIVER_END
-
-static MACHINE_DRIVER_START( cupsocbl )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000,12000000)
-	MDRV_CPU_PROGRAM_MAP(goal92_readmem,goal92_writemem)
-	MDRV_CPU_VBLANK_INT(irq4_line_hold,1) /* VBL */
-
-	MDRV_CPU_ADD(Z80, 2510000)
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(sound_cpu,0)
-								/* IRQs are triggered by the main CPU */
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(40*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
-	MDRV_GFXDECODE(cupsocbl_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(128*16)
-
-	MDRV_VIDEO_START(goal92)
-	MDRV_VIDEO_UPDATE(goal92)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(OKIM6295, 1056000)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high) // clock frequency & pin 7 not verified
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /*
@@ -454,69 +413,6 @@ ROM_START( goal92 )
 	ROM_LOAD( "8.bin",        0x180000, 0x080000, CRC(aeab3534) SHA1(af91238f412bfcff3a52232278d81276584614a7) )
 ROM_END
 
-/*
 
-Seibu Cup Soccer - Seibu - Bootleg
-
-2 boards
-
-1st board
-
-(snd)
-1 x z80
-1 x oki 6295
-sc_01 (prg)
-sc_02 and sc_03 (data)
-
-(prg)
-1 x 68000
-sc_04 and sc_05
-
-(gfx)
-2 x ti tpc1020
-from sc_06 to sc_11
-
-2nd board
-
-(gfx)
-1 x actel pl84c
-from sc_12 to sc_15
-
-*/
-
-ROM_START( cupsocbl )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "sc_04.bin", 0x00001, 0x80000, CRC(22566087) SHA1(4392f46ca50cc9947823a5190aa25f5e9654aa0d) )
-	ROM_LOAD16_BYTE( "sc_05.bin", 0x00000, 0x80000, CRC(2f977dff) SHA1(4d8d6e7d06ce17bb7292072965911f8b1f1067e2) )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Z80 code */
-	ROM_LOAD( "sc_01.bin",    0x000000, 0x08000, CRC(cea39d6d) SHA1(f0b79c03ffafdd1e57673d6d4836becbe415110b) )
-	ROM_CONTINUE(			  0x000000, 0x08000 )
-
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "sc_07.bin", 0x000000, 0x80000, CRC(dcb29d01) SHA1(72b4234622605f0ab03f21fdb6a61c6dac36000d) )
-	ROM_LOAD( "sc_06.bin", 0x080000, 0x80000, CRC(2dc70e05) SHA1(f1d0beb8428a7e1d7c7818e6719abdc543b2fa80) )
-
-	ROM_REGION( 0x020000, REGION_GFX2, ROMREGION_DISPOSE ) // text layer ?
-	ROM_LOAD( "sc_13.bin",    0x000000, 0x010000, CRC(229bddd8) SHA1(0924bf29db9c5a970546f154e7752697fdce6a58) )
-	ROM_LOAD( "sc_12.bin",    0x010000, 0x010000, CRC(dabfa826) SHA1(0db587c846755491b169ef7751ba8e7cdc2607e6) )
-
-	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE ) // background ?
-	ROM_LOAD( "sc_08.bin",    0x000000, 0x080000, CRC(637120f3) SHA1(b4b2ad192e46ff80d4cb440d7fb6dac215a353ed) )
-	ROM_LOAD( "sc_09.bin",    0x080000, 0x080000, CRC(695b6342) SHA1(dfccb43789021ba2568b9284ae61e64f7f89b152) )
-	ROM_LOAD( "sc_10.bin",    0x100000, 0x080000, CRC(27e172b8) SHA1(ed86db2f42c8061607d46f2407b0130aaf692a02) )
-	ROM_LOAD( "sc_11.bin",    0x180000, 0x080000, CRC(0cd5ca5e) SHA1(a59665e543e9383355de2576e6693348ec356591) )
-
-	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE ) // foreground ?
-	ROM_LOAD( "sc_14.bin",    0x000000, 0x080000, CRC(566086c2) SHA1(b7d09ce978f99ecc0d1975b31330ed49317701d5) )
-	ROM_LOAD( "sc_15.bin",    0x080000, 0x080000, CRC(8fd87e65) SHA1(acc9fd0289fa9ab60bec16d3e642039380e5180a) )
-
-	ROM_REGION( 0x020000, REGION_SOUND1, 0 )	/* ADPCM samples */
-	ROM_LOAD( "sc_02.bin",    0x000000, 0x020000, CRC(a70d4f03) SHA1(c2482e624c8a828a94206a36d10c1021ad8ca1d0) )
-
-	ROM_REGION( 0x080000, REGION_USER1, 0 ) // sound related ?
-	ROM_LOAD( "sc_03.bin",    0x000000, 0x080000, CRC(6e254d12) SHA1(857779dbd276b688201a8ea3afd5817e38acad2e) )
-ROM_END
 
 GAME( 1992, goal92,   cupsoc, goal92,   goal92, 0, ROT0, "bootleg", "Goal! '92", GAME_IMPERFECT_SOUND )
-GAME( 1992, cupsocbl, cupsoc, cupsocbl, goal92, 0, ROT0, "bootleg", "Seibu Cup Soccer (bootleg)", GAME_NOT_WORKING | GAME_NO_SOUND )

@@ -233,13 +233,14 @@ void ui_menu_draw(const ui_menu_item *items, int numitems, int selected, menu_au
 	const char *up_arrow = ui_getstring(UI_uparrow);
 	const char *down_arrow = ui_getstring(UI_downarrow);
 	const char *left_arrow = ui_getstring(UI_leftarrow);
-	const char *right_arrow = ui_getstring(UI_rightarrow);	const char *left_hilight = ui_getstring(UI_lefthilight);
+	const char *right_arrow = ui_getstring(UI_rightarrow);
+	const char *left_hilight = ui_getstring(UI_lefthilight);
 	const char *right_hilight = ui_getstring(UI_righthilight);
 
-	float left_hilight_width = ui_get_string_width(left_hilight);
-	float right_hilight_width = ui_get_string_width(right_hilight);
 	float left_arrow_width = ui_get_string_width(left_arrow);
 	float right_arrow_width = ui_get_string_width(right_arrow);
+	float left_hilight_width = ui_get_string_width(left_hilight);
+	float right_hilight_width = ui_get_string_width(right_hilight);
 	float line_height = ui_get_line_height();
 	float gutter_width;
 	float x1, y1, x2, y2;

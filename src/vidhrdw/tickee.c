@@ -105,7 +105,7 @@ VIDEO_START( tickee )
 
 VIDEO_UPDATE( tickee )
 {
-	int v, h, width, xoffs, beamx, beamy;
+	int v, h, width, xoffs;
 	UINT8 *base1 = (UINT8 *)tickee_vram;
 	pen_t pen_lookup[256];
 	UINT32 offset;
@@ -137,13 +137,6 @@ VIDEO_UPDATE( tickee )
 		offset += TOBYTE(0x1000);
 	}
 
-	/* draw player 1's crosshair */
-	get_crosshair_xy(0, &beamx, &beamy);
-	draw_crosshair(bitmap, beamx, beamy, cliprect, 0);
-
-	/* draw player 2's crosshair */
-	get_crosshair_xy(1, &beamx, &beamy);
-	draw_crosshair(bitmap, beamx, beamy, cliprect, 1);
 	return 0;
 }
 

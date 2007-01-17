@@ -849,18 +849,6 @@ static void seta_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 
 ***************************************************************************/
 
-static void zombraid_drawcrosshairs( mame_bitmap *bitmap, const rectangle *cliprect )
-{
-	int p1_x = seta_workram[0xC4AA/2];
-	int p1_y = 0x08+0xff - seta_workram[0xC4AC/2];
-	int p2_x = seta_workram[0xC4AE/2];
-	int p2_y = 0x08+0xff - seta_workram[0xC4B0/2];
-
-	draw_crosshair(bitmap,p1_x,p1_y,cliprect,0);
-	draw_crosshair(bitmap,p2_x,p2_y,cliprect,1);
-}
-
-
 /* For games without tilemaps */
 VIDEO_UPDATE( seta_no_layers )
 {
@@ -1001,11 +989,6 @@ if (code_pressed(KEYCODE_Z))
 
 			if (layers_ctrl & 8)	seta_draw_sprites(bitmap,cliprect);
 		}
-	}
-
-	if (!(strcmp(Machine->gamedrv->name,"zombraid")))
-	{
-		zombraid_drawcrosshairs(bitmap,cliprect);
 	}
 	return 0;
 }

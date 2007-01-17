@@ -316,14 +316,5 @@ VIDEO_UPDATE( balsente )
 	/* draw the sprite images */
 	for (i = 0; i < 40; i++)
 		draw_one_sprite(bitmap, cliprect, &spriteram[(0xe0 + i * 4) & 0xff]);
-
-	/* draw a crosshair */
-	if (balsente_shooter)
-	{
-		int beamx = balsente_shooter_x;
-		int beamy = balsente_shooter_y - 10;
-
-		draw_crosshair(bitmap,beamx,beamy,cliprect,0);
-	}
 	return 0;
 }

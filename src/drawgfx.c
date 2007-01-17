@@ -926,19 +926,11 @@ INLINE void common_drawgfx(mame_bitmap *dest,const gfx_element *gfx,
 	if (!is_raw[transparency])
 		color %= gfx->total_colors;
 
-	if (!(Machine->drv->video_attributes & VIDEO_RGB_DIRECT) &&
-		(transparency == TRANSPARENCY_ALPHAONE || transparency == TRANSPARENCY_ALPHA || transparency == TRANSPARENCY_ALPHARANGE))
+	if ((dest->format == BITMAP_FORMAT_INDEXED8 || dest->format == BITMAP_FORMAT_INDEXED16 || dest->format == BITMAP_FORMAT_INDEXED32) &&
+		(transparency == TRANSPARENCY_ALPHA || transparency == TRANSPARENCY_ALPHARANGE))
 	{
-		if (transparency == TRANSPARENCY_ALPHAONE && (cpu_getcurrentframe() & 1))
-		{
-			transparency = TRANSPARENCY_PENS;
-			transparent_color = (1 << (transparent_color & 0xff))|(1 << (transparent_color >> 8));
-		}
-		else
-		{
-			transparency = TRANSPARENCY_PEN;
-			transparent_color &= 0xff;
-		}
+		transparency = TRANSPARENCY_PEN;
+		transparent_color &= 0xff;
 	}
 
 	if (gfx->pen_usage && (transparency == TRANSPARENCY_PEN || transparency == TRANSPARENCY_PENS))
@@ -962,11 +954,11 @@ INLINE void common_drawgfx(mame_bitmap *dest,const gfx_element *gfx,
 			transparency = TRANSPARENCY_NONE;
 	}
 
-	if (dest->depth == 8)
+	if (dest->bpp == 8)
 		drawgfx_core8(dest,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color,pri_buffer,pri_mask);
-	else if(dest->depth == 15 || dest->depth == 16)
+	else if (dest->bpp == 16)
 		drawgfx_core16(dest,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color,pri_buffer,pri_mask);
-	else
+	else if (dest->bpp == 32)
 		drawgfx_core32(dest,gfx,code,color,flipx,flipy,sx,sy,clip,transparency,transparent_color,pri_buffer,pri_mask);
 }
 
@@ -1027,11 +1019,11 @@ void copybitmap_remap(mame_bitmap *dest,mame_bitmap *src,int flipx,int flipy,int
 {
 	profiler_mark(PROFILER_COPYBITMAP);
 
-	if (dest->depth == 8)
+	if (dest->bpp == 8)
 		copybitmap_core8(dest,src,flipx,flipy,sx,sy,clip,transparency,transparent_color);
-	else if(dest->depth == 15 || dest->depth == 16)
+	else if (dest->bpp == 16)
 		copybitmap_core16(dest,src,flipx,flipy,sx,sy,clip,transparency,transparent_color);
-	else
+	else if (dest->bpp == 32)
 		copybitmap_core32(dest,src,flipx,flipy,sx,sy,clip,transparency,transparent_color);
 
 	profiler_mark(PROFILER_END);
@@ -1334,11 +1326,11 @@ void copyrozbitmap(mame_bitmap *dest,mame_bitmap *src,
 		return;
 	}
 
-	if (dest->depth == 8)
+	if (dest->bpp == 8)
 		copyrozbitmap_core8(dest,src,startx,starty,incxx,incxy,incyx,incyy,wraparound,clip,transparency,transparent_color,priority);
-	else if(dest->depth == 15 || dest->depth == 16)
+	else if (dest->bpp == 16)
 		copyrozbitmap_core16(dest,src,startx,starty,incxx,incxy,incyx,incyy,wraparound,clip,transparency,transparent_color,priority);
-	else
+	else if (dest->bpp == 32)
 		copyrozbitmap_core32(dest,src,startx,starty,incxx,incxy,incyx,incyy,wraparound,clip,transparency,transparent_color,priority);
 
 	profiler_mark(PROFILER_END);
@@ -1363,48 +1355,48 @@ void fillbitmap(mame_bitmap *dest,pen_t pen,const rectangle *clip)
 	if (clip && ey > clip->max_y) ey = clip->max_y;
 	if (sy > ey) return;
 
-	if (dest->depth == 32)
+	if (dest->bpp == 32)
 	{
-		if (((pen >> 8) == (pen & 0xff)) && ((pen>>16) == (pen & 0xff)))
+		if (((pen >> 8) == (pen & 0xff)) && ((pen>>16) == (pen & 0xffff)))
 		{
 			for (y = sy;y <= ey;y++)
-				memset(((UINT32 *)dest->line[y]) + sx,pen&0xff,(ex-sx+1)*4);
+				memset(BITMAP_ADDR32(dest, y, sx),pen&0xff,(ex-sx+1)*4);
 		}
 		else
 		{
-			UINT32 *sp = (UINT32 *)dest->line[sy];
+			UINT32 *sp = BITMAP_ADDR32(dest, sy, 0);
 			int x;
 
 			for (x = sx;x <= ex;x++)
 				sp[x] = pen;
 			sp+=sx;
 			for (y = sy+1;y <= ey;y++)
-				memcpy(((UINT32 *)dest->line[y]) + sx,sp,(ex-sx+1)*4);
+				memcpy(BITMAP_ADDR32(dest, y, sx),sp,(ex-sx+1)*4);
 		}
 	}
-	else if (dest->depth == 15 || dest->depth == 16)
+	else if (dest->bpp == 16)
 	{
 		if ((pen >> 8) == (pen & 0xff))
 		{
 			for (y = sy;y <= ey;y++)
-				memset(((UINT16 *)dest->line[y]) + sx,pen&0xff,(ex-sx+1)*2);
+				memset(BITMAP_ADDR16(dest, y, sx),pen&0xff,(ex-sx+1)*2);
 		}
 		else
 		{
-			UINT16 *sp = (UINT16 *)dest->line[sy];
+			UINT16 *sp = BITMAP_ADDR16(dest, sy, 0);
 			int x;
 
 			for (x = sx;x <= ex;x++)
 				sp[x] = pen;
 			sp+=sx;
 			for (y = sy+1;y <= ey;y++)
-				memcpy(((UINT16 *)dest->line[y]) + sx,sp,(ex-sx+1)*2);
+				memcpy(BITMAP_ADDR16(dest, y, sx),sp,(ex-sx+1)*2);
 		}
 	}
-	else
+	else if (dest->bpp == 8)
 	{
 		for (y = sy;y <= ey;y++)
-			memset(((UINT8 *)dest->line[y]) + sx,pen,ex-sx+1);
+			memset(BITMAP_ADDR8(dest, y, sx),pen,ex-sx+1);
 	}
 }
 
@@ -1416,7 +1408,6 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 		int scalex, int scaley,mame_bitmap *pri_buffer,UINT32 pri_mask)
 {
 	rectangle myclip;
-	int alphapen = 0;
 
 	UINT8 ah, al;
 
@@ -1433,7 +1424,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 	if (transparency != TRANSPARENCY_PEN && transparency != TRANSPARENCY_PEN_RAW
 			&& transparency != TRANSPARENCY_PENS && transparency != TRANSPARENCY_COLOR
 			&& transparency != TRANSPARENCY_PEN_TABLE && transparency != TRANSPARENCY_PEN_TABLE_RAW
-			&& transparency != TRANSPARENCY_BLEND_RAW && transparency != TRANSPARENCY_ALPHAONE
+			&& transparency != TRANSPARENCY_BLEND_RAW
 			&& transparency != TRANSPARENCY_ALPHA && transparency != TRANSPARENCY_ALPHARANGE
 			&& transparency != TRANSPARENCY_NONE)
 	{
@@ -1441,16 +1432,10 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 		return;
 	}
 
-	if (!(Machine->drv->video_attributes & VIDEO_RGB_DIRECT) &&
-		(transparency == TRANSPARENCY_ALPHAONE || transparency == TRANSPARENCY_ALPHA || transparency == TRANSPARENCY_ALPHARANGE))
+	if ((dest_bmp->format == BITMAP_FORMAT_INDEXED8 || dest_bmp->format == BITMAP_FORMAT_INDEXED16 || dest_bmp->format == BITMAP_FORMAT_INDEXED32) &&
+		(transparency == TRANSPARENCY_ALPHA || transparency == TRANSPARENCY_ALPHARANGE))
 	{
 		transparency = TRANSPARENCY_PEN;
-		transparent_color &= 0xff;
-	}
-
-	if (transparency == TRANSPARENCY_ALPHAONE)
-	{
-		alphapen = transparent_color >> 8;
 		transparent_color &= 0xff;
 	}
 
@@ -1484,7 +1469,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 
 
 	/* ASG 980209 -- added 16-bit version */
-	if (dest_bmp->depth == 8)
+	if (dest_bmp->bpp == 8)
 	{
 		if( gfx && gfx->colortable )
 		{
@@ -1567,8 +1552,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT8 *dest = dest_bmp->line[y];
-									UINT8 *pri = pri_buffer->line[y];
+									UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
+									UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -1587,8 +1572,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT8 *dest = dest_bmp->line[y];
-									UINT8 *pri = pri_buffer->line[y];
+									UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
+									UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -1609,7 +1594,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT8 *dest = dest_bmp->line[y];
+									UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -1626,7 +1611,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT8 *dest = dest_bmp->line[y];
+									UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -1651,8 +1636,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT8 *dest = dest_bmp->line[y];
-									UINT8 *pri = pri_buffer->line[y];
+									UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
+									UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -1675,8 +1660,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT8 *dest = dest_bmp->line[y];
-									UINT8 *pri = pri_buffer->line[y];
+									UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
+									UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -1702,7 +1687,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT8 *dest = dest_bmp->line[y];
+									UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -1720,7 +1705,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT8 *dest = dest_bmp->line[y];
+									UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -1744,8 +1729,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT8 *dest = dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -1768,7 +1753,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT8 *dest = dest_bmp->line[y];
+								UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -1791,8 +1776,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT8 *dest = dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -1815,7 +1800,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT8 *dest = dest_bmp->line[y];
+								UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -1838,8 +1823,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT8 *dest = dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -1862,7 +1847,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT8 *dest = dest_bmp->line[y];
+								UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -1886,8 +1871,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT8 *dest = dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -1910,7 +1895,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT8 *dest = dest_bmp->line[y];
+								UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -1934,8 +1919,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT8 *dest = dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -1973,7 +1958,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT8 *dest = dest_bmp->line[y];
+								UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2008,8 +1993,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT8 *dest = dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2047,7 +2032,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT8 *dest = dest_bmp->line[y];
+								UINT8 *dest = BITMAP_ADDR8(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2078,7 +2063,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 	}
 
 	/* ASG 980209 -- new 16-bit part */
-	else if (dest_bmp->depth == 15 || dest_bmp->depth == 16)
+	else if (dest_bmp->bpp == 16)
 	{
 		if( gfx && gfx->colortable )
 		{
@@ -2161,8 +2146,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-									UINT8 *pri = pri_buffer->line[y];
+									UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+									UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -2181,8 +2166,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-									UINT8 *pri = pri_buffer->line[y];
+									UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+									UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -2204,7 +2189,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+									UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -2221,7 +2206,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+									UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -2246,8 +2231,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-									UINT8 *pri = pri_buffer->line[y];
+									UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+									UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -2270,8 +2255,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-									UINT8 *pri = pri_buffer->line[y];
+									UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+									UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -2297,7 +2282,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+									UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -2315,7 +2300,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 								for( y=sy; y<ey; y++ )
 								{
 									UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-									UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+									UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 									int x, x_index = x_index_base;
 									for( x=sx; x<ex; x++ )
@@ -2339,8 +2324,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2363,7 +2348,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2386,8 +2371,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2410,7 +2395,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2433,8 +2418,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2457,7 +2442,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2481,8 +2466,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2505,7 +2490,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2529,8 +2514,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2569,7 +2554,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2604,8 +2589,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2644,7 +2629,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2670,64 +2655,6 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 						}
 					}
 
-					/* case 5: TRANSPARENCY_ALPHAONE */
-					if (transparency == TRANSPARENCY_ALPHAONE)
-					{
-						if (pri_buffer)
-						{
-							for( y=sy; y<ey; y++ )
-							{
-								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
-
-								int x, x_index = x_index_base;
-								for( x=sx; x<ex; x++ )
-								{
-									int c = source[x_index>>16];
-									if( c != transparent_color )
-									{
-										if (((1 << pri[x]) & pri_mask) == 0)
-										{
-											if( c == alphapen)
-												dest[x] = alpha_blend16(dest[x], pal[c]);
-											else
-												dest[x] = pal[c];
-										}
-										pri[x] = 31;
-									}
-									x_index += dx;
-								}
-
-								y_index += dy;
-							}
-						}
-						else
-						{
-							for( y=sy; y<ey; y++ )
-							{
-								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-
-								int x, x_index = x_index_base;
-								for( x=sx; x<ex; x++ )
-								{
-									int c = source[x_index>>16];
-									if( c != transparent_color )
-									{
-										if( c == alphapen)
-											dest[x] = alpha_blend16(dest[x], pal[c]);
-										else
-											dest[x] = pal[c];
-									}
-									x_index += dx;
-								}
-
-								y_index += dy;
-							}
-						}
-					}
-
 					/* case 6: TRANSPARENCY_ALPHA */
 					if (transparency == TRANSPARENCY_ALPHA)
 					{
@@ -2736,8 +2663,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2760,7 +2687,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2784,8 +2711,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2813,7 +2740,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+								UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2918,8 +2845,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2938,7 +2865,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2960,8 +2887,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -2984,7 +2911,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -3007,8 +2934,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -3031,7 +2958,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -3054,8 +2981,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -3078,7 +3005,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -3101,8 +3028,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -3125,7 +3052,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -3149,8 +3076,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -3173,7 +3100,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -3202,8 +3129,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							{
 								source = source_base + (y_index>>16) * gfx->line_modulo;
 								y_index += dy;
-								dest = (UINT32 *)dest_bmp->line[y];
-								pri = pri_buffer->line[y];
+								dest = BITMAP_ADDR32(dest_bmp, y, 0);
+								pri = BITMAP_ADDR8(pri_buffer, y, 0);
 								x_index = x_index_base;
 
 								for( x=sx; x<ex; x++ )
@@ -3244,7 +3171,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							{
 								source = source_base + (y_index>>16) * gfx->line_modulo;
 								y_index += dy;
-								dest = (UINT32 *)dest_bmp->line[y];
+								dest = BITMAP_ADDR32(dest_bmp, y, 0);
 								x_index = x_index_base;
 
 								for( x=sx; x<ex; x++ )
@@ -3276,8 +3203,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							{
 								source = source_base + (y_index>>16) * gfx->line_modulo;
 								y_index += dy;
-								dest = (UINT32 *)dest_bmp->line[y];
-								pri = pri_buffer->line[y];
+								dest = BITMAP_ADDR32(dest_bmp, y, 0);
+								pri = BITMAP_ADDR8(pri_buffer, y, 0);
 								x_index = x_index_base;
 
 								for( x=sx; x<ex; x++ )
@@ -3318,7 +3245,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							{
 								source = source_base + (y_index>>16) * gfx->line_modulo;
 								y_index += dy;
-								dest = (UINT32 *)dest_bmp->line[y];
+								dest = BITMAP_ADDR32(dest_bmp, y, 0);
 								x_index = x_index_base;
 
 								for( x=sx; x<ex; x++ )
@@ -3337,64 +3264,6 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 					}
 
 
-					/* case 5: TRANSPARENCY_ALPHAONE */
-					if (transparency == TRANSPARENCY_ALPHAONE)
-					{
-						if (pri_buffer)
-						{
-							for( y=sy; y<ey; y++ )
-							{
-								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
-
-								int x, x_index = x_index_base;
-								for( x=sx; x<ex; x++ )
-								{
-									int c = source[x_index>>16];
-									if( c != transparent_color )
-									{
-										if (((1 << pri[x]) & pri_mask) == 0)
-										{
-											if( c == alphapen)
-												dest[x] = alpha_blend32(dest[x], pal[c]);
-											else
-												dest[x] = pal[c];
-										}
-										pri[x] = 31;
-									}
-									x_index += dx;
-								}
-
-								y_index += dy;
-							}
-						}
-						else
-						{
-							for( y=sy; y<ey; y++ )
-							{
-								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-
-								int x, x_index = x_index_base;
-								for( x=sx; x<ex; x++ )
-								{
-									int c = source[x_index>>16];
-									if( c != transparent_color )
-									{
-										if( c == alphapen)
-											dest[x] = alpha_blend32(dest[x], pal[c]);
-										else
-											dest[x] = pal[c];
-									}
-									x_index += dx;
-								}
-
-								y_index += dy;
-							}
-						}
-					}
-
 					/* case 6: TRANSPARENCY_ALPHA */
 					if (transparency == TRANSPARENCY_ALPHA)
 					{
@@ -3403,8 +3272,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -3427,7 +3296,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -3451,8 +3320,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -3480,7 +3349,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -3542,62 +3411,6 @@ INLINE void plotclip(mame_bitmap *bitmap,int x,int y,int pen,const rectangle *cl
 {
 	if (x >= clip->min_x && x <= clip->max_x && y >= clip->min_y && y <= clip->max_y)
 		plot_pixel(bitmap,x,y,pen);
-}
-
-static int crosshair_enable=1;
-
-void drawgfx_toggle_crosshair(void)
-{
-	crosshair_enable^=1;
-}
-
-void draw_crosshair(mame_bitmap *bitmap,int x,int y,const rectangle *clip,int player)
-{
-	unsigned short white;
-	int i;
-
-	if (!crosshair_enable)
-		return;
-
-	white = get_white_pen(Machine);
-
-	for (i = 1;i < 6;i++)
-	{
-		switch (player)
-		{
-			case 0:
-				plotclip(bitmap,x+i,y,white,clip);
-				plotclip(bitmap,x-i,y,white,clip);
-				plotclip(bitmap,x,y+i,white,clip);
-				plotclip(bitmap,x,y-i,white,clip);
-				break;
-
-			case 1:
-				plotclip(bitmap,x+i,y-i,white,clip);
-				plotclip(bitmap,x-i,y-i,white,clip);
-				plotclip(bitmap,x+i,y+i,white,clip);
-				plotclip(bitmap,x-i,y+i,white,clip);
-				break;
-
-			case 2:
-				plotclip(bitmap,x-5,y-i,white,clip);
-				plotclip(bitmap,x+5,y-i,white,clip);
-				plotclip(bitmap,x-5,y+i,white,clip);
-				plotclip(bitmap,x+5,y+i,white,clip);
-				plotclip(bitmap,x-i,y-5,white,clip);
-				plotclip(bitmap,x+i,y-5,white,clip);
-				plotclip(bitmap,x-i,y+5,white,clip);
-				plotclip(bitmap,x+i,y+5,white,clip);
-				break;
-
-			case 3:
-				plotclip(bitmap,x-i,y-5+i,white,clip);
-				plotclip(bitmap,x+i,y-5+i,white,clip);
-				plotclip(bitmap,x-i,y+5-i,white,clip);
-				plotclip(bitmap,x+i,y+5-i,white,clip);
-				break;
-		}
-	}
 }
 
 
@@ -5208,16 +5021,16 @@ DECLARE(drawgfx_core,(
 		int sm = gfx->line_modulo;								/* source modulo */
 		int ls = sx-ox;											/* left skip */
 		int ts = sy-oy;											/* top skip */
-		DATA_TYPE *dd = ((DATA_TYPE *)dest->line[sy]) + sx;		/* dest data */
+		DATA_TYPE *dd = BITMAP_ADDR(dest, DATA_TYPE, sy, sx);	/* dest data */
 		int dw = ex-sx+1;										/* dest width */
 		int dh = ey-sy+1;										/* dest height */
-		int dm = ((DATA_TYPE *)dest->line[1])-((DATA_TYPE *)dest->line[0]);	/* dest modulo */
+		int dm = dest->rowpixels;								/* dest modulo */
 		const pen_t *paldata = &gfx->colortable[gfx->color_granularity * color];
-		UINT8 *pribuf = (pri_buffer) ? ((UINT8 *)pri_buffer->line[sy]) + sx : NULL;
+		UINT8 *pribuf = (pri_buffer) ? BITMAP_ADDR8(pri_buffer, sy, sx) : NULL;
 
 		/* optimizations for 1:1 mapping */
 		if (Machine->drv->color_table_len == 0 &&
-			dest->depth == 16 &&
+			dest->format == BITMAP_FORMAT_INDEXED16 &&
 			paldata >= Machine->remapped_colortable &&
 			paldata < Machine->remapped_colortable + Machine->drv->total_colors)
 		{
@@ -5364,13 +5177,6 @@ DECLARE(drawgfx_core,(
 					BLOCKMOVERAW(8toN_transblend,(sd,sw,sh,sm,ls,ts,flipx,flipy,dd,dw,dh,dm,color,transparent_color));
 				break;
 
-			case TRANSPARENCY_ALPHAONE:
-				if (pribuf)
-					BLOCKMOVEPRI(8toN_alphaone,(sd,sw,sh,sm,ls,ts,flipx,flipy,dd,dw,dh,dm,paldata,pribuf,pri_mask,transparent_color & 0xff, (transparent_color>>8) & 0xff));
-				else
-					BLOCKMOVELU(8toN_alphaone,(sd,sw,sh,sm,ls,ts,flipx,flipy,dd,dw,dh,dm,paldata,transparent_color & 0xff, (transparent_color>>8) & 0xff));
-				break;
-
 			case TRANSPARENCY_ALPHA:
 				if (pribuf)
 					BLOCKMOVEPRI(8toN_alpha,(sd,sw,sh,sm,ls,ts,flipx,flipy,dd,dw,dh,dm,paldata,pribuf,pri_mask,transparent_color));
@@ -5425,12 +5231,12 @@ DECLARE(copybitmap_core,(
 	if (sy > ey) return;
 
 	{
-		DATA_TYPE *sd = ((DATA_TYPE *)src->line[0]);							/* source data */
+		DATA_TYPE *sd = (DATA_TYPE *)src->base;									/* source data */
 		int sw = ex-sx+1;														/* source width */
 		int sh = ey-sy+1;														/* source height */
-		int sm = ((DATA_TYPE *)src->line[1])-((DATA_TYPE *)src->line[0]);		/* source modulo */
-		DATA_TYPE *dd = ((DATA_TYPE *)dest->line[sy]) + sx;						/* dest data */
-		int dm = ((DATA_TYPE *)dest->line[1])-((DATA_TYPE *)dest->line[0]);		/* dest modulo */
+		int sm = src->rowpixels;												/* source modulo */
+		DATA_TYPE *dd = BITMAP_ADDR(dest, DATA_TYPE, sy, sx);					/* dest data */
+		int dm = dest->rowpixels;												/* dest modulo */
 
 		if (flipx)
 		{
@@ -5543,11 +5349,11 @@ DECLARE(copyrozbitmap_core,(mame_bitmap *bitmap,mame_bitmap *srcbitmap,
 						x = sx;
 						cx = startx;
 						cy = starty >> 16;
-						dest = ((DATA_TYPE *)bitmap->line[sy]) + sx;
+						dest = BITMAP_ADDR(bitmap, DATA_TYPE, sy, sx);
 						if (priority)
 						{
-							UINT8 *pri = ((UINT8 *)priority_bitmap->line[sy]) + sx;
-							DATA_TYPE *src = (DATA_TYPE *)srcbitmap->line[cy];
+							UINT8 *pri = BITMAP_ADDR8(priority_bitmap, sy, sx);
+							DATA_TYPE *src = BITMAP_ADDR(srcbitmap, DATA_TYPE, cy, 0);
 
 							while (x <= ex && cx < srcbitmap->width)
 							{
@@ -5567,7 +5373,7 @@ DECLARE(copyrozbitmap_core,(mame_bitmap *bitmap,mame_bitmap *srcbitmap,
 						}
 						else
 						{
-							DATA_TYPE *src = (DATA_TYPE *)srcbitmap->line[cy];
+							DATA_TYPE *src = BITMAP_ADDR(srcbitmap, DATA_TYPE, cy, 0);
 
 							while (x <= ex && cx < srcbitmap->width)
 							{
@@ -5604,11 +5410,11 @@ DECLARE(copyrozbitmap_core,(mame_bitmap *bitmap,mame_bitmap *srcbitmap,
 						x = sx;
 						cx = startx;
 						cy = starty >> 16;
-						dest = ((DATA_TYPE *)bitmap->line[sy]) + sx;
+						dest = BITMAP_ADDR(bitmap, DATA_TYPE, sy, sx);
 						if (priority)
 						{
-							UINT8 *pri = ((UINT8 *)priority_bitmap->line[sy]) + sx;
-							DATA_TYPE *src = (DATA_TYPE *)srcbitmap->line[cy];
+							UINT8 *pri = BITMAP_ADDR8(priority_bitmap, sy, sx);
+							DATA_TYPE *src = BITMAP_ADDR(srcbitmap, DATA_TYPE, cy, 0);
 
 							while (x <= ex && cx < widthshifted)
 							{
@@ -5628,7 +5434,7 @@ DECLARE(copyrozbitmap_core,(mame_bitmap *bitmap,mame_bitmap *srcbitmap,
 						}
 						else
 						{
-							DATA_TYPE *src = (DATA_TYPE *)srcbitmap->line[cy];
+							DATA_TYPE *src = BITMAP_ADDR(srcbitmap, DATA_TYPE, cy, 0);
 
 							while (x <= ex && cx < widthshifted)
 							{
@@ -5659,14 +5465,14 @@ DECLARE(copyrozbitmap_core,(mame_bitmap *bitmap,mame_bitmap *srcbitmap,
 				x = sx;
 				cx = startx;
 				cy = starty;
-				dest = ((DATA_TYPE *)bitmap->line[sy]) + sx;
+				dest = BITMAP_ADDR(bitmap, DATA_TYPE, sy, sx);
 				if (priority)
 				{
-					UINT8 *pri = ((UINT8 *)priority_bitmap->line[sy]) + sx;
+					UINT8 *pri = BITMAP_ADDR8(priority_bitmap, sy, sx);
 
 					while (x <= ex)
 					{
-						int c = ((DATA_TYPE *)srcbitmap->line[(cy >> 16) & ymask])[(cx >> 16) & xmask];
+						int c = *BITMAP_ADDR(srcbitmap, DATA_TYPE, (cy >> 16) & ymask, (cx >> 16) & xmask);
 
 						if (c != transparent_color)
 						{
@@ -5685,7 +5491,7 @@ DECLARE(copyrozbitmap_core,(mame_bitmap *bitmap,mame_bitmap *srcbitmap,
 				{
 					while (x <= ex)
 					{
-						int c = ((DATA_TYPE *)srcbitmap->line[(cy >> 16) & ymask])[(cx >> 16) & xmask];
+						int c = *BITMAP_ADDR(srcbitmap, DATA_TYPE, (cy >> 16) & ymask, (cx >> 16) & xmask);
 
 						if (c != transparent_color)
 							*dest = c;
@@ -5708,16 +5514,16 @@ DECLARE(copyrozbitmap_core,(mame_bitmap *bitmap,mame_bitmap *srcbitmap,
 				x = sx;
 				cx = startx;
 				cy = starty;
-				dest = ((DATA_TYPE *)bitmap->line[sy]) + sx;
+				dest = BITMAP_ADDR(bitmap, DATA_TYPE, sy, sx);
 				if (priority)
 				{
-					UINT8 *pri = ((UINT8 *)priority_bitmap->line[sy]) + sx;
+					UINT8 *pri = BITMAP_ADDR8(priority_bitmap, sy, sx);
 
 					while (x <= ex)
 					{
 						if (cx < widthshifted && cy < heightshifted)
 						{
-							int c = ((DATA_TYPE *)srcbitmap->line[cy >> 16])[cx >> 16];
+							int c = *BITMAP_ADDR(srcbitmap, DATA_TYPE, cy >> 16, cx >> 16);
 
 							if (c != transparent_color)
 							{
@@ -5739,7 +5545,7 @@ DECLARE(copyrozbitmap_core,(mame_bitmap *bitmap,mame_bitmap *srcbitmap,
 					{
 						if (cx < widthshifted && cy < heightshifted)
 						{
-							int c = ((DATA_TYPE *)srcbitmap->line[cy >> 16])[cx >> 16];
+							int c = *BITMAP_ADDR(srcbitmap, DATA_TYPE, cy >> 16, cx >> 16);
 
 							if (c != transparent_color)
 								*dest = c;
@@ -5764,10 +5570,9 @@ DECLAREG(draw_scanline, (
 		const DATA_TYPE *src,pen_t *pens,int transparent_pen),
 {
 	/* 8bpp destination */
-	if (bitmap->depth == 8)
+	if (bitmap->bpp == 8)
 	{
-		int dy = bitmap->rowpixels;
-		UINT8 *dst = (UINT8 *)bitmap->base + y * dy + x;
+		UINT8 *dst = BITMAP_ADDR8(bitmap, y, x);
 		int xadv = 1;
 
 		/* with pen lookups */
@@ -5810,10 +5615,9 @@ DECLAREG(draw_scanline, (
 	}
 
 	/* 16bpp destination */
-	else if(bitmap->depth == 15 || bitmap->depth == 16)
+	else if (bitmap->bpp == 16)
 	{
-		int dy = bitmap->rowpixels;
-		UINT16 *dst = (UINT16 *)bitmap->base + y * dy + x;
+		UINT16 *dst = BITMAP_ADDR16(bitmap, y, x);
 		int xadv = 1;
 
 		/* with pen lookups */
@@ -5856,10 +5660,9 @@ DECLAREG(draw_scanline, (
 	}
 
 	/* 32bpp destination */
-	else
+	else if (bitmap->bpp == 32)
 	{
-		int dy = bitmap->rowpixels;
-		UINT32 *dst = (UINT32 *)bitmap->base + y * dy + x;
+		UINT32 *dst = BITMAP_ADDR32(bitmap, y, x);
 		int xadv = 1;
 
 		/* with pen lookups */
@@ -5907,12 +5710,10 @@ DECLAREG(pdraw_scanline, (
 		const DATA_TYPE *src,pen_t *pens,int transparent_pen,int pri),
 {
 	/* 8bpp destination */
-	if (bitmap->depth == 8)
+	if (bitmap->bpp == 8)
 	{
-		int dy = bitmap->rowpixels;
-		int dyp = priority_bitmap->rowpixels;
-		UINT8 *dsti = (UINT8 *)bitmap->base + y * dy + x;
-		UINT8 *dstp = (UINT8 *)priority_bitmap->base + y * dyp + x;
+		UINT8 *dsti = BITMAP_ADDR8(bitmap, y, x);
+		UINT8 *dstp = BITMAP_ADDR8(priority_bitmap, y, x);
 		int xadv = 1;
 
 		/* with pen lookups */
@@ -5967,12 +5768,10 @@ DECLAREG(pdraw_scanline, (
 	}
 
 	/* 16bpp destination */
-	else if(bitmap->depth == 15 || bitmap->depth == 16)
+	else if (bitmap->bpp == 16)
 	{
-		int dy = bitmap->rowpixels;
-		int dyp = priority_bitmap->rowpixels;
-		UINT16 *dsti = (UINT16 *)bitmap->base + y * dy + x;
-		UINT8 *dstp = (UINT8 *)priority_bitmap->base + y * dyp + x;
+		UINT16 *dsti = BITMAP_ADDR16(bitmap, y, x);
+		UINT8 *dstp = BITMAP_ADDR8(priority_bitmap, y, x);
 		int xadv = 1;
 
 		/* with pen lookups */
@@ -6027,12 +5826,10 @@ DECLAREG(pdraw_scanline, (
 	}
 
 	/* 32bpp destination */
-	else
+	else if (bitmap->bpp == 32)
 	{
-		int dy = bitmap->rowpixels;
-		int dyp = priority_bitmap->rowpixels;
-		UINT32 *dsti = (UINT32 *)bitmap->base + y * dy + x;
-		UINT8 *dstp = (UINT8 *)priority_bitmap->base + y * dyp + x;
+		UINT32 *dsti = BITMAP_ADDR32(bitmap, y, x);
+		UINT8 *dstp = BITMAP_ADDR8(priority_bitmap, y, x);
 		int xadv = 1;
 
 		/* with pen lookups */
@@ -6093,10 +5890,9 @@ DECLAREG(extract_scanline, (
 		DATA_TYPE *dst),
 {
 	/* 8bpp destination */
-	if (bitmap->depth == 8)
+	if (bitmap->bpp == 8)
 	{
-		int dy = bitmap->rowpixels;
-		UINT8 *src = (UINT8 *)bitmap->base + y * dy + x;
+		UINT8 *src = BITMAP_ADDR8(bitmap, y, x);
 		int xadv = 1;
 
 		while (length--)
@@ -6107,10 +5903,9 @@ DECLAREG(extract_scanline, (
 	}
 
 	/* 16bpp destination */
-	else if(bitmap->depth == 15 || bitmap->depth == 16)
+	else if (bitmap->bpp == 16)
 	{
-		int dy = bitmap->rowpixels;
-		UINT16 *src = (UINT16 *)bitmap->base + y * dy + x;
+		UINT16 *src = BITMAP_ADDR16(bitmap, y, x);
 		int xadv = 1;
 
 		while (length--)
@@ -6121,10 +5916,9 @@ DECLAREG(extract_scanline, (
 	}
 
 	/* 32bpp destination */
-	else
+	else if (bitmap->bpp == 32)
 	{
-		int dy = bitmap->rowpixels;
-		UINT32 *src = (UINT32 *)bitmap->base + y * dy + x;
+		UINT32 *src = BITMAP_ADDR32(bitmap, y, x);
 		int xadv = 1;
 
 		while (length--)

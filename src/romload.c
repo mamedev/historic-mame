@@ -873,7 +873,12 @@ static void process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
 					sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s UNSUPPORTED CHD VERSION\n", filename);
 				else
 					sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s NOT FOUND\n", filename);
-				romdata->errors++;
+
+				/* if this is NO_DUMP, keep going, though the system may not be able to handle it */
+				if (hash_data_has_info(ROM_GETHASHDATA(romp), HASH_INFO_NO_DUMP))
+					romdata->warnings++;
+				else
+					romdata->errors++;
 				romp++;
 				continue;
 			}

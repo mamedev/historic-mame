@@ -71,10 +71,10 @@ endif
 ifdef MSVC_BUILD
 
 # replace the various compilers with vconv.exe prefixes
-CC = @$(subst /,\,$(OBJ))\vconv.exe gcc -I.
-LD = @$(subst /,\,$(OBJ))\vconv.exe ld
-AR = @$(subst /,\,$(OBJ))\vconv.exe ar
-RC = @$(subst /,\,$(OBJ))\vconv.exe windres
+CC = @$(OBJ)/vconv.exe gcc -I.
+LD = @$(OBJ)/vconv.exe ld
+AR = @$(OBJ)/vconv.exe ar
+RC = @$(OBJ)/vconv.exe windres
 
 # make sure we use the multithreaded runtime
 CC += /MT
@@ -158,30 +158,6 @@ LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm -ladvapi32 -
 
 ifdef PTR64
 LIBS += -lbufferoverflowu
-endif
-
-# hack for Vista building: set the environment variable VISTA_MINGW_ROOT
-# to the base of your standard mingw install
-ifdef VISTA_MINGW_ROOT
-
-ifndef MSVC_BUILD
-CFLAGS += -Wno-unknown-pragmas -Wno-redundant-decls -I$(subst \,/,$(VISTA_MINGW_ROOT))/include -I$(subst \,/,$(VISTA_MINGW_ROOT))/lib/gcc/mingw32/3.4.2/include
-LDFLAGS += -Wl,-L,$(subst \,/,$(VISTA_MINGW_ROOT))/lib,-L,$(subst \,/,$(VISTA_MINGW_ROOT))/lib/gcc/mingw32/3.4.2
-
-OSPREBUILD = vistahack
-
-vistahack: crt2.o crtbegin.o crtend.o
-
-crt2.o: $(VISTA_MINGW_ROOT)\lib\crt2.o
-	cmd /c copy $< $@
-
-crtbegin.o: $(VISTA_MINGW_ROOT)\lib\gcc\mingw32\3.4.2\crtbegin.o
-	cmd /c copy $< $@
-
-crtend.o: $(VISTA_MINGW_ROOT)\lib\gcc\mingw32\3.4.2\crtend.o
-	cmd /c copy $< $@
-endif
-
 endif
 
 

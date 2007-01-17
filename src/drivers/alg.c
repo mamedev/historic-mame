@@ -103,17 +103,6 @@ static void video_cleanup(running_machine *machine)
 
 static VIDEO_UPDATE( alg )
 {
-	int i;
-
-	/* draw the crosshair into the tmpbitmap, which is where the Amiga draws */
-	for (i = 0; i < 2; i++)
-	{
-		int x, y;
-
-		if (get_lightgun_pos(i, &x, &y))
-			draw_crosshair(tmpbitmap, x, y, &Machine->screen[screen].visarea, i);
-	}
-
 	/* composite the video */
 	if (!video_skip_this_frame())
 	{
@@ -448,16 +437,17 @@ static MACHINE_DRIVER_START( alg_r1 )
 	MDRV_CPU_PROGRAM_MAP(main_map_r1,0)
 	MDRV_CPU_VBLANK_INT(amiga_scanline_callback, 262)
 
-	MDRV_FRAMES_PER_SECOND(59.997)
-	MDRV_VBLANK_DURATION(0)
+	MDRV_SCREEN_REFRESH_RATE(59.97)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(0))
 
 	MDRV_MACHINE_RESET(amiga)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(512*2, 262)
-	MDRV_VISIBLE_AREA((129-8)*2, (449+8-1)*2, 44-8, 244+8-1)
+	MDRV_SCREEN_VISIBLE_AREA((129-8)*2, (449+8-1)*2, 44-8, 244+8-1)
 	MDRV_PALETTE_LENGTH(4097)
 	MDRV_PALETTE_INIT(amiga)
 
@@ -492,10 +482,10 @@ static MACHINE_DRIVER_START( picmatic )
 	MDRV_CPU_PROGRAM_MAP(main_map_picmatic,0)
 	MDRV_CPU_VBLANK_INT(amiga_scanline_callback, 312)
 
-	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_SCREEN_REFRESH_RATE(50)
 
 	MDRV_SCREEN_SIZE(512*2, 312)
-	MDRV_VISIBLE_AREA((129-8)*2, (449+8-1)*2, 44-8, 300+8-1)
+	MDRV_SCREEN_VISIBLE_AREA((129-8)*2, (449+8-1)*2, 44-8, 300+8-1)
 MACHINE_DRIVER_END
 
 

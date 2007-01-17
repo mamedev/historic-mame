@@ -511,7 +511,7 @@ void voodoo_update(int which, mame_bitmap *bitmap, const rectangle *cliprect)
 
 	/* display stats */
 	if (v->stats.display)
-		ui_draw_text(v->stats.buffer, 0, 0);
+		popmessage(v->stats.buffer, 0, 0);
 
 	/* update render override */
 	v->stats.render_override = code_pressed(KEYCODE_ENTER);

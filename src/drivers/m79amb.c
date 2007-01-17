@@ -1,20 +1,55 @@
-/* Ramtek M79 Ambush */
+/*          Ramtek M79 Ambush
 
-#include "driver.h"
-/*
- * in
- * 8000 DIP SW
- * 8002 D0=VBlank
- * 8004
- * 8005
- *
- * out
- * 8000
- * 8001 Mask Sel
- * 8002
- * 8003 D0=SelfTest LED
- *
+
+The following chart explains the settings of the eight switches on
+the DIP switch.  A plus(+) in the column means the toggle switch is
+up on the plus side of the DIP switch.
+
+                                SWITCHES
+                         |  12  |  345  |  678  |
+------------------------------------------------|
+Length of Game (seconds) |      |       |       |
+                  60     |  00  |       |       |
+                  90     |  0+  |       |       |
+                  90     |  +0  |       |       |
+                 120     |  ++  |       |       |
+-------------------------+------+-------+-------|
+Points for Extended Time |      |       |       |
+                1500     |      |  000  |       |
+                2500     |      |  +00  |       |
+                3500     |      |  0+0  |       |
+                5000     |      |  ++0  |       |
+    NO extended time     |      |  +++  |       |
+-------------------------+------+-------+-------|
+Coins Per Game           |      |       |       |
+ Free Play - two players |      |       |  0++  |
+ One Coin  - two players |      |       |  0+0  |
+ One Coin  - each player |      |       |  000  |
+ Two Coins - each player |      |       |  +00  |
+-------------------------------------------------
+
+
+Based on extensive tests on location, the factory settings for the
+most universal combinations are:
+    60 second long game
+    2500 points for extended play             12345678
+    On coin each player                       00+00000
+
+Ports:
+ In:
+  8000 DIP SW
+  8002 D0=VBlank
+  8004 Game Switch Inputs
+  8005 Game Switch Inputs
+
+ Out:
+  8000
+  8001 Mask Sel (Manual calls it "Select All RAM")
+  8002 Sound Control (According to Manual)
+  8003 D0=SelfTest LED
+
  */
+#include "driver.h"
 
 WRITE8_HANDLER( ramtek_videoram_w );
 
@@ -61,11 +96,11 @@ static WRITE8_HANDLER( sound_w )
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
-    AM_RANGE(0x4400, 0x5fff) AM_WRITE(ramtek_videoram_w) AM_BASE(&videoram)
-    AM_RANGE(0x6000, 0x63ff) AM_WRITE(MWA8_RAM)		/* ?? */
+	AM_RANGE(0x4400, 0x5fff) AM_WRITE(ramtek_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x6000, 0x63ff) AM_WRITE(MWA8_RAM)		/* ?? */
 	AM_RANGE(0x8001, 0x8001) AM_WRITE(ramtek_mask_w)
-	AM_RANGE(0x8000, 0x8000) AM_WRITE(sound_w)
-	AM_RANGE(0x8002, 0x8003) AM_WRITE(sound_w)
+	AM_RANGE(0x8000, 0x8000) AM_WRITE(sound_w)		/* sound_w listed twice?? */
+	AM_RANGE(0x8002, 0x8003) AM_WRITE(sound_w)		/* Manual Shows sound control at 0x8002 */
 	AM_RANGE(0xC000, 0xC07f) AM_WRITE(MWA8_RAM)			/* ?? */
 	AM_RANGE(0xC200, 0xC27f) AM_WRITE(MWA8_RAM)			/* ?? */
 ADDRESS_MAP_END
@@ -140,13 +175,14 @@ static MACHINE_DRIVER_START( m79amb )
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(M79_interrupt,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(32*8, 28*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
 	MDRV_PALETTE_LENGTH(7)
 
 	MDRV_PALETTE_INIT(m79amb)

@@ -121,24 +121,10 @@ hard_disk_info *hard_disk_get_info(hard_disk_file *file)
     disk
 -------------------------------------------------*/
 
-UINT32 hard_disk_read(hard_disk_file *file, UINT32 lbasector, UINT32 numsectors, void *buffer)
+UINT32 hard_disk_read(hard_disk_file *file, UINT32 lbasector, void *buffer)
 {
 	UINT32 hunknum = lbasector / file->hunksectors;
 	UINT32 sectoroffs = lbasector % file->hunksectors;
-
-	/* for now, just break down multisector reads into single sectors */
-	if (numsectors > 1)
-	{
-		UINT32 total = 0;
-		while (numsectors--)
-		{
-			if (hard_disk_read(file, lbasector++, 1, (UINT8 *)buffer + total * file->info.sectorbytes))
-				total++;
-			else
-				break;
-		}
-		return total;
-	}
 
 	/* if we haven't cached this hunk, read it now */
 	if (file->cachehunk != hunknum)
@@ -160,25 +146,11 @@ UINT32 hard_disk_read(hard_disk_file *file, UINT32 lbasector, UINT32 numsectors,
     disk
 -------------------------------------------------*/
 
-UINT32 hard_disk_write(hard_disk_file *file, UINT32 lbasector, UINT32 numsectors, const void *buffer)
+UINT32 hard_disk_write(hard_disk_file *file, UINT32 lbasector, const void *buffer)
 {
 	UINT32 hunknum = lbasector / file->hunksectors;
 	UINT32 sectoroffs = lbasector % file->hunksectors;
 	chd_error err;
-
-	/* for now, just break down multisector writes into single sectors */
-	if (numsectors > 1)
-	{
-		UINT32 total = 0;
-		while (numsectors--)
-		{
-			if (hard_disk_write(file, lbasector++, 1, (const UINT8 *)buffer + total * file->info.sectorbytes))
-				total++;
-			else
-				break;
-		}
-		return total;
-	}
 
 	/* if we haven't cached this hunk, read it now */
 	if (file->cachehunk != hunknum)

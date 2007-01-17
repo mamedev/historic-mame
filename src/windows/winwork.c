@@ -152,6 +152,10 @@ osd_work_queue *osd_work_queue_alloc(int flags)
 			queue->thread[threadnum] = (HANDLE)handle;
 			if (queue->thread[threadnum] == NULL)
 				goto error;
+
+			// set its priority
+			if (flags & WORK_QUEUE_FLAG_IO)
+				SetThreadPriority(queue->thread[threadnum], THREAD_PRIORITY_ABOVE_NORMAL);
 		}
 	}
 	return queue;
@@ -344,9 +348,6 @@ void osd_work_item_release(osd_work_item *item)
 	// make sure we're done first
 	WaitForSingleObject(item->event, INFINITE);
 
-	// release the event
-	CloseHandle(item->event);
-
 	// add us to the free list on our queue
 	do
 	{
@@ -382,7 +383,7 @@ static void worker_thread_entry(void *param)
 		// loop until everything is processed
 		while (queue->items != 0)
 		{
-			osd_work_item *item, *free;
+			osd_work_item *item;
 
 			// indicate that we are live
 			interlocked_increment(&queue->livethreads);
@@ -401,13 +402,6 @@ static void worker_thread_entry(void *param)
 			// call the callback and signal its event
 			item->result = (*item->callback)(item->param);
 			SetEvent(item->event);
-
-			// add the work item to the free list
-			do
-			{
-				free = (osd_work_item *)queue->free;
-				item->next = free;
-			} while (compare_exchange_pointer((PVOID volatile *)&queue->free, item, free) != free);
 
 			// decrement the count
 			if (interlocked_decrement(&queue->items) == 0)

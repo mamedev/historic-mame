@@ -356,21 +356,11 @@ WRITE32_HANDLER( policetr_palette_data_w )
 VIDEO_UPDATE( policetr )
 {
 	int width = cliprect->max_x - cliprect->min_x + 1;
-	int beamx, beamy;
 	int y;
 
 	/* render all the scanlines from the dstbitmap to MAME's bitmap */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		draw_scanline8(bitmap, cliprect->min_x, y, width, &dstbitmap[DSTBITMAP_WIDTH * y + cliprect->min_x], NULL, -1);
 
-	/* draw player 1's crosshair */
-	beamx = ((readinputport(3) & 0xff) * Machine->screen[0].width) >> 8;
-	beamy = ((readinputport(4) & 0xff) * Machine->screen[0].height) >> 8;
-	draw_crosshair(bitmap, beamx, beamy, cliprect, 0);
-
-	/* draw player 2's crosshair */
-	beamx = ((readinputport(5) & 0xff) * Machine->screen[0].width) >> 8;
-	beamy = ((readinputport(6) & 0xff) * Machine->screen[0].height) >> 8;
-	draw_crosshair(bitmap, beamx, beamy, cliprect, 1);
 	return 0;
 }
