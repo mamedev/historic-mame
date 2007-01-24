@@ -50,8 +50,6 @@ VIDEO_START( balsente )
 
 	/* allocate a bitmap */
 	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	if (!tmpbitmap)
-		return 1;
 
 	/* allocate a local copy of video RAM */
 	local_videoram = auto_malloc(256 * 256);

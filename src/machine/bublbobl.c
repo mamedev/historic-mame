@@ -358,14 +358,13 @@ READ8_HANDLER( boblbobl_ic43_b_r )
 
  Bootleg Bubble Bobble 68705 protection interface
 
- Not used at the moment, left in only for reference. Note that this actually
+ This is used by the 68705 bootleg version. Note that this actually
  wasn't working 100%, for some unknown reason the enemy movement wasn't right.
 
  The following is ENTIRELY GUESSWORK!!!
 
 ***************************************************************************/
 
-#if 0
 
 INTERRUPT_GEN( bublbobl_m68705_interrupt )
 {
@@ -497,4 +496,3 @@ WRITE8_HANDLER( bublbobl_68705_ddrB_w )
 	ddrB = data;
 }
 
-#endif

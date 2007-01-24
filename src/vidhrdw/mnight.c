@@ -31,11 +31,8 @@ VIDEO_START( mnight )
 {
 	bg_dirtybuffer = auto_malloc(1024);
 
-	if ((bitmap_bg = auto_bitmap_alloc (Machine->screen[0].width*2,Machine->screen[0].height*2)) == 0)
-		return 1;
-
-	if ((bitmap_sp = auto_bitmap_alloc (Machine->screen[0].width,Machine->screen[0].height)) == 0)
-		return 1;
+	bitmap_bg = auto_bitmap_alloc (Machine->screen[0].width*2,Machine->screen[0].height*2);
+	bitmap_sp = auto_bitmap_alloc (Machine->screen[0].width,Machine->screen[0].height);
 
 	mnight_mark_background_dirty() ;
 

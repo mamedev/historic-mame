@@ -23,8 +23,6 @@ static void mark_all_dirty(void)
 VIDEO_START( volfied )
 {
 	pixel_layer = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	if (pixel_layer == NULL)
-		return 1;
 
 	line_dirty = auto_malloc(256);
 

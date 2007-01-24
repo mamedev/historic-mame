@@ -467,9 +467,6 @@ VIDEO_START( marinedt )
 	obj1 = auto_bitmap_alloc(32,32);
 	obj2 = auto_bitmap_alloc(32,32);
 
-	if (!tile || !obj1 || !obj2)
-		return 1;
-
 	return 0;
 }
 

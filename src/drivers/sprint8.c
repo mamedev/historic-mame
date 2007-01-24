@@ -5,17 +5,7 @@ Atari Sprint 8 driver
 ***************************************************************************/
 
 #include "driver.h"
-
-extern VIDEO_EOF( sprint8 );
-extern VIDEO_START( sprint8 );
-extern VIDEO_UPDATE( sprint8 );
-
-extern WRITE8_HANDLER( sprint8_video_ram_w );
-
-extern UINT8* sprint8_video_ram;
-extern UINT8* sprint8_pos_h_ram;
-extern UINT8* sprint8_pos_v_ram;
-extern UINT8* sprint8_pos_d_ram;
+#include "includes/sprint8.h"
 
 static int steer_dir[8];
 static int steer_flag[8];

@@ -462,8 +462,6 @@ VIDEO_START( tceptor )
 
 	/* allocate temp bitmaps */
 	temp_bitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	if (!temp_bitmap)
-		return 1;
 
 	if (namco_road_init(gfx_index))
 		return 1;

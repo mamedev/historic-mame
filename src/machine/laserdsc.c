@@ -70,6 +70,9 @@ enum _laserdisc_state
 typedef enum _laserdisc_state laserdisc_state;
 
 /* generic states and configuration */
+#define FRAMEFLAG_PREV_SAME_FRAME	0x01
+#define FRAMEFLAG_NEXT_SAME_FRAME	0x02
+
 #define AUDIO_CH1_ENABLE			0x01
 #define AUDIO_CH2_ENABLE			0x02
 #define AUDIO_EXPLICIT_MUTE			0x04
@@ -171,6 +174,7 @@ struct _ldv1000_info
 	UINT32			readpos;				/* current read position */
 	UINT32			readtotal;				/* current read position */
 	UINT8			readbuf[256];			/* temporary read buffer */
+	UINT8			statusmask;				/* status bits mask */
 };
 
 
@@ -213,15 +217,16 @@ struct _laserdisc_info
 {
 	/* disc parameters */
 	chd_file *		disc;					/* handle to the disc itself */
+	UINT8			readpending;			/* true if a read is pending */
 	UINT8 *			framebuffer;			/* buffer to hold one frame */
 	UINT32			maxfractrack;			/* maximum track number */
 	UINT32			fieldnum;				/* field number (0 or 1) */
 
 	/* video data */
 	mame_bitmap *	videoframe[2];			/* currently cached frames */
-	UINT8			videovalid[2];			/* is the current frame valid? */
-	UINT32			videoseqid[2];			/* video sequence ID for each frame */
-	UINT32			curseqid;				/* current sequencce ID */
+	UINT8			videofields[2];			/* number of fields in each frame */
+	UINT32			videoframenum[2];		/* frame number contained in each frame */
+	UINT8			videoindex;				/* index of the current video buffer */
 	mame_bitmap *	emptyframe;				/* blank frame */
 
 	/* audio data */
@@ -732,6 +737,13 @@ void laserdisc_reset(laserdisc_info *info, int type)
 	for (i = 0; i < LASERDISC_OUTPUT_LINES; i++)
 		info->lineout[i] = CLEAR_LINE;
 
+	/* reset callbacks */
+	info->writedata = NULL;
+	memset(info->writeline, 0, sizeof(info->writeline));
+	info->readdata = NULL;
+	memset(info->readline, 0, sizeof(info->readline));
+	info->statechanged = NULL;
+
 	/* each player can init */
 	switch (info->type)
 	{
@@ -904,8 +916,7 @@ const char *laserdisc_describe_state(laserdisc_info *info)
 		{ LASERDISC_STEPPING_FORWARD, "Stepping Forward" },
 		{ LASERDISC_STEPPING_REVERSE, "Stepping Reverse" },
 		{ LASERDISC_SCANNING_FORWARD, "Scanning Forward" },
-		{ LASERDISC_SCANNING_REVERSE, "Scanning Reverse" },
-		{ 0, NULL }
+		{ LASERDISC_SCANNING_REVERSE, "Scanning Reverse" }
 	};
 	const char *description = "Unknown";
 	int i;
@@ -1019,10 +1030,15 @@ UINT8 laserdisc_line_r(laserdisc_info *info, UINT8 line)
 
 UINT32 laserdisc_get_video(laserdisc_info *info, mame_bitmap **bitmap)
 {
-	int frameindex = ((info->fieldnum >> 1) & 1) ^ 1;
+	int frameindex;
+
+	/* determine the most recent live set of frames */
+	frameindex = info->videoindex;
+	if (info->videofields[frameindex] < 2)
+		frameindex ^= 1;
 
 	/* if no video present, return the empty frame */
-	if (!video_active(info) || !info->videovalid[frameindex])
+	if (!video_active(info) || info->videofields[frameindex] < 2)
 	{
 		*bitmap = info->emptyframe;
 		return 0;
@@ -1030,7 +1046,7 @@ UINT32 laserdisc_get_video(laserdisc_info *info, mame_bitmap **bitmap)
 	else
 	{
 		*bitmap = info->videoframe[frameindex];
-		return info->videoseqid[frameindex];
+		return info->videoframenum[frameindex];
 	}
 }
 
@@ -1105,12 +1121,13 @@ static int process_number(laserdisc_info *info, UINT8 byte, const UINT8 numbers[
 
 static int update_position(laserdisc_info *info)
 {
+	UINT32 tracknum = FRAC_TO_INT(info->curfractrack);
 	UINT32 fieldnum = info->fieldnum & 1;
 	INT32 speed = info->curfracspeed;
-	INT32 framedelta, stepdelta;
+	INT32 framedelta;
 
-	/* if we're searching for a frame, adjust the speed accordingly */
-	if (info->state == LASERDISC_SEARCHING_FRAME || info->state == LASERDISC_LOADING)
+	/* if video isn't active, we don't need to be careful about fields and frames */
+	if (!video_active(info))
 	{
 		int frame = frame_from_metadata(&info->metadata[fieldnum]);
 		int direction;
@@ -1125,14 +1142,18 @@ static int update_position(laserdisc_info *info)
 				add_to_current_track(info, 10 * ONE_TRACK);
 
 			/* if we're on the second field of a frame, the next frame is on the next track */
-			else if (fieldnum == 1)
+			/* but don't do it if we're seeking to frame 1, since that might be the very first frame */
+			else if (fieldnum == 1 && (info->last_frame == 1 || info->targetframe != 1))
 				add_to_current_track(info, ONE_TRACK);
 			return FALSE;
 		}
 
 		/* if we hit our frame, we're done */
 		if (frame == info->targetframe)
+		{
+			info->curfractrack = INT_TO_FRAC(tracknum);
 			return TRUE;
+		}
 
 		/* determine the frame delta and direction */
 		framedelta = info->targetframe - frame;
@@ -1144,29 +1165,36 @@ static int update_position(laserdisc_info *info)
 
 		/* if we're only going forward one frame, only advance if we're on the second field */
 		/* otherwise, we might overshoot */
-		else if (framedelta == 1)
-			framedelta = (fieldnum == 1) ? 1 : 0;
+		else if (framedelta == 1 && fieldnum == 0)
+			framedelta = 0;
+
+		/* scale up to fractional bits */
 		framedelta = INT_TO_FRAC(abs(framedelta));
 
 		/* determine the stepdelta */
-		stepdelta = speed / 2;
-		add_to_current_track(info, (framedelta < stepdelta) ? framedelta * direction : stepdelta * direction);
+		add_to_current_track(info, MIN(framedelta, speed / 2) * direction);
 		return FALSE;
 	}
+
+	/* only advance on the second field */
+	if (fieldnum != 1)
+		return FALSE;
 
 	/* if we're moving backwards, advance back until we hit track 1 or the target */
 	if (speed < 0)
 	{
 		/* if we've hit the target, stop now */
 		if (info->targetframe != 0 && info->last_frame <= info->targetframe)
+		{
+			info->curfractrack = INT_TO_FRAC(tracknum);
 			return TRUE;
+		}
 
 		/* otherwise, clamp our delta so we don't overshoot */
 		else
 		{
 			framedelta = INT_TO_FRAC((info->targetframe == 0) ? -1000 : (info->targetframe - info->last_frame));
-			stepdelta = speed / 2;
-			add_to_current_track(info, MAX(framedelta, stepdelta));
+			add_to_current_track(info, MAX(framedelta, speed));
 		}
 	}
 
@@ -1175,14 +1203,16 @@ static int update_position(laserdisc_info *info)
 	{
 		/* if we've hit the target, stop now */
 		if (info->targetframe != 0 && info->last_frame >= info->targetframe)
+		{
+			info->curfractrack = INT_TO_FRAC(tracknum);
 			return TRUE;
+		}
 
 		/* otherwise, clamp our delta so we don't overshoot */
 		else
 		{
 			framedelta = INT_TO_FRAC((info->targetframe == 0) ? 1000 : (info->targetframe - info->last_frame));
-			stepdelta = speed / 2;
-			add_to_current_track(info, MIN(framedelta, stepdelta));
+			add_to_current_track(info, MIN(framedelta, speed));
 		}
 	}
 	return FALSE;
@@ -1196,28 +1226,22 @@ static int update_position(laserdisc_info *info)
 
 static void read_track_data(laserdisc_info *info)
 {
-	UINT32 tracknum = FRAC_TO_INT(info->curfractrack);
 	UINT32 fieldnum = info->fieldnum & 1;
-	UINT32 videobuf = (info->fieldnum >> 1) & 1;
-	UINT32 chdhunk = tracknum * 2 + fieldnum;
-	chd_error err;
 
 	/* if video is active, enable video decoding */
-	info->videovalid[videobuf] = video_active(info);
 	if (video_active(info))
 	{
-		/* if we are reading the second field, it might be stored in the previous CHD */
-		/* hunk; back up to ensure that it is the same frame */
-		if (fieldnum == 1 && info->metadata[0].frameflags == 0x01)
-			chdhunk -= 2;
-
-		/* bump the sequence ID */
-		info->videoseqid[videobuf] = ++info->curseqid;
+		/* if the flags on the previous field indicate that the next field
+           is part of the same frame, then keep steady; otherwise, bump to
+           the next videoindex */
+		if (info->videofields[info->videoindex] > 0 && !(info->metadata[fieldnum ^ 1].frameflags & FRAMEFLAG_NEXT_SAME_FRAME))
+		{
+			info->videoindex ^= 1;
+			info->videofields[info->videoindex] = 0;
+		}
 	}
-
-	/* read data */
-	if (info->disc != NULL)
-		err = chd_read_async(info->disc, chdhunk, info->framebuffer);
+	else
+		info->videofields[0] = info->videofields[1] = 0;
 }
 
 
@@ -1231,18 +1255,20 @@ static void process_track_data(laserdisc_info *info)
 	UINT32 tracknum = FRAC_TO_INT(info->curfractrack);
 	UINT32 fieldnum = info->fieldnum & 1;
 	const UINT8 *rawdata = NULL;
-	INT16 *sampsource[2];
+	const INT16 *sampsource[2];
 	int frame, chapter;
 	chd_error chderr;
 	int samples;
 
 	/* wait for the async operation to complete */
-	if (info->disc != NULL)
+	if (info->disc != NULL && info->readpending)
 	{
+		/* complete the async operation */
 		chderr = chd_async_complete(info->disc);
 		if (chderr == CHDERR_NONE || chderr == CHDERR_NO_ASYNC_OPERATION)
 			rawdata = info->framebuffer;
 	}
+	info->readpending = FALSE;
 
 	/* parse the metadata */
 	parse_metadata(rawdata, tracknum, fieldnum, &info->metadata[fieldnum]);
@@ -1255,12 +1281,19 @@ static void process_track_data(laserdisc_info *info)
 	if (chapter != -1)
 		info->last_chapter = chapter;
 
+	/* update video info */
+	if (rawdata != NULL)
+	{
+		info->videofields[info->videoindex]++;
+		info->videoframenum[info->videoindex] = info->last_frame;
+	}
+
 	/* stream the audio into our ring buffers */
 	if (rawdata != NULL)
 	{
 		samples = (rawdata[6] << 8) + rawdata[7];
-		sampsource[0] = (INT16 *)(rawdata + 12 + rawdata[4]) + 0 * samples;
-		sampsource[1] = (INT16 *)(rawdata + 12 + rawdata[4]) + 1 * samples;
+		sampsource[0] = (const INT16 *)(rawdata + 12 + rawdata[4]) + 0 * samples;
+		sampsource[1] = sampsource[0] + samples;
 
 		/* loop until all samples are copied */
 		while (samples != 0)
@@ -1370,9 +1403,25 @@ static void custom_stream_callback(void *param, stream_sample_t **inputs, stream
 	laserdisc_info *info = token->info;
 	stream_sample_t *dst0 = outputs[0];
 	stream_sample_t *dst1 = outputs[1];
+	int samples_avail = 0;
+
+	/* see if we have enough samples to fill the buffer; if not, drop out */
+	if (info != NULL)
+	{
+		samples_avail = info->audiobufin - info->audiobufout;
+		if (samples_avail < 0)
+			samples_avail += info->audiobufsize;
+	}
+
+	/* if no attached info, just clear the buffers */
+	if (samples_avail < samples)
+	{
+		memset(dst0, 0, samples * sizeof(dst0[0]));
+		memset(dst1, 0, samples * sizeof(dst1[0]));
+	}
 
 	/* otherwise, stream from our buffer */
-	if (info != NULL)
+	else
 	{
 		const INT16 *buffer0 = info->audiobuffer[0];
 		const INT16 *buffer1 = info->audiobuffer[1];
@@ -1388,13 +1437,20 @@ static void custom_stream_callback(void *param, stream_sample_t **inputs, stream
 				sampout = 0;
 		}
 		info->audiobufout = sampout;
-	}
 
-	/* clear out the rest of the buffer */
-	while (samples-- > 0)
-	{
-		*dst0++ = 0;
-		*dst1++ = 0;
+		/* clear out the rest of the buffer */
+		if (samples > 0)
+		{
+			int sampout = (info->audiobufout == 0) ? info->audiobufsize - 1 : info->audiobufout - 1;
+			stream_sample_t fill0 = buffer0[sampout];
+			stream_sample_t fill1 = buffer1[sampout];
+
+			while (samples-- > 0)
+			{
+				*dst0++ = fill0;
+				*dst1++ = fill1;
+			}
+		}
 	}
 }
 
@@ -1642,6 +1698,8 @@ static void pr7820_enter_w(laserdisc_info *info, UINT8 newstate)
 					targetframe = read_16bits_from_ram_be(pr7820->ram, (pr7820->activereg * 2) % 1024);
 				pr7820->activereg++;
 
+				if (targetframe == 0)
+					targetframe = 1;
 				set_state(info, LASERDISC_SEARCHING_FRAME, PR7820_SEARCH_SPEED, targetframe);
 			}
 			break;
@@ -2097,6 +2155,7 @@ static void ldv1000_soft_reset(laserdisc_info *info)
 	info->display = FALSE;
 	ldv1000->mode = LDV1000_MODE_STATUS;
 	ldv1000->activereg = 0;
+	ldv1000->statusmask = 0xff;
 	write_16bits_to_ram_be(ldv1000->ram, 0, 1);
 }
 
@@ -2111,9 +2170,17 @@ static void ldv1000_data_w(laserdisc_info *info, UINT8 prev, UINT8 data)
 	static const UINT8 numbers[10] = { 0x3f, 0x0f, 0x8f, 0x4f, 0x2f, 0xaf, 0x6f, 0x1f, 0x9f, 0x5f };
 	ldv1000_info *ldv1000 = &info->u.ldv1000;
 
-	/* 0xFF bytes are used for synchronization and filler; just ignore */
+	/* 0xFF bytes are used for synchronization */
 	if (data == 0xff)
+	{
+		ldv1000->statusmask = 0xff;	/* EHC 012207: reset our status mask */
 		return;
+	}
+
+	/* if we're not ready, return, otherwise signal ourselves busy */
+	if (ldv1000->statusmask == 0x7f)
+		return;
+	ldv1000->statusmask = 0x7f;
 
 	/* look for and process numbers */
 	if (process_number(info, data, numbers))
@@ -2126,6 +2193,34 @@ static void ldv1000_data_w(laserdisc_info *info, UINT8 prev, UINT8 data)
 			/* set the active register */
 			ldv1000->activereg = info->parameter;
 			/* should also display the register value */
+			break;
+
+		case 0x20:  CMDPRINTF(("ldv1000: x0 reverse (stop) - Badlands special\n"));
+			/* play reverse at 0 speed (stop) */
+			if (laserdisc_ready(info))
+				set_state(info, LASERDISC_PLAYING_SLOW_REVERSE, STOP_SPEED, NULL_TARGET_FRAME);
+			break;
+
+		case 0x21:  CMDPRINTF(("ldv1000: x1/4 reverse - Badlands special\n"));
+			/* play reverse at 1/4 speed */
+			if (laserdisc_ready(info))
+				set_state(info, LASERDISC_PLAYING_SLOW_REVERSE, -PLAY_SPEED / 4, NULL_TARGET_FRAME);
+			break;
+
+		case 0x22:  CMDPRINTF(("ldv1000: x1/2 reverse - Badlands special\n"));
+			/* play reverse at 1/2 speed */
+			if (laserdisc_ready(info))
+				set_state(info, LASERDISC_PLAYING_SLOW_REVERSE, -PLAY_SPEED / 2, NULL_TARGET_FRAME);
+			break;
+
+		case 0x23:
+		case 0x24:
+		case 0x25:
+		case 0x26:
+		case 0x27:  CMDPRINTF(("ldv1000: x%d reverse - Badlands special\n", (data & 0x07) - 2));
+			/* play reverse at 1-5x speed */
+			if (laserdisc_ready(info))
+				set_state(info, LASERDISC_PLAYING_FAST_REVERSE, -PLAY_SPEED * ((data & 0x07) - 2), NULL_TARGET_FRAME);
 			break;
 
 		case 0xa0:  CMDPRINTF(("ldv1000: x0 forward (stop)\n"));
@@ -2172,6 +2267,25 @@ static void ldv1000_data_w(laserdisc_info *info, UINT8 prev, UINT8 data)
 				/* note that this skips tracks, not frames; the track->frame count is not 1:1 */
 				/* in the case of 3:2 pulldown or other effects; for now, we just ignore the diff */
 				add_to_current_track(info, INT_TO_FRAC(10 * (data & 0x0f)));
+			}
+			break;
+
+		case 0x31:
+		case 0x32:
+		case 0x33:
+		case 0x34:
+		case 0x35:
+		case 0x36:
+		case 0x37:
+		case 0x38:
+		case 0x39:
+		case 0x3a:  CMDPRINTF(("ldv1000: Skip backwards %d0 - Badlands special\n", data & 0x0f));
+			/* skip backward */
+			if (laserdisc_active(info))
+			{
+				/* note that this skips tracks, not frames; the track->frame count is not 1:1 */
+				/* in the case of 3:2 pulldown or other effects; for now, we just ignore the diff */
+				add_to_current_track(info, -INT_TO_FRAC(10 * (data & 0x0f)));
 			}
 			break;
 
@@ -2297,11 +2411,8 @@ static void ldv1000_data_w(laserdisc_info *info, UINT8 prev, UINT8 data)
 
 		case 0xf9:	CMDPRINTF(("ldv1000: Reject\n"));
 			/* eject the disc */
-			if (laserdisc_ready(info))
-			{
-				set_state(info, LASERDISC_EJECTING, STOP_SPEED, NULL_TARGET_FRAME);
-				set_hold_state(info, GENERIC_LOAD_TIME, LASERDISC_EJECTED, STOP_SPEED);
-			}
+			set_state(info, LASERDISC_EJECTING, STOP_SPEED, NULL_TARGET_FRAME);
+			set_hold_state(info, GENERIC_LOAD_TIME, LASERDISC_EJECTED, STOP_SPEED);
 			break;
 
 		case 0xfb:	CMDPRINTF(("ldv1000: %d Stop/Wait\n", info->parameter));
@@ -2411,13 +2522,17 @@ static UINT8 ldv1000_status_r(laserdisc_info *info)
 		case LDV1000_MODE_GET_1ST:
 		case LDV1000_MODE_GET_2ND:
 			assert(ldv1000->readpos < ldv1000->readtotal);
-			status = ldv1000->readbuf[ldv1000->readpos];
+			status = ldv1000->readbuf[ldv1000->readpos++];
+			if (ldv1000->readpos == ldv1000->readtotal)
+				ldv1000->mode = LDV1000_MODE_STATUS;
 			break;
 
 		/* reading RAM returns 1024 bytes */
 		case LDV1000_MODE_GET_RAM:
 			assert(ldv1000->readpos < ldv1000->readtotal);
-			status = ldv1000->ram[1023 - ldv1000->readpos];
+			status = ldv1000->ram[1023 - ldv1000->readpos++];
+			if (ldv1000->readpos == ldv1000->readtotal)
+				ldv1000->mode = LDV1000_MODE_STATUS;
 			break;
 
 		/* otherwise, we just compute a status code */
@@ -2425,7 +2540,7 @@ static UINT8 ldv1000_status_r(laserdisc_info *info)
 		case LDV1000_MODE_STATUS:
 			switch (info->state)
 			{
-				case LASERDISC_EJECTED:					status = 0x60;		break;
+				case LASERDISC_EJECTED:					status = 0xe0;		break;
 				case LASERDISC_EJECTING:				status = 0x60;		break;
 				case LASERDISC_LOADED:					status = 0xc8;		break;
 				case LASERDISC_LOADING:					status = 0x48;		break;
@@ -2454,7 +2569,8 @@ static UINT8 ldv1000_status_r(laserdisc_info *info)
 			break;
 	}
 
-	return status;
+	/* bit 7 indicates our busy status */
+	return status & ldv1000->statusmask;
 }
 
 

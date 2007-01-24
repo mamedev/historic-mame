@@ -195,8 +195,6 @@ VIDEO_START( crgolf )
 	screena = auto_bitmap_alloc(256, 256);
 	screenb = auto_bitmap_alloc(256, 256);
 	highbit = auto_bitmap_alloc(256, 256);
-	if (!screena || !screenb || !highbit)
-		return 1;
 
 	/* initialize the "high bit" bitmap */
 	fillbitmap(screena, 0, NULL);

@@ -45,13 +45,9 @@ VIDEO_START( jedi )
 
 	/* allocate an 8bpp bitmap for the raw foreground characters */
 	fgbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	if (!fgbitmap)
-		return 1;
 
 	/* allocate an 8bpp bitmap for the motion objects */
 	mobitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	if (!mobitmap)
-		return 1;
 	fillbitmap(mobitmap, 0, &Machine->screen[0].visarea);
 
 	/* allocate dirty buffer for the background characters */
@@ -60,13 +56,9 @@ VIDEO_START( jedi )
 
 	/* the background area is 256x256, doubled by the hardware*/
 	bgbitmap = auto_bitmap_alloc(256, 256);
-	if (!bgbitmap)
-		return 1;
 
 	/* the expanded background area is 512x512 */
 	bgexbitmap = auto_bitmap_alloc(512, 512);
-	if (!bgexbitmap)
-		return 1;
 
 	/* reserve color 1024 for black (disabled display) */
 	palette_set_color(machine, 1024, 0, 0, 0);

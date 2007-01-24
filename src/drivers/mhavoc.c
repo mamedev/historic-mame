@@ -184,7 +184,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine/mathbox.h"
 #include "machine/atari_vg.h"
 #include "vidhrdw/avgdvg.h"
 #include "vidhrdw/vector.h"
@@ -226,25 +225,6 @@ static WRITE8_HANDLER( dual_pokey_w )
 }
 
 
-
-/*************************************
- *
- *  Gamma RAM
- *
- *************************************/
-
-static UINT8 *gammaram;
-
-static READ8_HANDLER( mhavoc_gammaram_r )
-{
-	return gammaram[offset & 0x7ff];
-}
-
-static WRITE8_HANDLER( mhavoc_gammaram_w )
-{
-	gammaram[offset & 0x7ff] = data;
-}
-
 /*************************************
  *
  *  Speech access
@@ -269,9 +249,10 @@ static WRITE8_HANDLER( speech_strobe_w )
  *************************************/
 
 static ADDRESS_MAP_START( alpha_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x01ff) AM_RAM                           /* 0.5K Program Ram */
-	AM_RANGE(0x0200, 0x07ff) AM_RAMBANK(1)                    /* 3K Paged Program RAM */
-	AM_RANGE(0x0800, 0x09ff) AM_RAM                           /* 0.5K Program RAM */
+	AM_RANGE(0x0000, 0x01ff) AM_RAM
+	AM_RANGE(0x0200, 0x07ff) AM_RAMBANK(1) AM_BASE(&mhavoc_zram0)
+	AM_RANGE(0x0800, 0x09ff) AM_RAM
+	AM_RANGE(0x0a00, 0x0fff) AM_RAMBANK(1) AM_BASE(&mhavoc_zram1)
 	AM_RANGE(0x1000, 0x1000) AM_READ(mhavoc_gamma_r)          /* Gamma Read Port */
 	AM_RANGE(0x1200, 0x1200) AM_READWRITE(mhavoc_port_0_r, MWA8_NOP) /* Alpha Input Port 0 */
 	AM_RANGE(0x1400, 0x141f) AM_RAM AM_BASE(&mhavoc_colorram)        /* ColorRAM */
@@ -300,7 +281,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( gamma_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_RAM			                  /* Program RAM (2K) */
-	AM_RANGE(0x0800, 0x1fff) AM_READWRITE(mhavoc_gammaram_r, mhavoc_gammaram_w) AM_BASE(&gammaram)	/* wraps to 0x000-0x7ff */
+    AM_RANGE(0x0800, 0x0fff) AM_RAM AM_MIRROR (0x1800)
 	AM_RANGE(0x2000, 0x203f) AM_READWRITE(quad_pokey_r, quad_pokey_w) /* Quad Pokey read  */
 	AM_RANGE(0x2800, 0x2800) AM_READ(mhavoc_port_1_r)         /* Gamma Input Port */
 	AM_RANGE(0x3000, 0x3000) AM_READ(mhavoc_alpha_r)          /* Alpha Comm. Read Port*/
@@ -322,9 +303,10 @@ ADDRESS_MAP_END
  *************************************/
 
 static ADDRESS_MAP_START( alphaone_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x01ff) AM_RAM                           /* 0.5K Program Ram */
-	AM_RANGE(0x0200, 0x07ff) AM_RAMBANK(1)                    /* 3K Paged Program RAM */
-	AM_RANGE(0x0800, 0x09ff) AM_RAM                           /* 0.5K Program RAM */
+	AM_RANGE(0x0000, 0x01ff) AM_RAM
+	AM_RANGE(0x0200, 0x07ff) AM_RAMBANK(1) AM_BASE(&mhavoc_zram0)
+	AM_RANGE(0x0800, 0x09ff) AM_RAM
+	AM_RANGE(0x0a00, 0x0fff) AM_RAMBANK(1) AM_BASE(&mhavoc_zram1)
 	AM_RANGE(0x1020, 0x103f) AM_READWRITE(dual_pokey_r, dual_pokey_w)
 	AM_RANGE(0x1040, 0x1040) AM_READWRITE(alphaone_port_0_r, MWA8_NOP) /* Alpha Input Port 0 */
 	AM_RANGE(0x1060, 0x1060) AM_READ(input_port_1_r)          /* Gamma Input Port */
@@ -623,7 +605,7 @@ MACHINE_DRIVER_END
 
 ROM_START( mhavoc )
 	/* Alpha Processor ROMs */
-	ROM_REGION( 0x21000, REGION_CPU1, 0 )	/* 152KB for ROMs */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 152KB for ROMs */
 	/* Vector Generator ROM */
 	ROM_LOAD( "136025.210",   0x05000, 0x2000, CRC(c67284ca) SHA1(d9adad80c266d36429444f483cac4ebcf1fec7b8) )
 
@@ -653,7 +635,7 @@ ROM_END
 
 ROM_START( mhavoc2 )
 	/* Alpha Processor ROMs */
-	ROM_REGION( 0x21000, REGION_CPU1, 0 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	/* Vector Generator ROM */
 	ROM_LOAD( "136025.110",   0x05000, 0x2000, CRC(16eef583) SHA1(277252bd716dd96d5b98ec5e33a3a6a3bc1a9abf) )
 
@@ -684,7 +666,7 @@ ROM_END
 
 ROM_START( mhavocrv )
 	/* Alpha Processor ROMs */
-	ROM_REGION( 0x21000, REGION_CPU1, 0 )	/* 152KB for ROMs */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 152KB for ROMs */
 	/* Vector Generator ROM */
 	ROM_LOAD( "136025.210",   0x05000, 0x2000, CRC(c67284ca) SHA1(d9adad80c266d36429444f483cac4ebcf1fec7b8) )
 
@@ -713,7 +695,7 @@ ROM_END
 
 ROM_START( mhavocp )
 	/* Alpha Processor ROMs */
-	ROM_REGION( 0x21000, REGION_CPU1, 0 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	/* Vector Generator ROM */
 	ROM_LOAD( "136025.010",   0x05000, 0x2000, CRC(3050c0e6) SHA1(f19a9538996d949cdca7e6abd4f04e8ff6e0e2c1) )
 
@@ -743,7 +725,7 @@ ROM_END
 
 
 ROM_START( alphaone )
-	ROM_REGION( 0x21000, REGION_CPU1, 0 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	/* Vector Generator ROM */
 	ROM_LOAD( "vec5000.tw",   0x05000, 0x1000, CRC(2a4c149f) SHA1(b60a0b29958bee9b5f7c1d88163680b626bb76dd) )
 
@@ -770,7 +752,7 @@ ROM_END
 
 
 ROM_START( alphaona )
-	ROM_REGION( 0x21000, REGION_CPU1, 0 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	/* Vector Generator ROM */
 	ROM_LOAD( "vec5000.tw",   0x05000, 0x1000, CRC(2a4c149f) SHA1(b60a0b29958bee9b5f7c1d88163680b626bb76dd) )
 
@@ -820,9 +802,9 @@ static DRIVER_INIT( mhavocrv )
  *
  *************************************/
 
-GAME( 1983, mhavoc,   0,      mhavoc,   mhavoc,   0,        ROT0, "Atari", "Major Havoc (rev 3)", 0 )
-GAME( 1983, mhavoc2,  mhavoc, mhavoc,   mhavoc,   0,        ROT0, "Atari", "Major Havoc (rev 2)", 0 )
-GAME( 1983, mhavocrv, mhavoc, mhavocrv, mhavoc,   mhavocrv, ROT0, "JMA",   "Major Havoc (Return to Vax)", 0 )
-GAME( 1983, mhavocp,  mhavoc, mhavoc,   mhavocp,  0,        ROT0, "Atari", "Major Havoc (prototype)", 0 )
-GAME( 1983, alphaone, mhavoc, alphaone, alphaone, 0,        ROT0, "Atari", "Alpha One (prototype, 3 lives)", 0 )
-GAME( 1983, alphaona, mhavoc, alphaone, alphaone, 0,        ROT0, "Atari", "Alpha One (prototype, 5 lives)", 0 )
+GAME( 1983, mhavoc,   0,      mhavoc,   mhavoc,   0,        ROT0, "Atari", "Major Havoc (rev 3)", GAME_SUPPORTS_SAVE )
+GAME( 1983, mhavoc2,  mhavoc, mhavoc,   mhavoc,   0,        ROT0, "Atari", "Major Havoc (rev 2)", GAME_SUPPORTS_SAVE )
+GAME( 1983, mhavocrv, mhavoc, mhavocrv, mhavoc,   mhavocrv, ROT0, "JMA",   "Major Havoc (Return to Vax)", GAME_SUPPORTS_SAVE )
+GAME( 1983, mhavocp,  mhavoc, mhavoc,   mhavocp,  0,        ROT0, "Atari", "Major Havoc (prototype)", GAME_SUPPORTS_SAVE )
+GAME( 1983, alphaone, mhavoc, alphaone, alphaone, 0,        ROT0, "Atari", "Alpha One (prototype, 3 lives)", GAME_SUPPORTS_SAVE )
+GAME( 1983, alphaona, mhavoc, alphaone, alphaone, 0,        ROT0, "Atari", "Alpha One (prototype, 5 lives)", GAME_SUPPORTS_SAVE )

@@ -13,10 +13,13 @@
 #define TORNBASE_CAB_TYPE_UPRIGHT_OLD	(0)
 #define TORNBASE_CAB_TYPE_UPRIGHT_NEW	(1)
 #define TORNBASE_CAB_TYPE_COCKTAIL		(2)
-int tornbase_get_cabinet_type(void);
+UINT8 tornbase_get_cabinet_type(void);
 
 #define DESERTGU_GUN_X_PORT_TAG			("GUNX")
 #define DESERTGU_GUN_Y_PORT_TAG			("GUNY")
+void desertgun_set_controller_select(UINT8 data);
+
+void clowns_set_controller_select(UINT8 data);
 
 UINT8 phantom2_get_cloud_pos(void);
 
@@ -26,6 +29,8 @@ int invaders_is_cabinet_cocktail(void);
 
 
 /*----------- defined in sndhrdw/mw8080bw.c -----------*/
+
+MACHINE_START( mw8080bw_sndhrdw );
 
 WRITE8_HANDLER( midway_tone_generator_lo_w );
 WRITE8_HANDLER( midway_tone_generator_hi_w );
@@ -54,7 +59,6 @@ WRITE8_HANDLER( checkmat_sh_port_w );
 MACHINE_DRIVER_EXTERN( desertgu_sound );
 WRITE8_HANDLER( desertgu_sh_port_1_w );
 WRITE8_HANDLER( desertgu_sh_port_2_w );
-UINT8 desertgun_get_controller_select(void);
 
 MACHINE_DRIVER_EXTERN( dplay_sound );
 WRITE8_HANDLER( dplay_sh_port_w );
@@ -71,7 +75,6 @@ WRITE8_HANDLER( m4_sh_port_2_w );
 MACHINE_DRIVER_EXTERN( clowns_sound );
 WRITE8_HANDLER( clowns_sh_port_1_w );
 WRITE8_HANDLER( clowns_sh_port_2_w );
-UINT8 clowns_get_controller_select(void);
 
 MACHINE_DRIVER_EXTERN( shuffle_sound );
 WRITE8_HANDLER( shuffle_sh_port_1_w );

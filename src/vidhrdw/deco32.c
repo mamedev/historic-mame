@@ -1075,7 +1075,7 @@ VIDEO_START( nslasher )
 	sprite1_mix_bitmap=auto_bitmap_alloc_format( Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16 );
 	tilemap_alpha_bitmap=auto_bitmap_alloc_format( Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16 );
 
-	if (!sprite1_mix_bitmap || !sprite0_mix_bitmap || !tilemap_alpha_bitmap || !pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
+	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);

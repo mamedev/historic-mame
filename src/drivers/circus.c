@@ -32,6 +32,7 @@ D000      Paddle Position and Interrupt Reset
 #include "circus.h"
 
 #include "circus.lh"
+#include "crash.lh"
 
 #if 0
 static int circus_interrupt;
@@ -538,5 +539,5 @@ static DRIVER_INIT( ripcord )
 GAMEL(1977, circus,   0,      circus,   circus,   circus,   ROT0, "Exidy", "Circus", 0, layout_circus )
 GAMEL(1977, circusse, circus, circus,   circus,   circus,   ROT0, "[Exidy] (Sub-Electro bootleg)", "Circus (Sub-Electro bootleg)", 0, layout_circus ) // looks like a text hack, but we've seen 2 identical copies so it's worth supporting
 GAME( 1977, robotbwl, 0,      robotbwl, robotbwl, robotbwl, ROT0, "Exidy", "Robot Bowl", GAME_IMPERFECT_SOUND )
-GAME( 1979, crash,    0,      crash,    crash,    crash,    ROT0, "Exidy", "Crash", GAME_IMPERFECT_SOUND )
+GAMEL(1979, crash,    0,      crash,    crash,    crash,    ROT0, "Exidy", "Crash", GAME_IMPERFECT_SOUND, layout_crash )
 GAME( 1979, ripcord,  0,      ripcord,  ripcord,  ripcord,  ROT0, "Exidy", "Rip Cord", GAME_IMPERFECT_SOUND )

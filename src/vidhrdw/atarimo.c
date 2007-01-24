@@ -347,7 +347,6 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 
 	/* allocate the temp bitmap */
 	mo->bitmap        = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	VERIFYRETFREE(mo->bitmap, "atarimo_init: out of memory for temporary bitmap", 0)
 	fillbitmap(mo->bitmap, desc->transpen, NULL);
 
 	/* allocate the spriteram */

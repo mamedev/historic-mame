@@ -35,11 +35,8 @@ PALETTE_INIT( nyny )
 
 VIDEO_START( nyny )
 {
-	if ((tmpbitmap1 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
-		return 1;
-
-	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
-		return 1;
+	tmpbitmap1 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+	tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
 	nyny_videoram = auto_malloc(0x4000);
 	nyny_colourram = auto_malloc(0x4000);

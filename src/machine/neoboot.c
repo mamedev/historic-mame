@@ -810,16 +810,16 @@ WRITE16_HANDLER( kof2003_w )
 	data = COMBINE_DATA(&kof2003_tbl[offset]);
 	if (offset == 0x1ff0/2 || offset == 0x1ff2/2) {
 		UINT8* cr = (UINT8 *)kof2003_tbl;
-		UINT32 address = (cr[0x1ff3]<<16)|(cr[0x1ff2]<<8)|cr[0x1ff1];
-		UINT8 prt = cr[0x1ff2];
+		UINT32 address = (cr[BYTE_XOR_LE(0x1ff3)]<<16)|(cr[BYTE_XOR_LE(0x1ff2)]<<8)|cr[BYTE_XOR_LE(0x1ff1)];
+		UINT8 prt = cr[BYTE_XOR_LE(0x1ff2)];
 		UINT8* mem = (UINT8 *)memory_region(REGION_CPU1);
 
-		cr[0x1ff0] =  0xa0;
-		cr[0x1ff1] &= 0xfe;
-		cr[0x1ff3] &= 0x7f;
+		cr[BYTE_XOR_LE(0x1ff0)] =  0xa0;
+		cr[BYTE_XOR_LE(0x1ff1)] &= 0xfe;
+		cr[BYTE_XOR_LE(0x1ff3)] &= 0x7f;
 		neogeo_set_cpu1_second_bank(address+0x100000);
 
-		mem[0x58196] = prt;
+		mem[BYTE_XOR_LE(0x58196)] = prt;
 	}
 }
 
@@ -828,15 +828,15 @@ WRITE16_HANDLER( kof2003p_w )
 	data = COMBINE_DATA(&kof2003_tbl[offset]);
 	if (offset == 0x1ff0/2 || offset == 0x1ff2/2) {
 		UINT8* cr = (UINT8 *)kof2003_tbl;
-		UINT32 address = (cr[0x1ff3]<<16)|(cr[0x1ff2]<<8)|cr[0x1ff0];
-		UINT8 prt = cr[0x1ff2];
+		UINT32 address = (cr[BYTE_XOR_LE(0x1ff3)]<<16)|(cr[BYTE_XOR_LE(0x1ff2)]<<8)|cr[BYTE_XOR_LE(0x1ff0)];
+		UINT8 prt = cr[BYTE_XOR_LE(0x1ff2)];
 		UINT8* mem = (UINT8 *)memory_region(REGION_CPU1);
 
-		cr[0x1ff0] &= 0xfe;
-		cr[0x1ff3] &= 0x7f;
+		cr[BYTE_XOR_LE(0x1ff0)] &= 0xfe;
+		cr[BYTE_XOR_LE(0x1ff3)] &= 0x7f;
 		neogeo_set_cpu1_second_bank(address+0x100000);
 
-		mem[0x58196] = prt;
+		mem[BYTE_XOR_LE(0x58196)] = prt;
 	}
 }
 

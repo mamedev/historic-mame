@@ -1090,8 +1090,6 @@ VIDEO_START( dambustr )
 
 	/* allocate the temporary bitmap for the background priority */
 	dambustr_tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	if (dambustr_tmpbitmap == NULL)
-		return 1;
 
 	/* make a copy of the tilemap to emulate background priority */
 	dambustr_videoram2 = auto_malloc(0x0400);

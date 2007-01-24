@@ -585,8 +585,8 @@ PCB Layout
 F-E1-16-001
 |----------------------------------------------|
 |       M6295       VROM1    N341256           |
-|  YM3016                                      |
-|       YMXXXX    |---------|N341256           |
+|  YM3012                                      |
+|       YM2151    |---------|N341256           |
 |                 |Quicklogi|                  |
 |                 |c        |N341256           |
 |J                |QL2003-  |                  |
@@ -607,7 +607,7 @@ F-E1-16-001
 Notes:
       E1-16T clock : 50.000MHz
       M6295 clock  : 1.7897725MHz (14.31818/8). Sample Rate = 1789772.5 / 132
-      YMXXXX clock : 3.579545MHz (14.31818/4). Chip is either YM2151 or YM3812, actually stamped 'KA51'
+      YM2151 clock : 3.579545MHz (14.31818/4). Chip stamped 'KA51' on one PCB, BS901 on another
       VSync        : 60Hz
       N341256      : NKK N341256SJ-15 32K x8 SRAM (SOJ28)
       GM71C18163   : LG Semi GM71C18163 1M x16 EDO DRAM (SOJ44)

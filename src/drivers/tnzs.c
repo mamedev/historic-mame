@@ -222,39 +222,10 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/11/06
 #include "sound/2203intf.h"
 #include "sound/dac.h"
 #include "sound/samples.h"
+#include "includes/tnzs.h"
 
-/* prototypes for functions in ../machine/tnzs.c */
 unsigned char *tnzs_objram, *tnzs_sharedram;
 unsigned char *tnzs_vdcram, *tnzs_scrollram, *tnzs_objctrl, *tnzs_bg_flag;
-DRIVER_INIT( plumpop );
-DRIVER_INIT( extrmatn );
-DRIVER_INIT( arknoid2 );
-DRIVER_INIT( drtoppel );
-DRIVER_INIT( chukatai );
-DRIVER_INIT( tnzs );
-DRIVER_INIT( tnzsb );
-DRIVER_INIT( kabukiz );
-DRIVER_INIT( insectx );
-DRIVER_INIT( kageki );
-READ8_HANDLER( arknoid2_sh_f000_r );
-MACHINE_RESET( tnzs );
-INTERRUPT_GEN( arknoid2_interrupt );
-READ8_HANDLER( tnzs_port1_r );
-READ8_HANDLER( tnzs_port2_r );
-WRITE8_HANDLER( tnzs_port2_w );
-READ8_HANDLER( tnzs_mcu_r );
-READ8_HANDLER( tnzs_sharedram_r );
-WRITE8_HANDLER( tnzs_sharedram_w );
-WRITE8_HANDLER( tnzs_mcu_w );
-WRITE8_HANDLER( tnzs_bankswitch_w );
-WRITE8_HANDLER( tnzs_bankswitch1_w );
-
-
-/* prototypes for functions in ../vidhrdw/tnzs.c */
-PALETTE_INIT( arknoid2 );
-VIDEO_UPDATE( tnzs );
-VIDEO_EOF( tnzs );
-
 
 
 /* max samples */

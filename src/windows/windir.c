@@ -14,6 +14,7 @@
 
 #include "osdcore.h"
 #include "strconv.h"
+#include "winutil.h"
 
 
 //============================================================
@@ -27,22 +28,6 @@ struct _osd_directory
 	osd_directory_entry	entry;					// current entry's data
 	WIN32_FIND_DATA		data;					// current raw data
 };
-
-
-
-//============================================================
-//  attributes_to_entry_type
-//============================================================
-
-INLINE osd_dir_entry_type attributes_to_entry_type(DWORD attributes)
-{
-	if (attributes == 0xFFFFFFFF)
-		return ENTTYPE_NONE;
-	else if (attributes & FILE_ATTRIBUTE_DIRECTORY)
-		return ENTTYPE_DIR;
-	else
-		return ENTTYPE_FILE;
-}
 
 
 
@@ -123,7 +108,7 @@ const osd_directory_entry *osd_readdir(osd_directory *dir)
 
 	// extract the data
 	dir->entry.name = utf8_from_tstring(dir->data.cFileName);
-	dir->entry.type = attributes_to_entry_type(dir->data.dwFileAttributes);
+	dir->entry.type = win_attributes_to_entry_type(dir->data.dwFileAttributes);
 	dir->entry.size = dir->data.nFileSizeLow | ((UINT64) dir->data.nFileSizeHigh << 32);
 	return (dir->entry.name != NULL) ? &dir->entry : NULL;
 }

@@ -1053,13 +1053,10 @@ static void psikyosh_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect
 
 VIDEO_START( psikyosh )
 {
-	zoom_bitmap = 0, z_bitmap = 0;
-	if ((zoom_bitmap = auto_bitmap_alloc_format(16*16, 16*16, BITMAP_FORMAT_INDEXED8)) == 0) /* hw can do 16-tile wide sprites */
-		return 1;
+	zoom_bitmap = auto_bitmap_alloc_format(16*16, 16*16, BITMAP_FORMAT_INDEXED8);
 
 	/* Need 16-bit z-buffer */
-	if ((z_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16)) == 0)
-		return 1;
+	z_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
 
 	Machine->gfx[1]->color_granularity=16; /* 256 colour sprites with palette selectable on 16 colour boundaries */
 

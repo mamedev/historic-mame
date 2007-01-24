@@ -221,14 +221,8 @@ VIDEO_START( taitojc )
 	taitojc_texture = auto_malloc(0x400000);
 
 	framebuffer = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	if (!framebuffer)
-	{
-		return 1;
-	}
 
 	zbuffer = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
-	if (!zbuffer)
-		return 1;
 
 	return 0;
 }

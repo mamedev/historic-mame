@@ -408,8 +408,6 @@ static const struct
 #if (HAS_S14001A)
 	{ SOUND_S14001A, s14001a_get_info },
 #endif
-
-#ifdef MESS
 #if (HAS_BEEP)
 	{ SOUND_BEEP, beep_get_info },
 #endif
@@ -424,7 +422,6 @@ static const struct
 #endif
 #if (HAS_SP0256)
 	{ SOUND_SP0256, sp0256_get_info },
-#endif
 #endif
 
 	{ SOUND_FILTER_VOLUME, filter_volume_get_info },

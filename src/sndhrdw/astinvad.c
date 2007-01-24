@@ -16,9 +16,7 @@
 
 #include "driver.h"
 #include "sound/samples.h"
-
-extern void astinvad_set_flash(int flag);
-
+#include "includes/astinvad.h"
 
 static const char *astinvad_sample_names[] =
 {

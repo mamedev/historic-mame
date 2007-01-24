@@ -28,8 +28,7 @@ VIDEO_START( ninjakd2 )
 
 	tilemap_set_transparent_pen(fg_tilemap, 15);
 
-	if ( (bitmap_sp = auto_bitmap_alloc (Machine->screen[0].width, Machine->screen[0].height ) ) == NULL )
-		return 1;
+	bitmap_sp = auto_bitmap_alloc (Machine->screen[0].width, Machine->screen[0].height );
 
 	return 0;
 }

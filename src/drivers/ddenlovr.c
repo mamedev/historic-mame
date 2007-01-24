@@ -149,7 +149,7 @@ VIDEO_START(ddenlovr)
 	for (i = 0; i < 8; i++)
 		pixmap[i] = auto_malloc(512*512);
 
-	if (!(framebuffer = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height))) return 1;
+	framebuffer = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
 	extra_layers = 0;
 

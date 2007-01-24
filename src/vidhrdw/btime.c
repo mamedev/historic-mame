@@ -142,8 +142,7 @@ VIDEO_START( bnj )
     memset(dirtybuffer2,1,bnj_backgroundram_size);
 
     /* the background area is twice as wide as the screen */
-    if ((background_bitmap = auto_bitmap_alloc(2*Machine->screen[0].width,Machine->screen[0].height)) == 0)
-        return 1;
+    background_bitmap = auto_bitmap_alloc(2*Machine->screen[0].width,Machine->screen[0].height);
 
     bnj_scroll1 = 0;
     bnj_scroll2 = 0;

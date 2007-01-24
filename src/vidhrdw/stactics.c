@@ -231,12 +231,12 @@ VIDEO_START( stactics )
     const unsigned char *firebeam_data;
     unsigned char firechar[256*8*9];
 
-    if ((tmpbitmap  = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0) return 1;
-    if ((tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0) return 1;
-    if ((bitmap_B = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)   return 1;
-    if ((bitmap_D = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)   return 1;
-    if ((bitmap_E = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)   return 1;
-    if ((bitmap_F = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)   return 1;
+    tmpbitmap  = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+    tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+    bitmap_B = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+    bitmap_D = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+    bitmap_E = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+    bitmap_F = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
 	/* Allocate dirty buffers */
 	dirty_videoram_b = auto_malloc(videoram_size);

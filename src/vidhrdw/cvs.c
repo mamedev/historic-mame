@@ -404,27 +404,17 @@ VIDEO_START( cvs )
 		}
 	}
 
-    /* Need 3 bitmaps for 2636 chips */
+	/* Need 3 bitmaps for 2636 chips */
 
-	if ((s2636_1_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8)) == 0)
-		return 1;
+	s2636_1_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8);
+	s2636_2_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8);
+	s2636_3_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8);
 
-	if ((s2636_2_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8)) == 0)
-		return 1;
+	/* 3 bitmaps for collision detection */
 
-	if ((s2636_3_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8)) == 0)
-		return 1;
-
-    /* 3 bitmaps for collision detection */
-
-	if ((collision_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8)) == 0)
-		return 1;
-
-	if ((collision_background = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8)) == 0)
-		return 1;
-
-	if ((scrolled_background = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8)) == 0)
-		return 1;
+	collision_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8);
+	collision_background = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8);
+	scrolled_background = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8);
 
 	return 0;
 }

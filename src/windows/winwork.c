@@ -60,20 +60,20 @@ static void worker_thread_entry(void *param);
 //  INLINE FUNCTIONS
 //============================================================
 
-INLINE PVOID compare_exchange_pointer(PVOID volatile *ptr, PVOID compare, PVOID exchange)
+INLINE PVOID compare_exchange_pointer(PVOID volatile *ptr, PVOID exchange, PVOID compare)
 {
 	// the mingw headers don't put the volatile keyword on the first parameter
 	// gcc also can't handle casting the result of a function
 #ifdef __GNUC__
 #ifdef PTR64
-	UINT64 result = InterlockedCompareExchange64((UINT64)ptr, (UINT64)compare, (UINT64)exchange);
+	UINT64 result = InterlockedCompareExchange64((UINT64)ptr, (UINT64)exchange, (UINT64)compare);
 	return (PVOID)result;
 #else
-	LONG result = InterlockedCompareExchange((LPLONG)ptr, (LONG)compare, (LONG)exchange);
+	LONG result = InterlockedCompareExchange((LPLONG)ptr, (LONG)exchange, (LONG)compare);
 	return (PVOID)result;
 #endif
 #else
-	return InterlockedCompareExchangePointer(ptr, compare, exchange);
+	return InterlockedCompareExchangePointer(ptr, exchange, compare);
 #endif
 }
 

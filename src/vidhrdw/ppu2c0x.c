@@ -737,7 +737,7 @@ static void render_scanline( int num )
 
 		// Fill this scanline with the background pen.
 		for (i = 0; i < bitmap->width; i ++)
-			((UINT16*)bitmap->line[scanline])[i] = back_pen;
+			*BITMAP_ADDR16(bitmap, scanline, i) = back_pen;
 	}
 
 	/* if sprites are on, draw them */
@@ -806,7 +806,7 @@ static void update_scanline( int num )
 
 			// Fill this scanline with the background pen.
 			for (i = 0; i < bitmap->width; i ++)
-				((UINT16*)bitmap->line[scanline])[i] = back_pen;
+				*BITMAP_ADDR16(bitmap, scanline, i) = back_pen;
 		}
 
 		/* increment the fine y-scroll */

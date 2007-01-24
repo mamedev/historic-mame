@@ -154,9 +154,6 @@ VIDEO_START( battlane )
 
 	screen_bitmap = auto_bitmap_alloc(32 * 8, 32 * 8);
 
-	if (!screen_bitmap)
-		return 1;
-
 	return 0;
 }
 

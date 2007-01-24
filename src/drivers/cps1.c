@@ -160,14 +160,6 @@ Stephh's log (2006.09.20) :
 
 #include "cps1.h"       /* External CPS1 definitions */
 
-/* in machine/kabuki.c */
-void wof_decode(void);
-void dino_decode(void);
-void punisher_decode(void);
-void slammast_decode(void);
-
-
-
 READ16_HANDLER( cps1_dsw_r )
 {
 	static const char *dswname[3] = { "DSWA", "DSWB", "DSWC" };

@@ -280,36 +280,6 @@ static WRITE32_HANDLER( znsecsel_w )
 	verboselog( 2, "znsecsel_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
 }
 
-static READ32_HANDLER( jamma_0_r )
-{
-	return readinputport( 0 );
-}
-
-static READ32_HANDLER( jamma_1_r )
-{
-	return readinputport( 1 );
-}
-
-static READ32_HANDLER( jamma_2_r )
-{
-	return readinputport( 2 );
-}
-
-static READ32_HANDLER( jamma_3_r )
-{
-	return readinputport( 3 );
-}
-
-static READ32_HANDLER( jamma_4_r )
-{
-	return readinputport( 4 );
-}
-
-static READ32_HANDLER( jamma_5_r )
-{
-	return readinputport( 5 );
-}
-
 static READ32_HANDLER( boardconfig_r )
 {
 	/*
@@ -381,12 +351,12 @@ static ADDRESS_MAP_START( zn_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1f801c00, 0x1f801dff) AM_READWRITE(psx_spu_r, psx_spu_w)
 	AM_RANGE(0x1f802020, 0x1f802033) AM_RAM /* ?? */
 	AM_RANGE(0x1f802040, 0x1f802043) AM_WRITENOP
-	AM_RANGE(0x1fa00000, 0x1fa00003) AM_READ(jamma_0_r)
-	AM_RANGE(0x1fa00100, 0x1fa00103) AM_READ(jamma_1_r)
-	AM_RANGE(0x1fa00200, 0x1fa00203) AM_READ(jamma_2_r)
-	AM_RANGE(0x1fa00300, 0x1fa00303) AM_READ(jamma_3_r)
-	AM_RANGE(0x1fa10000, 0x1fa10003) AM_READ(jamma_4_r)
-	AM_RANGE(0x1fa10100, 0x1fa10103) AM_READ(jamma_5_r)
+	AM_RANGE(0x1fa00000, 0x1fa00003) AM_READ(input_port_0_dword_r)
+	AM_RANGE(0x1fa00100, 0x1fa00103) AM_READ(input_port_1_dword_r)
+	AM_RANGE(0x1fa00200, 0x1fa00203) AM_READ(input_port_2_dword_r)
+	AM_RANGE(0x1fa00300, 0x1fa00303) AM_READ(input_port_3_dword_r)
+	AM_RANGE(0x1fa10000, 0x1fa10003) AM_READ(input_port_4_dword_r)
+	AM_RANGE(0x1fa10100, 0x1fa10103) AM_READ(input_port_5_dword_r)
 	AM_RANGE(0x1fa10200, 0x1fa10203) AM_READ(boardconfig_r)
 	AM_RANGE(0x1fa10300, 0x1fa10303) AM_READWRITE(znsecsel_r, znsecsel_w)
 	AM_RANGE(0x1fa20000, 0x1fa20003) AM_WRITE(coin_w)

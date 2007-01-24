@@ -5,11 +5,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-
-
-/* from the main driver */
-extern UINT8 *starfire_videoram;
-extern UINT8 *starfire_colorram;
+#include "includes/starfire.h"
 
 /* local allocated storage */
 static UINT8 *scanline_dirty;
@@ -30,8 +26,6 @@ VIDEO_START( starfire )
 {
 	/* make a temporary bitmap */
 	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	if (!tmpbitmap)
-		return 1;
 
 	/* make a dirty array */
 	scanline_dirty = auto_malloc(256);

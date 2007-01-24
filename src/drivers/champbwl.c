@@ -152,13 +152,7 @@ Notes:
 
 #include "driver.h"
 #include "sound/x1_010.h"
-
-extern unsigned char *tnzs_objram, *tnzs_sharedram;
-extern unsigned char *tnzs_vdcram, *tnzs_scrollram, *tnzs_objctrl, *tnzs_bg_flag;
-
-PALETTE_INIT( arknoid2 );
-VIDEO_UPDATE( tnzs );
-VIDEO_EOF( tnzs );
+#include "includes/tnzs.h"
 
 static UINT8 last_trackball_val[2] = {0,0};
 

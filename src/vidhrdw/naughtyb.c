@@ -157,8 +157,7 @@ VIDEO_START( naughtyb )
 	dirtybuffer = auto_malloc(videoram_size);
 	memset(dirtybuffer, 1, videoram_size);
 
-	if ((tmpbitmap = auto_bitmap_alloc(68*8,28*8)) == 0)
-		return 1;
+	tmpbitmap = auto_bitmap_alloc(68*8,28*8);
 
 	return 0;
 }

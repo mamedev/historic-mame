@@ -54,7 +54,7 @@ static UINT16 *livequiz_gfxram, *livequiz_gfxregs;
 VIDEO_START( livequiz );
 VIDEO_UPDATE( livequiz );
 
-tilemap *tmap;
+static tilemap *tmap;
 
 static void get_tile_info(int tile_index)
 {

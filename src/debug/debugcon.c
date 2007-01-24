@@ -112,12 +112,7 @@ void debug_console_exit(running_machine *machine)
 	errorlog_textbuf = NULL;
 
 	/* free the command list */
-	while (commandlist)
-	{
-		debug_command *temp = commandlist;
-		commandlist = commandlist->next;
-		free(temp);
-	}
+	commandlist = NULL;
 }
 
 
@@ -401,8 +396,12 @@ CMDERR debug_console_validate_command(const char *command)
 
 void debug_console_register_command(const char *command, UINT32 flags, int ref, int minparams, int maxparams, void (*handler)(int ref, int params, const char **param))
 {
-	debug_command *cmd = malloc(sizeof(*cmd));
-	assert_always(cmd != NULL, "Out of memory registering new command with the debugger!");
+	debug_command *cmd;
+
+	assert_always(mame_get_phase(Machine) == MAME_PHASE_INIT, "Can only call debug_console_register_command() at init time!");
+	assert_always(options.mame_debug != 0, "Cannot call debug_console_register_command() when debugger is not running");
+
+	cmd = auto_malloc(sizeof(*cmd));
 	memset(cmd, 0, sizeof(*cmd));
 
 	/* fill in the command */

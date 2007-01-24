@@ -100,8 +100,7 @@ VIDEO_START( megazone )
 	dirtybuffer = auto_malloc(videoram_size);
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((tmpbitmap = auto_bitmap_alloc(256,256)) == 0)
-		return 1;
+	tmpbitmap = auto_bitmap_alloc(256,256);
 
 	return 0;
 }

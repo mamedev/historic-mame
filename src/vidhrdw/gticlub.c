@@ -162,32 +162,17 @@ static int K001005_3d_fifo_ptr = 0;
 int K001005_init(void)
 {
 	K001005_bitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	if (!K001005_bitmap)
-		return 1;
 
 	K001005_zbuffer = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED32);
-	if (!K001005_zbuffer)
-		return 1;
 
 	K001005_texture = auto_malloc(0x800000);
-	if (!K001005_texture)
-		return 1;
 
 	K001005_ram[0] = auto_malloc(0x140000 * sizeof(UINT16));
-	if (!K001005_ram[0])
-		return 1;
-
 	K001005_ram[1] = auto_malloc(0x140000 * sizeof(UINT16));
-	if (!K001005_ram[1])
-		return 1;
 
 	K001005_fifo = auto_malloc(0x800 * sizeof(UINT32));
-	if (!K001005_fifo)
-		return 1;
 
 	K001005_3d_fifo = auto_malloc(0x10000 * sizeof(UINT32));
-	if (!K001005_3d_fifo)
-		return 1;
 
 	return 0;
 }

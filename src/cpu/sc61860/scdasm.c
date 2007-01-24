@@ -166,6 +166,7 @@ static const struct { const char *mnemonic; Adr adr; } table[]={
 
 unsigned sc61860_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
+	const UINT8 *base_oprom = oprom;
 	int oper=*(oprom++);
 	int t;
 	UINT16 adr;
@@ -217,7 +218,7 @@ unsigned sc61860_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opr
 		}
 		break;
 	}
-	return oprom - opram;
+	return oprom - base_oprom;
 }
 #endif	/* MAME_DEBUG */
 

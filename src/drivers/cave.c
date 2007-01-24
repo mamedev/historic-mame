@@ -15,25 +15,26 @@ Sound Chips  :  YMZ280B or
 Other        :  93C46 EEPROM
 
 
------------------------------------------------------------------------------------
-Year + Game         License     PCB         Tilemaps        Sprites         Other
------------------------------------------------------------------------------------
-94  Mazinger Z      Banpresto   ?           038 9335EX706   013 9341E7009   Z80
-94  PowerInstinct 2 Atlus       ATG02?      038 9429WX709?  013             Z80 NMK 112
-95  P.I. Legends    Atlus       AT047G2-B   038 9429WX709   013 9341E7009   Z80 NMK 112
-95  Metamoqester    Banpresto   BP947A      038 9437WX711   013 9346E7002   Z80
-95  Sailor Moon     Banpresto   BP945A      038 9437WX711   013 9346E7002   Z80
-95  Donpachi        Atlus       AT-C01DP-2  038 9429WX727   013 8647-01     NMK 112
-96  Air Gallet      Banpresto   BP962A      038 9437WX711   013 9346E7002   Z80
-96  Hotdog Storm    Marble      ?           ?                               Z80
-97  Dodonpachi      Atlus       ATC03D2     ?
-98  Dangun Feveron  Nihon Sys.  CV01        038 9808WX003   013 9807EX004
-98  ESP Ra.De.      Atlus       ATC04       ?
-98  Uo Poko         Jaleco      CV02        038 9749WX001   013 9749EX004
-99  Guwange         Atlus       ATC05       ?
-99  Gaia Crusaders  Noise Factory ?         038 9838WX003   013 9918EX008
-99  Koro Koro Quest Takumi      TUG-01B     038 9838WX004   013 9838EX004
------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
+Year + Game         License       PCB         Tilemaps        Sprites         Other
+-----------------------------------------------------------------------------------------
+94  Mazinger Z      Banpresto     ?           038 9335EX706   013 9341E7009   Z80
+94  PowerInstinct 2 Atlus         ATG02?      038 9429WX709   013             Z80 NMK 112
+95  P.I. Legends    Atlus         AT047G2-B   038 9429WX709   013 9341E7009   Z80 NMK 112
+95  Metamoqester    Banpresto     BP947A      038 9437WX711   013 9346E7002   Z80
+95  Sailor Moon     Banpresto     BP945A      038 9437WX711   013 9346E7002   Z80
+95  Donpachi        Atlus         AT-C01DP-2  038 9429WX727   013 8647-01     NMK 112
+96  Air Gallet      Banpresto     BP962A      038 9437WX711   013 9346E7002   Z80
+96  Hotdog Storm    Marble        ?           ?                               Z80
+97  Dodonpachi      Atlus         ATC03D2     ?
+98  Dangun Feveron  Nihon System  CV01        038 9808WX003   013 9807EX004
+98  ESP Ra.De.      Atlus         ATC04       ?
+98  Uo Poko         Jaleco        CV02        038 9749WX001   013 9749EX004
+99  Guwange         Atlus         ATC05       ?
+99  Gaia Crusaders  Noise Factory ?           038 9838WX003   013 9918EX008
+99  Koro Koro Quest Takumi        TUG-01B     038 9838WX004   013 9838EX004
+01  Thunder Heroes  Primetek      ?           038 9838WX003   013 9918EX008
+-----------------------------------------------------------------------------------------
 
 To Do:
 
@@ -2846,7 +2847,7 @@ BP962A.U77  23C16000    GFX
 
 ***************************************************************************/
 
-ROM_START( agallet )	// Shows "Taiwan Only" on the copyright notice screen.
+ROM_START( agallet ) /* PCB showed "Taiwan Only" on the copyright notice screen. Region byte in EEPROM */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )		/* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "bp962a.u45", 0x000000, 0x080000, CRC(24815046) SHA1(f5eeae60b923ae850b335e7898a2760407631d8b) )
 	//empty
@@ -2885,7 +2886,7 @@ ROM_END
 
 /***************************************************************************
 
-                                Dangun Feveron
+              Fever SOS (International) / Dangun Feveron (Japan)
 
 Board:  CV01
 OSC:    28.0, 16.0, 16.9 MHz
@@ -2915,7 +2916,8 @@ ROM_END
 
 Fever SOS
 
-this doesn't work, I don't know why, roms should be good
+  The program code checks for 0x05 & 0x19 at the 17th & 18th byte in the EEPROM.  Therefore
+  you cannot convert a Dangun Feveron over to a Fever SOS by changing the 2 program roms
 
 Jumper JP1:
 INT Version - 2 & 3
@@ -2924,24 +2926,19 @@ JAP Version - 1 & 2
 However there are more differences:
 
 U4:
-INT Version  - 9838EX003
-JAP Version - 9807EX004
+INT Version - 013 9838EX003
+JAP Version - 013 9807EX004 (The second set of numbers are manufacture day codes)
 
 UA2 & UB2:
-INT Version  - 038 9838WX001
-JAP Version - 038 9808WX003
+INT Version - 038 9838WX001
+JAP Version - 038 9808WX003 (The second set of numbers are manufacture day codes)
 
 TA8030S (Beside SW1)
 INT Version  - NOT MOUNTED
 JAP Version - TA8030S (WatchDog Timer, might be controlled by JP1)
 
 U47 & U48 - Differ
-U38 & U37 - Differ
-
-These chips however are Static RAM so I don't think anything is wrong!
-
-I suspect the main difference is the graphics chips. Looks like the
-international version is running on different H/W ?
+U38 & U37 - Differ - These chips are Static RAM
 
 It actually looks like the international version is older than
 the Japanese version PCB wise, but the software date is 98/09/25
@@ -3001,8 +2998,8 @@ present in the japanese images...
 
 ROM_START( feversos )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
-	ROM_LOAD16_BYTE( "rom1.bin", 0x000000, 0x080000, CRC(24ef3ce6) SHA1(42799eebbb2686a837b8972aec684143deadca59) )
-	ROM_LOAD16_BYTE( "rom2.bin", 0x000001, 0x080000, CRC(64ff73fd) SHA1(7fc3a8469cec2361d373a4dac4a547c13ca5f709) )
+	ROM_LOAD16_BYTE( "cv01-u34.sos", 0x000000, 0x080000, CRC(24ef3ce6) SHA1(42799eebbb2686a837b8972aec684143deadca59) )
+	ROM_LOAD16_BYTE( "cv01-u33.sos", 0x000001, 0x080000, CRC(64ff73fd) SHA1(7fc3a8469cec2361d373a4dac4a547c13ca5f709) )
 
 	ROM_REGION( 0x800000 * 2, REGION_GFX1, 0 )		/* Sprites: * 2 , do not dispose */
 	ROM_LOAD( "cv01-u25.bin", 0x000000, 0x400000, CRC(a6f6a95d) SHA1(e1eb45cb5d0e6163edfd9d830633b913fb53c6ca) )
@@ -3233,7 +3230,7 @@ ROM_END
 
 /***************************************************************************
 
-                                    Esprade
+                                ESP Ra.De.
 
 ATC04
 OSC:    28.0, 16.0, 16.9 MHz
@@ -3242,8 +3239,8 @@ OSC:    28.0, 16.0, 16.9 MHz
 
 ROM_START( esprade )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
-	ROM_LOAD16_BYTE( "u42_i.bin", 0x000000, 0x080000, CRC(3b510a73) SHA1(ab1666eb826cb4a71588d86831dd18a2ef1c2a33) )
-	ROM_LOAD16_BYTE( "u41_i.bin", 0x000001, 0x080000, CRC(97c1b649) SHA1(37a56b7b9662219a356aee3f4b5cbb774ac4950e) )
+	ROM_LOAD16_BYTE( "u42.int", 0x000000, 0x080000, CRC(3b510a73) SHA1(ab1666eb826cb4a71588d86831dd18a2ef1c2a33) )
+	ROM_LOAD16_BYTE( "u41.int", 0x000001, 0x080000, CRC(97c1b649) SHA1(37a56b7b9662219a356aee3f4b5cbb774ac4950e) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
 	ROM_LOAD16_BYTE( "u63.bin", 0x000000, 0x400000, CRC(2f2fe92c) SHA1(9519e365248bcec8419786eabb16fe4aae299af5) )
@@ -3268,8 +3265,8 @@ ROM_END
 
 ROM_START( espradej )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
-	ROM_LOAD16_BYTE( "u42_ver2.bin", 0x000000, 0x080000, CRC(75d03c42) SHA1(1c176185b6f1531752b633a97f705ffa0cfeb5ad) )
-	ROM_LOAD16_BYTE( "u41_ver2.bin", 0x000001, 0x080000, CRC(734b3ef0) SHA1(f584227b85c347d62d5f179445011ce0f607bcfd) )
+	ROM_LOAD16_BYTE( "u42.bin", 0x000000, 0x080000, CRC(75d03c42) SHA1(1c176185b6f1531752b633a97f705ffa0cfeb5ad) )
+	ROM_LOAD16_BYTE( "u41.bin", 0x000001, 0x080000, CRC(734b3ef0) SHA1(f584227b85c347d62d5f179445011ce0f607bcfd) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
 	ROM_LOAD16_BYTE( "u63.bin", 0x000000, 0x400000, CRC(2f2fe92c) SHA1(9519e365248bcec8419786eabb16fe4aae299af5) )
@@ -3294,8 +3291,8 @@ ROM_END
 
 ROM_START( espradeo )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
-	ROM_LOAD16_BYTE( "u42.bin", 0x000000, 0x080000, CRC(0718c7e5) SHA1(c7d1f30bd2ef363cad15b6918f9980312a15809a) )
-	ROM_LOAD16_BYTE( "u41.bin", 0x000001, 0x080000, CRC(def30539) SHA1(957ad0b06f06689ae71393572592f6b8f818603a) )
+	ROM_LOAD16_BYTE( "u42.old", 0x000000, 0x080000, CRC(0718c7e5) SHA1(c7d1f30bd2ef363cad15b6918f9980312a15809a) )
+	ROM_LOAD16_BYTE( "u41.old", 0x000001, 0x080000, CRC(def30539) SHA1(957ad0b06f06689ae71393572592f6b8f818603a) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
 	ROM_LOAD16_BYTE( "u63.bin", 0x000000, 0x400000, CRC(2f2fe92c) SHA1(9519e365248bcec8419786eabb16fe4aae299af5) )
@@ -3387,6 +3384,8 @@ ROM_END
 Thunder Heroes
 Primetek Investments Ltd. , 2001
 
+A quasi-clone, remake or continuation of Gaia Crusaders but is clearly a different game.
+
 PCB Layout
 ----------
 
@@ -3440,7 +3439,7 @@ ROM_START( theroes )
 	ROM_REGION( 0xc00000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "crvsaders-snd1.u0447", 0x000000, 0x400000, CRC(92770a52) SHA1(81f6835e1b45eb0f367e4586fdda92466f02edb9) )
 	ROM_LOAD( "crvsaders-snd2.u0454", 0x400000, 0x400000, CRC(329ae1cf) SHA1(0c5e5074a5d8f4fb85ab4893bc953f192dcb301a) )
-	ROM_LOAD( "t-hero-snd3.u0455", 0x800000, 0x400000, CRC(52b0b2c0) SHA1(6e96698905391c21a4fedd60e2768734b58add4e) )
+	ROM_LOAD( "t-hero-snd3.u0455",    0x800000, 0x400000, CRC(52b0b2c0) SHA1(6e96698905391c21a4fedd60e2768734b58add4e) )
 ROM_END
 
 
@@ -3545,7 +3544,7 @@ Hardware is kind of Banpresto-ish
  68000-16 + 16MHZ OSC
  YMZ280B + YAC516-M + Xtal 16.9344MHz
  93C46 EEPROM
- Custom - 9838EX004 (QFP240), 9838WX004 (QFP144) + OSC 28MHz
+ Custom - 013 9838EX004 (QFP240), 038 9838WX004 (QFP144) + OSC 28MHz
  RAM - 62256 (x8), M5M44260 (x2)
  3volt battery
  GAL16V8H (x5)
@@ -3622,9 +3621,8 @@ ROM_END
 
 /***************************************************************************
 
-                                Metamoqester
+             Metamoqester (World) / Oni - The Ninja Master (Japan)
 
-[Ninja Master (World version)?]
 (C) 1995 Banpresto
 
 PCB: BP947A
@@ -3748,7 +3746,7 @@ ROM_END
 
 /***************************************************************************
 
-                            Power Instinct 2
+           Power Instinct 2 (USA) / Gouketsuji Ichizoku 2 (Japan)
 
 (c)1994 Atlus
 CPU: 68000, Z80
@@ -3854,8 +3852,7 @@ ROM_END
 
 /*
 
-Power Instinct Legends (US)
-Gouketsuji Ichizoku Saikyou Densetsu (Japan)
+Power Instinct Legends (US) / Gouketsuji Ichizoku Saikyou Densetsu (Japan)
 Atlus, 1995
 
 PCB Layout
@@ -4005,7 +4002,7 @@ ROM_END
 
 /***************************************************************************
 
-                                Sailor Moon
+                         Pretty Soldier Sailor Moon
 
 (C) 1995 Banpresto
 PCB: BP945A
@@ -4142,7 +4139,7 @@ ROM_END
 
 /***************************************************************************
 
-                                    Uo Poko
+                             Puzzle Uo Poko
 Board: CV02
 OSC:    28.0, 16.0, 16.9 MHz
 
@@ -4150,8 +4147,8 @@ OSC:    28.0, 16.0, 16.9 MHz
 
 ROM_START( uopoko )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
-	ROM_LOAD16_BYTE( "u26.bin", 0x000000, 0x080000, CRC(b445c9ac) SHA1(4dda1c6e19de629ea4d9061560c32a9f0deabd53) )
-	ROM_LOAD16_BYTE( "u25.bin", 0x000001, 0x080000, CRC(a1258482) SHA1(7f4adc4a6d069032aaf3d93eb60fde16b59483f8) )
+	ROM_LOAD16_BYTE( "u26.int", 0x000000, 0x080000, CRC(b445c9ac) SHA1(4dda1c6e19de629ea4d9061560c32a9f0deabd53) )
+	ROM_LOAD16_BYTE( "u25.int", 0x000001, 0x080000, CRC(a1258482) SHA1(7f4adc4a6d069032aaf3d93eb60fde16b59483f8) )
 
 	ROM_REGION( 0x400000 * 2, REGION_GFX1, 0 )		/* Sprites: * 2 , do not dispose */
 	ROM_LOAD( "u33.bin", 0x000000, 0x400000, CRC(5d142ad2) SHA1(f26abcf7a625a322b83df44fbd6e852bfb03663c) )
@@ -4165,8 +4162,8 @@ ROM_END
 
 ROM_START( uopokoj )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
-	ROM_LOAD16_BYTE( "u26j.bin", 0x000000, 0x080000, CRC(e7eec050) SHA1(cf3a77741029f96dbbec5ca7217a1723e4233cff) )
-	ROM_LOAD16_BYTE( "u25j.bin", 0x000001, 0x080000, CRC(68cb6211) SHA1(a6db0bc2e3e54b6992a44b7d52395917e66db49b) )
+	ROM_LOAD16_BYTE( "u26.bin", 0x000000, 0x080000, CRC(e7eec050) SHA1(cf3a77741029f96dbbec5ca7217a1723e4233cff) )
+	ROM_LOAD16_BYTE( "u25.bin", 0x000001, 0x080000, CRC(68cb6211) SHA1(a6db0bc2e3e54b6992a44b7d52395917e66db49b) )
 
 	ROM_REGION( 0x400000 * 2, REGION_GFX1, 0 )		/* Sprites: * 2 , do not dispose */
 	ROM_LOAD( "u33.bin", 0x000000, 0x400000, CRC(5d142ad2) SHA1(f26abcf7a625a322b83df44fbd6e852bfb03663c) )

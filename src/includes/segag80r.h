@@ -4,7 +4,7 @@
 
 *************************************************************************/
 
-/*----------- defined in machine/segag80r.c -----------*/
+/*----------- defined in machine/segag80.c -----------*/
 
 extern UINT8 (*sega_decrypt)(offs_t, UINT8);
 
@@ -25,7 +25,6 @@ WRITE8_HANDLER( sega005_sound_b_w );
 
 WRITE8_HANDLER( spaceod_sound_w );
 
-WRITE8_HANDLER( monsterb_audio_8255_w );
  READ8_HANDLER( monsterb_audio_8255_r );
 
 

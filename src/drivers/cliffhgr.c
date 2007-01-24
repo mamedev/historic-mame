@@ -91,6 +91,8 @@ static render_texture *video_texture;
 static render_texture *overlay_texture;
 static mame_bitmap *last_video_bitmap;
 
+static mame_timer *irq_timer;
+
 /********************************************************/
 
 static void video_cleanup(running_machine *machine)
@@ -110,7 +112,7 @@ VIDEO_UPDATE( cliff )
 	if (discinfo != NULL)
 	{
 		mame_bitmap *vidbitmap;
-		rectangle fixedvis = Machine->screen[screen].visarea;
+		rectangle fixedvis = *TMS9928A_get_visarea();
 		fixedvis.max_x++;
 		fixedvis.max_y++;
 
@@ -216,9 +218,51 @@ static WRITE8_HANDLER( cliff_ldwire_w )
 	laserdisc_line_w(discinfo,LASERDISC_LINE_CONTROL,(data&1) ? ASSERT_LINE : CLEAR_LINE );
 }
 
+
+/********************************************************/
+
+static INTERRUPT_GEN( cliff_vsync )
+{
+	/* clock the laserdisc and video chip every 60Hz */
+	laserdisc_vsync(discinfo);
+	TMS9928A_interrupt();
+}
+
+static void cliff_irq_callback(int param)
+{
+	phillips_code = 0;
+
+	switch (param)
+	{
+		case 17:
+			phillips_code = laserdisc_get_field_code(discinfo, LASERDISC_CODE_LINE17);
+			param = 18;
+			break;
+
+		case 18:
+			phillips_code = laserdisc_get_field_code(discinfo, LASERDISC_CODE_LINE18);
+			param = 17;
+			break;
+	}
+
+	/* if we have a valid code, trigger an IRQ */
+	if ( phillips_code & 0x800000 )
+		cpunum_set_input_line(0, 0, ASSERT_LINE);
+
+	mame_timer_adjust(irq_timer, video_screen_get_time_until_pos(0, param, 0), param, time_zero);
+}
+
+static void vdp_interrupt (int state)
+{
+	cpunum_set_input_line(0, INPUT_LINE_NMI, state ? ASSERT_LINE : CLEAR_LINE );
+}
+
+
+
 static MACHINE_START( cliffhgr )
 {
 	discinfo = laserdisc_init(LASERDISC_TYPE_PR8210, get_disk_handle(0), 0);
+	irq_timer = mame_timer_alloc(cliff_irq_callback);
 	return 0;
 }
 
@@ -226,6 +270,7 @@ static MACHINE_RESET( cliffhgr )
 {
 	port_bank = 0;
 	phillips_code = 0;
+	mame_timer_adjust(irq_timer, video_screen_get_time_until_pos(0, 17, 0), 17, time_zero);
 }
 
 /********************************************************/
@@ -255,7 +300,12 @@ static ADDRESS_MAP_START( mainport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x6E, 0x6F) AM_WRITE(cliff_test_led_w)
 ADDRESS_MAP_END
 
-/********************************************************/
+
+/*************************************
+ *
+ *  Input ports
+ *
+ *************************************/
 
 INPUT_PORTS_START( cliffhgr )
 	PORT_START_TAG("BANK0")
@@ -655,64 +705,50 @@ INPUT_PORTS_START( goaltogo )
 	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-static INTERRUPT_GEN( cliff_interrupt )
-{
-	int irq_num = cpu_getiloops() % 2;
 
-	phillips_code = 0;
 
-	switch( irq_num )
-	{
-		case 0:
-			phillips_code = laserdisc_get_field_code(discinfo, LASERDISC_CODE_LINE17);
-			break;
-
-		case 1:
-			phillips_code = laserdisc_get_field_code(discinfo, LASERDISC_CODE_LINE18);
-
-			/* clock the laserdisc and video chip every 60Hz */
-			laserdisc_vsync(discinfo);
-			TMS9928A_interrupt();
-			break;
-	}
-
-	/* if we have a valid code, trigger an IRQ */
-	if ( phillips_code & 0x800000 )
-		cpunum_set_input_line(0, 0, ASSERT_LINE);
-}
-
-static void vdp_interrupt (int state)
-{
-	cpunum_set_input_line(0, INPUT_LINE_NMI, state ? ASSERT_LINE : CLEAR_LINE );
-}
+/*************************************
+ *
+ *  Video/sound interfaces
+ *
+ *************************************/
 
 static const TMS9928a_interface tms9928a_interface =
 {
 	TMS99x8A,		/* TMS9128NL on the board */
 	0x4000,
+	0,0,
 	vdp_interrupt
 };
 
 extern discrete_sound_block cliffhgr_discrete_interface[];
 
+
+
+/*************************************
+ *
+ *  Machine driver
+ *
+ *************************************/
+
 static MACHINE_DRIVER_START( cliffhgr )
+
 	MDRV_CPU_ADD(Z80, 4000000)       /* 4MHz */
 	MDRV_CPU_PROGRAM_MAP(mainmem,0)
 	MDRV_CPU_IO_MAP(mainport,0)
-	MDRV_CPU_VBLANK_INT(cliff_interrupt,2)
+	MDRV_CPU_VBLANK_INT(cliff_vsync,1)
 
+	MDRV_MACHINE_START(cliffhgr)
 	MDRV_MACHINE_RESET(cliffhgr)
 
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
-	MDRV_TMS9928A( &tms9928a_interface )
+	/* start with the TMS9928a video configuration */
+	MDRV_IMPORT_FROM(tms9928a)
 
-	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
-	MDRV_SCREEN_REFRESH_RATE(59.97)
-	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-
-	/* override video update */
-	MDRV_VIDEO_UPDATE( cliff )
+	/* override video rendering and raw screen info */
+	MDRV_VIDEO_UPDATE(cliff)
+	MDRV_SCREEN_RAW_PARAMS(13500000, 858, 0, 720, 262.5, 21, 262.5)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -728,6 +764,14 @@ static MACHINE_DRIVER_START( cliffhgr )
 	MDRV_SOUND_CONFIG(cliffhgr_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 MACHINE_DRIVER_END
+
+
+
+/*************************************
+*
+*  ROM definitions
+*
+*************************************/
 
 ROM_START( cliffhgr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
@@ -764,14 +808,32 @@ ROM_START( goaltogo )
 	DISK_IMAGE_READONLY( "goaltog1", 0, NO_DUMP )
 ROM_END
 
+
+
+/*************************************
+ *
+ *  Driver initialization
+ *
+ *************************************/
+
 static DRIVER_INIT( cliff )
 {
 	video_texture = NULL;
 	overlay_texture = NULL;
 	last_video_bitmap = NULL;
 
+	TMS9928A_configure(&tms9928a_interface);
+
 	add_exit_callback(machine, video_cleanup);
 }
+
+
+
+/*************************************
+ *
+ *  Game drivers
+ *
+ *************************************/
 
 GAME( 1983, cliffhgr, 0, cliffhgr, cliffhgr, cliff, ROT0, "Stern Electronics", "Cliff Hanger", GAME_NO_SOUND | GAME_NOT_WORKING)
 GAME( 1983, cliffhga, 0, cliffhgr, cliffhga, cliff, ROT0, "Stern Electronics", "Cliff Hanger (Alt)", GAME_NO_SOUND | GAME_NOT_WORKING)

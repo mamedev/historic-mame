@@ -4,11 +4,13 @@
 
 *************************************************************************/
 
-/*----------- defined in vidhrdw/cloud9.c -----------*/
+/*----------- defined in drivers/cloud9.c -----------*/
 
 extern int cloud9_vblank_start;
 extern int cloud9_vblank_end;
 
+
+/*----------- defined in vidhrdw/cloud9.c -----------*/
 
 VIDEO_START( cloud9 );
 VIDEO_UPDATE( cloud9 );

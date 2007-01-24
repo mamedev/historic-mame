@@ -132,7 +132,7 @@ static const pia6821_interface qix_pia_3_intf =
 
 static const pia6821_interface qix_pia_4_intf =
 {
-	/*inputs : A/B,CA/B1,CA/B2 */ pia_4_porta_r, 0, 0, 0, 0, 0,
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_3_porta_w, qix_dac_w, pia_3_ca1_w, 0,
 	/*irqs   : A/B             */ qix_pia_sint, qix_pia_sint
 };

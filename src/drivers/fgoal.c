@@ -17,13 +17,7 @@ Differences between these sets include
 ***************************************************************************/
 
 #include "driver.h"
-
-extern VIDEO_START( fgoal );
-extern VIDEO_UPDATE( fgoal );
-
-extern WRITE8_HANDLER( fgoal_color_w );
-extern WRITE8_HANDLER( fgoal_xpos_w );
-extern WRITE8_HANDLER( fgoal_ypos_w );
+#include "includes/fgoal.h"
 
 UINT8* fgoal_video_ram;
 

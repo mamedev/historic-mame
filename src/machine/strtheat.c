@@ -19,6 +19,7 @@ plaintext version of the roms produces things like 30 second long coinup sounds.
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/dkong.h"
 
 static void strtheat_decrypt_rom_8(void)
 {

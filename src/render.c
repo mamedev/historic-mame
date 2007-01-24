@@ -898,7 +898,7 @@ float render_get_ui_aspect(void)
 
 		/* if we have a valid pixel aspect, apply that and return */
 		if (target->pixel_aspect != 0.0f)
-			return aspect * target->pixel_aspect;
+			return aspect / target->pixel_aspect;
 
 		/* if not, clamp for extreme proportions */
 		if (aspect < 0.66f)

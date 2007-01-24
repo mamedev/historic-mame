@@ -306,8 +306,7 @@ VIDEO_START( liberatr )
     liberatr_planet_segs[1] = 0;
 
     /* allocate a tmpbitmap */
-    if ((tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == 0)
-    	return 1;
+    tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 
 	liberatr_videoram = auto_malloc(Machine->screen[0].width * Machine->screen[0].height);
 

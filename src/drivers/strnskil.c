@@ -8,8 +8,9 @@ Strength & Skill (c) 1984 Sun Electronics
 
 Notes:
  Banbam has a Fujitsu MB8841 4-Bit MCU for protection labeled SUN 8212
- It's not known if it has internal ROM code or if rom 12 is the program
- code for it.  Pettan Pyuu may also have the same type of MCU.
+ It's not known if it has internal ROM code or if rom 12 is the only
+ program code for it. Pettan Pyuu is a clone of Banbam although with
+ different levels / play fields.
 
 *****************************************************************************/
 
@@ -228,7 +229,7 @@ INPUT_PORTS_START( strnskil )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pettanp )
+INPUT_PORTS_START( banbam )
 	PORT_START  /* dsw1 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
@@ -316,90 +317,6 @@ INPUT_PORTS_START( pettanp )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( banbam )
-	PORT_START  /* dsw1 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown 1-1" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown 1-2" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown 1-3" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 1-4" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 1-5" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 1-6" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 1-7" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown 1-8" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-
-
-	PORT_START  /* dsw2 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown 2-1" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown 2-2" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown 2-3" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 2-4" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 2-5" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, "Unknown 2-6" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 2-7" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown 2-8" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
-
-	PORT_START /* d804 */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY
-
-	PORT_START /* d805 */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL
-
-	PORT_START /* d803 */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_SERVICE( 0x20, IP_ACTIVE_HIGH )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-INPUT_PORTS_END
 
 /****************************************************************************/
 
@@ -563,16 +480,16 @@ ROM_START( pettanp )
 	ROM_LOAD( "tvg9-16.100", 0x4000,  0x2000, CRC(c477e74c) SHA1(864eddcd9c817aeecb09423071f87d3b39eb5fc4) )
 
 	ROM_REGION( 0x0700, REGION_PROMS, 0 ) /* color PROMs */
-	ROM_LOAD( "16-3.66",  0x0000,  0x0100, CRC(dbcd3bec) SHA1(1baeec277b16c82b67e10da9d4c84cf383ef4a82) ) /* R */
-	ROM_LOAD( "16-4.67",  0x0100,  0x0100, CRC(9eb7b6cf) SHA1(86451e8a510f8cfbc0be7d4e7bb1ee7dfd67f1f4) ) /* G */
-	ROM_LOAD( "16-5.68",  0x0200,  0x0100, CRC(9b30a7f3) SHA1(a0aefc2c8325b95ea227e404583d14622b04a3b9) ) /* B */
-	ROM_LOAD( "16-1.148", 0x0300,  0x0200, CRC(777e2770) SHA1(7f4ef42ab4e0546c2932d498cf573bd4f4296db7) ) /* sprite */
-	ROM_LOAD( "16-2.97",  0x0500,  0x0200, CRC(7f95d4b2) SHA1(68dc311739a4d5d72f4cfbace27f3a82f05316ff) ) /* bg */
+	ROM_LOAD( "16-3.66",  0x0000,  0x0100, CRC(dbcd3bec) SHA1(1baeec277b16c82b67e10da9d4c84cf383ef4a82) ) /* R       Prom type 24s10 */
+	ROM_LOAD( "16-4.67",  0x0100,  0x0100, CRC(9eb7b6cf) SHA1(86451e8a510f8cfbc0be7d4e7bb1ee7dfd67f1f4) ) /* G       Prom type 24s10 */
+	ROM_LOAD( "16-5.68",  0x0200,  0x0100, CRC(9b30a7f3) SHA1(a0aefc2c8325b95ea227e404583d14622b04a3b9) ) /* B       Prom type 24s10 */
+	ROM_LOAD( "16-1.148", 0x0300,  0x0200, CRC(777e2770) SHA1(7f4ef42ab4e0546c2932d498cf573bd4f4296db7) ) /* sprite  Prom type mb7124h */
+	ROM_LOAD( "16-2.97",  0x0500,  0x0200, CRC(7f95d4b2) SHA1(68dc311739a4d5d72f4cfbace27f3a82f05316ff) ) /* bg      Prom type mb7124h */
 
 	ROM_REGION( 0x0100, REGION_USER1, 0 ) /* scroll control PROM */
-	ROM_LOAD( "16-6",  0x0000,  0x0100, BAD_DUMP CRC(ec4faf5b) SHA1(7ebbf50807d04105ebadec91bded069408e399ba) ) /* Needs to be verified */
+	ROM_LOAD( "16-6.59",  0x0000,  0x0100, CRC(ec4faf5b) SHA1(7ebbf50807d04105ebadec91bded069408e399ba) ) /* Prom type 24s10 */
 
-	ROM_REGION( 0x1000, REGION_USER2, 0 ) /* protection? */
+	ROM_REGION( 0x1000, REGION_USER2, 0 ) /* protection, program code used with Fujitsu MB8841 4-Bit MCU */
 	ROM_LOAD( "tvg12-16.2", 0x0000,  0x1000, CRC(3abc6ba8) SHA1(15e0b0f9d068f6094e2be4f4f1dea0ff6e85686b) )
 ROM_END
 
@@ -598,16 +515,16 @@ ROM_START( banbam )
 	ROM_LOAD( "ban-rom9.ic100",  0x4000,  0x2000, CRC(c0a5a4c8) SHA1(7f0978669218982d379a5d72c6198a33a8213ab5) )
 
 	ROM_REGION( 0x0700, REGION_PROMS, 0 ) /* color PROMs */
-	ROM_LOAD( "15-3.24s10n",  0x0000,  0x0100, CRC(dbcd3bec) SHA1(1baeec277b16c82b67e10da9d4c84cf383ef4a82) ) /* R */
-	ROM_LOAD( "15-4.24s10n",  0x0100,  0x0100, CRC(9eb7b6cf) SHA1(86451e8a510f8cfbc0be7d4e7bb1ee7dfd67f1f4) ) /* G */
-	ROM_LOAD( "15-5.24s10n",  0x0200,  0x0100, CRC(9b30a7f3) SHA1(a0aefc2c8325b95ea227e404583d14622b04a3b9) ) /* B */
-	ROM_LOAD( "16-1.mb7124h", 0x0300,  0x0200, CRC(777e2770) SHA1(7f4ef42ab4e0546c2932d498cf573bd4f4296db7) ) /* sprite */
-	ROM_LOAD( "16-2.mb7124h", 0x0500,  0x0200, CRC(7f95d4b2) SHA1(68dc311739a4d5d72f4cfbace27f3a82f05316ff) ) /* bg */
+	ROM_LOAD( "16-3.66",  0x0000,  0x0100, CRC(dbcd3bec) SHA1(1baeec277b16c82b67e10da9d4c84cf383ef4a82) ) /* R       Prom type 24s10 */
+	ROM_LOAD( "16-4.67",  0x0100,  0x0100, CRC(9eb7b6cf) SHA1(86451e8a510f8cfbc0be7d4e7bb1ee7dfd67f1f4) ) /* G       Prom type 24s10 */
+	ROM_LOAD( "16-5.68",  0x0200,  0x0100, CRC(9b30a7f3) SHA1(a0aefc2c8325b95ea227e404583d14622b04a3b9) ) /* B       Prom type 24s10 */
+	ROM_LOAD( "16-1.148", 0x0300,  0x0200, CRC(777e2770) SHA1(7f4ef42ab4e0546c2932d498cf573bd4f4296db7) ) /* sprite  Prom type mb7124h */
+	ROM_LOAD( "16-2.97",  0x0500,  0x0200, CRC(7f95d4b2) SHA1(68dc311739a4d5d72f4cfbace27f3a82f05316ff) ) /* bg      Prom type mb7124h */
 
 	ROM_REGION( 0x0100, REGION_USER1, 0 ) /* scroll control PROM */
-	ROM_LOAD( "15-6.24s10n",  0x0000,  0x0100, CRC(ec4faf5b) SHA1(7ebbf50807d04105ebadec91bded069408e399ba) )
+	ROM_LOAD( "16-6.59",  0x0000,  0x0100, CRC(ec4faf5b) SHA1(7ebbf50807d04105ebadec91bded069408e399ba) ) /* Prom type 24s10 */
 
-	ROM_REGION( 0x2000, REGION_USER2, 0 ) /* protection?, used with Fujitsu MB8841 4-Bit MCU? */
+	ROM_REGION( 0x2000, REGION_USER2, 0 ) /* protection, program code used with Fujitsu MB8841 4-Bit MCU */
 	ROM_LOAD( "ban-rom12.ic2", 0x0000,  0x2000, CRC(044bb2f6) SHA1(829b2152740061e0506c7504885d8404fb8fe360) )
 ROM_END
 
@@ -630,7 +547,7 @@ DRIVER_INIT( banbam )
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd80d, 0xd80d, 0, 0, protection_w);
 }
 
-GAME( 1984, strnskil, 0,        strnskil, strnskil, 0, ROT0, "Sun Electronics", "Strength & Skill", 0 )
-GAME( 1984, guiness,  strnskil, strnskil, strnskil, 0, ROT0, "Sun Electronics", "The Guiness (Japan)", 0 )
-GAME( 1984, banbam,   0,        strnskil, banbam,   banbam, ROT0, "Sun Electronics", "BanBam", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
-GAME( 1984, pettanp,  banbam,   strnskil, pettanp,  pettanp, ROT0, "Sun Electronics", "Pettan Pyuu (Japan)", GAME_UNEMULATED_PROTECTION )
+GAME( 1984, strnskil, 0,        strnskil, strnskil, 0,       ROT0, "Sun Electronics", "Strength & Skill", 0 )
+GAME( 1984, guiness,  strnskil, strnskil, strnskil, 0,       ROT0, "Sun Electronics", "The Guiness (Japan)", 0 )
+GAME( 1984, banbam,   0,        strnskil, banbam,   banbam,  ROT0, "Sun Electronics", "BanBam", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAME( 1984, pettanp,  banbam,   strnskil, banbam,   pettanp, ROT0, "Sun Electronics", "Pettan Pyuu (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )

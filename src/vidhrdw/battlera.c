@@ -37,9 +37,6 @@ VIDEO_START( battlera )
 	tile_bitmap=auto_bitmap_alloc(512,512);
 	front_bitmap=auto_bitmap_alloc(512,512);
 
-	if (!tile_bitmap || !front_bitmap)
-		return 1;
-
 	vram_ptr=0;
 	inc_value=1;
 	current_scanline=0;

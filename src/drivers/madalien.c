@@ -253,12 +253,8 @@ VIDEO_START( madalien )
 	tilemap_set_flip(bg_tilemap_r, TILEMAP_FLIPY);
 
 	headlight_bitmap = auto_bitmap_alloc(128, 128);
-	if( !headlight_bitmap )
-		return 1;
 
 	flip_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
-	if (!flip_bitmap)
-		return 1;
 
 	madalien_bgram = auto_malloc(0x1000);	/* ficticiuos background RAM for empty tile */
 

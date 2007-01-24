@@ -17,9 +17,7 @@ static mame_bitmap *helper;
 
 VIDEO_START( skyraid )
 {
-	if ((helper = auto_bitmap_alloc(128, 240)) == NULL)
-		return 1;
-
+	helper = auto_bitmap_alloc(128, 240);
 	return 0;
 }
 

@@ -10,7 +10,7 @@
 #include "sound/okim6295.h"
 #include "sound/2203intf.h"
 
-tilemap *tmap;
+static tilemap *tmap;
 
 static WRITE8_HANDLER( cowrace_videoram_w )
 {

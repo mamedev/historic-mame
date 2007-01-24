@@ -21,9 +21,6 @@
 #include "sound/custom.h"
 #include "sound/pokey.h"
 
-/* used in drivers/redbaron.c to select joystick pot */
-extern UINT8 rb_input_select;
-
 /* Statics */
 static INT16 *vol_lookup = NULL;
 

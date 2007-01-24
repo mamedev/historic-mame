@@ -319,9 +319,8 @@ void vblank_callback(void)
 	/* also update the speaker on the European version */
 	if (sndti_exists(SOUND_BEEP, 0))
 	{
-// this is freaking out gcc -- no idea why
-//      beep_set_state(0, 1);
-//      beep_set_frequency(0, z80ctc_getperiod(0, 0));
+		beep_set_state(0, 1);
+		beep_set_frequency(0, z80ctc_getperiod(0, 0));
 	}
 }
 
@@ -831,7 +830,6 @@ static MACHINE_DRIVER_START( dlair )
 
 	MDRV_SOUND_ADD(AY8910, MASTER_CLOCK_US/8)
 	MDRV_SOUND_CONFIG(ay8910_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.33)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.33)
 
 	MDRV_SOUND_ADD(CUSTOM, 0)

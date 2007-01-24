@@ -1334,7 +1334,7 @@ ROM_END
 
 
 
-    6116         ym2145(?)  MSM6295   5    4MHz
+    6116         ym2151     MSM6295   5    4MHz
     1
     Z80        pLSI1032    4
                                       76C88

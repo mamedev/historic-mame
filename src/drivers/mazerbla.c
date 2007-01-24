@@ -108,12 +108,6 @@ VIDEO_START( mazerbla )
 	tmpbitmaps[2] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 	tmpbitmaps[3] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
-	if ((tmpbitmaps[0]==0) || (tmpbitmaps[1]==0) || (tmpbitmaps[2]==0) || (tmpbitmaps[3]==0))
-	{
-		logerror("too bad - run out of memory in video_start() ");
-		return 1;
-	}
-
 	return 0;
 }
 

@@ -138,7 +138,7 @@ VIDEO_START( glass )
 	pant[1] = tilemap_create(get_tile_info_glass_screen1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	screen_bitmap = auto_bitmap_alloc (320, 200);
 
-	if (!pant[0] || !pant[1] || !screen_bitmap)
+	if (!pant[0] || !pant[1])
 		return 1;
 
 	tilemap_set_transparent_pen(pant[0],0);

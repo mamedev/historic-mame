@@ -36,7 +36,7 @@ void sidInitMixerEngine(void)
 
 	filterAmpl = 0.7;
 
-	ampMod1x8=(INT8*)malloc_or_die(256*256);
+	ampMod1x8=(INT8*) auto_malloc(256*256);
 
 	uk = 0;
 	for ( si = 0; si < 256; si++ )

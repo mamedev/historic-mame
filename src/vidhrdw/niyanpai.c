@@ -371,9 +371,9 @@ WRITE16_HANDLER( niyanpai_clutsel_2_w )	{ niyanpai_clutsel_w(2, data); }
 ******************************************************************************/
 VIDEO_START( niyanpai )
 {
-	if ((niyanpai_tmpbitmap[0] = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == 0) return 1;
-	if ((niyanpai_tmpbitmap[1] = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == 0) return 1;
-	if ((niyanpai_tmpbitmap[2] = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == 0) return 1;
+	niyanpai_tmpbitmap[0] = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
+	niyanpai_tmpbitmap[1] = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
+	niyanpai_tmpbitmap[2] = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	niyanpai_videoram[0] = auto_malloc(Machine->screen[0].width * Machine->screen[0].height * sizeof(short));
 	niyanpai_videoram[1] = auto_malloc(Machine->screen[0].width * Machine->screen[0].height * sizeof(short));
 	niyanpai_videoram[2] = auto_malloc(Machine->screen[0].width * Machine->screen[0].height * sizeof(short));

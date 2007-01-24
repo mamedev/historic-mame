@@ -308,8 +308,6 @@ VIDEO_START( ojankoc )
 	ojankohs_videoram = auto_malloc(0x8000);
 	ojankohs_paletteram = auto_malloc(0x20);
 
-	if (!ojankoc_tmpbitmap) return 1;
-
 	return 0;
 }
 

@@ -9,6 +9,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/astrof.h"
 
 
 unsigned char *astrof_color;

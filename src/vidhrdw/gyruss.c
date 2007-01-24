@@ -9,14 +9,14 @@
 #include "driver.h"
 
 
-static int flipscreen;
+static UINT8 flipscreen;
 
 /*
 sprites are multiplexed, so we have to buffer the spriteram
 scanline by scanline.
 */
-static unsigned char *sprite_mux_buffer;
-static int scanline;
+static UINT8 *sprite_mux_buffer;
+static UINT32 scanline;
 
 
 /***************************************************************************
@@ -86,6 +86,10 @@ VIDEO_START( gyruss )
 {
 	sprite_mux_buffer = auto_malloc(256 * spriteram_size);
 
+	state_save_register_global(flipscreen);
+	state_save_register_global(scanline);
+	state_save_register_global_pointer(sprite_mux_buffer,256*spriteram_size);
+
 	return video_start_generic(machine);
 }
 
@@ -129,7 +133,7 @@ static void draw_sprites(mame_bitmap *bitmap)
 	{
 		if (line >= Machine->screen[0].visarea.min_y && line <= Machine->screen[0].visarea.max_y)
 		{
-			unsigned char *sr;
+			UINT8 *sr;
 
 			sr = sprite_mux_buffer + line * spriteram_size;
 			clip.min_y = clip.max_y = line;

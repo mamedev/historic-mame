@@ -404,8 +404,8 @@ void m6509_get_info(UINT32 state, cpuinfo *info)
 		case CPUINFO_STR_REGISTER + M6509_A:			sprintf(info->s, "A:%02X", m6509.a); break;
 		case CPUINFO_STR_REGISTER + M6509_X:			sprintf(info->s, "X:%02X", m6509.x); break;
 		case CPUINFO_STR_REGISTER + M6509_Y:			sprintf(info->s, "Y:%02X", m6509.y); break;
-		case CPUINFO_STR_REGISTER + M6509_PC_BANK:		sprintf(info->s, "0:%01X", m6509.pc_bank.b.h2); break;
-		case CPUINFO_STR_REGISTER + M6509_IND_BANK:		sprintf(info->s, "1:%01X", m6509.ind_bank.b.h2); break;
+		case CPUINFO_STR_REGISTER + M6509_PC_BANK:		sprintf(info->s, "M0:%01X", m6509.pc_bank.b.h2); break;
+		case CPUINFO_STR_REGISTER + M6509_IND_BANK:		sprintf(info->s, "M1:%01X", m6509.ind_bank.b.h2); break;
 		case CPUINFO_STR_REGISTER + M6509_EA:			sprintf(info->s, "EA:%04X", m6509.ea.w.l); break;
 		case CPUINFO_STR_REGISTER + M6509_ZP:			sprintf(info->s, "ZP:%03X", m6509.zp.w.l); break;
 	}

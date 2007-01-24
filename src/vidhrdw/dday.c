@@ -244,7 +244,7 @@ VIDEO_START( dday )
 
 	main_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
-	if (!bg_tilemap || !fg_tilemap || !text_tilemap || !sl_tilemap || !main_bitmap)
+	if (!bg_tilemap || !fg_tilemap || !text_tilemap || !sl_tilemap)
 		return 1;
 
 	tilemap_set_transmask(bg_tilemap,0,0x00f0,0xff0f); /* pens 0-3 have priority over the foreground layer */

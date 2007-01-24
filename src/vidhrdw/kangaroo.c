@@ -55,11 +55,8 @@ PALETTE_INIT( kangaroo )
 
 VIDEO_START( kangaroo )
 {
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
-		return 1;
-
-	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
-		return 1;
+	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+	tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
 	videoram = auto_malloc(Machine->screen[0].width*Machine->screen[0].height);
 

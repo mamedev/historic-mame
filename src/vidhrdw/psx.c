@@ -907,7 +907,7 @@ VIDEO_UPDATE( psx )
 			while( n_line > 0 )
 			{
 				UINT16 *p_n_src = m_p_p_vram[ n_y + m_n_displaystarty ] + n_x + n_displaystartx;
-				UINT16 *p_n_dest = &( (UINT16 *)bitmap->line[ n_y + n_top ] )[ n_x + n_left ];
+				UINT16 *p_n_dest = BITMAP_ADDR16(bitmap, n_y + n_top, n_x + n_left);
 
 				n_column = n_columns;
 				while( n_column > 0 )

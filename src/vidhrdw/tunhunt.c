@@ -88,8 +88,6 @@ VIDEO_START( tunhunt )
 
 	memset( dirtybuffer, 1, 64 );
 	tmpbitmap = auto_bitmap_alloc( 256, 64 );
-	if (!tmpbitmap)
-		return 1;
 
 	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);

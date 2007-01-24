@@ -11,7 +11,7 @@
 #include "driver.h"
 #include "sound/ay8910.h"
 
-tilemap *tmap, *tmap2;
+static tilemap *tmap, *tmap2;
 
 static UINT8 *skylncr_videoram,*skylncr_colorram;
 static UINT8 *skylncr_videoram2,*skylncr_colorram2;

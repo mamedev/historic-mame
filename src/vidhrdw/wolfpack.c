@@ -109,10 +109,7 @@ VIDEO_START( wolfpack )
 
 	LFSR = auto_malloc(0x8000);
 
-	if ((helper = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == NULL)
-	{
-		return 1;
-	}
+	helper = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 
 	for (i = 0; i < 0x8000; i++)
 	{

@@ -105,8 +105,7 @@ VIDEO_START( crbaloon )
 	if ( !bg_tilemap )
 		return 1;
 
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
-		return 1;
+	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
 	state_save_register_global_array(spritectrl);
 	state_save_register_global(crbaloon_collision);

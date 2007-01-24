@@ -1,6 +1,6 @@
-
 #include "driver.h"
 #include "sound/samples.h"
+#include "includes/astrof.h"
 
 /* Make sure that the sample name definitions in drivers/astrof.c matches these */
 

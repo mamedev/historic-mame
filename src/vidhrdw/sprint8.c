@@ -5,8 +5,7 @@ Atari Sprint 8 video emulation
 ***************************************************************************/
 
 #include "driver.h"
-
-extern void sprint8_collision_callback(int n);
+#include "includes/sprint8.h"
 
 UINT8* sprint8_video_ram;
 UINT8* sprint8_pos_h_ram;
@@ -85,15 +84,6 @@ VIDEO_START( sprint8 )
 {
 	helper1 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	helper2 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-
-	if (helper1 == NULL)
-	{
-		return 1;
-	}
-	if (helper2 == NULL)
-	{
-		return 1;
-	}
 
 	tilemap1 = tilemap_create(get_tile_info1, tilemap_scan_rows, TILEMAP_OPAQUE, 16, 8, 32, 32);
 	tilemap2 = tilemap_create(get_tile_info2, tilemap_scan_rows, TILEMAP_OPAQUE, 16, 8, 32, 32);

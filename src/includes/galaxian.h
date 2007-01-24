@@ -116,6 +116,7 @@ DRIVER_INIT( checkman );
 DRIVER_INIT( gteikob2 );
 DRIVER_INIT( azurian );
 DRIVER_INIT( 4in1 );
+DRIVER_INIT( ladybugg );
 DRIVER_INIT( gmgalax );
 
 WRITE8_HANDLER( galaxian_nmi_enable_w );
@@ -188,7 +189,6 @@ DRIVER_INIT( mrkougb );
 DRIVER_INIT( mimonscr );
 DRIVER_INIT( sfx );
 DRIVER_INIT( monsterz );
-DRIVER_INIT( ladybugg );
 DRIVER_INIT( scorpion );
 DRIVER_INIT( ad2083 );
 

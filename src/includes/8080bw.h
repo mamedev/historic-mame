@@ -33,12 +33,11 @@ WRITE8_HANDLER( invadpt2_sh_port_1_w );
 WRITE8_HANDLER( invadpt2_sh_port_2_w );
 
 extern struct Samplesinterface lrescue_samples_interface;
-extern struct Samplesinterface lupin3_samples_interface;
-extern discrete_sound_block indianbt_discrete_interface[];
 extern discrete_sound_block polaris_discrete_interface[];
+extern discrete_sound_block indianbt_discrete_interface[];
 extern discrete_sound_block schaser_discrete_interface[];
 void schaser_effect_555_cb(int effect);
-int schaser_sx10;
+extern int schaser_sx10;
 extern mame_timer *schaser_effect_555_timer;
 extern struct SN76477interface schaser_sn76477_interface;
 
@@ -50,7 +49,6 @@ DRIVER_INIT( invadpt2 );
 DRIVER_INIT( cosmo );
 DRIVER_INIT( sstrngr2 );
 DRIVER_INIT( invaddlx );
-DRIVER_INIT( invrvnge );
 DRIVER_INIT( schaser );
 DRIVER_INIT( schasrcv );
 DRIVER_INIT( rollingc );

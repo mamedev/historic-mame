@@ -30,6 +30,26 @@ static UINT8 port_4_last;
 
 /*************************************
  *
+ *  Machine setup
+ *
+ *************************************/
+
+
+MACHINE_START( mw8080bw_sndhrdw )
+{
+	/* setup for save states */
+	state_save_register_global(port_1_last);
+	state_save_register_global(port_2_last);
+	state_save_register_global(port_3_last);
+	state_save_register_global(port_4_last);
+
+	return 0;
+}
+
+
+
+/*************************************
+ *
  *  Implementation of tone generator used
  *  by a few of these games
  *
@@ -642,9 +662,6 @@ WRITE8_HANDLER( checkmat_sh_port_w )
  *************************************/
 
 
-static UINT8 desertgu_controller_select;
-
-
 /* nodes - inputs */
 #define DESERTGU_GAME_ON_EN					NODE_01
 #define DESERTGU_RIFLE_SHOT_EN				NODE_02
@@ -898,15 +915,9 @@ WRITE8_HANDLER( desertgu_sh_port_2_w )
 
 	output_set_value("KICKER", (data >> 2) & 0x01);
 
-	desertgu_controller_select = (data >> 3) & 0x01;
+	desertgun_set_controller_select((data >> 3) & 0x01);
 
 	/* D4-D7 are not connected */
-}
-
-
-UINT8 desertgun_get_controller_select()
-{
-	return desertgu_controller_select;
 }
 
 
@@ -1342,9 +1353,6 @@ WRITE8_HANDLER( m4_sh_port_2_w )
  *************************************/
 
 
-static UINT8 clowns_controller_select;
-
-
 /* nodes - inputs */
 #define CLOWNS_POP_BOTTOM_EN		NODE_01
 #define CLOWNS_POP_MIDDLE_EN		NODE_02
@@ -1583,7 +1591,7 @@ WRITE8_HANDLER( clowns_sh_port_1_w )
 {
 	coin_counter_w(0, (data >> 0) & 0x01);
 
-	clowns_controller_select = (data >> 1) & 0x01;
+	clowns_set_controller_select((data >> 1) & 0x01);
 
 	/* D2-D7 are not connected */
 }
@@ -1608,12 +1616,6 @@ WRITE8_HANDLER( clowns_sh_port_2_w )
 	/* D6 and D7 are not connected */
 
 	port_2_last = data;
-}
-
-
-UINT8 clowns_get_controller_select()
-{
-	return clowns_controller_select;
 }
 
 
@@ -1771,7 +1773,7 @@ static struct SN76477interface spcenctr_sn76477_interface =
 	0,				/* 27 mixer C                */
 	1,				/* 1  envelope 1             */
 	0,				/* 28 envelope 2             */
-	0				/* 9  enable (variable)      */
+	1				/* 9  enable (variable)      */
 };
 
 
@@ -2048,7 +2050,7 @@ static struct SN76477interface invaders_sn76477_interface =
 	0,			/* 27 mixer C                */
 	1,			/* 1  envelope 1             */
 	0,			/* 28 envelope 2             */
-	0			/* 9  enable (variable)      */
+	1			/* 9  enable (variable)      */
 };
 
 
@@ -2313,7 +2315,7 @@ static struct SN76477interface invad2ct_p1_sn76477_interface =
 	0,			/* 27 mixer C                */
 	1,			/* 1  envelope 1             */
 	0,			/* 28 envelope 2             */
-	0			/* 9  enable (variable)      */
+	1			/* 9  enable (variable)      */
 };
 
 
@@ -2341,7 +2343,7 @@ static struct SN76477interface invad2ct_p2_sn76477_interface =
 	0,			  /* 27 mixer C                */
 	1,			  /* 1  envelope 1             */
 	0,			  /* 28 envelope 2             */
-	0			  /* 9  enable (variable)      */
+	1			  /* 9  enable (variable)      */
 };
 
 

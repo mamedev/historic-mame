@@ -23,10 +23,8 @@ static UINT8 *mjsister_videoram0, *mjsister_videoram1;
 
 VIDEO_START( mjsister )
 {
-	if ((mjsister_tmpbitmap0 = auto_bitmap_alloc(256,256)) == 0)
-		return 1;
-	if ((mjsister_tmpbitmap1 = auto_bitmap_alloc(256,256)) == 0)
-		return 1;
+	mjsister_tmpbitmap0 = auto_bitmap_alloc(256,256);
+	mjsister_tmpbitmap1 = auto_bitmap_alloc(256,256);
 	mjsister_videoram0 = auto_malloc(0x8000);
 	mjsister_videoram1 = auto_malloc(0x8000);
 

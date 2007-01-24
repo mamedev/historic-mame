@@ -8,14 +8,8 @@
 #include "cpu/i8039/i8039.h"
 #include "sound/sn76477.h"
 #include "sound/dac.h"
+#include "includes/n8080.h"
 #include <math.h>
-
-extern int helifire_flash;
-
-extern int spacefev_red_screen;
-extern int spacefev_red_cannon;
-
-extern void spacefev_start_red_cannon(void);
 
 static int n8080_hardware;
 

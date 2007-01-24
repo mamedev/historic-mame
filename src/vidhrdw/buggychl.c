@@ -33,9 +33,6 @@ VIDEO_START( buggychl )
 	tmpbitmap1 = auto_bitmap_alloc(256,256);
 	tmpbitmap2 = auto_bitmap_alloc(256,256);
 
-	if (!tmpbitmap1 || !tmpbitmap2)
-		return 1;
-
 	memset(dirtybuffer,1,videoram_size);
 	memset(dirtychar,0xff,256 * sizeof(*dirtychar));
 

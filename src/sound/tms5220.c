@@ -8,6 +8,7 @@
      TMS6100 Speech Rom support added by Raphael Nabet
      PRNG code by Jarek Burczynski backported from tms5110.c by Lord Nightmare
      Chirp/excitation table fixes by Lord Nightmare
+     Various fixes by Lord Nightmare
 
 ***********************************************************************************************/
 
@@ -222,7 +223,7 @@ void tms5220_reset_chip(void *chip)
 
 	/* initialize the sample generators */
 	tms->interp_count = tms->sample_count = tms->pitch_count = 0;
-	tms->RNG = 0xFFFFFFFF;
+        tms->RNG = 0x1FFF;
 	memset(tms->u, 0, sizeof(tms->u));
 	memset(tms->x, 0, sizeof(tms->x));
 
@@ -461,7 +462,7 @@ void tms5220_process(void *chip, INT16 *buffer, unsigned int size)
 {
 	struct tms5220 *tms = chip;
     int buf_count=0;
-    int i, interp_period;
+    int i, interp_period, cliptemp;
 
 tryagain:
 
@@ -664,14 +665,19 @@ tryagain:
 
         tms->x[0] = tms->u[0];
 
-        /* clipping, just like the chip */
+        /* clipping & wrapping, just like the patent shows */
 
-        if (tms->u[0] > 511)
+	cliptemp = tms->u[0];
+	if (cliptemp > 2047) cliptemp = -2048 + (cliptemp-2047);
+	else if (cliptemp < -2048) cliptemp = 2047 - (cliptemp+2048);
+
+	if (cliptemp > 511)
             buffer[buf_count] = 127<<8;
-        else if (tms->u[0] < -512)
+        else if (cliptemp < -512)
             buffer[buf_count] = -128<<8;
         else
-            buffer[buf_count] = tms->u[0] << 6;
+            buffer[buf_count] = cliptemp << 6;
+
 
         /* Update all counts */
 

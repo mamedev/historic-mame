@@ -262,7 +262,7 @@ void pastelg_gfxdraw(void)
 ******************************************************************************/
 VIDEO_START( pastelg )
 {
-	if ((pastelg_tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == 0) return 1;
+	pastelg_tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	pastelg_videoram = auto_malloc(Machine->screen[0].width * Machine->screen[0].height * sizeof(UINT8));
 	pastelg_clut = auto_malloc(0x10 * sizeof(UINT8));
 	memset(pastelg_videoram, 0x00, (Machine->screen[0].width * Machine->screen[0].height * sizeof(UINT8)));

@@ -14,8 +14,7 @@
 
 #include "driver.h"
 #include "cpu/i8x41/i8x41.h"
-
-extern unsigned char *tnzs_sharedram;
+#include "includes/tnzs.h"
 
 static int mcu_type;
 static int tnzs_input_select;

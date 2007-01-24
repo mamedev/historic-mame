@@ -5,10 +5,8 @@ Atari Starship 1 video emulation
 ***************************************************************************/
 
 #include "driver.h"
-
+#include "includes/starshp1.h"
 #include <math.h>
-
-extern int starshp1_attract;
 
 unsigned char* starshp1_playfield_ram;
 unsigned char* starshp1_hpos_ram;
@@ -83,10 +81,7 @@ VIDEO_START( starshp1 )
 		val = (val << 1) | (bit & 1);
 	}
 
-	if ((helper = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == 0)
-	{
-		return 1;
-	}
+	helper = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 
 	return 0;
 }

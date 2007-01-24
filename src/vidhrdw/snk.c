@@ -70,7 +70,6 @@ VIDEO_START( snk )
 	dirtybuffer = auto_malloc( MAX_VRAM_SIZE );
 
 	tmpbitmap = auto_bitmap_alloc( 512, 512 );
-	if(!tmpbitmap) return 1;
 
 	memset( dirtybuffer, 0xff, MAX_VRAM_SIZE );
 
@@ -262,7 +261,6 @@ VIDEO_START( sgladiat )
 	dirtybuffer = auto_malloc( MAX_VRAM_SIZE );
 	if(!dirtybuffer) return 1;
 	tmpbitmap = auto_bitmap_alloc( 512, 256 );
-	if(!tmpbitmap) return 1;
 	memset( dirtybuffer, 0xff, MAX_VRAM_SIZE );
 	return 0;
 }

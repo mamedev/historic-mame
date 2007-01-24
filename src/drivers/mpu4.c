@@ -1,6 +1,7 @@
 /***************************************************************************
-MPU4 highly preliminary driver by ElCondor, and Anonymous.
+MPU4 highly preliminary driver by J.Wallace, and Anonymous.
 
+  30-12-2006: J Wallace: Fixed init routines, state saving is theoretically supported.
   23-09-2006: Converted 7Segment code to cleaner version, but have yet to add new 16k EPROM, as
               the original image was purported to come from a Barcrest BBS service, and is probably
               more 'official'.
@@ -22,7 +23,7 @@ MPU4 highly preliminary driver by ElCondor, and Anonymous.
               that's the correct behaviour, and that my 'correction' for Old Timer was wrong.
               Yamaha sound does work, but is horrendous - presumably there's a filter on the
               sound that I haven't spotted. Trackball is apparently connected to AUX1, via
-              Schmitt triggers - I wish I had a clue what this meant (El Condor).
+              Schmitt triggers - I wish I had a clue what this meant (JW).
 
   05-09-2006: And the award for most bone-headed bug goes to.. me! the 6840 handler wasn't
               resetting the clocks after timeout, so the wave frequencies were way off.
@@ -112,20 +113,20 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
 -----------+---+-----------------+--------------------------------------------------------------------------
  0800      |R/W|                 | Characteriser (Security PAL) (NV)
 -----------+---+-----------------+--------------------------------------------------------------------------
- 0880      |R/W| D D D D D D D D | PIA6821 on soundboard (Oki MSM6376@16MHz,(NV)
-                                   port A = ??
-                                   port B (882)
-                                          b7 = 0 if OKI busy
-                                               1 if OKI ready
-                                          b6 = ??
-                                          b5 = volume control clock
-                                          b4 = volume control direction (0= up, 1 = down)
-                                          b3 = ??
-                                          b2 = ??
-                                          b1 = ??
-                                          b0 = ??
------------+---+-----------------+--------------------------------------------------------------------------
  0850 ?    | W | ??????????????? | page latch (NV)
+-----------+---+-----------------+--------------------------------------------------------------------------
+ 0880      |R/W| D D D D D D D D | PIA6821 on soundboard (Oki MSM6376@16MHz,(NV)
+           |   |                 | port A = ??
+           |   |                 | port B (882)
+           |   |                 |        b7 = 0 if OKI busy
+           |   |                 |             1 if OKI ready
+           |   |                 |        b6 = ??
+           |   |                 |        b5 = volume control clock
+           |   |                 |        b4 = volume control direction (0= up, 1 = down)
+           |   |                 |        b3 = ??
+           |   |                 |        b2 = ??
+           |   |                 |        b1 = ??
+           |   |                 |        b0 = ??
 -----------+---+-----------------+--------------------------------------------------------------------------
  08C0      |   |                 | MC6840 on sound board(NV?)
 -----------+---+-----------------+--------------------------------------------------------------------------
@@ -147,112 +148,112 @@ IRQ line connected to CPU
 
 -----------+---+-----------------+--------------------------------------------------------------------------
  0A00-0A03 |R/W| D D D D D D D D | PIA6821 IC3 port A Lamp Drives 1,2,3,4,6,7,8,9 (sic)(IC14)
-
-                                            CA1 <= output2 from PTM6840 (IC2)
-                                            CA2 => alpha data
-
-                                            port B Lamp Drives 10,11,12,13,14,15,16,17 (sic)(IC13)
-
-                                            CB2 => alpha reset (clock on Dutch systems)
-                                            Schematic shows IRQ A and B connected, but program hangs?
-
+           |   |                 |
+           |   |                 |          CA1 <= output2 from PTM6840 (IC2)
+           |   |                 |          CA2 => alpha data
+           |   |                 |
+           |   |                 |          port B Lamp Drives 10,11,12,13,14,15,16,17 (sic)(IC13)
+           |   |                 |
+           |   |                 |          CB2 => alpha reset (clock on Dutch systems)
+           |   |                 |          Schematic shows IRQ A and B connected, but program hangs?
+           |   |                 |
 -----------+---+-----------------+--------------------------------------------------------------------------
  0B00-0B03 |R/W| D D D D D D D D | PIA6821 IC4 port A = data for 7seg leds (pins 10 - 17, via IC32)
-
-                                               CA1 INPUT, 50 Hz input (used to generate IRQ)
-                                               CA2 OUTPUT, connected to pin2 74LS138 CE for multiplexer
-                                                          (B on LED strobe multiplexer)
-                                               IRQA connected to IRQ of CPU
-                                               port B
-                                                      PB7 = INPUT, serial port Receive data (Rx)
-                                                      PB6 = INPUT, reel A sensor
-                                                      PB5 = INPUT, reel B sensor
-                                                      PB4 = INPUT, reel C sensor
-                                                      PB3 = INPUT, reel D sensor
-                                                      PB2 = INPUT, Connected to CA1 (50Hz signal)
-                                                      PB1 = INPUT, undercurrent sense
-                                                      PB0 = INPUT, overcurrent  sense
-
-                                               CB1 INPUT,  used to generate IRQ on edge of serial input line
-                                               CB2 OUTPUT, enable signal for reel optics
-                                               IRQB connected to IRQ of CPU
-
+           |   |                 |
+           |   |                 |             CA1 INPUT, 50 Hz input (used to generate IRQ)
+           |   |                 |             CA2 OUTPUT, connected to pin2 74LS138 CE for multiplexer
+           |   |                 |                        (B on LED strobe multiplexer)
+           |   |                 |             IRQA connected to IRQ of CPU
+           |   |                 |             port B
+           |   |                 |                    PB7 = INPUT, serial port Receive data (Rx)
+           |   |                 |                    PB6 = INPUT, reel A sensor
+           |   |                 |                    PB5 = INPUT, reel B sensor
+           |   |                 |                    PB4 = INPUT, reel C sensor
+           |   |                 |                    PB3 = INPUT, reel D sensor
+           |   |                 |                    PB2 = INPUT, Connected to CA1 (50Hz signal)
+           |   |                 |                    PB1 = INPUT, undercurrent sense
+           |   |                 |                    PB0 = INPUT, overcurrent  sense
+           |   |                 |
+           |   |                 |             CB1 INPUT,  used to generate IRQ on edge of serial input line
+           |   |                 |             CB2 OUTPUT, enable signal for reel optics
+           |   |                 |             IRQB connected to IRQ of CPU
+           |   |                 |
 -----------+---+-----------------+--------------------------------------------------------------------------
  0C00-0C03 |R/W| D D D D D D D D | PIA6821 IC5 port A
-
-                                                      PA0-PA7, INPUT AUX1 connector
-
-                                               CA2  OUTPUT, serial port Transmit line
-                                               CA1  not connected
-                                               IRQA connected to IRQ of CPU
-
-                                               port B
-
-                                                      PB0-PB7 INPUT, AUX2 connector
-
-                                               CB1  INPUT,  connected to PB7 (Aux2 connector pin 4)
-
-                                               CB2  OUTPUT, AY8910 chip select line
-                                               IRQB connected to IRQ of CPU
-
+           |   |                 |
+           |   |                 |                    PA0-PA7, INPUT AUX1 connector
+           |   |                 |
+           |   |                 |             CA2  OUTPUT, serial port Transmit line
+           |   |                 |             CA1  not connected
+           |   |                 |             IRQA connected to IRQ of CPU
+           |   |                 |
+           |   |                 |             port B
+           |   |                 |
+           |   |                 |                    PB0-PB7 INPUT, AUX2 connector
+           |   |                 |
+           |   |                 |             CB1  INPUT,  connected to PB7 (Aux2 connector pin 4)
+           |   |                 |
+           |   |                 |             CB2  OUTPUT, AY8910 chip select line
+           |   |                 |             IRQB connected to IRQ of CPU
+           |   |                 |
 -----------+---+-----------------+--------------------------------------------------------------------------
  0D00-0D03 |R/W| D D D D D D D D | PIA6821 IC6
-
-                                    port A
-
-                                          PA0 - PA7 (INPUT/OUTPUT) data port AY8910 sound chip
-
-                                          CA1 INPUT,  not connected
-                                          CA2 OUTPUT, BC1 pin AY8910 sound chip
-                                          IRQA , connected to IRQ CPU
-
-                                    port B
-
-                                          PB0-PB3 OUTPUT, reel A
-                                          PB4-PB7 OUTPUT, reel B
-
-                                          CB1 INPUT,  not connected
-                                          CB2 OUTPUT, B01R pin AY8910 sound chip
-                                          IRQB , connected to IRQ CPU
-
+           |   |                 |
+           |   |                 |  port A
+           |   |                 |
+           |   |                 |        PA0 - PA7 (INPUT/OUTPUT) data port AY8910 sound chip
+           |   |                 |
+           |   |                 |        CA1 INPUT,  not connected
+           |   |                 |        CA2 OUTPUT, BC1 pin AY8910 sound chip
+           |   |                 |        IRQA , connected to IRQ CPU
+           |   |                 |
+           |   |                 |  port B
+           |   |                 |
+           |   |                 |        PB0-PB3 OUTPUT, reel A
+           |   |                 |        PB4-PB7 OUTPUT, reel B
+           |   |                 |
+           |   |                 |        CB1 INPUT,  not connected
+           |   |                 |        CB2 OUTPUT, B01R pin AY8910 sound chip
+           |   |                 |        IRQB , connected to IRQ CPU
+           |   |                 |
 -----------+---+-----------------+--------------------------------------------------------------------------
  0E00-0E03 |R/W| D D D D D D D D | PIA6821 IC7
-
-                                    port A
-
-                                          PA0-PA3 OUTPUT, reel C
-                                          PA4-PA7 OUTPUT, reel D
-                                          CA1     INPUT,  not connected
-                                          CA2     OUTPUT, A on LED strobe multiplexer
-                                          IRQA , connected to IRQ CPU
-
-                                    port B
-
-                                          PB0-PB7 OUTPUT mech meter or reel E + F
-                                          CB1     INPUT, not connected
-                                          CB2     OUTPUT,enable mech meter latch
-                                          IRQB , connected to IRQ CPU
-
+           |   |                 |
+           |   |                 |  port A
+           |   |                 |
+           |   |                 |        PA0-PA3 OUTPUT, reel C
+           |   |                 |        PA4-PA7 OUTPUT, reel D
+           |   |                 |        CA1     INPUT,  not connected
+           |   |                 |        CA2     OUTPUT, A on LED strobe multiplexer
+           |   |                 |        IRQA , connected to IRQ CPU
+           |   |                 |
+           |   |                 |  port B
+           |   |                 |
+           |   |                 |        PB0-PB7 OUTPUT mech meter or reel E + F
+           |   |                 |        CB1     INPUT, not connected
+           |   |                 |        CB2     OUTPUT,enable mech meter latch
+           |   |                 |        IRQB , connected to IRQ CPU
+           |   |                 |
 -----------+---+-----------------+--------------------------------------------------------------------------
  0F00-0F03 |R/W| D D D D D D D D | PIA6821 IC8
-
-                                   port A
-
-                                          PA0-PA7 INPUT  multiplexed inputs data
-
-                                          CA1     INPUT, not connected
-                                          CA2    OUTPUT, C on LED strobe multiplexer
-                                          IRQA           connected to IRQ CPU
-
-                                   port B
-
-                                          PB0-PB7 OUTPUT  triacs outputs connector PL6
-                                          used for slides / hoppers
-
-                                          CB1     INPUT, not connected
-                                          CB2    OUTPUT, pin1 alpha display PL7 (clock signal)
-                                          IRQB           connected to IRQ CPU
-
+           |   |                 |
+           |   |                 | port A
+           |   |                 |
+           |   |                 |        PA0-PA7 INPUT  multiplexed inputs data
+           |   |                 |
+           |   |                 |        CA1     INPUT, not connected
+           |   |                 |        CA2    OUTPUT, C on LED strobe multiplexer
+           |   |                 |        IRQA           connected to IRQ CPU
+           |   |                 |
+           |   |                 | port B
+           |   |                 |
+           |   |                 |        PB0-PB7 OUTPUT  triacs outputs connector PL6
+           |   |                 |        used for slides / hoppers
+           |   |                 |
+           |   |                 |        CB1     INPUT, not connected
+           |   |                 |        CB2    OUTPUT, pin1 alpha display PL7 (clock signal)
+           |   |                 |        IRQB           connected to IRQ CPU
+           |   |                 |
 -----------+---+-----------------+--------------------------------------------------------------------------
  1000-FFFF | R | D D D D D D D D | ROM (can be banked switched by 0x850 in 8 banks of 64 k ) (NV)
 -----------+---+-----------------+--------------------------------------------------------------------------
@@ -260,8 +261,8 @@ IRQ line connected to CPU
  TODO: - confirm map, based on 6809 code.
        - Get MPU4 board working properly, so that video layer will operate.
        - Confirm that MC6850 emulation is sufficient.
-
-*/
+       - MPU4 Master clock balue taken from schematic, but 68k value is not.
+*****************************************************************************************/
 
 #include "driver.h"
 
@@ -272,10 +273,10 @@ IRQ line connected to CPU
 #include "ui.h"
 #include "cpu/m6809/m6809.h"
 #include "sound/ay8910.h"
-//#include "vidhrdw/awpvid.h" //AGEMAME Only
-#include "machine/lamps.h"    // lamp matrix
-#include "machine/steppers.h" // stepper motor
-#include "machine/vacfdisp.h" // vfd
+//#include "vidhrdw/awpvid.h"   // Fruit Machines Only
+#include "machine/lamps.h"		// lamp matrix
+#include "machine/steppers.h"	// stepper motor
+#include "machine/vacfdisp.h"	// vfd
 #include "machine/mmtr.h"
 
 // Video
@@ -300,10 +301,8 @@ IRQ line connected to CPU
 
 #include "mpu4.lh"
 
-void draw_MPU4_led(UINT8 id, UINT8 value)
-{
-	output_set_digit_value(id,value);
-}
+#define MPU4_MASTER_CLOCK (6880000)
+#define VIDEO_MASTER_CLOCK (10000000)
 
 // local vars /////////////////////////////////////////////////////////////
 static int mmtr_latch;		  // mechanical meter latch
@@ -358,6 +357,12 @@ with settings like this in the majority of cases.
 
 8 display enables (pins 10 - 17)
 */
+
+void draw_MPU4_led(UINT8 id, UINT8 value)
+{
+	output_set_digit_value(id,value);
+}
+
 static int    input_strobe;	  // IC23 74LS138 A = CA2 IC7, B = CA2 IC4, C = CA2 IC8
 static int    output_strobe;  // same
 
@@ -384,47 +389,59 @@ static UINT8 scn2674_cursor_h;
 static UINT8 scn2674_screen2_l;
 static UINT8 scn2674_screen2_h;
 
-static const UINT8 MPU4_strcnv[] =
-{   //1                                //9      //10                               //17
-	0x38,0x39,0x3A,0x3B,0x3C,0x3D,0x3E,0x3F,	0x78,0x79,0x7A,0x7B,0x7C,0x7D,0x7E,0x7F,//1
-	0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,	0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,
-	0x28,0x29,0x2A,0x2B,0x2C,0x2D,0x2E,0x2F,	0x68,0x69,0x6A,0x6B,0x6C,0x6D,0x6E,0x6F,
-	0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,	0x60,0x61,0x62,0x63,0x64,0x65,0x66,0x67,
-	0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F,	0x58,0x59,0x5A,0x5B,0x5C,0x5D,0x5E,0x5F,
-	0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,	0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,
-	0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,	0x48,0x49,0x4A,0x4B,0x4C,0x4D,0x4E,0x4F,
-	0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,	0x40,0x41,0x42,0x43,0x44,0x45,0x46,0x47//9
+static const UINT8 MPU4_matrix1[] =
+{   //1   2    3    4     5   6    8     9
+	0x38,0x39,0x3A,0x3B,0x3C,0x3D,0x3E,0x3F,
+	0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,
+	0x28,0x29,0x2A,0x2B,0x2C,0x2D,0x2E,0x2F,
+	0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,
+	0x18,0x19,0x1A,0x1B,0x1C,0x1D,0x1E,0x1F,
+	0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,
+	0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
+	0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07
+};
+
+static const UINT8 MPU4_matrix2[] =
+{
+	//10  11   12   13   14   15   16   17     -> drives (lamp strobe)
+	0x78,0x79,0x7A,0x7B,0x7C,0x7D,0x7E,0x7F,//1
+	0x70,0x71,0x72,0x73,0x74,0x75,0x76,0x77,//2 | selects (input strobe)
+	0x68,0x69,0x6A,0x6B,0x6C,0x6D,0x6E,0x6F,//3 V
+	0x60,0x61,0x62,0x63,0x64,0x65,0x66,0x67,//4
+	0x58,0x59,0x5A,0x5B,0x5C,0x5D,0x5E,0x5F,//5
+	0x50,0x51,0x52,0x53,0x54,0x55,0x56,0x57,//7
+	0x48,0x49,0x4A,0x4B,0x4C,0x4D,0x4E,0x4F,//8
+	0x40,0x41,0x42,0x43,0x44,0x45,0x46,0x47 //9
 };
 
 void update_lamps(void)
 {
-	if (!IC23GC)
+	int x;
+	Lamps[MPU4_matrix1[(16*input_strobe)+0]] = (lamp_strobe & 0x0001) != 0;
+	Lamps[MPU4_matrix1[(16*input_strobe)+1]] = (lamp_strobe & 0x0002) != 0;
+	Lamps[MPU4_matrix1[(16*input_strobe)+2]] = (lamp_strobe & 0x0004) != 0;
+	Lamps[MPU4_matrix1[(16*input_strobe)+3]] = (lamp_strobe & 0x0008) != 0;
+	Lamps[MPU4_matrix1[(16*input_strobe)+4]] = (lamp_strobe & 0x0010) != 0;
+	Lamps[MPU4_matrix1[(16*input_strobe)+5]] = (lamp_strobe & 0x0020) != 0;
+	Lamps[MPU4_matrix1[(16*input_strobe)+6]] = (lamp_strobe & 0x0040) != 0;
+	Lamps[MPU4_matrix1[(16*input_strobe)+7]] = (lamp_strobe & 0x0080) != 0;
+
+	Lamps[MPU4_matrix2[(16*input_strobe)+0]] = (lamp_strobe & 0x0100) != 0;
+	Lamps[MPU4_matrix2[(16*input_strobe)+1]] = (lamp_strobe & 0x0200) != 0;
+	Lamps[MPU4_matrix2[(16*input_strobe)+2]] = (lamp_strobe & 0x0400) != 0;
+	Lamps[MPU4_matrix2[(16*input_strobe)+3]] = (lamp_strobe & 0x0800) != 0;
+	Lamps[MPU4_matrix2[(16*input_strobe)+4]] = (lamp_strobe & 0x1000) != 0;
+	Lamps[MPU4_matrix2[(16*input_strobe)+5]] = (lamp_strobe & 0x2000) != 0;
+	Lamps[MPU4_matrix2[(16*input_strobe)+6]] = (lamp_strobe & 0x4000) != 0;
+	Lamps[MPU4_matrix2[(16*input_strobe)+7]] = (lamp_strobe & 0x8000) != 0;
+	Lamps_SetBrightness(0, 127, Lamps);
+
+	for ( x = 0; x < 128; x++ )
 	{
-		if (!IC23GB)
-		{
-			if (IC23GA)
-			{
-				Lamps[MPU4_strcnv[(16*input_strobe)+0]] =  (lamp_strobe & 0x0001) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+1]] =  (lamp_strobe & 0x0002) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+2]] =  (lamp_strobe & 0x0004) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+3]] =  (lamp_strobe & 0x0008) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+4]] =  (lamp_strobe & 0x0010) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+5]] =  (lamp_strobe & 0x0020) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+6]] =  (lamp_strobe & 0x0040) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+7]] =  (lamp_strobe & 0x0080) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+8]] =  (lamp_strobe & 0x0100) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+9]] =  (lamp_strobe & 0x0200) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+10]] = (lamp_strobe & 0x0400) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+11]] = (lamp_strobe & 0x0800) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+12]] = (lamp_strobe & 0x1000) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+13]] = (lamp_strobe & 0x2000) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+14]] = (lamp_strobe & 0x4000) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+15]] = (lamp_strobe & 0x8000) != 0;
-				Lamps_SetBrightness(0, 127, Lamps);
-			}
-		}
+		LOG_CHR(("Lamp %02X %02X", x, Lamps[x]));
 	}
 }
+
 void awp_lamp_draw(void)
 {
 	int i,nrlamps;
@@ -506,7 +523,6 @@ static MACHINE_RESET( mpu4 )
 		optic_pattern = pattern;
 	}
 
-	//led_mux_strobe = 0;
 	lamp_strobe    = 0;
 	lamp_data      = 0;
 
@@ -553,7 +569,6 @@ static MACHINE_RESET( mpu4_vid )
 	IC23GB    = 0;
 	IC23GA    = 0;
 	prot_col  = 0;
-
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -561,13 +576,13 @@ static MACHINE_RESET( mpu4_vid )
 void cpu0_irq(int state)
 {
 	cpunum_set_input_line(0, M6809_IRQ_LINE, state? ASSERT_LINE:CLEAR_LINE);
-	logerror("6809 int%d \n",state);
+	LOG(("6809 int%d \n",state));
 }
 
 void cpu0_firq(int state)
 {
 	cpunum_set_input_line(0, M6809_FIRQ_LINE, state? ASSERT_LINE:CLEAR_LINE);
-	logerror("6809 fint%d \n",state);
+	LOG(("6809 fint%d \n",state));
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -575,7 +590,7 @@ void cpu0_firq(int state)
 static WRITE8_HANDLER( bankswitch_w )
 {
 //  memory_set_bank(1,data & 0x07);//BFM setting, may not be correct
-	logerror("Bank %d \n",data & 0x07);
+	LOG(("Bank %d \n",data & 0x07));
 }
 
 // IC2 6840 PTM handler ///////////////////////////////////////////////////////
@@ -607,7 +622,7 @@ static WRITE8_HANDLER( ic2_o3_callback )
 
 static const ptm6840_interface ptm_ic2_intf =
 {
-	6880000/4,
+	MPU4_MASTER_CLOCK/4,
 	0,0,0,
 	ic2_o1_callback, ic2_o2_callback, ic2_o3_callback,
 	cpu0_irq
@@ -615,8 +630,8 @@ static const ptm6840_interface ptm_ic2_intf =
 
 static const ptm6840_interface ptm_ic2b_intf =
 {
-	6880000/4,
-	0,	0,	0,
+	MPU4_MASTER_CLOCK/4,
+	0,0,0,
 	ic2_o1_callback, ic2_o2_callback, ic2_o3_callback,
 	cpu0_firq
 };
@@ -803,7 +818,7 @@ static READ8_HANDLER( pia_ic4_cb2_r )
 
 static const pia6821_interface pia_ic4_intf =
 {
-	/*inputs : A/B,CA/B1,CA/B2 */ 0, pia_ic4_portb_r, 0, 0, 0, 0,
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, pia_ic4_portb_r, pia_ic4_ca1_r, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_ic4_porta_w, 0, pia_ic4_ca2_w, pia_ic4_cb2_w,
 	/*irqs   : A/B             */ cpu0_irq, cpu0_irq
 };
@@ -1198,7 +1213,8 @@ static const pia6821_interface pia_ic8_intf =
     3 - 2674 AVDC
     2 - 6850 ACIA
     1 - 6840 PTM
-    0 - Unused (no such IRQ on 68k)
+    0 - Unused
+    So far, none of the games studied use any IRQ above 3
 */
 
 void update_mpu68_interrupts(void)
@@ -1263,7 +1279,7 @@ static WRITE8_HANDLER( vid_o3_callback )
 static const ptm6840_interface ptm_vid_intf =
 {
 	1000000,
-	6880000/4,	0,	0,
+	MPU4_MASTER_CLOCK/4,0,0, //Linked to MPU4 crystal
 	vid_o1_callback, vid_o2_callback, vid_o3_callback,
 	cpu1_irq
 };
@@ -1432,7 +1448,7 @@ WRITE16_HANDLER( mpu4_vid_vidram_w )
 /*
 SCN2674 - Advanced Video Display Controller (AVDC)  (Video Chip)
 
-15 Initalization Registers (8-bit each)
+15 Initialization Registers (8-bit each)
 
 -- fill me in later ---
 
@@ -1869,7 +1885,7 @@ READ16_HANDLER( mpu4_vid_unmap_r )
 
 WRITE16_HANDLER( mpu4_vid_unmap_w )
 {
-	logerror("WData %d WOffset %d", data, offset);
+	LOG(("WData %d WOffset %d", data, offset));
 }
 
 VIDEO_START( mpu4_vid )
@@ -2013,82 +2029,9 @@ WRITE16_HANDLER ( mpu4_vid_6850_w )
 }
 #endif
 
-INPUT_PORTS_START( connect4 )
-
-	PORT_START_TAG("IN1A")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("00")
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("01")
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("02")
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("03")
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("04")
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("05")
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("06")
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("07")
-
-	PORT_START_TAG("IN1B")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("08")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("09")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("10")
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("11")
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("12")
-	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("13")
-	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("14")
-	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("15")
-
-	PORT_START_TAG("IN2A")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("16")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("17")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("18")
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("19")
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("20")
-	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("21")
-	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_SERVICE) PORT_NAME("Refill Key") PORT_CODE(KEYCODE_R) PORT_TOGGLE
-	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("Software Reset")
-
-	PORT_START_TAG("IN2B")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1) PORT_NAME("Select")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("25")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_START2) PORT_NAME("Pass")
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_START1) PORT_NAME("Play")
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("28")
-	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("29")
-	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("30")
-	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Drop")
-
-	PORT_START_TAG("AUX1")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("32")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("33")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("34")
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("35")
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("36")
-	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("37")
-	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("38")
-	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("39")
-
-	PORT_START_TAG("AUX2")
-	PORT_DIPNAME( 0x01, 0x00, "10p Enable?" )
-	PORT_DIPSETTING(    0x00, "Enabled")
-	PORT_DIPSETTING(    0x01, "Disabled")
-	PORT_DIPNAME( 0x02, 0x00, "20p Enable?" )
-	PORT_DIPSETTING(    0x00, "Enabled")
-	PORT_DIPSETTING(    0x02, "Disabled")
-	PORT_DIPNAME( 0x04, 0x00, "50p Enable?" )
-	PORT_DIPSETTING(    0x00, "Enabled")
-	PORT_DIPSETTING(    0x04, "Disabled")
-	PORT_DIPNAME( 0x08, 0x00, "100p Enable?" )
-	PORT_DIPSETTING(    0x00, "Enabled")
-	PORT_DIPSETTING(    0x08, "Disabled")
-
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_COIN1) PORT_NAME("10p")PORT_IMPULSE(5)
-	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_COIN2) PORT_NAME("20p")PORT_IMPULSE(5)
-	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_COIN3) PORT_NAME("50p")PORT_IMPULSE(5)
-	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_COIN4) PORT_NAME("100p")PORT_IMPULSE(5)
-
-	//2X8 dips
-INPUT_PORTS_END
+// input ports for MPU4 board ////////////////////////////////////////
 
 INPUT_PORTS_START( mpu4 )
-
 	PORT_START_TAG("IN1A")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("00")
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("01")
@@ -2130,14 +2073,14 @@ INPUT_PORTS_START( mpu4 )
 	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("31")
 
 	PORT_START_TAG("AUX1")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("32")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("33")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("34")
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("35")
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("36")
-	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("37")
-	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("38")
-	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("39")
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("0")
+	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("1")
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("2")
+	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("3")
+	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("4")
+	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("5")
+	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("6")
+	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("7")
 
 	PORT_START_TAG("AUX2")
 	PORT_DIPNAME( 0x01, 0x00, "10p Enable?" )
@@ -2157,15 +2100,83 @@ INPUT_PORTS_START( mpu4 )
 	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_COIN3) PORT_NAME("50p")PORT_IMPULSE(100)
 	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_COIN4) PORT_NAME("100p")PORT_IMPULSE(100)
 
+	//2X8 dips
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mpu4_vid )
-PORT_INCLUDE(mpu4)
+INPUT_PORTS_START( connect4 )
+	PORT_START_TAG("IN1A")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("00")
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("01")
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("02")
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("03")
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("04")
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("05")
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("06")
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("07")
+
+	PORT_START_TAG("IN1B")
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("08")
+	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("09")
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("10")
+	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("11")
+	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("12")
+	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("13")
+	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("14")
+	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("15")
+
+	PORT_START_TAG("IN2A")
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("16")
+	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("17")
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("18")
+	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("19")
+	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("20")
+	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("21")
+	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_SERVICE) PORT_NAME("Refill Key") PORT_CODE(KEYCODE_R) PORT_TOGGLE
+	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("Software Reset")
+
+	PORT_START_TAG("IN2B")
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1) PORT_NAME("Select")
+	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("25")
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_START2) PORT_NAME("Pass")
+	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_START1) PORT_NAME("Play")
+	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("28")
+	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("29")
+	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("30")
+	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Drop")
+
+	PORT_START_TAG("AUX1")
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("0")
+	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("1")
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("2")
+	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("3")
+	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("4")
+	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("5")
+	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("6")
+	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("7")
+
+	PORT_START_TAG("AUX2")
+	PORT_DIPNAME( 0x01, 0x00, "10p Enable?" )
+	PORT_DIPSETTING(    0x00, "Enabled")
+	PORT_DIPSETTING(    0x01, "Disabled")
+	PORT_DIPNAME( 0x02, 0x00, "20p Enable?" )
+	PORT_DIPSETTING(    0x00, "Enabled")
+	PORT_DIPSETTING(    0x02, "Disabled")
+	PORT_DIPNAME( 0x04, 0x00, "50p Enable?" )
+	PORT_DIPSETTING(    0x00, "Enabled")
+	PORT_DIPSETTING(    0x04, "Disabled")
+	PORT_DIPNAME( 0x08, 0x00, "100p Enable?" )
+	PORT_DIPSETTING(    0x00, "Enabled")
+	PORT_DIPSETTING(    0x08, "Disabled")
+
+	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_COIN1) PORT_NAME("10p")PORT_IMPULSE(5)
+	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_COIN2) PORT_NAME("20p")PORT_IMPULSE(5)
+	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_COIN3) PORT_NAME("50p")PORT_IMPULSE(5)
+	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_COIN4) PORT_NAME("100p")PORT_IMPULSE(5)
+
 	//2X8 dips
 INPUT_PORTS_END
 
 INPUT_PORTS_START( crmaze )
-
 	PORT_START_TAG("IN1A")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("00")
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("01")
@@ -2363,7 +2374,7 @@ For most Barcrest games, though, the following can be used:
 
 To calculate the values necessary to program the CHR, we must first find the version string,
 which starts at ff28 and terminates at ff2f. For Club Celebration  (an AWP) ff2f then represents the CHR address.
-For some reason, the tables always start and end with '00 00'.
+For some reason, the tables always seem to start and end with '00 00'.
 
 From that point on, every word represents a call and response pair, until we have generated 8 8 byte rows of data.
 
@@ -2382,12 +2393,37 @@ Despite the potential to radically overhaul the design, the video card version o
 way as before. That said, the 'quiz' games on the board did use an address-scrambling PAL for encryption, and the very
 last mod had a characteriser capable of scrambling the ROM address lines.
 */
+
+static void character_generation_8(UINT16 address)
+{
+	int x;
+	UINT8 *rom;
+	rom = memory_region(REGION_CPU1);
+	for ( x = 0; x < 128; x++ )
+	{
+		chr_data[x] = rom[(address)+(x)];
+		LOG_CHR(("%02X",chr_data[x]));
+	}
+}
+
+static void character_generation_16(UINT16 address)
+{
+	int x;
+	UINT8 *rom;
+	rom = memory_region(REGION_CPU2);
+	for ( x = 0; x < 128; x++ )
+	{
+		chr16_data[x] = rom[(address)+(x)];
+		LOG_CHR(("%02X",chr16_data[x]));
+	}
+}
+
 static WRITE8_HANDLER( characteriser_w )
 {
 	int x;
 	int call=data;
 		LOG_CHR(("Characteriser write offset %02X data %02X\n",offset,data));
-		for ( x = prot_col+(offset*16); x < 128; x++ )
+		for ( x = prot_col; x < 128; x++ )
 		{
 			if	((chr_data[(x)] == call) && ((x & 1) == 0))
 			{
@@ -2410,7 +2446,7 @@ static WRITE16_HANDLER( characteriser16_w )
 	int x;
 	int call=data;
 		LOG_CHR(("Characteriser write offset %02X data %02X\n",offset,data));
-		for ( x = prot_col+(offset*16)+1; x < 128; x++ )
+		for ( x = prot_col+1; x < 128; x++ )
 		{
 			if	((chr16_data[(x)] == call) && ((x & 1) == 1))
 			{
@@ -2460,11 +2496,11 @@ static ADDRESS_MAP_START( mpu4_vid_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc00000, 0xc1ffff) AM_READWRITE(mpu4_vid_vidram_r, mpu4_vid_vidram_w)
 
 	/* comms with the MPU4? - disabling this gives MPU4 communication breakdown */
-    AM_RANGE(0xff8000, 0xff8003) AM_READ(  vidcard_uart_rx_r )  // 6850 compatible uart read  data.
+    AM_RANGE(0xff8000, 0xff8003) AM_READ(  vidcard_uart_rx_r )  // 6850 compatible uart read  data
     AM_RANGE(0xff8000, 0xff8003) AM_WRITE( vidcard_uart_tx_w )  // 6850 compatible uart write data
 
-	AM_RANGE(0xff9000, 0xff900f) AM_READ(  ptm6840_1_lsb_r)  // 6840PTM IC2
-	AM_RANGE(0xff9000, 0xff900f) AM_WRITE( ptm6840_1_lsb_w)  // 6840PTM IC2
+	AM_RANGE(0xff9000, 0xff900f) AM_READ(  ptm6840_1_lsb_r)
+	AM_RANGE(0xff9000, 0xff900f) AM_WRITE( ptm6840_1_lsb_w)
 
 	/* characterizer??? */
 	AM_RANGE(0xffd000, 0xffd00f) AM_READWRITE(characteriser16_r, characteriser16_w)
@@ -2482,6 +2518,7 @@ static ADDRESS_MAP_START( mpu4_map, ADDRESS_SPACE_PROGRAM, 8 )
 	//AM_RANGE(0x0880, 0x0880) AM_WRITE(uart1ctrl_w)    // Or a PIA?
 	//AM_RANGE(0x0881, 0x0881) AM_READ(uart1data_r)
 	//AM_RANGE(0x0881, 0x0881) AM_WRITE(uart1data_w)
+	AM_RANGE(0x0880, 0x0881) AM_NOP
 
 	AM_RANGE(0x0900, 0x0907) AM_READ( ptm6840_0_r)		// 6840PTM IC2
 	AM_RANGE(0x0900, 0x0907) AM_WRITE(ptm6840_0_w)
@@ -2505,7 +2542,7 @@ static ADDRESS_MAP_START( mpu4_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0F00, 0x0F03) AM_READ( pia_5_r)
 
 	AM_RANGE(0x1000, 0xBFFF) AM_RAM						// it actually runs code from here...
-	AM_RANGE(0xC000, 0xffff) AM_ROM						// 64k EPROM on board, only this region read
+	AM_RANGE(0xC000, 0xFFFF) AM_ROM	AM_REGION(REGION_CPU1,0)  // 64k EPROM on board, only this region read
 
 ADDRESS_MAP_END
 
@@ -2554,16 +2591,17 @@ ADDRESS_MAP_END
 
 static MACHINE_DRIVER_START( mpu4_vid )
 
-	MDRV_CPU_ADD_TAG("main", M6809, 6880000/4 )
+	MDRV_CPU_ADD_TAG("main", M6809, MPU4_MASTER_CLOCK/4 )
 	MDRV_CPU_PROGRAM_MAP(mpu4_map,0)
 	MDRV_CPU_PERIODIC_INT(gen_50hz, TIME_IN_HZ(50) )// generate 50 hz signal
 
-	MDRV_CPU_ADD_TAG("video", M68000, 10000000 )
+	MDRV_CPU_ADD_TAG("video", M68000, VIDEO_MASTER_CLOCK )
 	MDRV_CPU_PROGRAM_MAP(mpu4_vid_map,0)
 	MDRV_CPU_VBLANK_INT(mpu4_vid_irq,1)
 
 	MDRV_NVRAM_HANDLER(generic_0fill)				// confirm
 
+	MDRV_INTERLEAVE(16)
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
@@ -2578,7 +2616,7 @@ static MACHINE_DRIVER_START( mpu4_vid )
 	MDRV_PALETTE_LENGTH(16)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	MDRV_SOUND_ADD(AY8910, 1000000)
+	MDRV_SOUND_ADD(AY8910, MPU4_MASTER_CLOCK/4)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")	// Present on all video cards
@@ -2594,13 +2632,13 @@ static MACHINE_DRIVER_START( mpu4 )
 
 	MDRV_MACHINE_START(mpu4)							// main mpu4 board initialisation
 	MDRV_MACHINE_RESET(mpu4)
-	MDRV_CPU_ADD_TAG("main", M6809, 6880000/4 )			// 6809 CPU
+	MDRV_CPU_ADD_TAG("main", M6809, MPU4_MASTER_CLOCK/4)// 6809 CPU
 	MDRV_CPU_PROGRAM_MAP(memmap,0)						// setup read and write memorymap
 
 	MDRV_CPU_PERIODIC_INT(gen_50hz, TIME_IN_HZ(50) )	// generate 50 hz signal
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	MDRV_SOUND_ADD(AY8910, 6880000/4)
+	MDRV_SOUND_ADD(AY8910, MPU4_MASTER_CLOCK/4)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
 	MDRV_NVRAM_HANDLER(generic_0fill)					// load/save nv RAM
@@ -2622,26 +2660,12 @@ MACHINE_DRIVER_END
 
 DRIVER_INIT (crmaze)
 {
-	int x;
-	UINT8 *rom;
-	rom = memory_region(REGION_CPU2);
-	for ( x = 0; x < 128; x++ )
-	{
-		chr16_data[x] = rom[(0x04c6)+(x)];
-		LOG_CHR(("%02X",chr16_data[x]));
-	}
+	character_generation_16(0x04c6);
 }
 
 DRIVER_INIT (mating)
 {
-	int x;
-	UINT8 *rom;
-	rom = memory_region(REGION_CPU2);
-	for ( x = 0; x < 128; x++ )
-	{
-		chr16_data[x] = rom[(0x04f6)+(x)];
-		LOG_CHR(("%02X",chr16_data[x]));
-	}
+	character_generation_16(0x04f6);
 }
 
 /*
@@ -2673,17 +2697,6 @@ ROM_START( crmaze ) // this set runs in MFME, so should be OK */
 	ROM_LOAD16_BYTE( "cm3.p8",  0x300001, 0x80000,  CRC(1e6e60b0) SHA1(5e71714747073dd89852a84585642388ee440325) )
 	ROM_LOAD16_BYTE( "cm3.p9",  0x400000, 0x80000,  CRC(bfba55a7) SHA1(22eb9b1f9fe83d3b424fd521b68e2976a1940df9) )
 	ROM_LOAD16_BYTE( "cm3.pa",  0x400001, 0x80000,  CRC(07edda81) SHA1(e94525be03f30e407051992925bb0d693f3d809b) )
-
-	/* Does Crystal Maze really have a OKI sound roms? these were only in 2 sets */
-	/* This are Ed Tudor Pole samples, the game graphics are Richard O'Brien - Fruit machine perhaps? */
-//  ROM_REGION( 0x200000, REGION_SOUND1, 0 )
-//  ROM_LOAD( "crmsnd.p1",  0x000000, 0x080000,  CRC(e05cdf96) SHA1(c85c7b31b775e3cc2d7f943eb02ff5ebae6c6080) )  // two sets differed by one byte 72C0: 73 / A7
-//  ROM_LOAD( "crmsnd.p2",  0x080000, 0x080000,  CRC(11da0781) SHA1(cd63834bf5d5034c2473372bfcc4930c300333f7) )
-
-	/* there were also many 128kb (64k, duplicate halves) roms in the big set... nothing else has them, maybe they're not important? */
-	/* they only seem to differ in the FFxx region.. what are they? NVRAM dumps? load one just in the remote chance we need it.. */
-	/* Appears to be the result of someone getting confused when dumping the AWP version*/
-//  ROM_LOAD( "crmc.p1",  0x080000, 0x020000,  CRC(58631e6d) SHA1(cffecd4c4ca46aa0ccfbaf7592d58da0428cf143) )
 ROM_END
 
 ROM_START( crmazea )
@@ -2826,7 +2839,7 @@ GAME( 199?, bctvidbs,0,       mpu4,		mpu4,	  0,     ROT0,   "Barcrest", 		"MPU4 
 GAME( 1994, crmaze,  bctvidbs,mpu4_vid, crmaze,   crmaze,ROT0,   "Barcrest", 		"The Crystal Maze: Team Challenge (SWP)",							GAME_NOT_WORKING|GAME_NO_SOUND )
 GAME( 1994, crmazea, crmaze,  mpu4_vid, crmaze,   crmaze,ROT0,   "Barcrest", 		"The Crystal Maze (AMLD version SWP)",								GAME_NOT_WORKING|GAME_NO_SOUND )
 GAME( 1994, crmazeb, crmaze,  mpu4_vid, crmaze,	  0,     ROT0,   "Barcrest", 		"The Crystal Maze - Now Featuring Ocean Zone (AMLD Version SWP)",	GAME_NOT_WORKING|GAME_NO_SOUND ) // unprotected?
-GAME( 1990, turnover,bctvidbs,mpu4_vid, mpu4_vid, 0,     ROT0,   "Barcrest", 		"Turnover",															GAME_NOT_WORKING|GAME_NO_SOUND ) // unprotected?
-GAME( 1992, skiltrek,bctvidbs,mpu4_vid, mpu4_vid, 0,     ROT0,   "Barcrest", 		"Skill Trek",														GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 199?, mating,  bctvidbs,mpu4_vid, mpu4_vid, mating,ROT0,   "Barcrest", 		"The Mating Game (Datapak)",										GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 199?, matinga, mating,  mpu4_vid, mpu4_vid, mating,ROT0,   "Barcrest", 		"The Mating Game (Standard)",										GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1990, turnover,bctvidbs,mpu4_vid, mpu4,     0,     ROT0,   "Barcrest", 		"Turnover",															GAME_NOT_WORKING|GAME_NO_SOUND ) // unprotected?
+GAME( 1992, skiltrek,bctvidbs,mpu4_vid, mpu4,     0,     ROT0,   "Barcrest", 		"Skill Trek",														GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 199?, mating,  bctvidbs,mpu4_vid, mpu4,     mating,ROT0,   "Barcrest", 		"The Mating Game (Datapak)",										GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 199?, matinga, mating,  mpu4_vid, mpu4,     mating,ROT0,   "Barcrest", 		"The Mating Game (Standard)",										GAME_NOT_WORKING|GAME_NO_SOUND )

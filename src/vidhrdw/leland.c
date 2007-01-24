@@ -63,10 +63,6 @@ VIDEO_START( leland )
     leland_video_ram = auto_malloc(VRAM_SIZE);
     fgbitmap = auto_bitmap_alloc(VIDEO_WIDTH * 8, VIDEO_HEIGHT * 8);
 
-	/* error cases */
-    if (!fgbitmap)
-		return 1;
-
 	/* reset videoram */
     memset(leland_video_ram, 0, VRAM_SIZE);
 	return 0;

@@ -11,6 +11,7 @@
 #include "driver.h"
 #include "streams.h"
 #include "sound/custom.h"
+#include "includes/warpwarp.h"
 
 #define CLOCK_16H	(18432000/3/2/16)
 #define CLOCK_1V    (18432000/3/2/384)

@@ -48,12 +48,8 @@ static int lastscan;
 VIDEO_START( gaelco3d )
 {
 	screenbits = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	if (!screenbits)
-		return 1;
 
 	zbuffer = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
-	if (!zbuffer)
-		return 1;
 
 	palette = auto_malloc(32768 * sizeof(palette[0]));
 	polydata_buffer = auto_malloc(MAX_POLYDATA * sizeof(polydata_buffer[0]));

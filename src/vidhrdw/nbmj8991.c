@@ -296,7 +296,7 @@ static void nbmj8991_gfxdraw(void)
 ******************************************************************************/
 VIDEO_START( nbmj8991 )
 {
-	if ((nbmj8991_tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == 0) return 1;
+	nbmj8991_tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	nbmj8991_videoram = auto_malloc(Machine->screen[0].width * Machine->screen[0].height * sizeof(UINT8));
 	nbmj8991_clut = auto_malloc(0x800 * sizeof(UINT8));
 	memset(nbmj8991_videoram, 0x00, (Machine->screen[0].width * Machine->screen[0].height * sizeof(UINT8)));

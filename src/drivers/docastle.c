@@ -128,25 +128,7 @@ more sprite tiles, it also has a MSM5205 chip for sample playback.
 #include "driver.h"
 #include "sound/msm5205.h"
 #include "sound/sn76496.h"
-
-
-extern READ8_HANDLER( docastle_shared0_r );
-extern READ8_HANDLER( docastle_shared1_r );
-extern WRITE8_HANDLER( docastle_shared0_w );
-extern WRITE8_HANDLER( docastle_shared1_w );
-extern WRITE8_HANDLER( docastle_nmitrigger_w );
-
-extern WRITE8_HANDLER( docastle_videoram_w );
-extern WRITE8_HANDLER( docastle_colorram_w );
-extern READ8_HANDLER( docastle_flipscreen_off_r );
-extern READ8_HANDLER( docastle_flipscreen_on_r );
-extern WRITE8_HANDLER( docastle_flipscreen_off_w );
-extern WRITE8_HANDLER( docastle_flipscreen_on_w );
-
-extern PALETTE_INIT( docastle );
-extern PALETTE_INIT( dorunrun );
-extern VIDEO_START( docastle );
-extern VIDEO_UPDATE( docastle );
+#include "includes/docastle.h"
 
 
 /* Read/Write Handlers */

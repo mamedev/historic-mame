@@ -11,6 +11,7 @@
 #include "driver.h"
 #include "streams.h"
 #include "sound/custom.h"
+#include "includes/warpwarp.h"
 
 static void *volume_timer = NULL;
 static UINT16 *decay = NULL;

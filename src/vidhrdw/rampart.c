@@ -148,8 +148,6 @@ int rampart_bitmap_init(int _xdim, int _ydim)
 
 	/* allocate playfield bitmap */
 	pfbitmap = auto_bitmap_alloc(xdim, ydim);
-	if (!pfbitmap)
-		return 0;
 	return 1;
 }
 

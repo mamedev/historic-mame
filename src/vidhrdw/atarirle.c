@@ -344,8 +344,6 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 	/* allocate bitmaps */
 	mo->vram[0][0] = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
 	mo->vram[0][1] = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
-	if (!mo->vram[0][0] || !mo->vram[0][1])
-		return 0;
 	fillbitmap(mo->vram[0][0], 0, NULL);
 	fillbitmap(mo->vram[0][1], 0, NULL);
 
@@ -354,8 +352,6 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 	{
 		mo->vram[1][0] = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
 		mo->vram[1][1] = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
-		if (!mo->vram[1][0] || !mo->vram[1][1])
-			return 0;
 		fillbitmap(mo->vram[1][0], 0, NULL);
 		fillbitmap(mo->vram[1][1], 0, NULL);
 	}

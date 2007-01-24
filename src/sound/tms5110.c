@@ -5,6 +5,7 @@
      Written for MAME by Frank Palazzolo
      With help from Neill Corlett
      Additional tweaking by Aaron Giles
+     Various fixes by Lord Nightmare
 
 ***********************************************************************************************/
 
@@ -144,7 +145,7 @@ void tms5110_reset_chip(void *chip)
     /* initialize the chip state */
     tms->speaking_now = tms->speak_delay_frames = tms->talk_status = 0;
     tms->CTL_pins = 0;
-	tms->RNG = 0xfff;
+        tms->RNG = 0x1fff;
 
     /* initialize the energy/pitch/k states */
     tms->old_energy = tms->new_energy = tms->current_energy = tms->target_energy = 0;
@@ -291,7 +292,7 @@ void tms5110_process(void *chip, INT16 *buffer, unsigned int size)
 {
 	struct tms5110 *tms = chip;
     int buf_count=0;
-    int i, interp_period;
+    int i, interp_period, cliptemp;
 
     /* if we're not speaking, fill with nothingness */
     if (!tms->speaking_now)
@@ -483,15 +484,18 @@ void tms5110_process(void *chip, INT16 *buffer, unsigned int size)
         tms->x[0] = tms->u[0];
 
 
-        /* clipping, just like the chip */
+        /* clipping & wrapping, just like the patent */
 
-        if (tms->u[0] > 511)
+	cliptemp = tms->u[0];
+	if (cliptemp > 2047) cliptemp = -2048 + (cliptemp-2047);
+	else if (cliptemp < -2048) cliptemp = 2047 - (cliptemp+2048);
+
+	if (cliptemp > 511)
             buffer[buf_count] = 127<<8;
-        else if (tms->u[0] < -512)
+        else if (cliptemp < -512)
             buffer[buf_count] = -128<<8;
         else
-            buffer[buf_count] = tms->u[0] << 6;
-
+            buffer[buf_count] = cliptemp << 6;
 
         /* Update all counts */
 

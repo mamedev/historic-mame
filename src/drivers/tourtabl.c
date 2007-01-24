@@ -10,18 +10,7 @@
 #include "machine/6532riot.h"
 #include "cpu/m6502/m6502.h"
 #include "sound/tiaintf.h"
-
-
-extern PALETTE_INIT( tia_NTSC );
-extern PALETTE_INIT( tia_PAL );
-
-extern VIDEO_START( tia );
-extern VIDEO_UPDATE( tia );
-
-extern READ8_HANDLER( tia_r );
-extern WRITE8_HANDLER( tia_w );
-
-extern void tia_init(void);
+#include "vidhrdw/tia.h"
 
 
 static UINT8* r6532_0_ram;

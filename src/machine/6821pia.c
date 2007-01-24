@@ -602,6 +602,8 @@ void pia_set_input_a(int which, int data)
 {
 	pia6821 *p = pia + which;
 
+	assert_always(p->intf->in_a_func == NULL, "pia_set_input_a() called when in_a_func implemented");
+
 	/* set the input, what could be easier? */
 	p->in_a = data;
 	p->in_set |= PIA_IN_SET_A;
@@ -699,6 +701,8 @@ void pia_set_input_ca2(int which, int data)
 void pia_set_input_b(int which, int data)
 {
 	pia6821 *p = pia + which;
+
+	assert_always(p->intf->in_b_func == NULL, "pia_set_input_b() called when in_b_func implemented");
 
 	/* set the input, what could be easier? */
 	p->in_b = data;

@@ -168,6 +168,7 @@ Changes:
 #include "sound/dac.h"
 #include "sound/samples.h"
 #include "sound/nes_apu.h"
+#include "includes/dkong.h"
 #include <math.h>
 
 static UINT8 page,mcustatus;
@@ -176,41 +177,9 @@ static UINT8 t[2];
 static double envelope,tt;
 static UINT8 decay;
 static INT8 counter;
-int hunchloopback;
+static int hunchloopback;
 
 
-extern WRITE8_HANDLER( radarscp_grid_enable_w );
-extern WRITE8_HANDLER( radarscp_grid_color_w );
-extern WRITE8_HANDLER( dkong_flipscreen_w );
-extern WRITE8_HANDLER( dkongjr_gfxbank_w );
-extern WRITE8_HANDLER( dkong3_gfxbank_w );
-extern WRITE8_HANDLER( dkong_palettebank_w );
-
-extern WRITE8_HANDLER( dkong_videoram_w );
-
-extern PALETTE_INIT( dkong );
-extern PALETTE_INIT( dkong3 );
-extern VIDEO_START( dkong );
-extern VIDEO_UPDATE( radarscp );
-extern VIDEO_UPDATE( dkong );
-extern VIDEO_UPDATE( pestplce );
-extern VIDEO_UPDATE( spclforc );
-
-extern DRIVER_INIT( strtheat );
-extern DRIVER_INIT( drakton );
-
-extern WRITE8_HANDLER( dkong_sh_w );
-extern WRITE8_HANDLER( dkongjr_sh_death_w );
-extern WRITE8_HANDLER( dkongjr_sh_drop_w );
-extern WRITE8_HANDLER( dkongjr_sh_roar_w );
-extern WRITE8_HANDLER( dkongjr_sh_jump_w );
-extern WRITE8_HANDLER( dkongjr_sh_walk_w );
-extern WRITE8_HANDLER( dkongjr_sh_climb_w );
-extern WRITE8_HANDLER( dkongjr_sh_land_w );
-extern WRITE8_HANDLER( dkongjr_sh_snapjaw_w );
-
-extern SOUND_START( dkong );
-extern WRITE8_HANDLER( dkong_sh1_w );
 
 #define ACTIVELOW_PORT_BIT(P,A,D)   ((P & (~(1 << A))) | ((D ^ 1) << A))
 

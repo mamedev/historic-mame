@@ -154,8 +154,7 @@ VIDEO_START( kaneko16_1xVIEW2 )
 
 	kaneko16_tmap_3 = 0;
 
-	if ((sprites_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
-		return 1;
+	sprites_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
 	if (	!kaneko16_tmap_0 || !kaneko16_tmap_1	)
 		return 1;
@@ -269,8 +268,7 @@ VIDEO_START( berlwall )
 
 	/* Render the hi-color static backgrounds held in the ROMs */
 
-	if ((kaneko16_bg15_bitmap = auto_bitmap_alloc_format(256 * 32, 256 * 1, BITMAP_FORMAT_INDEXED16)) == 0)
-		return 1;
+	kaneko16_bg15_bitmap = auto_bitmap_alloc_format(256 * 32, 256 * 1, BITMAP_FORMAT_INDEXED16);
 
 /*
     8aba is used as background color

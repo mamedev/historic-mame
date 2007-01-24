@@ -45,19 +45,7 @@ starfira has one less rom in total than starfire but everything passes as
 ***************************************************************************/
 
 #include "driver.h"
-
-
-/* In vidhrdw/starfire.c */
-VIDEO_UPDATE( starfire );
-extern VIDEO_START( starfire );
-extern void starfire_video_update(int scanline, int count);
-
-WRITE8_HANDLER( starfire_videoram_w );
-READ8_HANDLER( starfire_videoram_r );
-WRITE8_HANDLER( starfire_colorram_w );
-READ8_HANDLER( starfire_colorram_r );
-WRITE8_HANDLER( starfire_vidctrl_w );
-WRITE8_HANDLER( starfire_vidctrl1_w );
+#include "includes/starfire.h"
 
 
 

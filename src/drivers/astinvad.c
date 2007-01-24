@@ -15,24 +15,7 @@ Space Intruder emulation by Lee Taylor (lee@defender.demon.co.uk),
 
 #include "driver.h"
 #include "sound/samples.h"
-
-
-extern VIDEO_UPDATE( astinvad );
-extern VIDEO_UPDATE( spaceint );
-
-extern VIDEO_START( astinvad );
-extern VIDEO_START( spcking2 );
-extern VIDEO_START( spaceint );
-
-extern WRITE8_HANDLER( astinvad_sound1_w );
-extern WRITE8_HANDLER( astinvad_sound2_w );
-extern WRITE8_HANDLER( astinvad_videoram_w );
-extern WRITE8_HANDLER( spaceint_sound1_w );
-extern WRITE8_HANDLER( spaceint_sound2_w );
-extern WRITE8_HANDLER( spaceint_videoram_w );
-extern WRITE8_HANDLER( spaceint_color_w);
-
-extern struct Samplesinterface astinvad_samples_interface;
+#include "includes/astinvad.h"
 
 
 static PALETTE_INIT( astinvad )

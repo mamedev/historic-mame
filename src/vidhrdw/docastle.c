@@ -9,6 +9,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/docastle.h"
 
 static tilemap *bg_tilemap, *fg_tilemap;
 

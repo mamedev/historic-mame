@@ -259,8 +259,7 @@ static int videoram_alloc(int size)
 	omegaf_bg2_videoram = auto_malloc(size);
 	memset( omegaf_bg2_videoram, 0x00, size );
 
-	if ( (bitmap_sp = auto_bitmap_alloc (Machine -> screen[0].width, Machine -> screen[0].height ) ) == NULL )
-		return 1;
+	bitmap_sp = auto_bitmap_alloc (Machine -> screen[0].width, Machine -> screen[0].height );
 
 	return 0;
 }

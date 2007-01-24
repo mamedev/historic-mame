@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/arkanoid.h"
 
 static UINT8 gfxbank, palettebank;
 extern UINT8 arkanoid_paddle_select;

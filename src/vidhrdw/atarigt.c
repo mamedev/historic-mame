@@ -154,8 +154,6 @@ VIDEO_START( atarigt )
 	/* allocate temp bitmaps */
 	pf_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
 	an_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
-	if (!pf_bitmap || !an_bitmap)
-		return 1;
 
 	/* allocate memory */
 	expanded_mram = auto_malloc(sizeof(*expanded_mram) * MRAM_ENTRIES * 3);

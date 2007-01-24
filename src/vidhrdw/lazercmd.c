@@ -7,7 +7,7 @@
 #include "driver.h"
 #include "vidhrdw/lazercmd.h"
 
-extern int marker_x, marker_y;
+int marker_x, marker_y;
 
 static int video_inverted = 0;
 

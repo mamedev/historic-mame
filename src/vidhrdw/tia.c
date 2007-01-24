@@ -5,9 +5,9 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "tia.h"
+#include "sound/tiaintf.h"
 #include <math.h>
-
-extern WRITE8_HANDLER( tia_sound_w );
 
 static UINT32 frame_cycles;
 static UINT32 paddle_cycles;
@@ -206,11 +206,6 @@ VIDEO_START( tia )
 
 	helper[0] = auto_bitmap_alloc(cx, cy);
 	helper[1] = auto_bitmap_alloc(cx, cy);
-
-	if (helper[0] == NULL)
-		return 1;
-	if (helper[1] == NULL)
-		return 1;
 
 	return 0;
 }
@@ -539,7 +534,7 @@ static void update_bitmap(int next_x, int next_y)
 			continue;
 		}
 
-		p = helper[current_bitmap]->line[y];
+		p = BITMAP_ADDR16(helper[current_bitmap], y, 0);
 
 		for (x = x1; x < x2; x++)
 		{
@@ -647,7 +642,7 @@ static WRITE8_HANDLER( HMOVE_w )
 	{
 		if (curr_y < helper[current_bitmap]->height)
 		{
-			memset(helper[current_bitmap]->line[curr_y], 0, 16);
+			memset(BITMAP_ADDR16(helper[current_bitmap], curr_y, 0), 0, 16);
 		}
 
 		prev_x = 8;

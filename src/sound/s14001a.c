@@ -425,7 +425,7 @@ static void s14001a_pcm_update(void *param, stream_sample_t **inputs, stream_sam
 	for (i = 0; i < length; i++)
 	{
 		s14001a_clock(chip);
-		outputs[0][i] = chip->audioout<<7;
+		outputs[0][i] = chip->audioout<<6;
 	}
 }
 
@@ -452,7 +452,7 @@ static void *s14001a_start(int sndindex, int clock, const void *config)
 
 	chip->SpeechRom = memory_region(intf->region);
 
-	chip->stream = stream_create(0, 1, intf->rate, chip, s14001a_pcm_update);
+	chip->stream = stream_create(0, 1, clock, chip, s14001a_pcm_update);
 
 	return chip;
 }

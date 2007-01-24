@@ -29,6 +29,7 @@
 #include "config.h"
 #include "osdepend.h"
 #include "strconv.h"
+#include "winutil.h"
 
 #ifdef MESS
 #include "parallel.h"
@@ -252,7 +253,7 @@ static int check_for_double_click_start(int argc)
 	if (argc <= 1 && startup_info.dwFlags && !(startup_info.dwFlags & STARTF_USESTDHANDLES))
 	{
 		char message_text[1024] = "";
-		int button = IDNO;
+		int button;
 
 #ifndef MESS
 		sprintf(message_text, APPLONGNAME " v%s - Multiple Arcade Machine Emulator\n"
@@ -279,16 +280,7 @@ static int check_for_double_click_start(int argc)
 #endif
 
 		// pop up a messagebox with some information
-		{
-			TCHAR *t_message_text = tstring_from_utf8(message_text);
-			TCHAR *t_message_caption = tstring_from_utf8(APPLONGNAME " usage information...");
-			if (t_message_text != NULL && t_message_caption != NULL)
-			{
-				button = MessageBox(NULL, t_message_text, t_message_caption, MB_YESNO | MB_ICONASTERISK);
-				free(t_message_text);
-				free(t_message_caption);
-			}
-		}
+		button = win_message_box_utf8(NULL, message_text, APPLONGNAME " usage information...", MB_YESNO | MB_ICONASTERISK);
 
 		if (button == IDYES)
 		{

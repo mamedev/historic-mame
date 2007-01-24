@@ -17,6 +17,13 @@
  *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
+ *   Changes in 3.7 [Aaron Giles]
+ *   - Changed NMI handling. NMIs are now latched in set_irq_state
+ *     but are not taken there. Instead they are taken at the start of the
+ *     execute loop.
+ *   - Changed IRQ handling. IRQ state is set in set_irq_state but not taken
+ *     except during the inner execute loop.
+ *   - Removed x86 assembly hacks and obsolete timing loop catchers.
  *   Changes in 3.6
  *   - Got rid of the code that would inexactly emulate a Z80, i.e. removed
  *     all the #if Z80_EXACT #else branches.
@@ -109,13 +116,6 @@
 /* on JP and JR opcodes check for tight loops */
 #define BUSY_LOOP_HACKS		1
 
-/* check for delay loops counting down BC */
-#define TIME_LOOP_HACKS		0
-
-#ifdef X86_ASM
-#undef	BIG_FLAGS_ARRAY
-#define BIG_FLAGS_ARRAY		0
-#endif
 
 /****************************************************************************/
 /* The Z80 registers. HALT is set to 1 when the CPU is halted, the refresh  */
@@ -127,10 +127,11 @@ typedef struct
 	PAIR	af2,bc2,de2,hl2;
 	UINT8	r,r2,iff1,iff2,halt,im,i;
 	UINT8	nmi_state;			/* nmi line state */
+	UINT8	nmi_pending;		/* nmi pending */
 	UINT8	irq_state;			/* irq line state */
+	UINT8	after_ei;			/* are we in the EI shadow? */
 	const struct z80_irq_daisy_chain *daisy;
 	int		(*irq_callback)(int irqline);
-	int		extra_cycles;		/* extra cycles for interrupts */
 }	Z80_Regs;
 
 #define CF	0x01
@@ -195,7 +196,6 @@ typedef struct
 static int z80_ICount;
 static Z80_Regs Z80;
 static UINT32 EA;
-static int after_EI = 0;
 
 static UINT8 SZ[256];		/* zero and sign flags */
 static UINT8 SZ_BIT[256];	/* zero, sign and parity/overflow (=zero) flags for BIT opcode */
@@ -550,7 +550,7 @@ INLINE void BURNODD(int cycles, int opcodes, int cyclesum)
 #define ENTER_HALT {											\
 	PC--;														\
 	HALT = 1;													\
-	if( !after_EI )												\
+	if( !Z80.after_ei )											\
 		z80_burn( z80_ICount );									\
 }
 
@@ -663,7 +663,7 @@ INLINE UINT32 ARG16(void)
 	/* speed up busy loop */									\
 	if( PCD == oldpc )											\
 	{															\
-		if( !after_EI )											\
+		if( !Z80.after_ei )										\
 			BURNODD( z80_ICount, 1, cc[Z80_TABLE_op][0xc3] );	\
 	}															\
 	else														\
@@ -674,7 +674,7 @@ INLINE UINT32 ARG16(void)
 			/* NOP - JP $-1 or EI - JP $-1 */					\
 			if ( op == 0x00 || op == 0xfb )						\
 			{													\
-				if( !after_EI )									\
+				if( !Z80.after_ei )								\
 					BURNODD( z80_ICount-cc[Z80_TABLE_op][0x00], \
 						2, cc[Z80_TABLE_op][0x00]+cc[Z80_TABLE_op][0xc3]); \
 			}													\
@@ -683,7 +683,7 @@ INLINE UINT32 ARG16(void)
 		/* LD SP,#xxxx - JP $-3 (Galaga) */						\
 		if( PCD == oldpc-3 && op == 0x31 )						\
 		{														\
-			if( !after_EI )										\
+			if( !Z80.after_ei )									\
 				BURNODD( z80_ICount-cc[Z80_TABLE_op][0x31],		\
 					2, cc[Z80_TABLE_op][0x31]+cc[Z80_TABLE_op][0xc3]); \
 		}														\
@@ -723,7 +723,7 @@ INLINE UINT32 ARG16(void)
 	/* speed up busy loop */									\
 	if( PCD == oldpc )											\
 	{															\
-		if( !after_EI )											\
+		if( !Z80.after_ei )										\
 			BURNODD( z80_ICount, 1, cc[Z80_TABLE_op][0x18] );	\
 	}															\
 	else														\
@@ -734,7 +734,7 @@ INLINE UINT32 ARG16(void)
 			/* NOP - JR $-1 or EI - JR $-1 */					\
 			if ( op == 0x00 || op == 0xfb )						\
 			{													\
-				if( !after_EI )									\
+				if( !Z80.after_ei )								\
 				   BURNODD( z80_ICount-cc[Z80_TABLE_op][0x00],	\
 					   2, cc[Z80_TABLE_op][0x00]+cc[Z80_TABLE_op][0x18]); \
 			}													\
@@ -743,7 +743,7 @@ INLINE UINT32 ARG16(void)
 		/* LD SP,#xxxx - JR $-3 */								\
 		if( PCD == oldpc-3 && op == 0x31 )						\
 		{														\
-			if( !after_EI )										\
+			if( !Z80.after_ei )									\
 			   BURNODD( z80_ICount-cc[Z80_TABLE_op][0x31],		\
 				   2, cc[Z80_TABLE_op][0x31]+cc[Z80_TABLE_op][0x18]); \
 		}														\
@@ -807,17 +807,7 @@ INLINE UINT32 ARG16(void)
 	LOG(("Z80 #%d RETN IFF1:%d IFF2:%d\n", cpu_getactivecpu(), IFF1, IFF2)); \
 	POP( pc );													\
 	change_pc(PCD);												\
-	if( IFF1 == 0 && IFF2 == 1 )								\
-	{															\
-		IFF1 = 1;												\
-		if( Z80.irq_state != CLEAR_LINE)						\
-		{														\
-			LOG(("Z80 #%d RETN takes IRQ\n",					\
-				cpu_getactivecpu()));							\
-			take_interrupt();									\
-		}														\
-	}															\
-	else IFF1 = IFF2;											\
+	IFF1 = IFF2;												\
 }
 
 /***************************************************************
@@ -827,7 +817,7 @@ INLINE UINT32 ARG16(void)
 	POP( pc );													\
 	change_pc(PCD);												\
 /* according to http://www.msxnet.org/tech/z80-documented.pdf */\
-/*  IFF1 = IFF2;    */											\
+	IFF1 = IFF2;												\
 	if (Z80.daisy)												\
 		z80daisy_call_reti_device(Z80.daisy);					\
 }
@@ -949,23 +939,6 @@ INLINE UINT8 DEC(UINT8 value)
 /***************************************************************
  * ADD  A,n
  ***************************************************************/
-#ifdef X86_ASM
-#define ADD(value)												\
- asm (															\
- " addb %2,%0			\n"										\
- " lahf					\n"										\
- " setob %1				\n" /* al = 1 if overflow */			\
- " addb %1,%1			\n"										\
- " addb %1,%1			\n" /* shift to P/V bit position */		\
- " andb $0xd1,%%ah		\n" /* sign, zero, half carry, carry */ \
- " orb %%ah,%1			\n"										\
- " movb %0,%%ah			\n" /* get result */					\
- " andb $0x28,%%ah		\n" /* maks flags 5+3 */				\
- " orb %%ah,%1			\n" /* put them into flags */			\
- :"=q" (A), "=q" (F)											\
- :"q" (value), "1" (F), "0" (A)									\
- )
-#else
 #if BIG_FLAGS_ARRAY
 #define ADD(value)												\
 {																\
@@ -985,29 +958,10 @@ INLINE UINT8 DEC(UINT8 value)
 	A = (UINT8)res;												\
 }
 #endif
-#endif
 
 /***************************************************************
  * ADC  A,n
  ***************************************************************/
-#ifdef X86_ASM
-#define ADC(value)												\
- asm (															\
- " shrb $1,%1			\n"										\
- " adcb %2,%0			\n"										\
- " lahf					\n"										\
- " setob %1				\n" /* al = 1 if overflow */			\
- " addb %1,%1			\n" /* shift to P/V bit position */		\
- " addb %1,%1			\n"										\
- " andb $0xd1,%%ah		\n" /* sign, zero, half carry, carry */ \
- " orb %%ah,%1			\n" /* combine with P/V */				\
- " movb %0,%%ah			\n" /* get result */					\
- " andb $0x28,%%ah		\n" /* maks flags 5+3 */				\
- " orb %%ah,%1			\n" /* put them into flags */			\
- :"=q" (A), "=q" (F)											\
- :"q" (value), "1" (F), "0" (A)									\
- )
-#else
 #if BIG_FLAGS_ARRAY
 #define ADC(value)												\
 {																\
@@ -1027,29 +981,10 @@ INLINE UINT8 DEC(UINT8 value)
 	A = res;													\
 }
 #endif
-#endif
 
 /***************************************************************
  * SUB  n
  ***************************************************************/
-#ifdef X86_ASM
-#define SUB(value)												\
- asm (															\
- " subb %2,%0			\n"										\
- " lahf					\n"										\
- " setob %1				\n" /* al = 1 if overflow */			\
- " stc					\n" /* prepare to set N flag */			\
- " adcb %1,%1			\n" /* shift to P/V bit position */		\
- " addb %1,%1			\n"										\
- " andb $0xd1,%%ah		\n" /* sign, zero, half carry, carry */ \
- " orb %%ah,%1			\n" /* combine with P/V */				\
- " movb %0,%%ah			\n" /* get result */					\
- " andb $0x28,%%ah		\n" /* maks flags 5+3 */				\
- " orb %%ah,%1			\n" /* put them into flags */			\
- :"=q" (A), "=q" (F)											\
- :"q" (value), "1" (F), "0" (A)									\
- )
-#else
 #if BIG_FLAGS_ARRAY
 #define SUB(value)												\
 {																\
@@ -1069,30 +1004,10 @@ INLINE UINT8 DEC(UINT8 value)
 	A = res;													\
 }
 #endif
-#endif
 
 /***************************************************************
  * SBC  A,n
  ***************************************************************/
-#ifdef X86_ASM
-#define SBC(value)												\
- asm (															\
- " shrb $1,%1			\n"										\
- " sbbb %2,%0			\n"										\
- " lahf					\n"										\
- " setob %1				\n" /* al = 1 if overflow */			\
- " stc					\n" /* prepare to set N flag */			\
- " adcb %1,%1			\n" /* shift to P/V bit position */		\
- " addb %1,%1			\n"										\
- " andb $0xd1,%%ah		\n" /* sign, zero, half carry, carry */ \
- " orb %%ah,%1			\n" /* combine with P/V */				\
- " movb %0,%%ah			\n" /* get result */					\
- " andb $0x28,%%ah		\n" /* maks flags 5+3 */				\
- " orb %%ah,%1			\n" /* put them into flags */			\
- :"=q" (A), "=q" (F)											\
- :"q" (value), "1" (F), "0" (A)									\
- )
-#else
 #if BIG_FLAGS_ARRAY
 #define SBC(value)												\
 {																\
@@ -1111,7 +1026,6 @@ INLINE UINT8 DEC(UINT8 value)
 		(((val ^ A) & (A ^ res) & 0x80) >> 5);					\
 	A = res;													\
 }
-#endif
 #endif
 
 /***************************************************************
@@ -1188,24 +1102,6 @@ INLINE UINT8 DEC(UINT8 value)
 /***************************************************************
  * CP   n
  ***************************************************************/
-#ifdef X86_ASM
-#define CP(value)												\
- asm (															\
- " cmpb %2,%0			\n"										\
- " lahf					\n"										\
- " setob %1				\n" /* al = 1 if overflow */			\
- " stc					\n" /* prepare to set N flag */			\
- " adcb %1,%1			\n" /* shift to P/V bit position */		\
- " addb %1,%1			\n"										\
- " andb $0xd1,%%ah		\n" /* sign, zero, half carry, carry */ \
- " orb %%ah,%1			\n" /* combine with P/V */				\
- " movb %2,%%ah			\n" /* get result */					\
- " andb $0x28,%%ah		\n" /* maks flags 5+3 */				\
- " orb %%ah,%1			\n" /* put them into flags */			\
- :"=q" (A), "=q" (F)											\
- :"q" (value), "1" (F), "0" (A)									\
- )
-#else
 #if BIG_FLAGS_ARRAY
 #define CP(value)												\
 {																\
@@ -1225,7 +1121,6 @@ INLINE UINT8 DEC(UINT8 value)
 		((A ^ res ^ val) & HF) |								\
 		((((val ^ A) & (A ^ res)) >> 5) & VF);					\
 }
-#endif
 #endif
 
 /***************************************************************
@@ -1269,22 +1164,6 @@ INLINE UINT8 DEC(UINT8 value)
 /***************************************************************
  * ADD16
  ***************************************************************/
-#ifdef	X86_ASM
-#define ADD16(DR,SR)											\
- asm (															\
- " andb $0xc4,%1		\n"										\
- " addb %%dl,%%cl		\n"										\
- " adcb %%dh,%%ch		\n"										\
- " lahf					\n"										\
- " andb $0x11,%%ah		\n"										\
- " orb %%ah,%1			\n"										\
- " movb %%ch,%%ah		\n" /* get result MSB */				\
- " andb $0x28,%%ah		\n" /* maks flags 5+3 */				\
- " orb %%ah,%1			\n" /* put them into flags */			\
- :"=c" (Z80.DR.d), "=q" (F)										\
- :"0" (Z80.DR.d), "1" (F), "d" (Z80.SR.d)						\
- )
-#else
 #define ADD16(DR,SR)											\
 {																\
 	UINT32 res = Z80.DR.d + Z80.SR.d;							\
@@ -1293,34 +1172,10 @@ INLINE UINT8 DEC(UINT8 value)
 		((res >> 16) & CF) | ((res >> 8) & (YF | XF));			\
 	Z80.DR.w.l = (UINT16)res;									\
 }
-#endif
 
 /***************************************************************
  * ADC  r16,r16
  ***************************************************************/
-#ifdef	X86_ASM
-#define ADC16(Reg)												\
- asm (															\
- " shrb $1,%1			\n"										\
- " adcb %%dl,%%cl		\n"										\
- " lahf					\n"										\
- " movb %%ah,%%dl		\n"										\
- " adcb %%dh,%%ch		\n"										\
- " lahf					\n"										\
- " setob %1				\n"										\
- " orb $0xbf,%%dl		\n" /* set all but zero */				\
- " addb %1,%1			\n"										\
- " andb $0xd1,%%ah		\n" /* sign,zero,half carry and carry */\
- " addb %1,%1			\n"										\
- " orb %%ah,%1			\n" /* overflow into P/V */				\
- " andb %%dl,%1			\n" /* mask zero */						\
- " movb %%ch,%%ah		\n" /* get result MSB */				\
- " andb $0x28,%%ah		\n" /* maks flags 5+3 */				\
- " orb %%ah,%1			\n" /* put them into flags */			\
- :"=c" (HLD), "=q" (F)											\
- :"0" (HLD), "1" (F), "d" (Z80.Reg.d)							\
- )
-#else
 #define ADC16(Reg)												\
 {																\
 	UINT32 res = HLD + Z80.Reg.d + (F & CF);					\
@@ -1331,35 +1186,10 @@ INLINE UINT8 DEC(UINT8 value)
 		(((Z80.Reg.d ^ HLD ^ 0x8000) & (Z80.Reg.d ^ res) & 0x8000) >> 13); \
 	HL = (UINT16)res;											\
 }
-#endif
 
 /***************************************************************
  * SBC  r16,r16
  ***************************************************************/
-#ifdef	X86_ASM
-#define SBC16(Reg)												\
-asm (															\
- " shrb $1,%1			\n"										\
- " sbbb %%dl,%%cl		\n"										\
- " lahf					\n"										\
- " movb %%ah,%%dl		\n"										\
- " sbbb %%dh,%%ch		\n"										\
- " lahf					\n"										\
- " setob %1				\n"										\
- " orb $0xbf,%%dl		\n" /* set all but zero */				\
- " stc					\n"										\
- " adcb %1,%1			\n"										\
- " andb $0xd1,%%ah		\n" /* sign,zero,half carry and carry */\
- " addb %1,%1			\n"										\
- " orb %%ah,%1			\n" /* overflow into P/V */				\
- " andb %%dl,%1			\n" /* mask zero */						\
- " movb %%ch,%%ah		\n" /* get result MSB */				\
- " andb $0x28,%%ah		\n" /* maks flags 5+3 */				\
- " orb %%ah,%1			\n" /* put them into flags */			\
- :"=c" (HLD), "=q" (F)											\
- :"0" (HLD), "1" (F), "d" (Z80.Reg.d)							\
- )
-#else
 #define SBC16(Reg)												\
 {																\
 	UINT32 res = HLD - Z80.Reg.d - (F & CF);					\
@@ -1370,7 +1200,6 @@ asm (															\
 		(((Z80.Reg.d ^ HLD) & (HLD ^ res) &0x8000) >> 13);		\
 	HL = (UINT16)res;											\
 }
-#endif
 
 /***************************************************************
  * RLC  r8
@@ -1712,31 +1541,8 @@ INLINE UINT8 SET(UINT8 bit, UINT8 value)
      * instruction and check the IRQ line.                      \
      * If not, simply set interrupt flip-flop 2                 \
      */															\
-	if( IFF1 == 0 )												\
-	{															\
-		IFF1 = IFF2 = 1;										\
-		PRVPC = PCD;											\
-		CALL_MAME_DEBUG;										\
-		R++;													\
-		while( cpu_readop(PCD) == 0xfb ) /* more EIs? */		\
-		{														\
-			LOG(("Z80 #%d multiple EI opcodes at %04X\n",		\
-				cpu_getactivecpu(), PC));						\
-			CC(op,0xfb);										\
-			PRVPC = PCD;										\
-			CALL_MAME_DEBUG;									\
-			PC++;												\
-			R++;												\
-		}														\
-		if( Z80.irq_state != CLEAR_LINE)						\
-		{														\
-			after_EI = 1;	/* avoid cycle skip hacks */		\
-			EXEC(op,ROP());										\
-			after_EI = 0;										\
-			LOG(("Z80 #%d EI takes irq\n", cpu_getactivecpu())); \
-			take_interrupt();									\
-		} else EXEC(op,ROP());									\
-	} else IFF2 = 1;											\
+	IFF1 = IFF2 = 1;											\
+	Z80.after_ei = TRUE;	/* avoid cycle skip hacks */		\
 }
 
 /**********************************************************
@@ -3208,144 +3014,6 @@ OP(ed,fd) { illegal_2();										} /* DB   ED          */
 OP(ed,fe) { illegal_2();										} /* DB   ED          */
 OP(ed,ff) { illegal_2();										} /* DB   ED          */
 
-#if TIME_LOOP_HACKS
-
-#define CHECK_BC_LOOP												\
-if( BC > 1 && PCD < 0xfffc ) {										\
-	UINT8 op1 = cpu_readop(PCD);									\
-	UINT8 op2 = cpu_readop(PCD+1);									\
-	if( (op1==0x78 && op2==0xb1) || (op1==0x79 && op2==0xb0) )		\
-	{																\
-		UINT8 op3 = cpu_readop(PCD+2);								\
-		UINT8 op4 = cpu_readop(PCD+3);								\
-		if( op3==0x20 && op4==0xfb )								\
-		{															\
-			int cnt =												\
-				cc[Z80_TABLE_op][0x78] +							\
-				cc[Z80_TABLE_op][0xb1] +							\
-				cc[Z80_TABLE_op][0x20] +							\
-				cc[Z80_TABLE_ex][0x20];								\
-			while( BC > 0 && z80_ICount > cnt )						\
-			{														\
-				BURNODD( cnt, 4, cnt );								\
-				BC--;												\
-			}														\
-		}															\
-		else														\
-		if( op3 == 0xc2 )											\
-		{															\
-			UINT8 ad1 = cpu_readop_arg(PCD+3);						\
-			UINT8 ad2 = cpu_readop_arg(PCD+4);						\
-			if( (ad1 + 256 * ad2) == (PCD - 1) )					\
-			{														\
-				int cnt =											\
-					cc[Z80_TABLE_op][0x78] +						\
-					cc[Z80_TABLE_op][0xb1] +						\
-					cc[Z80_TABLE_op][0xc2] +						\
-					cc[Z80_TABLE_ex][0xc2];							\
-				while( BC > 0 && z80_ICount > cnt )					\
-				{													\
-					BURNODD( cnt, 4, cnt );							\
-					BC--;											\
-				}													\
-			}														\
-		}															\
-	}																\
-}
-
-#define CHECK_DE_LOOP												\
-if( DE > 1 && PCD < 0xfffc ) {										\
-	UINT8 op1 = cpu_readop(PCD);									\
-	UINT8 op2 = cpu_readop(PCD+1);									\
-	if( (op1==0x7a && op2==0xb3) || (op1==0x7b && op2==0xb2) )		\
-	{																\
-		UINT8 op3 = cpu_readop(PCD+2);								\
-		UINT8 op4 = cpu_readop(PCD+3);								\
-		if( op3==0x20 && op4==0xfb )								\
-		{															\
-			int cnt =												\
-				cc[Z80_TABLE_op][0x7a] +							\
-				cc[Z80_TABLE_op][0xb3] +							\
-				cc[Z80_TABLE_op][0x20] +							\
-				cc[Z80_TABLE_ex][0x20];								\
-			while( DE > 0 && z80_ICount > cnt )						\
-			{														\
-				BURNODD( cnt, 4, cnt );								\
-				DE--;												\
-			}														\
-		}															\
-		else														\
-		if( op3==0xc2 )												\
-		{															\
-			UINT8 ad1 = cpu_readop_arg(PCD+3);						\
-			UINT8 ad2 = cpu_readop_arg(PCD+4);						\
-			if( (ad1 + 256 * ad2) == (PCD - 1) )					\
-			{														\
-				int cnt =											\
-					cc[Z80_TABLE_op][0x7a] +						\
-					cc[Z80_TABLE_op][0xb3] +						\
-					cc[Z80_TABLE_op][0xc2] +						\
-					cc[Z80_TABLE_ex][0xc2];							\
-				while( DE > 0 && z80_ICount > cnt )					\
-				{													\
-					BURNODD( cnt, 4, cnt );							\
-					DE--;											\
-				}													\
-			}														\
-		}															\
-	}																\
-}
-
-#define CHECK_HL_LOOP												\
-if( HL > 1 && PCD < 0xfffc ) {										\
-	UINT8 op1 = cpu_readop(PCD);									\
-	UINT8 op2 = cpu_readop(PCD+1);									\
-	if( (op1==0x7c && op2==0xb5) || (op1==0x7d && op2==0xb4) )		\
-	{																\
-		UINT8 op3 = cpu_readop(PCD+2);								\
-		UINT8 op4 = cpu_readop(PCD+3);								\
-		if( op3==0x20 && op4==0xfb )								\
-		{															\
-			int cnt =												\
-				cc[Z80_TABLE_op][0x7c] +							\
-				cc[Z80_TABLE_op][0xb5] +							\
-				cc[Z80_TABLE_op][0x20] +							\
-				cc[Z80_TABLE_ex][0x20];								\
-			while( HL > 0 && z80_ICount > cnt )						\
-			{														\
-				BURNODD( cnt, 4, cnt );								\
-				HL--;												\
-			}														\
-		}															\
-		else														\
-		if( op3==0xc2 )												\
-		{															\
-			UINT8 ad1 = cpu_readop_arg(PCD+3);						\
-			UINT8 ad2 = cpu_readop_arg(PCD+4);						\
-			if( (ad1 + 256 * ad2) == (PCD - 1) )					\
-			{														\
-				int cnt =											\
-					cc[Z80_TABLE_op][0x7c] +						\
-					cc[Z80_TABLE_op][0xb5] +						\
-					cc[Z80_TABLE_op][0xc2] +						\
-					cc[Z80_TABLE_ex][0xc2];							\
-				while( HL > 0 && z80_ICount > cnt )					\
-				{													\
-					BURNODD( cnt, 4, cnt );							\
-					HL--;											\
-				}													\
-			}														\
-		}															\
-	}																\
-}
-
-#else
-
-#define CHECK_BC_LOOP
-#define CHECK_DE_LOOP
-#define CHECK_HL_LOOP
-
-#endif
 
 /**********************************************************
  * main opcodes
@@ -3362,7 +3030,7 @@ OP(op,07) { RLCA;												} /* RLCA             */
 OP(op,08) { EX_AF;												} /* EX   AF,AF'      */
 OP(op,09) { ADD16(hl, bc);										} /* ADD  HL,BC       */
 OP(op,0a) { A = RM( BC );										} /* LD   A,(BC)      */
-OP(op,0b) { BC--; CHECK_BC_LOOP;								} /* DEC  BC          */
+OP(op,0b) { BC--; 												} /* DEC  BC          */
 OP(op,0c) { C = INC(C);											} /* INC  C           */
 OP(op,0d) { C = DEC(C);											} /* DEC  C           */
 OP(op,0e) { C = ARG();											} /* LD   C,n         */
@@ -3380,7 +3048,7 @@ OP(op,17) { RLA;												} /* RLA              */
 OP(op,18) { JR();												} /* JR   o           */
 OP(op,19) { ADD16(hl, de);										} /* ADD  HL,DE       */
 OP(op,1a) { A = RM( DE );										} /* LD   A,(DE)      */
-OP(op,1b) { DE--; CHECK_DE_LOOP;								} /* DEC  DE          */
+OP(op,1b) { DE--; 												} /* DEC  DE          */
 OP(op,1c) { E = INC(E);											} /* INC  E           */
 OP(op,1d) { E = DEC(E);											} /* DEC  E           */
 OP(op,1e) { E = ARG();											} /* LD   E,n         */
@@ -3398,7 +3066,7 @@ OP(op,27) { DAA;												} /* DAA              */
 OP(op,28) { JR_COND( F & ZF, 0x28 );							} /* JR   Z,o         */
 OP(op,29) { ADD16(hl, hl);										} /* ADD  HL,HL       */
 OP(op,2a) { EA = ARG16(); RM16( EA, &Z80.hl );					} /* LD   HL,(w)      */
-OP(op,2b) { HL--; CHECK_HL_LOOP;								} /* DEC  HL          */
+OP(op,2b) { HL--; 												} /* DEC  HL          */
 OP(op,2c) { L = INC(L);											} /* INC  L           */
 OP(op,2d) { L = DEC(L);											} /* DEC  L           */
 OP(op,2e) { L = ARG();											} /* LD   L,n         */
@@ -3641,78 +3309,75 @@ OP(op,ff) { RST(0x38);											} /* RST  7           */
 
 static void take_interrupt(void)
 {
-	if( IFF1 )
+	int irq_vector;
+
+	/* there isn't a valid previous program counter */
+	PRVPC = -1;
+
+	/* Check if processor was halted */
+	LEAVE_HALT;
+
+	/* Clear both interrupt flip flops */
+	IFF1 = IFF2 = 0;
+
+	/* Daisy chain mode? If so, call the requesting device */
+	if (Z80.daisy)
+		irq_vector = z80daisy_call_ack_device(Z80.daisy);
+
+	/* else call back the cpu interface to retrieve the vector */
+	else
+		irq_vector = (*Z80.irq_callback)(0);
+
+	LOG(("Z80 #%d single int. irq_vector $%02x\n", cpu_getactivecpu(), irq_vector));
+
+	/* Interrupt mode 2. Call [Z80.i:databyte] */
+	if( IM == 2 )
 	{
-		int irq_vector;
-
-		/* there isn't a valid previous program counter */
-		PRVPC = -1;
-
-		/* Check if processor was halted */
-		LEAVE_HALT;
-
-		/* Clear both interrupt flip flops */
-		IFF1 = IFF2 = 0;
-
-		/* Daisy chain mode? If so, call the requesting device */
-		if (Z80.daisy)
-			irq_vector = z80daisy_call_ack_device(Z80.daisy);
-
-		/* else call back the cpu interface to retrieve the vector */
-		else
-			irq_vector = (*Z80.irq_callback)(0);
-
-		LOG(("Z80 #%d single int. irq_vector $%02x\n", cpu_getactivecpu(), irq_vector));
-
-		/* Interrupt mode 2. Call [Z80.i:databyte] */
-		if( IM == 2 )
-		{
-			irq_vector = (irq_vector & 0xff) | (I << 8);
-			PUSH( pc );
-			RM16( irq_vector, &Z80.pc );
-			LOG(("Z80 #%d IM2 [$%04x] = $%04x\n",cpu_getactivecpu() , irq_vector, PCD));
-			/* CALL opcode timing */
-			Z80.extra_cycles += cc[Z80_TABLE_op][0xcd];
-		}
-		else
-		/* Interrupt mode 1. RST 38h */
-		if( IM == 1 )
-		{
-			LOG(("Z80 #%d IM1 $0038\n",cpu_getactivecpu() ));
-			PUSH( pc );
-			PCD = 0x0038;
-			/* RST $38 + 'interrupt latency' cycles */
-			Z80.extra_cycles += cc[Z80_TABLE_op][0xff] + cc[Z80_TABLE_ex][0xff];
-		}
-		else
-		{
-			/* Interrupt mode 0. We check for CALL and JP instructions, */
-			/* if neither of these were found we assume a 1 byte opcode */
-			/* was placed on the databus                                */
-			LOG(("Z80 #%d IM0 $%04x\n",cpu_getactivecpu() , irq_vector));
-			switch (irq_vector & 0xff0000)
-			{
-				case 0xcd0000:	/* call */
-					PUSH( pc );
-					PCD = irq_vector & 0xffff;
-					 /* CALL $xxxx + 'interrupt latency' cycles */
-					Z80.extra_cycles += cc[Z80_TABLE_op][0xcd] + cc[Z80_TABLE_ex][0xff];
-					break;
-				case 0xc30000:	/* jump */
-					PCD = irq_vector & 0xffff;
-					/* JP $xxxx + 2 cycles */
-					Z80.extra_cycles += cc[Z80_TABLE_op][0xc3] + cc[Z80_TABLE_ex][0xff];
-					break;
-				default:		/* rst (or other opcodes?) */
-					PUSH( pc );
-					PCD = irq_vector & 0x0038;
-					/* RST $xx + 2 cycles */
-					Z80.extra_cycles += cc[Z80_TABLE_op][PCD] + cc[Z80_TABLE_ex][PCD];
-					break;
-			}
-		}
-		change_pc(PCD);
+		irq_vector = (irq_vector & 0xff) | (I << 8);
+		PUSH( pc );
+		RM16( irq_vector, &Z80.pc );
+		LOG(("Z80 #%d IM2 [$%04x] = $%04x\n",cpu_getactivecpu() , irq_vector, PCD));
+		/* CALL opcode timing */
+		z80_ICount -= cc[Z80_TABLE_op][0xcd];
 	}
+	else
+	/* Interrupt mode 1. RST 38h */
+	if( IM == 1 )
+	{
+		LOG(("Z80 #%d IM1 $0038\n",cpu_getactivecpu() ));
+		PUSH( pc );
+		PCD = 0x0038;
+		/* RST $38 + 'interrupt latency' cycles */
+		z80_ICount -= cc[Z80_TABLE_op][0xff] + cc[Z80_TABLE_ex][0xff];
+	}
+	else
+	{
+		/* Interrupt mode 0. We check for CALL and JP instructions, */
+		/* if neither of these were found we assume a 1 byte opcode */
+		/* was placed on the databus                                */
+		LOG(("Z80 #%d IM0 $%04x\n",cpu_getactivecpu() , irq_vector));
+		switch (irq_vector & 0xff0000)
+		{
+			case 0xcd0000:	/* call */
+				PUSH( pc );
+				PCD = irq_vector & 0xffff;
+				 /* CALL $xxxx + 'interrupt latency' cycles */
+				z80_ICount -= cc[Z80_TABLE_op][0xcd] + cc[Z80_TABLE_ex][0xff];
+				break;
+			case 0xc30000:	/* jump */
+				PCD = irq_vector & 0xffff;
+				/* JP $xxxx + 2 cycles */
+				z80_ICount -= cc[Z80_TABLE_op][0xc3] + cc[Z80_TABLE_ex][0xff];
+				break;
+			default:		/* rst (or other opcodes?) */
+				PUSH( pc );
+				PCD = irq_vector & 0x0038;
+				/* RST $xx + 2 cycles */
+				z80_ICount -= cc[Z80_TABLE_op][PCD] + cc[Z80_TABLE_ex][PCD];
+				break;
+		}
+	}
+	change_pc(PCD);
 }
 
 /****************************************************************************
@@ -3834,7 +3499,9 @@ static void z80_init(int index, int clock, const void *config, int (*irqcallback
 	state_save_register_item("z80", index, Z80.im);
 	state_save_register_item("z80", index, Z80.i);
 	state_save_register_item("z80", index, Z80.nmi_state);
+	state_save_register_item("z80", index, Z80.nmi_pending);
 	state_save_register_item("z80", index, Z80.irq_state);
+	state_save_register_item("z80", index, Z80.after_ei);
 
 	/* Reset registers to their initial values */
 	memset(&Z80, 0, sizeof(Z80));
@@ -3854,7 +3521,9 @@ static void z80_reset(void)
 	R = 0;
 	R2 = 0;
 	Z80.nmi_state = CLEAR_LINE;
+	Z80.nmi_pending = FALSE;
 	Z80.irq_state = CLEAR_LINE;
+	Z80.after_ei = FALSE;
 
 	if (Z80.daisy)
 		z80daisy_reset(Z80.daisy);
@@ -3877,19 +3546,36 @@ static void z80_exit(void)
  ****************************************************************************/
 static int z80_execute(int cycles)
 {
-	z80_ICount = cycles - Z80.extra_cycles;
-	Z80.extra_cycles = 0;
+	z80_ICount = cycles;
+
+	/* check for NMIs on the way in; they can only be set externally */
+	/* via timers, and can't be dynamically enabled, so it is safe */
+	/* to just check here */
+	if (Z80.nmi_pending)
+	{
+		LOG(("Z80 #%d take NMI\n", cpu_getactivecpu()));
+		PRVPC = -1;			/* there isn't a valid previous program counter */
+		LEAVE_HALT;			/* Check if processor was halted */
+
+		IFF1 = 0;
+		PUSH( pc );
+		PCD = 0x0066;
+		z80_ICount -= 11;
+		Z80.nmi_pending = FALSE;
+	}
 
 	do
 	{
+		/* check for IRQs before each instruction */
+		if (Z80.irq_state != CLEAR_LINE && IFF1 && !Z80.after_ei)
+			take_interrupt();
+		Z80.after_ei = FALSE;
+
 		PRVPC = PCD;
 		CALL_MAME_DEBUG;
 		R++;
 		EXEC_INLINE(op,ROP());
 	} while( z80_ICount > 0 );
-
-	z80_ICount -= Z80.extra_cycles;
-	Z80.extra_cycles = 0;
 
 	return cycles - z80_ICount;
 }
@@ -3934,33 +3620,19 @@ static void set_irq_line(int irqline, int state)
 {
 	if (irqline == INPUT_LINE_NMI)
 	{
-		if( Z80.nmi_state == state ) return;
-
-		LOG(("Z80 #%d set_irq_line (NMI) %d\n", cpu_getactivecpu(), state));
+		/* mark an NMI pending on the rising edge */
+		if (Z80.nmi_state == CLEAR_LINE && state != CLEAR_LINE)
+			Z80.nmi_pending = TRUE;
 		Z80.nmi_state = state;
-		if( state == CLEAR_LINE ) return;
-
-		LOG(("Z80 #%d take NMI\n", cpu_getactivecpu()));
-		PRVPC = -1;			/* there isn't a valid previous program counter */
-		LEAVE_HALT;			/* Check if processor was halted */
-
-		IFF1 = 0;
-		PUSH( pc );
-		PCD = 0x0066;
-		Z80.extra_cycles += 11;
 	}
 	else
 	{
-		LOG(("Z80 #%d set_irq_line %d\n",cpu_getactivecpu() , state));
-
-		/* update the IRQ state */
+		/* update the IRQ state via the daisy chain */
 		Z80.irq_state = state;
 		if (Z80.daisy)
 			Z80.irq_state = z80daisy_update_irq_state(Z80.daisy);
 
-		/* if there's something pending, take it */
-		if (Z80.irq_state != CLEAR_LINE)
-			take_interrupt();
+		/* the main execute loop will take the interrupt */
 	}
 }
 
@@ -4103,7 +3775,7 @@ void z80_get_info(UINT32 state, cpuinfo *info)
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:						strcpy(info->s, "Z80");						break;
 		case CPUINFO_STR_CORE_FAMILY:				strcpy(info->s, "Zilog Z80");				break;
-		case CPUINFO_STR_CORE_VERSION:				strcpy(info->s, "3.6");						break;
+		case CPUINFO_STR_CORE_VERSION:				strcpy(info->s, "3.7");						break;
 		case CPUINFO_STR_CORE_FILE:					strcpy(info->s, __FILE__);					break;
 		case CPUINFO_STR_CORE_CREDITS:				strcpy(info->s, "Copyright (C) 1998,1999,2000 Juergen Buchmueller, all rights reserved."); break;
 

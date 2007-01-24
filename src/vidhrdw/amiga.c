@@ -640,7 +640,7 @@ void amiga_render_scanline(int scanline)
 	update_sprite_dma(scanline);
 
 	/* start of a new line, signal we're not done with it and fill up vars */
-	dst = (UINT16 *)tmpbitmap->line[scanline];
+	dst = BITMAP_ADDR16(tmpbitmap, scanline, 0);
 
 	/* all sprites off at the start of the line */
 	memset(sprite_remain, 0, sizeof(sprite_remain));

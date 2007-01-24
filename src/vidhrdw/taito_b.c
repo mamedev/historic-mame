@@ -214,7 +214,7 @@ static VIDEO_START( taitob_core )
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 
-	if (!bg_tilemap || !fg_tilemap || !tx_tilemap || !framebuffer[0] || !framebuffer[1])
+	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen(fg_tilemap,0);
@@ -287,9 +287,6 @@ VIDEO_START( hitice )
     return 1;
 
   pixel_bitmap = auto_bitmap_alloc(1024,512);
-
-  if (!pixel_bitmap)
-    return 1;
 
   state_save_register_global_bitmap(pixel_bitmap);
 

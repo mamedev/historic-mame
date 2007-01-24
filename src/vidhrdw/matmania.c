@@ -135,12 +135,10 @@ VIDEO_START( matmania )
 	memset(dirtybuffer2,1,matmania_videoram3_size);
 
 	/* Mat Mania has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,2* Machine->screen[0].height)) == 0)
-		return 1;
+	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,2* Machine->screen[0].height);
 
 	/* Mat Mania has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,2 * Machine->screen[0].height)) == 0)
-		return 1;
+	tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,2 * Machine->screen[0].height);
 
 	return 0;
 }

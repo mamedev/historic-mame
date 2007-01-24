@@ -98,8 +98,7 @@ VIDEO_START( magmax )
 	prom_tab = auto_malloc(256 * sizeof(UINT32));
 
 	/* Allocate temporary bitmap */
- 	if ((tmpbitmap = auto_bitmap_alloc(256,256)) == 0)
-		return 1;
+ 	tmpbitmap = auto_bitmap_alloc(256,256);
 
 	for (i=0; i<256; i++)
 	{

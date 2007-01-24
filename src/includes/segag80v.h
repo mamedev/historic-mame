@@ -7,7 +7,7 @@
 #include "sound/custom.h"
 
 
-/*----------- defined in sndhrdw/sega.c -----------*/
+/*----------- defined in sndhrdw/segag80v.c -----------*/
 
 WRITE8_HANDLER( elim1_sh_w );
 WRITE8_HANDLER( elim2_sh_w );
@@ -17,7 +17,7 @@ WRITE8_HANDLER( zektor1_sh_w );
 WRITE8_HANDLER( zektor2_sh_w );
 
 
-/*----------- defined in vidhrdw/sega.c -----------*/
+/*----------- defined in vidhrdw/segag80v.c -----------*/
 
 VIDEO_START( sega );
 VIDEO_UPDATE( sega );

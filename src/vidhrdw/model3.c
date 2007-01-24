@@ -122,12 +122,7 @@ VIDEO_START( model3 )
 	int j,t;
 
 	bitmap3d = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	if (!bitmap3d)
-		return 1;
-
 	zbuffer = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED32);
-	if (!zbuffer)
-		return 1;
 
 	m3_char_ram = auto_malloc(0x100000);
 	m3_tile_ram = auto_malloc(0x8000);

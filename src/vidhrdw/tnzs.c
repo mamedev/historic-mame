@@ -6,15 +6,10 @@
 
 ***************************************************************************/
 #include "driver.h"
+#include "includes/tnzs.h"
 #include <ctype.h>
 
 
-
-extern unsigned char *tnzs_objram;
-extern unsigned char *tnzs_vdcram;
-extern unsigned char *tnzs_scrollram;
-extern unsigned char *tnzs_objctrl;
-extern unsigned char *tnzs_bg_flag;
 
 static int tnzs_screenflip;
 

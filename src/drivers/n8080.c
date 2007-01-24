@@ -11,26 +11,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-
-extern WRITE8_HANDLER( n8080_video_control_w );
-
-extern PALETTE_INIT( n8080 );
-extern PALETTE_INIT( helifire );
-
-extern VIDEO_START( spacefev );
-extern VIDEO_START( sheriff );
-extern VIDEO_START( helifire );
-extern VIDEO_UPDATE( spacefev );
-extern VIDEO_UPDATE( sheriff );
-extern VIDEO_UPDATE( helifire );
-extern VIDEO_EOF( helifire );
-
-extern MACHINE_DRIVER_EXTERN( spacefev_sound );
-extern MACHINE_DRIVER_EXTERN( sheriff_sound );
-extern MACHINE_DRIVER_EXTERN( helifire_sound );
-
-extern WRITE8_HANDLER( n8080_sound_1_w );
-extern WRITE8_HANDLER( n8080_sound_2_w );
+#include "includes/n8080.h"
 
 static unsigned shift_data;
 static unsigned shift_bits;

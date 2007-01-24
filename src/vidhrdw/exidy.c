@@ -154,22 +154,14 @@ PALETTE_INIT( exidy )
 
 VIDEO_START( exidy )
 {
-    if (video_start_generic(machine))
-        return 1;
+	if (video_start_generic(machine))
+		return 1;
 
 	motion_object_1_vid = auto_bitmap_alloc(16, 16);
-    if (!motion_object_1_vid)
-        return 1;
-
 	motion_object_2_vid = auto_bitmap_alloc(16, 16);
-    if (!motion_object_2_vid)
-        return 1;
-
 	motion_object_2_clip = auto_bitmap_alloc(16, 16);
-    if (!motion_object_2_clip)
-        return 1;
 
-    return 0;
+	return 0;
 }
 
 

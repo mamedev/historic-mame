@@ -28,6 +28,7 @@
 #include "video.h"
 #include "config.h"
 #include "strconv.h"
+#include "winutil.h"
 
 
 
@@ -1810,7 +1811,6 @@ static void memory_determine_combo_items(void)
 
 static void memory_update_selection(debugwin_info *info, memorycombo_item *ci)
 {
-	TCHAR *t_name;
 	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_CPUNUM, ci->cpunum);
 	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_SPACENUM, ci->spacenum);
 	debug_view_set_property_ptr(info->view[0].view, DVP_MEM_RAW_BASE, ci->base);
@@ -1818,12 +1818,7 @@ static void memory_update_selection(debugwin_info *info, memorycombo_item *ci)
 	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_RAW_OFFSET_XOR, ci->offset_xor);
 	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_RAW_LITTLE_ENDIAN, ci->little_endian);
 	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK, ci->prefsize);
-	t_name = tstring_from_utf8(ci->name);
-	if (t_name != NULL)
-	{
-		SetWindowText(info->wnd, t_name);
-		free(t_name);
-	}
+	win_set_window_text_utf8(info->wnd, ci->name);
 }
 
 
@@ -2488,19 +2483,13 @@ static void disasm_update_caption(HWND wnd)
 	debugwin_info *info = (debugwin_info *)(UINT32)GetWindowLongPtr(wnd, GWLP_USERDATA);
 	char title[100];
 	UINT32 cpunum;
-	TCHAR *t_title;
 
 	// get the properties
 	cpunum = debug_view_get_property_UINT32(info->view[0].view, DVP_DASM_CPUNUM);
 
 	// then update the caption
 	sprintf(title, "Disassembly: %s (%d)", cpunum_name(cpunum), cpunum);
-	t_title = tstring_from_utf8(title);
-	if (t_title != NULL)
-	{
-		SetWindowText(wnd, t_title);
-		free(t_title);
-	}
+	win_set_window_text_utf8(wnd, title);
 }
 
 
@@ -2714,9 +2703,7 @@ static void console_process_string(debugwin_info *info, const char *string)
 
 static void console_set_cpunum(int cpunum)
 {
-	TCHAR title[256], curtitle[256];
-	TCHAR *t_gamedrv_name;
-	TCHAR *t_cpu_name;
+	char title[256], curtitle[256];
 
 	// first set all the views to the new cpu number
 	if (main_console->view[0].view)
@@ -2725,17 +2712,10 @@ static void console_set_cpunum(int cpunum)
 		debug_view_set_property_UINT32(main_console->view[1].view, DVP_REGS_CPUNUM, cpunum);
 
 	// then update the caption
-	t_gamedrv_name = tstring_from_utf8(Machine->gamedrv->name);
-	t_cpu_name =  tstring_from_utf8(activecpu_name());
-	if (t_gamedrv_name != NULL && t_cpu_name != NULL)
-	{
-		_sntprintf(title, ARRAY_LENGTH(title), TEXT("Debug: %s - CPU %d (%s)"), t_gamedrv_name, cpu_getactivecpu(), t_cpu_name);
-		free(t_gamedrv_name);
-		free(t_cpu_name);
-		GetWindowText(main_console->wnd, curtitle, sizeof(curtitle) / sizeof(curtitle[0]));
-		if (_tcscmp(title, curtitle))
-			SetWindowText(main_console->wnd, title);
-	}
+	snprintf(title, ARRAY_LENGTH(title), "Debug: %s - CPU %d (%s)", Machine->gamedrv->name, cpu_getactivecpu(), activecpu_name());
+	win_get_window_text_utf8(main_console->wnd, curtitle, sizeof(curtitle) / sizeof(curtitle[0]));
+	if (strcmp(title, curtitle))
+		win_set_window_text_utf8(main_console->wnd, title);
 }
 
 

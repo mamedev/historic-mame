@@ -93,13 +93,6 @@ VIDEO_START( tank8 )
 	helper2 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	helper3 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 
-	if (helper1 == NULL)
-		return 1;
-	if (helper2 == NULL)
-		return 1;
-	if (helper3 == NULL)
-		return 1;
-
 	tilemap1 = tilemap_create(tank8_get_tile_info1, tilemap_scan_rows, TILEMAP_OPAQUE, 16, 16, 32, 32);
 	tilemap2 = tilemap_create(tank8_get_tile_info2, tilemap_scan_rows, TILEMAP_OPAQUE, 16, 16, 32, 32);
 

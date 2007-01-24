@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
 #include "sound/samples.h"
+#include "includes/dkong.h"
 
 static UINT8 sh1_state[8];
 static UINT8 sh1_count = 0;

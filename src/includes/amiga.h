@@ -366,7 +366,6 @@ MACHINE_RESET( amiga );
 INTERRUPT_GEN( amiga_scanline_callback );
 
 UINT32 amiga_joystick_convert(void *param);
-void amiga_latch_hvpos(void);
 
 READ16_HANDLER( amiga_cia_r );
 WRITE16_HANDLER( amiga_cia_w );

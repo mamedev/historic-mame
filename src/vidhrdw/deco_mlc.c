@@ -32,9 +32,6 @@ VIDEO_START( mlc )
 	temp_bitmap = auto_bitmap_alloc_format( 512, 512, BITMAP_FORMAT_RGB32 );
 	mlc_buffered_spriteram = auto_malloc(0x3000);
 
-	if (!temp_bitmap)
-		return 1;
-
 	return 0;
 }
 

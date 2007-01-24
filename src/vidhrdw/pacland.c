@@ -174,7 +174,7 @@ VIDEO_START( pacland )
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,           8,8,64,32);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT_COLOR,8,8,64,32);
 
-	if (!fg_bitmap || !sprite_bitmap || !bg_tilemap || !fg_tilemap)
+	if (!bg_tilemap || !fg_tilemap)
 		return 1;
 
 	tilemap_set_scroll_rows(fg_tilemap, 32);

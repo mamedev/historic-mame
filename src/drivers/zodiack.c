@@ -20,29 +20,10 @@ TODO:
 
 #include "driver.h"
 #include "sound/ay8910.h"
+#include "includes/espial.h"
 
-extern UINT8 *zodiack_videoram2;
-extern UINT8 *zodiack_attributesram;
-extern UINT8 *zodiack_bulletsram;
-extern size_t zodiack_bulletsram_size;
-
-extern WRITE8_HANDLER( zodiack_videoram_w );
-extern WRITE8_HANDLER( zodiack_videoram2_w );
-extern WRITE8_HANDLER( zodiack_attributes_w );
-extern WRITE8_HANDLER( zodiack_flipscreen_w );
-
-extern PALETTE_INIT( zodiack );
-extern VIDEO_START( zodiack );
-extern VIDEO_UPDATE( zodiack );
 
 int percuss_hardware;
-
-extern MACHINE_RESET( espial );
-extern WRITE8_HANDLER( zodiac_master_interrupt_enable_w );
-extern INTERRUPT_GEN( zodiac_master_interrupt );
-extern WRITE8_HANDLER( zodiac_master_soundlatch_w );
-extern WRITE8_HANDLER( espial_sound_nmi_enable_w );
-extern INTERRUPT_GEN( espial_sound_nmi_gen );
 
 
 static MACHINE_RESET( zodiack )

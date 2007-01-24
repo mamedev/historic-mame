@@ -53,8 +53,6 @@ struct _grchamp_state
 
 extern discrete_sound_block grchamp_discrete_interface[];
 
-WRITE8_HANDLER( grchamp_sound_w );
-
 /*----------- defined in vidhrdw/grchamp.c -----------*/
 
 PALETTE_INIT( grchamp );

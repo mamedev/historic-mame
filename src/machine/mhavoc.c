@@ -10,6 +10,8 @@
 #include "cpu/m6502/m6502.h"
 #include "mhavoc.h"
 
+UINT8 *mhavoc_zram0, *mhavoc_zram1;
+
 static UINT8 alpha_data;
 static UINT8 alpha_rcvd;
 static UINT8 alpha_xmtd;
@@ -24,7 +26,6 @@ static UINT8 alpha_irq_clock;
 static UINT8 alpha_irq_clock_enable;
 static UINT8 gamma_irq_clock;
 
-static UINT8 *ram_base;
 static UINT8 has_gamma_cpu;
 
 
@@ -83,9 +84,11 @@ WRITE8_HANDLER( mhavoc_gamma_irq_ack_w )
 
 MACHINE_RESET( mhavoc )
 {
-	/* cache the base of memory region 1 */
-	ram_base = memory_region(REGION_CPU1);
 	has_gamma_cpu = (cpu_gettotalcpu() > 1);
+
+	memory_configure_bank(1, 0, 1, mhavoc_zram0, 0);
+	memory_configure_bank(1, 1, 1, mhavoc_zram1, 0);
+	memory_configure_bank(2, 0, 4,  memory_region(REGION_CPU1) + 0x10000, 0x2000);
 
 	/* reset RAM/ROM banks to 0 */
 	mhavoc_ram_banksel_w(0, 0);
@@ -111,6 +114,17 @@ MACHINE_RESET( mhavoc )
 
 	/* set a timer going for the CPU interrupt generators */
 	timer_pulse(TIME_IN_HZ(MHAVOC_CLOCK_5K), 0, cpu_irq_clock);
+
+	state_save_register_item("misc", 0, alpha_data);
+	state_save_register_item("misc", 0, alpha_rcvd);
+	state_save_register_item("misc", 0, alpha_xmtd);
+	state_save_register_item("misc", 0, gamma_data);
+	state_save_register_item("misc", 0, gamma_rcvd);
+	state_save_register_item("misc", 0, gamma_xmtd);
+	state_save_register_item("misc", 0, player_1);
+	state_save_register_item("misc", 0, alpha_irq_clock);
+	state_save_register_item("misc", 0, alpha_irq_clock_enable);
+	state_save_register_item("misc", 0, gamma_irq_clock);
 }
 
 
@@ -186,21 +200,13 @@ READ8_HANDLER( mhavoc_gamma_r )
 
 WRITE8_HANDLER( mhavoc_ram_banksel_w )
 {
-	static const offs_t bank[2] = { 0x20200, 0x20800 };
-
-	data &= 0x01;
-	memory_set_bankptr(1, &ram_base[bank[data]]);
-/*  logerror("Alpha RAM select: %02x\n",data);*/
+	memory_set_bank(1, data & 1);
 }
 
 
 WRITE8_HANDLER( mhavoc_rom_banksel_w )
 {
-	static const offs_t bank[4] = { 0x10000, 0x12000, 0x14000, 0x16000 };
-
-	data &= 0x03;
-	memory_set_bankptr(2, &ram_base[bank[data]]);
-/*  logerror("Alpha ROM select: %02x\n",data);*/
+	memory_set_bank(2, data & 3);
 }
 
 

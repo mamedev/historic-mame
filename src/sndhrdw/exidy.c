@@ -96,6 +96,7 @@ struct sh8253_timer_channel
 	UINT32	fraction;
 };
 static struct sh8253_timer_channel sh8253_timer[3];
+static UINT8 has_sh8253;
 
 /* 5220/CVSD variables */
 static UINT8 has_hc55516;
@@ -331,31 +332,35 @@ static void exidy_stream_update(void *param, stream_sample_t **inputs, stream_sa
 			}
 		}
 
-		/* music channel 0 */
-		c = &sh8253_timer[0];
-		if (c->enable)
+		/* music (if present) */
+		if (has_sh8253)
 		{
-			c->fraction += c->step;
-			if (c->fraction & 0x0800000)
-				sample += BASE_VOLUME;
-		}
+			/* music channel 0 */
+			c = &sh8253_timer[0];
+			if (c->enable)
+			{
+				c->fraction += c->step;
+				if (c->fraction & 0x0800000)
+					sample += BASE_VOLUME;
+			}
 
-		/* music channel 1 */
-		c = &sh8253_timer[1];
-		if (c->enable)
-		{
-			c->fraction += c->step;
-			if (c->fraction & 0x0800000)
-				sample += BASE_VOLUME;
-		}
+			/* music channel 1 */
+			c = &sh8253_timer[1];
+			if (c->enable)
+			{
+				c->fraction += c->step;
+				if (c->fraction & 0x0800000)
+					sample += BASE_VOLUME;
+			}
 
-		/* music channel 2 */
-		c = &sh8253_timer[2];
-		if (c->enable)
-		{
-			c->fraction += c->step;
-			if (c->fraction & 0x0800000)
-				sample += BASE_VOLUME;
+			/* music channel 2 */
+			c = &sh8253_timer[2];
+			if (c->enable)
+			{
+				c->fraction += c->step;
+				if (c->fraction & 0x0800000)
+					sample += BASE_VOLUME;
+			}
 		}
 
 		/* stash */
@@ -379,14 +384,14 @@ static void *common_start(void)
 	int i;
 
 	/* determine which sound hardware is installed */
-	has_hc55516 = 0;
-	has_tms5220 = 0;
+	has_hc55516 = FALSE;
+	has_tms5220 = FALSE;
 	for (i = 0; i < MAX_SOUND; i++)
 	{
 		if (Machine->drv->sound[i].sound_type == SOUND_TMS5220)
-			has_tms5220 = 1;
+			has_tms5220 = TRUE;
 		if (Machine->drv->sound[i].sound_type == SOUND_HC55516)
-			has_hc55516 = 1;
+			has_hc55516 = TRUE;
 	}
 
 	/* allocate the stream */
@@ -423,6 +428,7 @@ void *exidy_sh_start(int clock, const struct CustomSound_interface *config)
 	/* Init PIA */
 	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
 	pia_config(1, PIA_STANDARD_ORDERING, &pia_1_intf);
+	has_sh8253 = TRUE;
 	return common_start();
 }
 
@@ -432,6 +438,14 @@ void *victory_sh_start(int clock, const struct CustomSound_interface *config)
 	/* Init PIA */
 	pia_config(0, PIA_STANDARD_ORDERING, &victory_pia_0_intf);
 	pia_0_cb1_w(0, 1);
+	has_sh8253 = TRUE;
+	return common_start();
+}
+
+
+void *berzerk_sh_start(int clock, const struct CustomSound_interface *config)
+{
+	has_sh8253 = FALSE;
 	return common_start();
 }
 

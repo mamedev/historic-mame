@@ -180,9 +180,6 @@ VIDEO_START( spbactn )
 	tile_bitmap_bg = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
 	tile_bitmap_fg = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);
 
-	if (!tile_bitmap_bg || !tile_bitmap_fg)
-		return 1;
-
 	return 0;
 }
 

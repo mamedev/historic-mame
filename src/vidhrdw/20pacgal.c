@@ -55,9 +55,6 @@ VIDEO_START( 20pacgal )
 {
 	chr_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
-	if (!chr_bitmap)
-		return 1;
-
 	return 0;
 }
 

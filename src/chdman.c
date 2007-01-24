@@ -329,6 +329,7 @@ static int do_createhd(int argc, char *argv[], int param)
 	heads = (argc >= 7) ? atoi(argv[6]) : guess_heads;
 	sectors = (argc >= 8) ? atoi(argv[7]) : guess_sectors;
 	sectorsize = (argc >= 9) ? atoi(argv[8]) : guess_sectorsize;
+	if (sectorsize == 0) sectorsize = IDE_SECTOR_SIZE;
 	hunksize = (argc >= 10) ? atoi(argv[9]) : (sectorsize > 4096) ? sectorsize : ((4096 / sectorsize) * sectorsize);
 	totalsectors = cylinders * heads * sectors;
 
@@ -642,6 +643,7 @@ static int do_createblankhd(int argc, char *argv[], int param)
 	heads = atoi(argv[4]);
 	sectors = atoi(argv[5]);
 	sectorsize = (argc >= 7) ? atoi(argv[6]) : IDE_SECTOR_SIZE;
+	if (sectorsize == 0) sectorsize = IDE_SECTOR_SIZE;
 	hunksize = (argc >= 8) ? atoi(argv[7]) : (sectorsize > 4096) ? sectorsize : ((4096 / sectorsize) * sectorsize);
 	totalsectors = cylinders * heads * sectors;
 

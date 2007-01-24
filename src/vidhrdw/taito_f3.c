@@ -607,7 +607,7 @@ VIDEO_START( f3 )
 	tile_opaque_sp = (UINT8 *)auto_malloc(Machine->gfx[2]->total_elements);
 	tile_opaque_pf = (UINT8 *)auto_malloc(Machine->gfx[1]->total_elements);
 
-	if (!vram_layer || !pixel_layer || !pri_alp_bitmap)
+	if (!vram_layer || !pixel_layer)
 		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);

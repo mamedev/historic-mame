@@ -41,25 +41,9 @@ Stephh's notes (based on the games M6502 code and some tests) :
 
 #include "driver.h"
 #include "sound/dac.h"
+#include "includes/sbrkout.h"
 
 #include "sbrkout.lh"
-
-extern WRITE8_HANDLER( sbrkout_serve_led_w );
-extern WRITE8_HANDLER( sbrkout_start_1_led_w );
-extern WRITE8_HANDLER( sbrkout_start_2_led_w );
-extern READ8_HANDLER( sbrkout_read_DIPs_r );
-extern INTERRUPT_GEN( sbrkout_interrupt );
-extern READ8_HANDLER( sbrkout_select1_r );
-extern READ8_HANDLER( sbrkout_select2_r );
-
-extern UINT8 *sbrkout_horiz_ram;
-extern UINT8 *sbrkout_vert_ram;
-
-extern WRITE8_HANDLER( sbrkout_videoram_w );
-
-extern VIDEO_START( sbrkout );
-extern VIDEO_UPDATE( sbrkout );
-
 
 
 /*************************************

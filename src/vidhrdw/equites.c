@@ -224,7 +224,7 @@ VIDEO_START( splndrbt )
 	i = halfclip.max_y - halfclip.min_y + 1;
 	halfclip.max_y = halfclip.min_y + (i >> 1) - 1;
 
-	if ((tmpbitmap = auto_bitmap_alloc(BMW, BMW)) == NULL) return(-1);
+	tmpbitmap = auto_bitmap_alloc(BMW, BMW);
 
 	charmap0 = tilemap_create(splndrbt_char0info, tilemap_scan_cols, TILEMAP_TRANSPARENT_COLOR, 8, 8, 32, 32);
 	tilemap_set_transparent_pen(charmap0, 0);

@@ -5,6 +5,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/astinvad.h"
 
 static int spaceint_color;
 static int astinvad_adjust;

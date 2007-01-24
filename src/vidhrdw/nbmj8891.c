@@ -491,7 +491,7 @@ VIDEO_START( nbmj8891_1layer )
 	unsigned char *CLUT = memory_region(REGION_USER1);
 	int i;
 
-	if ((nbmj8891_tmpbitmap0 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == 0) return 1;
+	nbmj8891_tmpbitmap0 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	nbmj8891_videoram0 = auto_malloc(Machine->screen[0].width * Machine->screen[0].height * sizeof(char));
 	nbmj8891_palette = auto_malloc(0x200 * sizeof(char));
 	nbmj8891_clut = auto_malloc(0x800 * sizeof(char));
@@ -506,8 +506,8 @@ VIDEO_START( nbmj8891_1layer )
 
 VIDEO_START( nbmj8891_2layer )
 {
-	if ((nbmj8891_tmpbitmap0 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == 0) return 1;
-	if ((nbmj8891_tmpbitmap1 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == 0) return 1;
+	nbmj8891_tmpbitmap0 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
+	nbmj8891_tmpbitmap1 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	nbmj8891_videoram0 = auto_malloc(Machine->screen[0].width * Machine->screen[0].height * sizeof(UINT8));
 	nbmj8891_videoram1 = auto_malloc(Machine->screen[0].width * Machine->screen[0].height * sizeof(UINT8));
 	nbmj8891_palette = auto_malloc(0x200 * sizeof(UINT8));

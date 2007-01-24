@@ -346,8 +346,6 @@ VIDEO_START( generic )
 
 	/* allocate the temporary bitmap */
 	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	if (tmpbitmap == NULL)
-		return 1;
 
 	/* on a restore, we automatically zap the dirty buffer */
 	state_save_register_func_postload(video_generic_postload);
@@ -364,8 +362,6 @@ VIDEO_START( generic_bitmapped )
 {
 	/* allocate the temporary bitmap */
 	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
-	if (tmpbitmap == NULL)
-		return 1;
 
 	/* ensure the contents of the bitmap are saved */
 	state_save_register_bitmap("video", 0, "tmpbitmap", tmpbitmap);

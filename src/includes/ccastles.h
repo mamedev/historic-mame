@@ -4,10 +4,12 @@
 
 *************************************************************************/
 
-/*----------- defined in vidhrdw/ccastles.c -----------*/
+/*----------- defined in drivers/ccastles.c -----------*/
 
 extern int ccastles_vblank_start;
 extern int ccastles_vblank_end;
+
+/*----------- defined in vidhrdw/ccastles.c -----------*/
 
 
 VIDEO_START( ccastles );

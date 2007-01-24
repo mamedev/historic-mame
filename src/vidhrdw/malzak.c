@@ -53,8 +53,7 @@ static struct playfield
 
 VIDEO_START( malzak )
 {
-	if ((collision_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8)) == 0)
-		return 1;
+	collision_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8);
 
 	saa5050_vidram = auto_malloc(0x800);
 	s2636_1_ram = auto_malloc(0x100);

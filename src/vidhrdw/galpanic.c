@@ -10,11 +10,8 @@ static mame_bitmap *sprites_bitmap;
 
 VIDEO_START( galpanic )
 {
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
-		return 1;
-
-	if ((sprites_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
-		return 1;
+	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+	sprites_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
 	galpanic_clear_sprites = 1;
 

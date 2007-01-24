@@ -142,8 +142,7 @@ VIDEO_START( quasar )
 
 	memset(effectdirty,0,sizeof(effectdirty));
 
-	if ((effect_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
-		return 1;
+	effect_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
 	return video_start_cvs(machine);
 }

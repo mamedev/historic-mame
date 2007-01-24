@@ -216,23 +216,17 @@ VIDEO_START( taitosj )
 	dirtybuffer3 = auto_malloc(videoram_size);
 	memset(dirtybuffer3,1,videoram_size);
 
-	if ((sprite_plane_collbitmap1 = auto_bitmap_alloc(16,16)) == 0)
-		return 1;
+	sprite_plane_collbitmap1 = auto_bitmap_alloc(16,16);
 
 	for (i = 0; i < 3; i++)
 	{
-		if ((taitosj_tmpbitmap[i] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
-			return 1;
+		taitosj_tmpbitmap[i] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
-		if ((sprite_plane_collbitmap2[i] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
-			return 1;
+		sprite_plane_collbitmap2[i] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 	}
 
-	if ((sprite_sprite_collbitmap1 = auto_bitmap_alloc(32,32)) == 0)
-		return 1;
-
-	if ((sprite_sprite_collbitmap2 = auto_bitmap_alloc(32,32)) == 0)
-		return 1;
+	sprite_sprite_collbitmap1 = auto_bitmap_alloc(32,32);
+	sprite_sprite_collbitmap2 = auto_bitmap_alloc(32,32);
 
 	flipscreen[0] = flipscreen[1] = 0;
 

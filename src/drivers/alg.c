@@ -35,6 +35,7 @@ static render_texture *video_texture;
 static render_texture *overlay_texture;
 
 static void video_cleanup(running_machine *machine);
+static void response_timer(int param);
 
 
 
@@ -140,6 +141,30 @@ static VIDEO_UPDATE( alg )
 
 /*************************************
  *
+ *  Machine start/reset
+ *
+ *************************************/
+
+static MACHINE_START( alg )
+{
+	discinfo = laserdisc_init(LASERDISC_TYPE_LDP1450, get_disk_handle(0), 1);
+	serial_timer = timer_alloc(response_timer);
+	serial_timer_active = FALSE;
+
+	return 0;
+}
+
+
+static MACHINE_RESET( alg )
+{
+	machine_reset_amiga(machine);
+	laserdisc_reset(discinfo, 0);
+}
+
+
+
+/*************************************
+ *
  *  Laserdisc communication
  *
  *************************************/
@@ -166,8 +191,7 @@ static void response_timer(int param)
 static void vsync_callback(void)
 {
 	/* only clock the disc every other frame */
-	if (cpu_getcurrentframe() % 2 == 1)
-		laserdisc_vsync(discinfo);
+	laserdisc_vsync(discinfo);
 
 	/* if we have data available, set a timer to read it */
 	if (!serial_timer_active && laserdisc_line_r(discinfo, LASERDISC_LINE_DATA_AVAIL) == ASSERT_LINE)
@@ -440,7 +464,8 @@ static MACHINE_DRIVER_START( alg_r1 )
 	MDRV_SCREEN_REFRESH_RATE(59.97)
 	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(0))
 
-	MDRV_MACHINE_RESET(amiga)
+	MDRV_MACHINE_START(alg)
+	MDRV_MACHINE_RESET(alg)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
     /* video hardware */
@@ -459,10 +484,15 @@ static MACHINE_DRIVER_START( alg_r1 )
 
 	MDRV_SOUND_ADD(CUSTOM, 3579545)
 	MDRV_SOUND_CONFIG(amiga_custom_interface)
-	MDRV_SOUND_ROUTE(0, "left", 0.50)
-	MDRV_SOUND_ROUTE(1, "right", 0.50)
-	MDRV_SOUND_ROUTE(2, "right", 0.50)
-	MDRV_SOUND_ROUTE(3, "left", 0.50)
+	MDRV_SOUND_ROUTE(0, "left", 0.25)
+	MDRV_SOUND_ROUTE(1, "right", 0.25)
+	MDRV_SOUND_ROUTE(2, "right", 0.25)
+	MDRV_SOUND_ROUTE(3, "left", 0.25)
+
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(laserdisc_custom_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -528,6 +558,9 @@ ROM_START( maddoga )
 	ROM_REGION( 0x20000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "maddog_01.dat", 0x000000, 0x10000, CRC(04572557) SHA1(3dfe2ce94ced8701a3e73ed5869b6fbe1c8b3286) )
 	ROM_LOAD16_BYTE( "maddog_02.dat", 0x000001, 0x10000, CRC(f64014ec) SHA1(d343a2cb5d8992153b8c916f39b11d3db736543d))
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE_READONLY( "maddog", 0, NO_DUMP )
 ROM_END
 
 
@@ -556,6 +589,9 @@ ROM_START( maddog )
 	ROM_REGION( 0x40000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "md_2.03_1.bin", 0x000000, 0x20000, CRC(6f5b8f2d) SHA1(bbf32bb27a998d53744411d75efdbdb730855809) )
 	ROM_LOAD16_BYTE( "md_2.03_2.bin", 0x000001, 0x20000, CRC(a50d3c04) SHA1(4cf100fdb5b2f2236539fd0ec33b3db19c64a6b8) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE_READONLY( "maddog", 0, NO_DUMP )
 ROM_END
 
 
@@ -691,10 +727,6 @@ static void alg_init(void)
 	/* set up memory */
 	memory_configure_bank(1, 0, 1, amiga_chip_ram, 0);
 	memory_configure_bank(1, 1, 1, memory_region(REGION_USER1), 0);
-
-	discinfo = laserdisc_init(LASERDISC_TYPE_LDP1450, get_disk_handle(0), 0);
-	serial_timer = timer_alloc(response_timer);
-	serial_timer_active = FALSE;
 }
 
 

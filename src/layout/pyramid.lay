@@ -82,7 +82,7 @@
 		<bezel name="lamp7" element="enter">
 			<bounds x="250" y="280" width="28" height="14" />
 		</bezel>
-		<bezel name="lamp0" element="p1start">
+		<bezel name="lamp0" element="start">
 			<bounds x="285" y="280" width="28" height="14" />
 		</bezel>
 		<bezel name="door" element="door0">

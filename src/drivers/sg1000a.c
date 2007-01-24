@@ -281,6 +281,7 @@ static const TMS9928a_interface tms9928a_interface =
 {
 	TMS99x8A,
 	0x4000,
+	0,0,
 	vdp_interrupt
 };
 
@@ -288,11 +289,13 @@ static MACHINE_DRIVER_START( sg1000a )
 	MDRV_CPU_ADD(Z80, 3579545)       /* 3.579545 Mhz */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_VBLANK_INT(sg100a_interrupt,1)
+
+	/* video hardware */
+	MDRV_IMPORT_FROM(tms9928a)
 	MDRV_SCREEN_REFRESH_RATE(60)
 	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
-	MDRV_CPU_VBLANK_INT(sg100a_interrupt,1)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_TMS9928A( &tms9928a_interface )
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -322,13 +325,19 @@ ROM_START( dokidoki )
 	ROM_LOAD( "epr-7358.ic3",	0x8000, 0x4000, CRC(c6f26b0b) SHA1(3753e05b6e77159832dbe88562ba7a818120d1a3) )
 ROM_END
 
+DRIVER_INIT( sg1000a )
+{
+	TMS9928A_configure(&tms9928a_interface);
+}
+
 DRIVER_INIT(chwrestl)
 {
+	init_sg1000a(machine);
 	regulus_decode();
 }
 
-GAME( 1984, chboxing, 0, sg1000a, chboxing, 0, ROT0, "Sega", "Champion Boxing", 0)
+GAME( 1984, chboxing, 0, sg1000a, chboxing, sg1000a,  ROT0, "Sega", "Champion Boxing", 0)
 GAME( 1985, chwrestl, 0, sg1000a, chwrestl, chwrestl, ROT0, "Sega", "Champion Pro Wrestling", 0)
-GAME( 1985, dokidoki, 0, sg1000a, dokidoki, 0, ROT0, "Sega", "Doki Doki Penguin Land", 0)
+GAME( 1985, dokidoki, 0, sg1000a, dokidoki, sg1000a,  ROT0, "Sega", "Doki Doki Penguin Land", 0)
 
 

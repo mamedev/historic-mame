@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/espial.h"
 
 
 unsigned char *marineb_column_scroll;

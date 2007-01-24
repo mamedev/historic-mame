@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/dkong.h"
 
 
 static UINT8 gfx_bank, palette_bank;

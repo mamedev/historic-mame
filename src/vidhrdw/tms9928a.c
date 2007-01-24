@@ -155,6 +155,7 @@ typedef struct {
     /* emulation settings */
     int LimitSprites; /* max 4 sprites on a row, like original TMS9918A */
     int top_border, bottom_border;
+    rectangle visarea;
     /* dirty tables */
     char anyDirtyColour, anyDirtyName, anyDirtyPattern;
     char *DirtyColour, *DirtyName, *DirtyPattern;
@@ -190,7 +191,8 @@ void TMS9928A_reset () {
     _TMS9928A_set_dirty (1);
 }
 
-static int TMS9928A_start (const TMS9928a_interface *intf) {
+static int TMS9928A_start (const TMS9928a_interface *intf)
+{
     /* 4, 8 or 16 kB vram please */
     if (! ((intf->vram == 0x1000) || (intf->vram == 0x2000) || (intf->vram == 0x4000)) )
         return 1;
@@ -201,6 +203,16 @@ static int TMS9928A_start (const TMS9928a_interface *intf) {
 	tms.bottom_border = TMS_50HZ ? BOTTOM_BORDER_50HZ : BOTTOM_BORDER_60HZ;
 
 	tms.INTCallback = intf->int_callback;
+
+	/* determine the visible area */
+	tms.visarea.min_x = LEFT_BORDER - MIN(intf->borderx, LEFT_BORDER);
+	tms.visarea.max_x = LEFT_BORDER + 32*8 - 1 + MIN(intf->borderx, RIGHT_BORDER);
+	tms.visarea.min_y = tms.top_border - MIN(intf->bordery, tms.top_border);
+	tms.visarea.max_y = tms.top_border + 24*8 - 1 + MIN(intf->bordery, tms.bottom_border);
+
+	/* configure the screen if we weren't overridden */
+	if (Machine->screen[0].width == LEFT_BORDER+32*8+RIGHT_BORDER && Machine->screen[0].height == TOP_BORDER_60HZ+24*8+BOTTOM_BORDER_60HZ)
+		video_screen_configure(0, LEFT_BORDER + 32*8 + RIGHT_BORDER, tms.top_border + 24*8 + tms.bottom_border, &tms.visarea, Machine->screen[0].refresh);
 
     /* Video RAM */
     tms.vramsize = intf->vram;
@@ -219,8 +231,6 @@ static int TMS9928A_start (const TMS9928a_interface *intf) {
 
     /* back bitmap */
     tms.tmpbmp = auto_bitmap_alloc (256, 192);
-    if (!tms.tmpbmp)
-        return 1;
 
     TMS9928A_reset ();
     tms.LimitSprites = 1;
@@ -243,6 +253,12 @@ static int TMS9928A_start (const TMS9928a_interface *intf) {
 
     return 0;
 }
+
+const rectangle *TMS9928A_get_visarea (void)
+{
+	return &tms.visarea;
+}
+
 
 void TMS9928A_post_load (void) {
 	int i;
@@ -914,32 +930,32 @@ static void _TMS9928A_sprites (mame_bitmap *bmp) {
 
 static TMS9928a_interface sIntf;
 
-static VIDEO_START ( TMS9928A_hack )
+
+void TMS9928A_configure (const TMS9928a_interface *intf)
 {
+	sIntf = *intf;
+}
+
+
+VIDEO_START( tms9928a )
+{
+	assert(sIntf.model != TMS_INVALID_MODEL);
 	return TMS9928A_start(&sIntf);
 }
 
-void mdrv_tms9928a(machine_config *machine, const TMS9928a_interface *intf)
-{
-	int top_border = ((intf->model == TMS9929) || (intf->model == TMS9929A)) ? TOP_BORDER_50HZ : TOP_BORDER_60HZ;
-	int bottom_border = ((intf->model == TMS9929) || (intf->model == TMS9929A)) ? BOTTOM_BORDER_50HZ : BOTTOM_BORDER_60HZ;
-	screen_config *screen = &machine->screen[0];
 
-	sIntf = *intf;
+MACHINE_DRIVER_START( tms9928a )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(LEFT_BORDER+32*8+RIGHT_BORDER, top_border+24*8+bottom_border)
-	/* display no border */
-	/*MDRV_SCREEN_VISIBLE_AREA(LEFT_BORDER+0*8, LEFT_BORDER+32*8-1, top_border+0*8, top_border+24*8-1)*/
-	/* display max borders */
-	/*MDRV_SCREEN_VISIBLE_AREA(0, LEFT_BORDER+32*8+RIGHT_BORDER-1, 0, top_border+24*8+bottom_border-1)*/
-	/* display fixed (12+12)*(9+9) borders */
-	MDRV_SCREEN_VISIBLE_AREA(LEFT_BORDER-12, LEFT_BORDER+32*8+12-1, top_border-9, top_border+24*8+9-1)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
+	MDRV_SCREEN_SIZE(LEFT_BORDER+32*8+RIGHT_BORDER, TOP_BORDER_60HZ+24*8+BOTTOM_BORDER_60HZ)
+	MDRV_SCREEN_VISIBLE_AREA(LEFT_BORDER-12, LEFT_BORDER+32*8+12-1, TOP_BORDER_60HZ-9, TOP_BORDER_60HZ+24*8+9-1)
+
 	MDRV_PALETTE_LENGTH(TMS9928A_PALETTE_SIZE)
-	MDRV_COLORTABLE_LENGTH(0)
 	MDRV_PALETTE_INIT(tms9928a)
 
-	MDRV_VIDEO_START(TMS9928A_hack)
+	MDRV_VIDEO_START(tms9928a)
 	MDRV_VIDEO_UPDATE(tms9928a)
-}
+MACHINE_DRIVER_END
+

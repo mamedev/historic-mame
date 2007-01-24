@@ -5,13 +5,10 @@
 ***************************************************************************/
 
 #include "driver.h"
-
-extern UINT8* fgoal_video_ram;
+#include "includes/fgoal.h"
 
 static mame_bitmap *fgbitmap;
 static mame_bitmap *bgbitmap;
-
-extern int fgoal_player;
 
 static UINT8 xpos;
 static UINT8 ypos;
@@ -42,7 +39,7 @@ VIDEO_START( fgoal )
 	fgbitmap = auto_bitmap_alloc(256, 256);
 	bgbitmap = auto_bitmap_alloc(256, 256);
 
-	return fgbitmap == 0 || bgbitmap == 0;
+	return 0;
 }
 
 

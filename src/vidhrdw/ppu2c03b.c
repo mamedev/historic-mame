@@ -217,9 +217,6 @@ void ppu2c03b_init( const ppu2c03b_interface *interface )
 		chips[i].dirtychar = auto_malloc( CHARGEN_NUM_CHARS );
 		chips[i].colortable_mono = auto_malloc( sizeof( default_colortable_mono ) );
 
-		/* see if it failed */
-		assert_always(chips[i].bitmap, "auto_bitmap_alloc() failed\n");
-
 		/* clear videoram & spriteram */
 		memset( chips[i].videoram, 0, VIDEORAM_SIZE );
 		memset( chips[i].spriteram, 0, SPRITERAM_SIZE );

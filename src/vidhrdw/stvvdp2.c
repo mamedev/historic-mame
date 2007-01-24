@@ -2491,7 +2491,7 @@ static void stv_vdp2_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 						for( y=sy; y<ey; y++ )
 						{
 							UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+							UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -2508,7 +2508,7 @@ static void stv_vdp2_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 						for( y=sy; y<ey; y++ )
 						{
 							UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+							UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -2530,7 +2530,7 @@ static void stv_vdp2_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 						for( y=sy; y<ey; y++ )
 						{
 							UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+							UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -2548,7 +2548,7 @@ static void stv_vdp2_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 						for( y=sy; y<ey; y++ )
 						{
 							UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+							UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -2569,7 +2569,7 @@ static void stv_vdp2_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 					for( y=sy; y<ey; y++ )
 					{
 						UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-						UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+						UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 						int x, x_index = x_index_base;
 						for( x=sx; x<ex; x++ )
@@ -2591,7 +2591,7 @@ static void stv_vdp2_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 						for( y=sy; y<ey; y++ )
 						{
 							UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+							UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -2609,7 +2609,7 @@ static void stv_vdp2_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 						for( y=sy; y<ey; y++ )
 						{
 							UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-							UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+							UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 
 							int x, x_index = x_index_base;
 							for( x=sx; x<ex; x++ )
@@ -2779,7 +2779,7 @@ static void stv_vdp2_drawgfx_rgb555( mame_bitmap *dest_bmp, unsigned int code, i
 			for( y=sy; y<ey; y++ )
 			{
 				UINT8 *source = gfxdata + (y_index>>16)*16;
-				UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+				UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
 				UINT16 data;
 
 				int x, x_index = x_index_base;
@@ -2900,7 +2900,7 @@ static void stv_vdp2_draw_basic_bitmap(mame_bitmap *bitmap, const rectangle *cli
 							if ( stv2_current_tilemap.colour_calculation_enabled == 0 )
 								plot_pixel(bitmap,xcnt+1,ycnt,Machine->pens[((gfxdata[0] & 0x0f) >> 0) | (stv2_current_tilemap.bitmap_palette_number * 0x100) | pal_color_offset]);
 							else
-								((UINT16*)bitmap->line[ycnt])[xcnt+1] = alpha_blend16(((UINT16*)bitmap->line[ycnt])[xcnt+1], Machine->pens[((gfxdata[0] & 0x0f) >> 0) | (stv2_current_tilemap.bitmap_palette_number * 0x100) | pal_color_offset]);
+								*BITMAP_ADDR16(bitmap, ycnt, xcnt+1) = alpha_blend16(*BITMAP_ADDR16(bitmap, ycnt, xcnt+1), Machine->pens[((gfxdata[0] & 0x0f) >> 0) | (stv2_current_tilemap.bitmap_palette_number * 0x100) | pal_color_offset]);
 						}
 					}
 					tw = stv_vdp2_window_process(xcnt,ycnt);
@@ -2913,7 +2913,7 @@ static void stv_vdp2_draw_basic_bitmap(mame_bitmap *bitmap, const rectangle *cli
 							if ( stv2_current_tilemap.colour_calculation_enabled == 0 )
 								plot_pixel(bitmap,xcnt,ycnt,Machine->pens[((gfxdata[0] & 0xf0) >> 4) | (stv2_current_tilemap.bitmap_palette_number * 0x100) | pal_color_offset]);
 							else
-								((UINT16*)bitmap->line[ycnt])[xcnt] = alpha_blend16(((UINT16*)bitmap->line[ycnt])[xcnt], Machine->pens[((gfxdata[0] & 0x0f) >> 0) | (stv2_current_tilemap.bitmap_palette_number * 0x100) | pal_color_offset]);
+								*BITMAP_ADDR16(bitmap, ycnt, xcnt) = alpha_blend16(*BITMAP_ADDR16(bitmap, ycnt, xcnt), Machine->pens[((gfxdata[0] & 0x0f) >> 0) | (stv2_current_tilemap.bitmap_palette_number * 0x100) | pal_color_offset]);
 						}
 					}
 					gfxdata++;
@@ -2966,7 +2966,7 @@ static void stv_vdp2_draw_basic_bitmap(mame_bitmap *bitmap, const rectangle *cli
 					gfxdata += xlinesize*(yy>>16);
 					yy &= 0xffff;
 
-					destline = (UINT16*)(bitmap->line[ycnt]);
+					destline = BITMAP_ADDR16(bitmap, ycnt, 0);
 					xx = 0;
 					for (xcnt = cliprect->min_x; xcnt <= cliprect->max_x; xx+=stv2_current_tilemap.incx, xcnt++)
 					{
@@ -3018,7 +3018,7 @@ static void stv_vdp2_draw_basic_bitmap(mame_bitmap *bitmap, const rectangle *cli
 
 				for (ycnt = cliprect->min_y; ycnt <= cliprect->max_y; ycnt++)
 				{
-					destline = (UINT16 *)(bitmap->line[ycnt]);
+					destline = BITMAP_ADDR16(bitmap, ycnt, 0);
 
 					for (xcnt = cliprect->min_x; xcnt <= cliprect->max_x; xcnt++)
 					{
@@ -3057,7 +3057,7 @@ static void stv_vdp2_draw_basic_bitmap(mame_bitmap *bitmap, const rectangle *cli
 					gfxdata += xlinesize*(yy>>16);
 					yy &= 0xffff;
 
-					destline = (UINT16*)(bitmap->line[ycnt]);
+					destline = BITMAP_ADDR16(bitmap, ycnt, 0);
 					xx = 0;
 					for (xcnt = cliprect->min_x; xcnt <= cliprect->max_x; xx+=stv2_current_tilemap.incx, xcnt++)
 					{
@@ -3100,7 +3100,7 @@ static void stv_vdp2_draw_basic_bitmap(mame_bitmap *bitmap, const rectangle *cli
 			//popmessage("BITMAP type 4 enabled");
 			for (ycnt = 0; ycnt <ysize;ycnt++)
 			{
-				destline = (UINT16 *)(bitmap->line[ycnt]);
+				destline = BITMAP_ADDR16(bitmap, ycnt, 0);
 
 				for (xcnt = 0; xcnt <xsize;xcnt++)
 				{
@@ -4137,7 +4137,7 @@ static void stv_vdp2_copy_roz_bitmap(mame_bitmap *bitmap,
 		//dx  = (RP.A * RP.dx) + (RP.B * RP.dy);
 		//dy  = (RP.D * RP.dx) + (RP.E * RP.dy);
 
-		line = (UINT16*)bitmap->line[vcnt];
+		line = BITMAP_ADDR16(bitmap, vcnt, 0);
 
 		if ( !use_coeff_table || RP.dkax == 0 )
 		{
@@ -4215,7 +4215,7 @@ static void stv_vdp2_copy_roz_bitmap(mame_bitmap *bitmap,
 				y = ys >> 16;
 
 				if ( x & clipxmask || y & clipymask ) continue;
-				pix = ((UINT16*)roz_bitmap->line[y & planerenderedsizey])[x & planerenderedsizex];
+				pix = *BITMAP_ADDR16(roz_bitmap, y & planerenderedsizey, x & planerenderedsizex);
 				if(stv2_current_tilemap.fade_control & 1)
 					stv_vdp2_compute_color_offset_RGB555_UINT16(&pix,stv2_current_tilemap.fade_control & 2);
 				switch( stv2_current_tilemap.transparency )
@@ -4307,7 +4307,7 @@ static void stv_vdp2_copy_roz_bitmap(mame_bitmap *bitmap,
 
 				if ( x & clipxmask || y & clipymask ) continue;
 
-				pix = ((UINT16*)roz_bitmap->line[y & planerenderedsizey])[x & planerenderedsizex];
+				pix = *BITMAP_ADDR16(roz_bitmap, y & planerenderedsizey, x & planerenderedsizex);
 				if(stv2_current_tilemap.fade_control & 1)
 					stv_vdp2_compute_color_offset_RGB555_UINT16(&pix,stv2_current_tilemap.fade_control & 2);
 				switch( stv2_current_tilemap.transparency )
@@ -5020,7 +5020,7 @@ static void stv_vdp2_draw_back(mame_bitmap *bitmap, const rectangle *cliprect)
 
 		for (ycnt = cliprect->min_y; ycnt <= cliprect->max_y;ycnt++)
 		{
-			destline = (UINT16 *)(bitmap->line[ycnt]);
+			destline = BITMAP_ADDR16(bitmap, ycnt, 0);
 
 			for (xcnt = cliprect->min_x; xcnt <=cliprect->max_x;xcnt++)
 			{
@@ -5754,7 +5754,7 @@ void stv_vdp2_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 
 						continue;
 
 				framebuffer_line = stv_framebuffer_display_lines[y];
-				bitmap_line = (UINT16*)bitmap->line[y];
+				bitmap_line = BITMAP_ADDR16(bitmap, y, 0);
 
 				for ( x = mycliprect.min_x; x <= mycliprect.max_x; x++ )
 				{
@@ -5816,7 +5816,7 @@ void stv_vdp2_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 
 						continue;
 
 				framebuffer_line = stv_framebuffer_display_lines[y];
-				bitmap_line = (UINT16*)bitmap->line[y];
+				bitmap_line = BITMAP_ADDR16(bitmap, y, 0);
 
 				for ( x = mycliprect.min_x; x <= mycliprect.max_x; x++ )
 				{
@@ -5903,12 +5903,12 @@ void stv_vdp2_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 
 			framebuffer_line = stv_framebuffer_display_lines[y];
 			if ( interlace_framebuffer == 0 )
 			{
-				bitmap_line = (UINT16*)bitmap->line[y];
+				bitmap_line = BITMAP_ADDR16(bitmap, y, 0);
 			}
 			else
 			{
-				bitmap_line = (UINT16*)bitmap->line[2*y];
-				bitmap_line2 = (UINT16*)bitmap->line[2*y + 1];
+				bitmap_line = BITMAP_ADDR16(bitmap, 2*y, 0);
+				bitmap_line2 = BITMAP_ADDR16(bitmap, 2*y + 1, 0);
 			}
 
 			for ( x = mycliprect.min_x; double_x ? x <= ((mycliprect.max_x)/2) : (x <= mycliprect.max_x); x++ )

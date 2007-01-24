@@ -924,26 +924,6 @@ static MACHINE_DRIVER_START( coh110 )
 	MDRV_VIDEO_START( psx_type2 )
 MACHINE_DRIVER_END
 
-static int lightgunx( const char *tag )
-{
-	const int portmin = 0xd8;
-	const int portmax = 0x387;
-	int x = ( readinputportbytag( tag ) - portmin );
-	x *= ( Machine->screen[0].visarea.max_x - Machine->screen[0].visarea.min_x );
-	x /= ( portmax - portmin );
-	return Machine->screen[0].visarea.min_x + x;
-}
-
-static int lightguny( const char *tag )
-{
-	const int portmin = 0x2c;
-	const int portmax = 0x11b;
-	int y = ( readinputportbytag( tag ) - portmin );
-	y *= ( Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y );
-	y /= ( portmax - portmin );
-	return Machine->screen[0].visarea.min_y + y;
-}
-
 INPUT_PORTS_START( namcos11 )
 	PORT_START_TAG( "SWITCH" )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* read by pocket racer */

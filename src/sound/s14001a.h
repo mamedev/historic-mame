@@ -4,7 +4,6 @@
 struct S14001A_interface
 {
 	int region;			/* memory region where the sample ROM lives */
-	int rate;			/* sample rate (can be overridden) */
 };
 
 int S14001A_bsy_0_r(void);     		/* read BUSY pin */

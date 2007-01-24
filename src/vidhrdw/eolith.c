@@ -66,9 +66,6 @@ VIDEO_START( eolith )
 	bitmaps[0] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 	bitmaps[1] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
-	if(!bitmaps[0] || !bitmaps[1])
-		return 1;
-
 	return 0;
 }
 

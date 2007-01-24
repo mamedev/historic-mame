@@ -1320,45 +1320,6 @@ static struct C352interface c352_interface =
 	REGION_SOUND1
 };
 
-static int gunxmin;
-static int gunxmax;
-static int gunxflip;
-static int gunymin;
-static int gunymax;
-static int gunyflip;
-
-static int gunx( int port )
-{
-	int x = readinputport( port );
-	if( gunxflip )
-	{
-		x = gunxmax - x;
-	}
-	else
-	{
-		x = x - gunxmin;
-	}
-	x *= ( Machine->screen[0].visarea.max_x - Machine->screen[0].visarea.min_x );
-	x /= ( gunxmax - gunxmin );
-	return Machine->screen[0].visarea.min_x + x;
-}
-
-static int guny( int port )
-{
-	int y = readinputport( port );
-	if( gunyflip )
-	{
-		y = gunymax - y;
-	}
-	else
-	{
-		y = y - gunymin;
-	}
-	y *= ( Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y );
-	y /= ( gunymax - gunymin );
-	return Machine->screen[0].visarea.min_y + y;
-}
-
 static DRIVER_INIT( namcos12 )
 {
 	psx_driver_init();
@@ -1374,14 +1335,6 @@ static DRIVER_INIT( ptblank2 )
 	*( (UINT32 *)( memory_region( REGION_USER1 ) + 0x331c4 ) ) = 0;
 
 	system11gun_install();
-
-	gunxmin = 0xd8;
-	gunxmax = 0x387;
-	gunxflip = 0;
-
-	gunymin = 0x2c;
-	gunymax = 0x11b;
-	gunyflip = 0;
 }
 
 static DRIVER_INIT( ghlpanic )
@@ -1389,27 +1342,11 @@ static DRIVER_INIT( ghlpanic )
 	init_namcos12(machine);
 
 	system11gun_install();
-
-	gunxmin = 0xc0;
-	gunxmax = 0x35f;
-	gunxflip = 0;
-
-	gunymin = 0x1a;
-	gunymax = 0x109;
-	gunyflip = 0;
 }
 
 static DRIVER_INIT( golgo13 )
 {
 	init_namcos12(machine);
-
-	gunxmin = 0x9c;
-	gunxmax = 0x29b;
-	gunxflip = 0;
-
-	gunymin = 0x1f;
-	gunymax = 0x1de;
-	gunyflip = 1;
 }
 
 static MACHINE_DRIVER_START( coh700 )
@@ -1559,7 +1496,7 @@ INPUT_PORTS_START( golgo13 )
 	PORT_BIT( 0xffff, 0x019b, IPT_LIGHTGUN_X ) PORT_MINMAX(0x9c,0x29b) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_PLAYER(1)
 
 	PORT_START_TAG("IN4")
-	PORT_BIT( 0xffff, 0x00fe, IPT_LIGHTGUN_Y ) PORT_MINMAX(0x1f,0x1de) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_PLAYER(1) PORT_REVERSE
+	PORT_BIT( 0xffff, 0x00fe, IPT_LIGHTGUN_Y ) PORT_CROSSHAIR(CROSSHAIR_AXIS_Y, -1.0, 0.0, 0) PORT_MINMAX(0x1f,0x1de) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_PLAYER(1) PORT_REVERSE
 INPUT_PORTS_END
 
 ROM_START( aquarush )

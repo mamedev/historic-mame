@@ -215,8 +215,7 @@ VIDEO_START( yard )
 	if ( !bg_tilemap )
 		return 1;
 
-	if ((scroll_panel_bitmap = auto_bitmap_alloc(SCROLL_PANEL_WIDTH, Machine->screen[0].height)) == 0)
-		return 1;
+	scroll_panel_bitmap = auto_bitmap_alloc(SCROLL_PANEL_WIDTH, Machine->screen[0].height);
 
 	return 0;
 }

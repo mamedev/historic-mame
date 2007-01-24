@@ -55,17 +55,11 @@ WRITE8_HANDLER( starcrus_p2_y_w ) { p2_y = data^0xff; }
 
 VIDEO_START( starcrus )
 {
-	if ((ship1_vid = auto_bitmap_alloc(16,16)) == 0)
-		return 1;
+	ship1_vid = auto_bitmap_alloc(16,16);
+	ship2_vid = auto_bitmap_alloc(16,16);
 
-	if ((ship2_vid = auto_bitmap_alloc(16,16)) == 0)
-		return 1;
-
-	if ((proj1_vid = auto_bitmap_alloc(16,16)) == 0)
-		return 1;
-
-	if ((proj2_vid = auto_bitmap_alloc(16,16)) == 0)
-		return 1;
+	proj1_vid = auto_bitmap_alloc(16,16);
+	proj2_vid = auto_bitmap_alloc(16,16);
 
 	return 0;
 }

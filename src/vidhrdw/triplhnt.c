@@ -40,9 +40,6 @@ VIDEO_START( triplhnt )
 {
 	helper = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 
-	if (helper == NULL)
-		return 1;
-
 	bg_tilemap = tilemap_create(get_tile_info, get_memory_offset, 0, 16, 16, 16, 16);
 
 	if (bg_tilemap == NULL)

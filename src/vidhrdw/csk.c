@@ -110,11 +110,6 @@ VIDEO_START( cska )
 	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 	tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
-	if (!tmpbitmap || !tmpbitmap2)
-	{
-		return 1;
-	}
-
 	/* leave everything at the default, but map all foreground 0 pens as transparent */
 	for (i = 0;i < 16;i++)
         {

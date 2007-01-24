@@ -24,6 +24,5 @@ READ8_HANDLER( berzerk_port_4e_r );
 
 /*----------- defined in sndhrdw/berzerk.c -----------*/
 
-extern struct Samplesinterface berzerk_samples_interface;
 WRITE8_HANDLER( berzerk_sound_w );
 READ8_HANDLER( berzerk_sound_r );

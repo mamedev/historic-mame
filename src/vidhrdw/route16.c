@@ -47,11 +47,8 @@ PALETTE_INIT( route16 )
 ***************************************************************************/
 VIDEO_START( route16 )
 {
-	if ((tmpbitmap1 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
-		return 1;
-
-	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
-		return 1;
+	tmpbitmap1 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+	tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
 	video_flip = 0;
 	video_color_select_1 = 0;

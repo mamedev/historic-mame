@@ -3,6 +3,7 @@
 */
 
 #include "driver.h"
+#include "includes/n64.h"
 
 #define LOG_RDP_EXECUTION 		0
 
@@ -328,7 +329,7 @@ VIDEO_UPDATE(n64)
 			{
 				for (j=0; j <height; j++)
 				{
-					UINT32 *d = bitmap->line[j];
+					UINT32 *d = BITMAP_ADDR32(bitmap, j, 0);
 					for (i=0; i < fb_width; i++)
 					{
 						UINT16 pix = *frame_buffer++;
@@ -349,7 +350,7 @@ VIDEO_UPDATE(n64)
 			{
 				for (j=0; j < height; j++)
 				{
-					UINT32 *d = bitmap->line[j];
+					UINT32 *d = BITMAP_ADDR32(bitmap, j, 0);
 					for (i=0; i < fb_width; i++)
 					{
 						UINT32 pix = *frame_buffer++;

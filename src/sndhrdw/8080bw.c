@@ -267,7 +267,7 @@ static WRITE8_HANDLER( indianbt_sh_port3_w )
 
 	UINT8 rising_bits = data & ~port_1_last;
 
-	if (rising_bits & 0x01) sample_start(1, 16, 0);	/* Death */
+	if (rising_bits & 0x01) sample_start(1, 7, 0);	/* Death */
 	if (rising_bits & 0x02) sample_start(0, 1, 0);		/* Shot Sound */
 	if (rising_bits & 0x04) sample_start(2, 3, 0);		/* Move */
 	if (rising_bits & 0x08) sample_start(3, 2, 0);		/* Hit */
@@ -284,8 +284,8 @@ static WRITE8_HANDLER( indianbt_sh_port5_w )
 	UINT8 rising_bits = data & ~port_2_last;
 
 	if (rising_bits & 0x01) sample_start(4, 0, 0);		/* Bird dropped an egg, Lasso used */
-	if (rising_bits & 0x02) sample_start(4, 11, 0);	/* Egg hatches, egg shot */
-	if (rising_bits & 0x08) sample_start(5, 9, 0);		/* Grabber, Lasso caught something */
+	if (rising_bits & 0x02) sample_start(4, 2, 0);	/* Egg hatches, egg shot */
+	if (rising_bits & 0x08) sample_start(5, 0, 0);		/* Grabber, Lasso caught something */
 	if (rising_bits & 0x10) sample_start(3, 7, 0);		/* Lasso sound */
 
 	port_2_last = data;
@@ -725,7 +725,7 @@ struct SN76477interface schaser_sn76477_interface =
 	0,			/* 27 mixer C           */
 	1,			/* 1  envelope 1        */
 	0,			/* 28 envelope 2        */
-	0			/* 9  enable (variable) */
+	1			/* 9  enable (variable) */
 };
 
 /* Nodes - Inputs */
@@ -867,6 +867,7 @@ static WRITE8_HANDLER( schaser_sh_port3_w )
 		SN76477_set_amplitude_res(0, RES_K(200));
 	}
 	SN76477_enable_w(0, !(schaser_effect_555_is_low || explosion));
+//  SN76477_set_one_shot_cap_voltage(0, !(schaser_effect_555_is_low || explosion) ? 0 : SN76477_EXTERNAL_VOLTAGE_DISCONNECT);
 	SN76477_mixer_b_w(0, explosion);
 }
 
@@ -909,6 +910,7 @@ void schaser_effect_555_cb(int effect)
 	}
 	timer_adjust(schaser_effect_555_timer, new_time, effect, 0);
 	SN76477_enable_w(0, !(schaser_effect_555_is_low || explosion));
+//  SN76477_set_one_shot_cap_voltage(0, !(schaser_effect_555_is_low || explosion) ? 0 : SN76477_EXTERNAL_VOLTAGE_DISCONNECT);
 }
 
 MACHINE_RESET( schaser )

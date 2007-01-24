@@ -229,18 +229,6 @@
 #include "lazercmd.lh"
 
 
-int marker_x, marker_y;
-
-
-/*************************************************************
-
-   externals
-
- *************************************************************/
-VIDEO_START( lazercmd );
-VIDEO_UPDATE( lazercmd );
-void lazercmd_marker_dirty(int marker);
-
 /*************************************************************
  *
  * Statics

@@ -1,17 +1,36 @@
-/* Disco Boy */
-
-/* Similar to mitchell.c / egghunt.c .. clearly derived from that hardware */
-
 /*
+       Disco Boy
 
-2 crystals
-10mhz
-12mhz
+Similar to mitchell.c / egghunt.c .. clearly derived from that hardware
 
-2xz80
+PCB Layout
+----------
 
-m5205 for sound..
+SOFT ART CO. 1993 NO - 1021
+PROGRAM NO-93-01-14-0024
++------------------------------------------+
+| YM3014 YM3812 10MHz            5.u94     |
+|       6116                    6.u124     |
+|       1.u45                    7.u95     |
+| M5205 2.u28                   8.u125     |
+|J     Z8400B                          6116|
+|A          6116          6116 TPC1020AFN  |
+|M          6116                       6116|
+|M    DSW2                                 |
+|A DSW1                          6264      |
+|      6264                       u80  u81 |
+|12MHz  u2                       u50  u5   |
+|      u18                        u78  u79 |
+|    Z0840004PSC                 u46  u49  |
++------------------------------------------+
 
+Notes:
+  Zilog Z0840004PSC (Z80 cpu, main program CPU)
+  Goldstar Z8400B PS (Z80 cpu, sound CPU)
+  Yamaha YM3014/YM3812 (rebadged as 83142/5A12)
+  OKI M5205
+  TI TPC1020AFN-084C
+  10.000MHz & 12.000MHz OSCs
 
 */
 

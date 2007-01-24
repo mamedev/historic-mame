@@ -5,6 +5,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/n8080.h"
 #include <math.h>
 
 int spacefev_red_screen;

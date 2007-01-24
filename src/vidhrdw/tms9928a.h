@@ -12,11 +12,34 @@
 */
 typedef enum
 {
+	TMS_INVALID_MODEL,
 	TMS99x8,
 	TMS9929,
 	TMS99x8A,
 	TMS9929A
 } tms9928a_model;
+
+/*
+** MachineDriver video declarations for the TMS9928A chip
+*/
+typedef struct TMS9928a_interface
+{
+	tms9928a_model model;		/* model: tms9929(a) runs at 50Hz instead of 60Hz */
+	int vram;					/* VRAM size in bytes (4k, 8k or 16k) */
+	int borderx, bordery;		/* number of border pixels to show in each direction */
+	void (*int_callback)(int);	/* callback which is called whenever the state
+                                ** of the INT output of the TMS9918A changes (may be NULL)*/
+} TMS9928a_interface;
+
+/*
+** configuration function
+*/
+extern void TMS9928A_configure (const TMS9928a_interface *intf);
+
+/*
+** visible area query
+*/
+extern const rectangle *TMS9928A_get_visarea (void);
 
 /*
 ** reset function
@@ -34,6 +57,7 @@ extern WRITE8_HANDLER (TMS9928A_register_w);
 /*
 ** Call this function to render the screen.
 */
+extern VIDEO_START( tms9928a );
 extern VIDEO_UPDATE( tms9928a );
 
 /*
@@ -61,14 +85,4 @@ void TMS9928A_post_load (void);
 /*
 ** MachineDriver video declarations for the TMS9928A chip
 */
-typedef struct TMS9928a_interface
-{
-	tms9928a_model model;		/* model: tms9929(a) runs at 50Hz instead of 60Hz */
-	int vram;					/* VRAM size in bytes (4k, 8k or 16k) */
-	void (*int_callback)(int);	/* callback which is called whenever the state
-                                ** of the INT output of the TMS9918A changes (may be NULL)*/
-} TMS9928a_interface;
-
-extern void mdrv_tms9928a(machine_config *machine, const TMS9928a_interface *intf);
-
-#define MDRV_TMS9928A(intf)		mdrv_tms9928a(machine, (intf));
+MACHINE_DRIVER_EXTERN( tms9928a );

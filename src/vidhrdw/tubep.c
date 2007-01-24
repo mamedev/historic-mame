@@ -463,9 +463,6 @@ VIDEO_START( tubep )
 
 	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
-	if (tmpbitmap == NULL)
-		return 1;
-
 	/* Set up save state */
 	state_save_register_func_postload(tubep_postload);
 	state_save_register_global(romD_addr);

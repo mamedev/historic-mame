@@ -41,11 +41,6 @@ VIDEO_START( goldstar )
 	tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 	tmpbitmap3 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
-	if (!(tmpbitmap1 && tmpbitmap2 && tmpbitmap3))
-	{
-		return 1;
-	}
-
 	/* leave everything at the default, but map all foreground 0 pens as transparent */
 //        for (i = 0;i < 16;i++) palette_used_colors[8 * i] = PALETTE_COLOR_TRANSPARENT;
 

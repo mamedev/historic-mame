@@ -1062,17 +1062,17 @@ static void v9938_refresh_16 (mame_bitmap *bmp, int line)
 		if (vdp.contReg[9] & 0x08)
 			{
 			vdp.size_now = RENDER_HIGH;
-			ln = (UINT16*)bmp->line[line*2+((vdp.statReg[2]>>1)&1)];
+			ln = BITMAP_ADDR16(bmp, line*2+((vdp.statReg[2]>>1)&1), 0);
 			}
 		else
 			{
-			ln = (UINT16*)bmp->line[line*2];
-			ln2 = (UINT16*)bmp->line[line*2+1];
+			ln = BITMAP_ADDR16(bmp, line*2, 0);
+			ln2 = BITMAP_ADDR16(bmp, line*2+1, 0);
 			double_lines = 1;
 			}
 		}
 	else
-		ln = (UINT16*)bmp->line[line];
+		ln = BITMAP_ADDR16(bmp, line, 0);
 
 	if ( !(vdp.contReg[1] & 0x40) || (vdp.statReg[2] & 0x40) )
 		{

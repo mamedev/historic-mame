@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/warpwarp.h"
 
 
 UINT8 *geebee_videoram,*warpwarp_videoram;

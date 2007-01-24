@@ -39,29 +39,6 @@ from 2.bin to 9.bin program eproms
 #include "cpu/m68000/m68kmame.h"
 #include "cps1.h"
 
-/* in drivers/cps1.c */
-extern READ16_HANDLER( cps1_dsw_r );
-extern READ16_HANDLER( cps1_in0_r );
-extern READ16_HANDLER( cps1_in1_r );
-extern READ16_HANDLER( cps1_in2_r );
-extern READ16_HANDLER( cps1_in3_r );
-extern WRITE16_HANDLER( cps1_coinctrl_w );
-extern WRITE16_HANDLER( cps1_coinctrl2_w );
-extern gfx_decode cps1_gfxdecodeinfo[];
-extern INTERRUPT_GEN( cps1_interrupt );
-
-/* in vidhrdw/cps1.c */
-extern tilemap *cps1_bg_tilemap[3];
-extern UINT16 *cps1_gfxram;
-extern UINT16 *cps1_output;
-extern int cps1_port(int offset);
-extern void cps1_get_video_base(void);
-extern void cps1_build_palette(void);
-extern int cps1_scroll1x, cps1_scroll1y;
-extern int cps1_scroll2x, cps1_scroll2y;
-extern int cps1_scroll3x, cps1_scroll3y;
-extern UINT16 *cps1_other;
-
 /* not verified */
 #define CPS1_ROWSCROLL_OFFS     0x20    /* base of row scroll offsets in other RAM */
 

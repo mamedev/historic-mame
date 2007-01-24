@@ -42,8 +42,7 @@ VIDEO_START( vigilant )
 {
 	video_start_generic(machine);
 
-	if ((bg_bitmap = auto_bitmap_alloc(512*4,256)) == 0)
-		return 1;
+	bg_bitmap = auto_bitmap_alloc(512*4,256);
 
 	return 0;
 }

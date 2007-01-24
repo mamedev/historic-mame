@@ -138,9 +138,7 @@ VIDEO_START( airbustr )
 	if ( !fg_tilemap )
 		return 1;
 
-	if ((sprites_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
-		return 1;
-
+	sprites_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 	tilemap_set_transparent_pen(fg_tilemap, 0);
 
 	tilemap_set_scrolldx(bg_tilemap, 0x094, 0x06a);

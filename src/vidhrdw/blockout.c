@@ -61,8 +61,7 @@ WRITE16_HANDLER( blockout_frontcolor_w )
 VIDEO_START( blockout )
 {
 	/* Allocate temporary bitmaps */
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
-		return 1;
+	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
 	return 0;
 }

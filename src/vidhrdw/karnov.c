@@ -235,8 +235,7 @@ WRITE16_HANDLER( karnov_playfield_w )
 VIDEO_START( karnov )
 {
 	/* Allocate bitmaps */
-	if ((bitmap_f = auto_bitmap_alloc(512,512)) == 0)
-		return 1;
+	bitmap_f = auto_bitmap_alloc(512,512);
 
 	dirty_f=auto_malloc(0x800);
 	memset(dirty_f,1,0x800);
@@ -252,8 +251,7 @@ VIDEO_START( karnov )
 VIDEO_START( wndrplnt )
 {
 	/* Allocate bitmaps */
-	if ((bitmap_f = auto_bitmap_alloc(512,512)) == 0)
-		return 1;
+	bitmap_f = auto_bitmap_alloc(512,512);
 
 	dirty_f=auto_malloc(0x800);
 	memset(dirty_f,1,0x800);

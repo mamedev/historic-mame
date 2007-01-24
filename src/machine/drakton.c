@@ -7,6 +7,7 @@
 ****************************************************************************************/
 
 #include "driver.h"
+#include "includes/dkong.h"
 
 static void drakton_decrypt_rom_8(void)
 {

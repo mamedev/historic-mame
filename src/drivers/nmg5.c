@@ -2,17 +2,159 @@
 
  Title                          Copyright            PCB - ID
  ----------------------------------------------------------------------------
+ Multi 5 / New Multi Game 5     (c) 1997 Yun Sung    YS-1300
  Multi 5 / New Multi Game 5     (c) 1998 Yun Sung    YS-1300 / YS-1301
  Search Eye                     (c) 1999 Yun Sung    YS-1905
  Puzzle Club (set 1)            (c) 2000 Yun Sung    YS-2113
  Puzzle Club (set 2)            (c) 2000 Yun Sung    YS-2111
- Wonder Stick                   (c) ???? Yun Sung    YS-2320
  Garogun Seroyang               (c) 2000 Yun Sung    YS-2111
+ Wonder Stick                   (c) ???? Yun Sung    YS-2320
 
  driver by Pierpaolo Prazzoli
 
-- nmg5:
-  Press player 2 button 2 in service mode to enable image test
+
+Stephh's notes (based on the games M68000 code and some tests) :
+
+1) 'nmg5'
+
+  - On title screen, there's a 1998 release date.
+    However, ending "Tong Boy" shows a 1997 copyright,
+    and there's even a 1996 date in the PRG ROMS :
+    look at addresses 0x0565bc to 0x0565bf to see it.
+  - There's sort of "protection" routine at address 0x000366.
+    Its effect is unknown but prevents the game to boot.
+  - Here are what the inputs which are read in "Test Mode" do :
+      * COIN1 : adds 1 coin (you can hear the sound)
+      * COIN2 : adds 1 coin (you can hear the sound)
+      * Player 2 BUTTON3 :
+          . if SW2-1 is ON, it goes to "Test Mode" routine
+          . if SW2-1 is OFF, it goes back to the game
+            WITHOUT resetting the number of coins / credits
+      * Player 2 BUTTON2 : toggles "Slideshow Mode" ON/OFF
+  - Here are what the additional inputs which are read in "Slideshow Mode" do :
+      * Player 1 BUTTON1 : (picture++)%0x1c  (next)
+      * Player 1 BUTTON2 : (picture--)%0x1c  (previous)
+  - Here are what the buttons do for each sub-game :
+      * Rocktris :
+          . BUTTON1 : Rotate counterclockwise
+          . BUTTON2 : Rotate counterclockwise (same as BUTTON1)
+          . BUTTON3 : UNUSED
+      * Bubble Gum :
+          . BUTTON1 : Fire
+          . BUTTON2 : UNUSED
+          . BUTTON3 : UNUSED
+      * Tong Boy :
+          . BUTTON1 : Jump / Fire (depending on stages)
+          . BUTTON2 : UNUSED
+          . BUTTON3 : UNUSED
+      * Cross Point :
+          . BUTTON1 : Rotate counterclockwise
+          . BUTTON2 : Help
+          . BUTTON3 : UNUSED
+      * Box Logic :
+          . BUTTON1 : Tag as good
+          . BUTTON2 : Tag as bad / Untag (switch)
+          . BUTTON3 : Help
+  - It is difficult to find a name for DSW1-6 and DSW1-7.
+    All I can tell is that it seems to affects the crocodiles
+    patterns in "Tong Boy". Watch the demo and see what you find.
+  - Unused DSW2-4 is told to be "Flip Screen" in "Test Mode",
+    but is in fact not read in-game. Leftover from another game ?
+
+2) 'nmg5e'
+
+  - On title screen, there's a 1997 release date.
+    However, there's a 1996 date in the PRG ROMS :
+    look at addresses 0x0564a4 to 0x0564a7 to see it.
+  - There are 2 main differences with the other set :
+      * The code for the "protection" routine doesn't exist
+      * Player 2 BUTTON2 is tested but has no visible effect
+        (there is no "Slideshow Mode" and code which tests
+        Player 1 BUTTON1 and Player 1 BUTTON2 doesn't exist)
+
+3) 'searchey'
+
+  - Here are what the buttons do :
+      * BUTTON1 : spot
+      * BUTTON2 : help
+  - It's difficult to find a good description for DSW2-1 !
+    All I can tell is that it affects the number of items to find :
+      * OFF : table at 0x024cae (4 items for level 1)
+      * ON  : table at 0x024d3c (3 items for level 1)
+
+4) 'psclubys*'
+
+  - Here are what the buttons do for each sub-game :
+      * Magic Eye :
+          . BUTTON1 : Fire
+          . BUTTON2 : Fire (same as BUTTON1)
+          . BUTTON3 : UNUSED
+      * Box Logic :
+          . BUTTON1 : Tag as good
+          . BUTTON2 : Tag as bad / Untag (switch)
+          . BUTTON3 : Help
+      * Mad Ball :
+          . BUTTON1 : Jump / Launch ball
+          . BUTTON2 : Fire
+          . BUTTON3 : UNUSED
+      * Magic Bubble :
+          . BUTTON1 : Fire
+          . BUTTON2 : UNUSED
+          . BUTTON3 : UNUSED
+      * Bogle Puyo :
+          . BUTTON1 : Rotate counterclockwise
+          . BUTTON2 : Rotate clockwise
+          . BUTTON3 : UNUSED
+      * Rocktris :
+          . BUTTON1 : Rotate counterclockwise
+          . BUTTON2 : Rotate counterclockwise (same as BUTTON1)
+          . BUTTON3 : UNUSED
+  - DSW1-6 only affects "Magic Bubble", "Bogle Puyo" and "Rocktris" sub-games.
+  - There are 72 gals pics, 36 of them are "soft" (sort girls are even not nude)
+    and the 36 others are "hard".
+    When nudity set to "Soft only", the game will only display "soft" gals pics.
+    When nudity set to "Soft and High", the game will alternate "soft" and "hard" gals pics.
+    There is no gals pics (thus no nudity) in "Magic Eye" and "Bogle Puyo" sub-games.
+    "Girl view" choice in "Test Mode" is also affected by DSW1-5.
+  - As there is no nudity in "Magic Eye" sub-game, I haven't been able
+    to determine effect of DSW1-5. Have a look at routine at 0x006dc8 ('pclubys')
+    or 0x006dc4 ('pclubysa') and see what you find.
+
+5) 'garogun'
+
+  - Here are what the buttons do :
+      * BUTTON1 : spot
+      * BUTTON2 : help
+  - The game starts as soon as you have inserted enough coins.
+    However, the START button is needed when you want to continue play.
+  - There are 12 main levels and 3 bonus levels :
+      * levels  1 to 6  : 3 sub-levels each - 1 bonus level after 2 full main levels
+      * levels  7 to 9  : 5 sub-levels each - 1 bonus level after 1 full main level
+      * levels 10 to 12 : 5 sub-levels each - 1 bonus level after 1 full main level
+        (there is no bonus game when you end full main level 12)
+  - There's an ingame bug when timer for bonus game is displayed :
+      * Level is stored at address 0x2056c8 :
+          . 0x00 to 0x0b : main levels 1 to 12
+          . 0x0c : bonus level 3
+          . 0x0d : bonus level 2
+          . 0x0e : bonus level 1
+      * Routine that handles starting time begins at address 0x010a22.
+      * The problem is that when time is displayed in bonus game screen,
+        the value stored at 0x2056c8 is still the one from the main level
+        instead of being the one from the bonus game. So the time which
+        is displayed is incorrect and it sometimes causes graphics glitches.
+        However, when bonus game starts, value stored at 0x2056c8 is good.
+   - Depending on "Helps" Dip Switch, you get 1 to 4 helps at start.
+     Then, depending on your starting level, you get additional helps :
+       * level 1 : +0
+       * level 3 : +1
+       * level 5 : +2
+
+6) 'wondstck'
+
+  - Here are what the buttons do :
+      * BUTTON1 : trace
+      * BUTTON2 : help
 
 */
 
@@ -154,62 +296,59 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START( nmg5 )
 	PORT_START_TAG("DSW")
-	PORT_DIPNAME( 0x0001, 0x0001, "Game Title" )
+	PORT_DIPNAME( 0x0001, 0x0001, "Game Title" )            PORT_DIPLOCATION("SW1:8")
 	PORT_DIPSETTING(      0x0001, "Multi 5" )
 	PORT_DIPSETTING(      0x0000, "New Multi Game 5" )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0018, 0x0018, "License" )
+	PORT_DIPNAME( 0x0006, 0x0006, "Crocodiles (Tong Boy)" ) PORT_DIPLOCATION("SW1:7,6")   // See notes
+	PORT_DIPSETTING(      0x0006, "Pattern 1" )
+	PORT_DIPSETTING(      0x0002, "Pattern 2" )
+	PORT_DIPSETTING(      0x0004, "Pattern 3" )
+	PORT_DIPSETTING(      0x0000, "Pattern 4" )
+	PORT_DIPNAME( 0x0018, 0x0018, "License" )               PORT_DIPLOCATION("SW1:5,4")
 	PORT_DIPSETTING(      0x0000, "New Impeuropex Corp. S.R.L." )
 	PORT_DIPSETTING(      0x0008, "BNS Enterprises" )
 	PORT_DIPSETTING(      0x0010, "Nova Games" )
 	PORT_DIPSETTING(      0x0018, DEF_STR( None ) )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Hard ) )
-	PORT_DIPSETTING(      0x00c0, DEF_STR( Normal ) )
+	PORT_DIPNAME( 0x0020, 0x0020, "1P Vs 2P Rounds (Bubble Gum)" )    PORT_DIPLOCATION("SW1:3")
+	PORT_DIPSETTING(      0x0020, "Best of 1" )             /* 1 winning round needed */
+	PORT_DIPSETTING(      0x0000, "Best of 3" )             /* 2 winning rounds needed */
+	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Difficulty ) )   PORT_DIPLOCATION("SW1:2,1")
 	PORT_DIPSETTING(      0x0040, DEF_STR( Easy ) )
-	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( 2C_1C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(      0x0300, DEF_STR( 1C_1C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(      0x0100, DEF_STR( 1C_2C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(      0x0300, DEF_STR( 1C_1C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
-	PORT_DIPSETTING(      0x0100, DEF_STR( 1C_3C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
-	PORT_DIPSETTING(      0x0200, DEF_STR( 1C_4C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
-	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( 2C_1C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(      0x0c00, DEF_STR( 1C_1C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(      0x0400, DEF_STR( 1C_2C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
-	PORT_DIPSETTING(      0x0800, DEF_STR( 3C_1C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
-	PORT_DIPSETTING(      0x0400, DEF_STR( 2C_1C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
-	PORT_DIPSETTING(      0x0c00, DEF_STR( 1C_1C ) )	PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Flip_Screen ) ) /* doesn't work */
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Coin_B ) )       PORT_DIPLOCATION("SW2:8,7")
+	PORT_DIPSETTING(      0x0200, DEF_STR( 2C_1C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
+	PORT_DIPSETTING(      0x0300, DEF_STR( 1C_1C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
+	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
+	PORT_DIPSETTING(      0x0100, DEF_STR( 1C_2C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
+	PORT_DIPSETTING(      0x0300, DEF_STR( 1C_1C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
+	PORT_DIPSETTING(      0x0100, DEF_STR( 1C_3C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
+	PORT_DIPSETTING(      0x0200, DEF_STR( 1C_4C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Coin_A ) )       PORT_DIPLOCATION("SW2:6,5")
+	PORT_DIPSETTING(      0x0800, DEF_STR( 2C_1C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
+	PORT_DIPSETTING(      0x0c00, DEF_STR( 1C_1C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
+	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
+	PORT_DIPSETTING(      0x0400, DEF_STR( 1C_2C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_NOTEQUALS,0x00)
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
+	PORT_DIPSETTING(      0x0800, DEF_STR( 3C_1C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
+	PORT_DIPSETTING(      0x0400, DEF_STR( 2C_1C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
+	PORT_DIPSETTING(      0x0c00, DEF_STR( 1C_1C ) )        PORT_CONDITION("DSW",0x4000,PORTCOND_EQUALS,0x00)
+	PORT_DIPUNUSED_DIPLOC( 0x1000, IP_ACTIVE_LOW, "SW2:4" )                               // See notes
+	PORT_DIPNAME( 0x2000, 0x0000, DEF_STR( Demo_Sounds ) )  PORT_DIPLOCATION("SW2:3")
 	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, "Coin Type" )
+	PORT_DIPNAME( 0x4000, 0x4000, "Coin Type" )             PORT_DIPLOCATION("SW2:2")
 	PORT_DIPSETTING(      0x4000, "1" )
 	PORT_DIPSETTING(      0x0000, "2" )
-	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
+	PORT_SERVICE_DIPLOC( 0x8000, IP_ACTIVE_LOW, "SW2:1" )
 
 	PORT_START	/* Coins */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW,  IPT_COIN2 )
-	PORT_BIT( 0x0050, IP_ACTIVE_HIGH, IPT_SPECIAL ) // otherwise it doesn't boot
-	PORT_BIT( 0xffac, IP_ACTIVE_LOW,  IPT_UNUSED )  // tested in service mode
+	PORT_BIT( 0x0050, IP_ACTIVE_HIGH, IPT_SPECIAL )         // otherwise it doesn't boot (unneeded for 'nmg5e' - see notes)
+	PORT_BIT( 0xffac, IP_ACTIVE_LOW,  IPT_UNUSED )          // tested in service mode
 
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(1) PORT_8WAY
@@ -232,192 +371,107 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( searchey )
 	PORT_START
-	PORT_DIPNAME( 0x0003, 0x0003, "Time Speed" )
-	PORT_DIPSETTING(      0x0000, "Fastest" )
-	PORT_DIPSETTING(      0x0001, "Fast" )
-	PORT_DIPSETTING(      0x0002, "Slow" )
+	PORT_DIPNAME( 0x0003, 0x0003, "Timer Speed" )           PORT_DIPLOCATION("SW1:8,7")
 	PORT_DIPSETTING(      0x0003, "Slowest" )
-	PORT_DIPNAME( 0x000c, 0x0000, "Number of Helps" )
+	PORT_DIPSETTING(      0x0002, "Slow" )
+	PORT_DIPSETTING(      0x0001, "Fast" )
+	PORT_DIPSETTING(      0x0000, "Fastest" )
+	PORT_DIPNAME( 0x000c, 0x0000, "Helps" )                 PORT_DIPLOCATION("SW1:6,5")
 	PORT_DIPSETTING(      0x000c, "1" )
 	PORT_DIPSETTING(      0x0008, "2" )
 	PORT_DIPSETTING(      0x0004, "3" )
 	PORT_DIPSETTING(      0x0000, "4" )
-	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Lives ) )        PORT_DIPLOCATION("SW1:4,3")
 	PORT_DIPSETTING(      0x0020, "3" )
 	PORT_DIPSETTING(      0x0010, "4" )
 	PORT_DIPSETTING(      0x0030, "5" )
 	PORT_DIPSETTING(      0x0000, "6" )
-	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_2C ) )
-	PORT_SERVICE( 0x0100, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0200, 0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x0000, DEF_STR( Language ) )
-	PORT_DIPSETTING(      0x2000, "Korean" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( English ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, "Items to Start Finding" )
-	PORT_DIPSETTING(      0x0000, "3" )
-	PORT_DIPSETTING(      0x8000, "4" )
-
-	PORT_START	/* Coins */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0xfffe, IP_ACTIVE_LOW,  IPT_UNUSED )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(1) PORT_8WAY
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(1) PORT_8WAY
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(1) PORT_8WAY
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1) PORT_8WAY
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1) // not used
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(2) PORT_8WAY
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(2) PORT_8WAY
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(2) PORT_8WAY
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2) PORT_8WAY
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2) // not used
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
-INPUT_PORTS_END
-
-INPUT_PORTS_START( pclubys )
-	PORT_START
-	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0000, "Nude Girls" )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0030, DEF_STR( Easy ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Normal ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Medium ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )
-	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0040, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_2C ) )
-	PORT_SERVICE( 0x0100, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x4000, "4" )
-	PORT_DIPSETTING(      0x0000, "3" )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0xfffe, IP_ACTIVE_LOW,  IPT_UNUSED )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(1) PORT_8WAY
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(1) PORT_8WAY
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(1) PORT_8WAY
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1) PORT_8WAY
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(2) PORT_8WAY
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(2) PORT_8WAY
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(2) PORT_8WAY
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2) PORT_8WAY
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
-INPUT_PORTS_END
-
-INPUT_PORTS_START( wondstck )
-	PORT_START_TAG("DSW")
-	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unused ) ) PORT_DIPLOCATION("SW1:8")
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unused ) ) PORT_DIPLOCATION("SW1:7")
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unused ) ) PORT_DIPLOCATION("SW1:6")
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unused ) ) PORT_DIPLOCATION("SW1:5")
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, "Number of Jumps" ) PORT_DIPLOCATION("SW1:4") /* AKA "Helps" */
-	PORT_DIPSETTING(      0x0010, "3" )
-	PORT_DIPSETTING(      0x0000, "5" )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Lives ) ) PORT_DIPLOCATION("SW1:3")
-	PORT_DIPSETTING(      0x0020, "3" )
-	PORT_DIPSETTING(      0x0000, "5" )
-	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Coinage ) ) PORT_DIPLOCATION("SW1:1,2")
+	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Coinage ) )      PORT_DIPLOCATION("SW1:2,1")
 	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_2C ) )
 	PORT_SERVICE_DIPLOC( 0x0100, IP_ACTIVE_LOW, "SW2:8" )
-	PORT_DIPNAME( 0x0200, 0x0000, DEF_STR( Demo_Sounds ) ) PORT_DIPLOCATION("SW2:7")
+	PORT_DIPNAME( 0x0200, 0x0000, DEF_STR( Demo_Sounds ) )  PORT_DIPLOCATION("SW2:7")
 	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unused ) ) PORT_DIPLOCATION("SW2:6")
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unused ) ) PORT_DIPLOCATION("SW2:5")
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unused ) ) PORT_DIPLOCATION("SW2:4")
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unused ) ) PORT_DIPLOCATION("SW2:3")
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Difficulty ) ) PORT_DIPLOCATION("SW2:1,2")
-	PORT_DIPSETTING(      0x8000, DEF_STR( Easy ) )
-	PORT_DIPSETTING(      0xc000, DEF_STR( Normal ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Hard ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Very_Hard ) )
+	PORT_DIPUNUSED_DIPLOC( 0x0400, IP_ACTIVE_LOW, "SW2:6" )
+	PORT_DIPUNUSED_DIPLOC( 0x0800, IP_ACTIVE_LOW, "SW2:5" )
+	PORT_DIPUNUSED_DIPLOC( 0x1000, IP_ACTIVE_LOW, "SW2:4" )
+	PORT_DIPNAME( 0x2000, 0x0000, DEF_STR( Language ) )     PORT_DIPLOCATION("SW2:3")
+	PORT_DIPSETTING(      0x0000, DEF_STR( English ) )
+	PORT_DIPSETTING(      0x2000, "Korean" )
+	PORT_DIPUNUSED_DIPLOC( 0x4000, IP_ACTIVE_LOW, "SW2:2" )
+	PORT_DIPNAME( 0x8000, 0x8000, "Items to find" )         PORT_DIPLOCATION("SW2:1")     // See notes
+	PORT_DIPSETTING(      0x0000, "Less" )
+	PORT_DIPSETTING(      0x8000, "More" )
 
 	PORT_START	/* Coins */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0xfffe, IP_ACTIVE_LOW,  IPT_UNUSED )  // tested in service mode
+	PORT_BIT( 0xfffe, IP_ACTIVE_LOW,  IPT_UNUSED )          // tested in service mode
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )           // tested in service mode
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )           // tested in service mode
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( pclubys )
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0000, "Lives (Mad Ball)" )      PORT_DIPLOCATION("SW1:8")
+	PORT_DIPSETTING(      0x0000, "3" )
+	PORT_DIPSETTING(      0x0001, "4" )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )  PORT_DIPLOCATION("SW1:7")
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, "1P Vs 2P Rounds" )       PORT_DIPLOCATION("SW1:6")     // See notes
+	PORT_DIPSETTING(      0x0000, "Best of 1" )             /* 1 winning round needed */
+	PORT_DIPSETTING(      0x0020, "Best of 3" )             /* 2 winning rounds needed */
+	PORT_DIPNAME( 0x0008, 0x0000, "Nudity" )                PORT_DIPLOCATION("SW1:5")     // See notes
+	PORT_DIPSETTING(      0x0008, "Soft only" )
+	PORT_DIPSETTING(      0x0000, "Soft and Hard" )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Difficulty ) )   PORT_DIPLOCATION("SW1:4,3")
+	PORT_DIPSETTING(      0x0030, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Coinage ) )      PORT_DIPLOCATION("SW1:2,1")
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_2C ) )
+	PORT_SERVICE_DIPLOC( 0x0100, IP_ACTIVE_LOW, "SW2:8" )
+	PORT_DIPUNUSED_DIPLOC( 0x0200, IP_ACTIVE_LOW, "SW2:7" )
+	PORT_DIPUNUSED_DIPLOC( 0x0400, IP_ACTIVE_LOW, "SW2:6" )
+	PORT_DIPUNUSED_DIPLOC( 0x0800, IP_ACTIVE_LOW, "SW2:5" )
+	PORT_DIPNAME( 0x3000, 0x3000, "Timer Speed (Magic Eye)" )    PORT_DIPLOCATION("SW2:4,3")
+	PORT_DIPSETTING(      0x3000, "Slowest" )
+	PORT_DIPSETTING(      0x2000, "Slow" )
+	PORT_DIPSETTING(      0x1000, "Fast" )
+	PORT_DIPSETTING(      0x0000, "Fastest" )
+	PORT_DIPNAME( 0x4000, 0x0000, "Lives (Magic Eye)" )     PORT_DIPLOCATION("SW2:2")
+	PORT_DIPSETTING(      0x0000, "3" )
+	PORT_DIPSETTING(      0x4000, "4" )
+	PORT_DIPNAME( 0x8000, 0x8000, "Timer Speed (Box Logic)" )    PORT_DIPLOCATION("SW2:1")
+	PORT_DIPSETTING(      0x8000, "Slow" )
+	PORT_DIPSETTING(      0x0000, "Fast" )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_COIN1 )
+	PORT_BIT( 0xfffe, IP_ACTIVE_LOW,  IPT_UNUSED )          // tested in service mode
 
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(1) PORT_8WAY
@@ -440,54 +494,86 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( garogun )
 	PORT_START
-	PORT_DIPNAME( 0x0003, 0x0003, "Number of Helps" )
+	PORT_DIPNAME( 0x0003, 0x0003, "Helps" )                 PORT_DIPLOCATION("SW1:8,7")
 	PORT_DIPSETTING(      0x0000, "1" )
 	PORT_DIPSETTING(      0x0001, "2" )
 	PORT_DIPSETTING(      0x0002, "3" )
 	PORT_DIPSETTING(      0x0003, "4" )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Coinage ) )
+	PORT_DIPNAME( 0x000c, 0x000c, "Timer Speed (Bonus Levels)" ) PORT_DIPLOCATION("SW1:6,5")
+	PORT_DIPSETTING(      0x000c, "Slowest" )
+	PORT_DIPSETTING(      0x0008, "Slow" )
+	PORT_DIPSETTING(      0x0004, "Fast" )
+	PORT_DIPSETTING(      0x0000, "Fastest" )
+	PORT_DIPNAME( 0x0030, 0x0030, "Timer Speed (Main Levels)" )  PORT_DIPLOCATION("SW1:4,3")
+	PORT_DIPSETTING(      0x0030, "Slowest" )
+	PORT_DIPSETTING(      0x0020, "Slow" )
+	PORT_DIPSETTING(      0x0010, "Fast" )
+	PORT_DIPSETTING(      0x0000, "Fastest" )
+	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Coinage ) )      PORT_DIPLOCATION("SW1:2,1")
 	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_2C ) )
-	PORT_SERVICE( 0x0100, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0200, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_SERVICE_DIPLOC( 0x0100, IP_ACTIVE_LOW, "SW2:8" )
+	PORT_DIPNAME( 0x0200, 0x0000, DEF_STR( Demo_Sounds ) )  PORT_DIPLOCATION("SW2:7")
 	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPUNUSED_DIPLOC( 0x0400, IP_ACTIVE_LOW, "SW2:6" )
+	PORT_DIPUNUSED_DIPLOC( 0x0800, IP_ACTIVE_LOW, "SW2:5" )
+	PORT_DIPUNUSED_DIPLOC( 0x1000, IP_ACTIVE_LOW, "SW2:4" )
+	PORT_DIPUNUSED_DIPLOC( 0x2000, IP_ACTIVE_LOW, "SW2:3" )
+	PORT_DIPUNUSED_DIPLOC( 0x4000, IP_ACTIVE_LOW, "SW2:2" )
+	PORT_DIPUNUSED_DIPLOC( 0x8000, IP_ACTIVE_LOW, "SW2:1" )
+
+	PORT_START	/* Coins */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0xfffe, IP_ACTIVE_LOW, IPT_UNUSED )           // tested in service mode
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0xff40, IP_ACTIVE_LOW, IPT_UNUSED )           // tested in service mode
+INPUT_PORTS_END
+
+INPUT_PORTS_START( wondstck )
+	PORT_START_TAG("DSW")
+	PORT_DIPUNUSED_DIPLOC( 0x0001, IP_ACTIVE_LOW, "SW1:8" )
+	PORT_DIPUNUSED_DIPLOC( 0x0002, IP_ACTIVE_LOW, "SW1:7" )
+	PORT_DIPUNUSED_DIPLOC( 0x0004, IP_ACTIVE_LOW, "SW1:6" )
+	PORT_DIPUNUSED_DIPLOC( 0x0008, IP_ACTIVE_LOW, "SW1:5" )
+	PORT_DIPNAME( 0x0010, 0x0010, "Helps" )                 PORT_DIPLOCATION("SW1:4")
+	PORT_DIPSETTING(      0x0010, "3" )
+	PORT_DIPSETTING(      0x0000, "5" )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Lives ) )        PORT_DIPLOCATION("SW1:3")
+	PORT_DIPSETTING(      0x0020, "3" )
+	PORT_DIPSETTING(      0x0000, "5" )
+	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Coinage ) )      PORT_DIPLOCATION("SW1:2,1")
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_2C ) )
+	PORT_SERVICE_DIPLOC( 0x0100, IP_ACTIVE_LOW, "SW2:8" )
+	PORT_DIPNAME( 0x0200, 0x0000, DEF_STR( Demo_Sounds ) )  PORT_DIPLOCATION("SW2:7")
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPUNUSED_DIPLOC( 0x0400, IP_ACTIVE_LOW, "SW2:6" )
+	PORT_DIPUNUSED_DIPLOC( 0x0800, IP_ACTIVE_LOW, "SW2:5" )
+	PORT_DIPUNUSED_DIPLOC( 0x1000, IP_ACTIVE_LOW, "SW2:4" )
+	PORT_DIPUNUSED_DIPLOC( 0x2000, IP_ACTIVE_LOW, "SW2:3" )
+	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Difficulty ) )   PORT_DIPLOCATION("SW2:2,1")
+	PORT_DIPSETTING(      0x8000, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0xc000, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
 
 	PORT_START	/* Coins */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0xfffe, IP_ACTIVE_LOW,  IPT_UNUSED )
+	PORT_BIT( 0xfffe, IP_ACTIVE_LOW,  IPT_UNUSED )          // tested in service mode
 
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(1) PORT_8WAY
@@ -496,7 +582,7 @@ INPUT_PORTS_START( garogun )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1) PORT_8WAY
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1) // not used
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(2) PORT_8WAY
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(2) PORT_8WAY
@@ -504,7 +590,7 @@ INPUT_PORTS_START( garogun )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2) PORT_8WAY
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2) // not used
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
 INPUT_PORTS_END
 
@@ -778,6 +864,40 @@ static MACHINE_DRIVER_START( pclubys )
 MACHINE_DRIVER_END
 
 
+/*
+
+Multi 5 / New Multi Game 5
+Yunsung, 1997/1998
+
+PCB Layout
+----------
+
+YS-1300
++------------------------------------------+
+| 4.000MHz 6116  xra1           ufa1       |
+|          xh15   M6295         uj1        |
+| YM3014 YM3812 Z8400AB1        uf1        |
+|                               uh1        |
+|J                              uf2        |
+|A DIP1        62256                       |
+|M             62256    Actel   srom5 srom6|
+|M                      A1020B  srom7 srom8|
+|A     ub15             Actel   srom2 srom1|
+|      ub16             A1020B  srom4 srom3|
+|DIP2 MC68HC000P16                     6264|
+|                                      6264|
+| 16.00MHz 14.31818MHz                     |
++------------------------------------------+
+
+Notes:
+  68000 16MHz
+  Z80A 4MHz
+  K-664/K-666 & AD-65 (YM3014/YM3812 & OKI M6295)
+  Actel A1020B PL84C (x2)
+  4.000MHz, 16.000MHz & 14.31818MHz OSCs
+
+*/
+
 ROM_START( nmg5 )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "ub15.bin", 0x000000, 0x80000, CRC(36af3e2f) SHA1(735aaa901290b1d921242869e81e59649905eb30) )
@@ -802,6 +922,35 @@ ROM_START( nmg5 )
 	ROM_LOAD( "ufa1.bin",0x080000, 0x40000, CRC(ba73ed2d) SHA1(efd2548fb0ada11ff98b73335689d2394cbf42a4) )
 	ROM_LOAD( "uh1.bin", 0x0c0000, 0x40000, CRC(f7726e8e) SHA1(f28669725609ffab7c6c3bfddbe293c55ddd0155) )
 	ROM_LOAD( "uj1.bin", 0x100000, 0x40000, CRC(54f7486e) SHA1(88a237a1005b1fd70b6d8544ef60a0d16cb38e6f) )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "xra1.bin", 0x00000, 0x20000, CRC(c74a4f3e) SHA1(2f6165c1d5bdd3e816b95ffd9303dd4bd07f7ac8) )
+ROM_END
+
+ROM_START( nmg5e )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "ub15.rom", 0x000000, 0x80000, CRC(578516e2) SHA1(87785e0071c62f17664e875d95cd6124984b8080) )
+	ROM_LOAD16_BYTE( "ub16.rom", 0x000001, 0x80000, CRC(12fab483) SHA1(3b6a410b730d8bf5a81470ec9cdc46c05da0721b) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Z80 Code */
+	ROM_LOAD( "xh15.bin", 0x00000, 0x10000, CRC(12d047c4) SHA1(3123b1856219380ff598a2fad97a66863e30d80f) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )	/* 8x8x8 */
+	ROM_LOAD( "srom1.rom", 0x000000, 0x80000, CRC(6df3e0c2) SHA1(855e7d3a75d18c92cfb18ddbe7d110ae6879870d) )
+	ROM_LOAD( "srom2.rom", 0x080000, 0x80000, CRC(3caf65f9) SHA1(da0d417ab6b57fb33e7ed62d4e00b47698764e11) )
+	ROM_LOAD( "srom3.rom", 0x100000, 0x80000, CRC(812f3f87) SHA1(157270343674265ef7d6415a970084ba05daf061) )
+	ROM_LOAD( "srom4.rom", 0x180000, 0x80000, CRC(edb8299d) SHA1(ab5c1195bf2229b50992994031eb8e9a6847b652) )
+	ROM_LOAD( "srom5.rom", 0x200000, 0x80000, CRC(79821f18) SHA1(228de566f47339d30caf5908f78368ed45ba8da3) )
+	ROM_LOAD( "srom6.rom", 0x280000, 0x80000, CRC(7e37abaf) SHA1(16361d08f6da49b5ee57185febd1dc14a609f415) )
+	ROM_LOAD( "srom7.rom", 0x300000, 0x80000, CRC(b7a9c660) SHA1(d4f39e99813cd2635a95bd05a3776587a2f9351b) )
+	ROM_LOAD( "srom8.rom", 0x380000, 0x80000, CRC(d7ba6058) SHA1(31739fc233ad9b565631b72aab7f9f5a70eca15f) )
+
+	ROM_REGION( 0x140000, REGION_GFX2, ROMREGION_DISPOSE )	/* 16x16x5 */
+	ROM_LOAD( "uf1.rom", 0x000000, 0x40000, CRC(502dbd65) SHA1(b44c7fa61180c807b55f5fd12ef9cba82b0fe18b) )
+	ROM_LOAD( "uf2.rom", 0x040000, 0x40000, CRC(6744cca0) SHA1(f1a45c9b5cd6f4131511910199f71e98a79a4d97) )
+	ROM_LOAD( "ufa1.rom",0x080000, 0x40000, CRC(7110677f) SHA1(8a644223bbf87af446796347d6b0309b439b43dc) )
+	ROM_LOAD( "uh1.rom", 0x0c0000, 0x40000, CRC(f6a3ef4d) SHA1(9d5c011ec5eb69822905d0872d5baf55dc76ca39) )
+	ROM_LOAD( "uj1.rom", 0x100000, 0x40000, CRC(0595d8ef) SHA1(b2f2fbd8cf6dce6358db9cd976aa7d117cafb5ae) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "xra1.bin", 0x00000, 0x20000, CRC(c74a4f3e) SHA1(2f6165c1d5bdd3e816b95ffd9303dd4bd07f7ac8) )
@@ -848,7 +997,7 @@ YS-2113
 |----------------------------------------------|
 |ROM1.128 ROM2.137 ROM3.7  62256  ROM5.97      |
 |  6116 Z80  6295  ROM4.2  62256  ROM6.95      |
-|  YMXXXX   16MHz     PAL         ROM7.105     |
+|  YM3812   16MHz     PAL         ROM7.105     |
 |  YM3014             PAL  PAL    ROM8.83      |
 |          62256    68000         ROM9.82      |
 |          62256           6116     14.38383MHz|
@@ -865,11 +1014,12 @@ YS-2113
 |                   QL2003        PAL          |
 |  ROM13.164  ROM12.165           PAL          |
 |----------------------------------------------|
+
 Notes:
       68000 clock : 16.000MHz
       Z80 clock   : 4.000MHz (16/4)
       M6295 clock : 1.000MHz (16/16). Sample Rate = 1000000 / 132
-      YMXXXX clock: 4.000MHz (16/4). Chip is either YM2151 or YM3812
+      YM3812 clock: 4.000MHz (16/4).
       VSync       : 60Hz
 
 */
@@ -982,14 +1132,14 @@ ROM_START( garogun )
 	ROM_LOAD( "s.u137", 0x00000, 0x80000, CRC(3eadc21a) SHA1(b1c131c3f59adbc370696b277f8f04681212761d) )
 ROM_END
 
-DRIVER_INIT( prot_val_10 )
-{
-	prot_val = 0x10;
-}
-
 DRIVER_INIT( prot_val_00 )
 {
 	prot_val = 0x00;
+}
+
+DRIVER_INIT( prot_val_10 )
+{
+	prot_val = 0x10;
 }
 
 DRIVER_INIT( prot_val_40 )
@@ -998,8 +1148,9 @@ DRIVER_INIT( prot_val_40 )
 }
 
 GAME( 1998, nmg5,     0,       nmg5,    nmg5,      prot_val_10, ROT0, "Yun Sung", "Multi 5 / New Multi Game 5", GAME_SUPPORTS_SAVE )
+GAME( 1997, nmg5e,    nmg5,    nmg5,    nmg5,      prot_val_10, ROT0, "Yun Sung", "Multi 5 / New Multi Game 5 (earlier)", GAME_SUPPORTS_SAVE )
 GAME( 1999, searchey, 0,       nmg5,    searchey,  prot_val_10, ROT0, "Yun Sung", "Search Eye", GAME_SUPPORTS_SAVE )
-GAME( 2000, pclubys,  0,       pclubys, pclubys,   prot_val_10, ROT0, "Yun Sung", "Puzzle Club (Yun Sung - set 1)", GAME_SUPPORTS_SAVE )
-GAME( 2000, pclubysa, pclubys, pclubys, pclubys,   prot_val_10, ROT0, "Yun Sung", "Puzzle Club (Yun Sung - set 2)", GAME_SUPPORTS_SAVE )
+GAME( 2000, pclubys,  0,       pclubys, pclubys,   prot_val_10, ROT0, "Yun Sung", "Puzzle Club (Yun Sung, set 1)", GAME_SUPPORTS_SAVE )
+GAME( 2000, pclubysa, pclubys, pclubys, pclubys,   prot_val_10, ROT0, "Yun Sung", "Puzzle Club (Yun Sung, set 2)", GAME_SUPPORTS_SAVE )
 GAME( 2000, garogun,  0,       garogun, garogun,   prot_val_40, ROT0, "Yun Sung", "Garogun Seroyang (Korea)", GAME_SUPPORTS_SAVE )
 GAME( ????, wondstck, 0,       nmg5,    wondstck,  prot_val_00, ROT0, "Yun Sung", "Wonder Stick", GAME_SUPPORTS_SAVE )

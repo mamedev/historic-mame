@@ -887,6 +887,9 @@ const game_driver * const drivers[] =
 	DRIVER( jjack )		/* (c) 1984 */
 	DRIVER( kickridr )	/* (c) 1984 */
 	DRIVER( idsoccer )	/* (c) 1985 */
+	DRIVER( superdq )	/* (c) 1984 */
+	DRIVER( superdqs )	/* (c) 1984 */
+	DRIVER( superdqa )	/* (c) 1984 */
 
 	/* Nintendo games */
 	DRIVER( spacefev )	/* (c) 1979 Nintendo */
@@ -1013,6 +1016,7 @@ const game_driver * const drivers[] =
 	DRIVER( rbibb )		/* (c) 1987 Namco */
 	DRIVER( rbibba )	/* (c) 1987 Namco */
 	DRIVER( suprmrio )	/* (c) 1986 Nintendo */
+	DRIVER( suprmria )	/* (c) 1986 Nintendo */
 	DRIVER( vsskykid )	/* (c) 1986 Namco */
 	DRIVER( tkoboxng )	/* (c) 1987 Data East */
 	DRIVER( smgolf )	/* (c) 1984 Nintendo */
@@ -1568,6 +1572,7 @@ const game_driver * const drivers[] =
 	DRIVER( bubbobr1 )	/* A78 (c) 1986 Taito America Corporation + Romstar license */
 	DRIVER( boblbobl )	/* bootleg */
 	DRIVER( sboblbob )	/* bootleg */
+	DRIVER( bub68705 )	/* bootleg */
 	DRIVER( missb2 )	/* bootleg on enhanced hardware */
 	DRIVER( kikikai )	/* A85 (c) 1986 Taito Corporation */
 	DRIVER( knightb )	/* bootleg */
@@ -6592,6 +6597,7 @@ Other Sun games
 	DRIVER( shocking )	/* (c) 1997 Yun Sung */
 	DRIVER( bombkick )	/* (c) 1998 Yun Sung */
 	DRIVER( nmg5 )		/* (c) 1998 Yun Sung */
+	DRIVER( nmg5e )		/* (c) 1998 Yun Sung */
 	DRIVER( searchey )	/* (c) 1999 Yun Sung */
 	DRIVER( pclubys )	/* (c) 2000 Yun Sung */
 	DRIVER( pclubysa )	/* (c) 2000 Yun Sung */
@@ -7364,5 +7370,6 @@ Other Sun games
 	DRIVER( discoboy )	/* (c) 1993 Soft Art Co. */
 	DRIVER( steaser )
 	DRIVER( pangofun )	/* (c) 1995 InfoCube */
+	DRIVER( 2mindril )	/* (c) 1993 Taito */
 
 #endif	/* DRIVER_RECURSIVE */

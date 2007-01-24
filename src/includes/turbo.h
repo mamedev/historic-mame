@@ -65,13 +65,6 @@ struct _turbo_state
 };
 
 
-/*----------- defined in drivers/turbo.c -----------*/
-
-void turbo_update_tachometer(void);
-void turbo_update_segments(void);
-
-
-
 /*----------- defined in sndhrdw/turbo.c -----------*/
 
 MACHINE_DRIVER_EXTERN( turbo_samples );

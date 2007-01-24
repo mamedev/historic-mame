@@ -300,11 +300,6 @@ VIDEO_START( firetrk )
 	helper1 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	helper2 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 
-	if (helper1 == NULL || helper2 == NULL)
-	{
-		return 1;
-	}
-
 	tilemap1 = tilemap_create(get_tile_info1, get_memory_offset, TILEMAP_OPAQUE, 16, 16, 16, 16);
 	tilemap2 = tilemap_create(get_tile_info2, get_memory_offset, TILEMAP_OPAQUE, 16, 16, 16, 16);
 

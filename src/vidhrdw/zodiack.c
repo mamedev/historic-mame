@@ -7,13 +7,12 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/espial.h"
 
 UINT8 *zodiack_videoram2;
 UINT8 *zodiack_attributesram;
 UINT8 *zodiack_bulletsram;
 size_t zodiack_bulletsram_size;
-
-extern int percuss_hardware;
 
 static tilemap *bg_tilemap, *fg_tilemap;
 

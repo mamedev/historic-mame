@@ -70,8 +70,6 @@ VIDEO_START( mnchmobl )
 	dirtybuffer = auto_malloc(0x100);
 	memset( dirtybuffer, 1, 0x100 );
 	tmpbitmap = auto_bitmap_alloc(512,512);
-	if( !tmpbitmap )
-		return 1;
 	return 0;
 }
 
