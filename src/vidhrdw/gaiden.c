@@ -81,9 +81,6 @@ VIDEO_START( gaiden )
 	foreground = tilemap_create(get_fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 64, 32);
 	text_layer = tilemap_create(get_tx_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT,  8,  8, 32, 32);
 
-	if (!text_layer || !foreground || !background)
-		return 1;
-
 	tilemap_set_transparent_pen(background, 0);
 	tilemap_set_transparent_pen(foreground, 0);
 	tilemap_set_transparent_pen(text_layer, 0);
@@ -101,9 +98,6 @@ VIDEO_START( raiga )
 	foreground = tilemap_create(get_fg_tile_info_raiga,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 	text_layer = tilemap_create(get_tx_tile_info,	   tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
 
-	if (!text_layer || !foreground || !background)
-		return 1;
-
 	tilemap_set_transparent_pen(background,0);
 	tilemap_set_transparent_pen(foreground,0);
 	tilemap_set_transparent_pen(text_layer,0);
@@ -120,9 +114,6 @@ VIDEO_START( drgnbowl )
 	background = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      16, 16, 64, 32);
 	foreground = tilemap_create(get_fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 64, 32);
 	text_layer = tilemap_create(get_tx_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT,  8,  8, 32, 32);
-
-	if (!text_layer || !foreground || !background)
-		return 1;
 
 	tilemap_set_transparent_pen(foreground, 15);
 	tilemap_set_transparent_pen(text_layer, 15);
@@ -264,16 +255,16 @@ static void blendbitmaps(
 		pen_t *paldata = Machine->pens;
 		UINT32 *end;
 
-		UINT16 *sd1 = ((UINT16 *)src1->line[0]);								/* source data   */
-		UINT16 *sd2 = ((UINT16 *)src2->line[0]);
-		UINT16 *sd3 = ((UINT16 *)src3->line[0]);
+		UINT16 *sd1 = src1->base;												/* source data   */
+		UINT16 *sd2 = src2->base;
+		UINT16 *sd3 = src3->base;
 
 		int sw = ex-sx+1;														/* source width  */
 		int sh = ey-sy+1;														/* source height */
-		int sm = ((UINT16 *)src1->line[1]) - ((UINT16 *)src1->line[0]);			/* source modulo */
+		int sm = src1->rowpixels;												/* source modulo */
 
-		UINT32 *dd = ((UINT32 *)dest->line[sy]) + sx;							/* dest data     */
-		int dm = ((UINT32 *)dest->line[1]) - ((UINT32 *)dest->line[0]);			/* dest modulo   */
+		UINT32 *dd = BITMAP_ADDR32(dest, sy, sx);								/* dest data     */
+		int dm = dest->rowpixels;											/* dest modulo   */
 
 		sd1 += (sx-ox);
 		sd1 += sm * (sy-oy);

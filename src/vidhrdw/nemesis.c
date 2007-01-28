@@ -85,6 +85,13 @@ WRITE16_HANDLER( nemesis_gfx_flipx_w )
 
 		tilemap_set_flip(ALL_TILEMAPS, tilemap_flip);
 	}
+	else
+	{
+		if (data & 0x100)
+		{
+			cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, 0xff);
+		}
+	}
 }
 
 WRITE16_HANDLER( nemesis_gfx_flipy_w )
@@ -204,9 +211,6 @@ VIDEO_START( nemesis )
 
 	foreground = tilemap_create(
 		get_fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 64,32 );
-
-	if( !(background && foreground) )
-		return 1;
 
 	tilemap_set_transparent_pen( background, 0 );
 	tilemap_set_transparent_pen( foreground, 0 );

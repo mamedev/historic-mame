@@ -251,7 +251,7 @@ static void draw_water(mame_bitmap* bitmap, const rectangle* cliprect)
 
 	for (y = rect.min_y; y <= rect.max_y; y++)
 	{
-		UINT16* p = bitmap->line[y];
+		UINT16* p = BITMAP_ADDR16(bitmap, y, 0);
 
 		for (x = rect.min_x; x <= rect.max_x; x++)
 		{

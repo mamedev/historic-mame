@@ -83,8 +83,6 @@ VIDEO_START( blstroid )
 
 	/* initialize the playfield */
 	atarigen_playfield_tilemap = tilemap_create(get_playfield_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,8, 64,64);
-	if (!atarigen_playfield_tilemap)
-		return 1;
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &modesc))

@@ -259,9 +259,6 @@ VIDEO_START( supdrapo )
 {
 	fg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
-	if( !fg_tilemap )
-		return 1;
-
 	return 0;
 }
 

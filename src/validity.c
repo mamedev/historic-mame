@@ -699,6 +699,72 @@ static int validate_gfx(int drivnum, const machine_config *drv, const UINT32 *re
 }
 
 
+/*************************************
+ *
+ *  Display valid coin order
+ *
+ *************************************/
+
+static void display_valid_coin_order(int drivnum, const input_port_entry *memory)
+{
+	const game_driver *driver = drivers[drivnum];
+	const input_port_entry *inp;
+	int	coin_list[1024];
+	int coin_len = 0;
+	int i, j;
+	quark_entry *entry;
+
+	for (inp = memory; inp->type != IPT_END; inp++)
+	{
+		int		strindex = 0;
+		UINT32	crc;
+
+		if ( !inp->name || inp->name == IP_NAME_DEFAULT )
+			continue;
+
+		/* hash the string and look it up in the string table */
+		crc = quark_string_crc(inp->name);
+		for (entry = first_hash_entry(defstr_table, crc); entry; entry = entry->next)
+			if (entry->crc == crc && !strcmp(inp->name, input_port_string_from_token(INPUT_PORT_UINT32(entry - defstr_table->entry))))
+			{
+				strindex = entry - defstr_table->entry;
+				break;
+			}
+
+		/* if its a coin entry, add it to our list, avoiding repetitions */
+		if ( strindex >= INPUT_STRING_9C_1C && strindex <= INPUT_STRING_1C_9C )
+		{
+			j = 1;
+
+			for( i = 0; i < coin_len; i++ )
+			{
+				if ( coin_list[i] == strindex )
+				{
+					j = 0;
+					break;
+				}
+			}
+
+			if ( j )
+				coin_list[coin_len++] = strindex;
+		}
+	}
+
+	/* now display the proper coin entry list */
+	mame_printf_error( "%s: %s proper coin sort order should be:\n", driver->source_file, driver->name );
+	for( i = INPUT_STRING_9C_1C; i <= INPUT_STRING_1C_9C; i++ )
+	{
+		for( j = 0; j < coin_len; j++ )
+		{
+			/* if it's on our list, display it */
+			if ( coin_list[j] == i )
+			{
+				mame_printf_error( "%s\n", input_port_string_from_token(INPUT_PORT_UINT32(i)) );
+			}
+		}
+	}
+}
+
 
 /*************************************
  *
@@ -717,6 +783,7 @@ static int validate_inputs(int drivnum, const machine_config *drv, input_port_en
 	int last_strindex = 0;
 	quark_entry *entry;
 	int error = FALSE;
+	int coin_error = FALSE;
 	UINT32 crc;
 
 	/* skip if no ports */
@@ -838,6 +905,7 @@ static int validate_inputs(int drivnum, const machine_config *drv, input_port_en
 			{
 				mame_printf_error("%s: %s has unsorted coinage %s > %s\n", driver->source_file, driver->name, inp[-1].name, inp[0].name);
 				error = TRUE;
+				coin_error = TRUE;
 			}
 		}
 
@@ -885,6 +953,9 @@ static int validate_inputs(int drivnum, const machine_config *drv, input_port_en
 		/* remember the last string index */
 		last_strindex = strindex;
 	}
+
+	if ( coin_error )
+		display_valid_coin_order(drivnum, *memory);
 
 	return error;
 }

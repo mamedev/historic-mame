@@ -287,7 +287,7 @@ VIDEO_UPDATE( genesis )
 	int y;
 
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
-		drawline((UINT16 *)bitmap->line[y], y, 0);
+		drawline(BITMAP_ADDR16(bitmap, y, 0), y, 0);
 	return 0;
 }
 
@@ -310,7 +310,7 @@ VIDEO_UPDATE( megatech )
 	{
 		/* generate the final screen */
 		for (y = 0; y <= cliprect->max_y; y++)
-			drawline((UINT16 *)bitmap->line[y], y, 0);
+			drawline(BITMAP_ADDR16(bitmap, y, 0), y, 0);
 	}
 	else if (screen==0)
 	{
@@ -328,7 +328,7 @@ VIDEO_UPDATE( megaplay )
 
 
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
-		drawline((UINT16 *)bitmap->line[y], y, 0);
+		drawline(BITMAP_ADDR16(bitmap, y, 0), y, 0);
 
 	update_megaplay_video_normal(bitmap, cliprect);
 
@@ -341,7 +341,7 @@ void update_system18_vdp( mame_bitmap *bitmap, const rectangle *cliprect )
 
 	/* generate the final screen */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
-		drawline((UINT16 *)bitmap->line[y], y, 0xffff);
+		drawline(BITMAP_ADDR16(bitmap, y, 0), y, 0xffff);
 }
 
 /******************************************************************************

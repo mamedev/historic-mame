@@ -176,6 +176,11 @@ int cpu_scalebyfcount(int value);
  *
  *************************************/
 
+/***** OBSOLETE NOTICE: these functions are no longer considered */
+/***** to be the authority on scanline timing. Please use the */
+/***** video_screen_* functions in video.c for newer driviers. */
+/***** These functions may eventually go away. */
+
 /* Recomputes the scanling timing after, e.g., a visible area change */
 void cpu_compute_scanline_timing(void);
 

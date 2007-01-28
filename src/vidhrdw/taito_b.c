@@ -214,9 +214,6 @@ static VIDEO_START( taitob_core )
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 
-	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap,0);
 	tilemap_set_transparent_pen(tx_tilemap,0);
 
@@ -526,10 +523,10 @@ profiler_mark(PROFILER_USER1);
 			/*popmessage("1. X[%3i;%3i] Y[%3i;%3i]", myclip.min_x, myclip.max_x, myclip.min_y, myclip.max_y);*/
 			for (y = myclip.min_y;y <= myclip.max_y;y++)
 			{
-				UINT16 *src = ((UINT16 *)framebuffer[framebuffer_page]->line[y]) + myclip.min_x;
+				UINT16 *src = BITMAP_ADDR16(framebuffer[framebuffer_page], y, myclip.min_x);
 				UINT16 *dst;
 
-				dst = ((UINT16 *)bitmap->line[bitmap->height-1-y]) + myclip.max_x;
+				dst = BITMAP_ADDR16(bitmap, bitmap->height-1-y, myclip.max_x);
 
 				for (x = myclip.min_x;x <= myclip.max_x;x++)
 				{
@@ -546,8 +543,8 @@ profiler_mark(PROFILER_USER1);
 		{
 			for (y = myclip.min_y;y <= myclip.max_y;y++)
 			{
-				UINT16 *src = ((UINT16 *)framebuffer[framebuffer_page]->line[y]) + myclip.min_x;
-				UINT16 *dst = ((UINT16 *)bitmap->line[y]) + myclip.min_x;
+				UINT16 *src = BITMAP_ADDR16(framebuffer[framebuffer_page], y, myclip.min_x);
+				UINT16 *dst = BITMAP_ADDR16(bitmap, y, myclip.min_x);
 
 				for (x = myclip.min_x;x <= myclip.max_x;x++)
 				{
@@ -568,10 +565,10 @@ profiler_mark(PROFILER_USER1);
 			/*popmessage("3. X[%3i;%3i] Y[%3i;%3i]", myclip.min_x, myclip.max_x, myclip.min_y, myclip.max_y);*/
 			for (y = myclip.min_y;y <= myclip.max_y;y++)
 			{
-				UINT16 *src = ((UINT16 *)framebuffer[framebuffer_page]->line[y]) + myclip.min_x;
+				UINT16 *src = BITMAP_ADDR16(framebuffer[framebuffer_page], y, myclip.min_x);
 				UINT16 *dst;
 
-				dst = ((UINT16 *)bitmap->line[bitmap->height-1-y]) + myclip.max_x;
+				dst = BITMAP_ADDR16(bitmap, bitmap->height-1-y, myclip.max_x);
 
 				for (x = myclip.min_x;x <= myclip.max_x;x++)
 				{
@@ -588,8 +585,8 @@ profiler_mark(PROFILER_USER1);
 	    {
 	        for (y = myclip.min_y;y <= myclip.max_y;y++)
 			{
-				UINT16 *src = ((UINT16 *)framebuffer[framebuffer_page]->line[y]) + myclip.min_x;
-				UINT16 *dst = ((UINT16 *)bitmap->line[y]) + myclip.min_x;
+				UINT16 *src = BITMAP_ADDR16(framebuffer[framebuffer_page], y, myclip.min_x);
+				UINT16 *dst = BITMAP_ADDR16(bitmap, y, myclip.min_x);
 
 				for (x = myclip.min_x;x <= myclip.max_x;x++)
 				{

@@ -170,9 +170,6 @@ VIDEO_START( m72 )
 
 	m72_spriteram = auto_malloc(spriteram_size);
 
-	if (!fg_tilemap || !bg_tilemap)
-		return 1;
-
 	tilemap_set_transmask(fg_tilemap,0,0xffff,0x0001);
 	tilemap_set_transmask(fg_tilemap,1,0x00ff,0xff01);
 	tilemap_set_transmask(fg_tilemap,2,0x0001,0xffff);
@@ -197,9 +194,6 @@ VIDEO_START( rtype2 )
 	fg_tilemap = tilemap_create(rtype2_get_fg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
 
 	m72_spriteram = auto_malloc(spriteram_size);
-
-	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
-		return 1;
 
 	tilemap_set_transmask(fg_tilemap,0,0xffff,0x0001);
 	tilemap_set_transmask(fg_tilemap,1,0x00ff,0xff01);
@@ -240,9 +234,6 @@ VIDEO_START( majtitle )
 
 	m72_spriteram = auto_malloc(spriteram_size);
 
-	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
-		return 1;
-
 	tilemap_set_transmask(fg_tilemap,0,0xffff,0x0001);
 	tilemap_set_transmask(fg_tilemap,1,0x00ff,0xff01);
 	tilemap_set_transmask(fg_tilemap,2,0x0001,0xffff);
@@ -267,9 +258,6 @@ VIDEO_START( hharry )
 	fg_tilemap = tilemap_create(m72_get_fg_tile_info,   tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
 
 	m72_spriteram = auto_malloc(spriteram_size);
-
-	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
-		return 1;
 
 	tilemap_set_transmask(fg_tilemap,0,0xffff,0x0001);
 	tilemap_set_transmask(fg_tilemap,1,0x00ff,0xff01);

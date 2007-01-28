@@ -167,5 +167,5 @@ unsigned apexc_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *op
 	/* print Y address */
 	buffer += sprintf(buffer, "(%02d/%02d)", (y >> 5) & 0x1f, y & 0x1f);	/* 7 chars */
 
-	return 1;
+	return 4;
 }

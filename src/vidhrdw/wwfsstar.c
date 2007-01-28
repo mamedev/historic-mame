@@ -215,9 +215,6 @@ VIDEO_START( wwfsstar )
 	bg0_tilemap = tilemap_create(get_bg0_tile_info,bg0_scan,TILEMAP_OPAQUE, 16, 16,32,32);
 	tilemap_set_transparent_pen(fg0_tilemap,0);
 
-	if (!fg0_tilemap || !bg0_tilemap)
-		return 1;
-
 	return 0;
 }
 

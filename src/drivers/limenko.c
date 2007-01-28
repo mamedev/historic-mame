@@ -241,9 +241,6 @@ VIDEO_START( limenko )
 	md_tilemap = tilemap_create(get_md_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,128,64);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,128,64);
 
-	if(!bg_tilemap || !md_tilemap || !fg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(md_tilemap,0);
 	tilemap_set_transparent_pen(fg_tilemap,0);
 

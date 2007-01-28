@@ -146,9 +146,6 @@ VIDEO_START( lasso )
 {
 	bg_tilemap = tilemap_create(lasso_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
 
-	if (!bg_tilemap)
-		return 1;
-
 	return 0;
 }
 
@@ -157,9 +154,6 @@ VIDEO_START( wwjgtin )
 	bg_tilemap =    tilemap_create(lasso_get_bg_tile_info,      tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8,  32,  32);
 	track_tilemap = tilemap_create(wwjgtin_get_track_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      16,16, 0x80,0x40);
 
-	if (!bg_tilemap || !track_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(bg_tilemap,0);
 	return 0;
 }
@@ -167,9 +161,6 @@ VIDEO_START( wwjgtin )
 VIDEO_START( pinbo )
 {
 	bg_tilemap = tilemap_create(pinbo_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
-
-	if (!bg_tilemap)
-		return 1;
 
 	return 0;
 }

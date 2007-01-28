@@ -128,9 +128,6 @@ VIDEO_START(bigstrkb)
 	bsb_tilemap2 = tilemap_create(get_bsb_tile2_info,bsb_bg_scan,TILEMAP_OPAQUE, 16, 16,128,64);
 	bsb_tilemap3 = tilemap_create(get_bsb_tile3_info,bsb_bg_scan,TILEMAP_TRANSPARENT, 16, 16,128,64);
 
-	if (!bsb_tilemap || !bsb_tilemap2 || !bsb_tilemap3)
-		return 1;
-
 	tilemap_set_transparent_pen(bsb_tilemap,15);
 //  tilemap_set_transparent_pen(bsb_tilemap2,15);
 	tilemap_set_transparent_pen(bsb_tilemap3,15);

@@ -84,9 +84,6 @@ VIDEO_START( zerotrgt )
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,       TILEMAP_OPAQUE,     16,16,64,64);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows_flip_x,TILEMAP_TRANSPARENT, 8, 8,32,32);
 
-	if( !bg_tilemap || !fg_tilemap )
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap,0);
 
 	tilemap_set_flip(bg_tilemap, TILEMAP_FLIPX|TILEMAP_FLIPY);

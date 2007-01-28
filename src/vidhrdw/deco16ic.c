@@ -542,16 +542,10 @@ static int deco16_video_init(int pf12_only, int split, int full_width)
 	dirty_palette = auto_malloc(4096);
 	deco16_raster_display_list=auto_malloc(20 * 256);
 
-	if (!pf1_tilemap_8x8 || !pf2_tilemap_8x8 || !pf1_tilemap_16x16 || !pf2_tilemap_16x16)
-		return 1;
-
 	if (!pf12_only)
 	{
 		pf4_tilemap_16x16 =	tilemap_create(get_pf4_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,full_width ? 64 : 32,32);
 		pf3_tilemap_16x16 =	tilemap_create(get_pf3_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,full_width ? 64 : 32,32);
-
-		if (!pf3_tilemap_16x16 || !pf4_tilemap_16x16)
-			return 1;
 	}
 	else
 	{
@@ -880,9 +874,9 @@ void deco16_pdrawgfx(mame_bitmap *dest,const gfx_element *gfx,
 	for( y=0; y<16-cy; y++ )
 	{
 		UINT8 *source = gfx->gfxdata + ((source_base+y_index) * gfx->line_modulo);
-		UINT32 *destb = (UINT32 *)dest->line[sy];
-		UINT8 *pri = priority_bitmap->line[sy];
-		UINT8 *spri = sprite_priority_bitmap->line[sy];
+		UINT32 *destb = BITMAP_ADDR32(dest, sy, 0);
+		UINT8 *pri = BITMAP_ADDR8(priority_bitmap, sy, 0);
+		UINT8 *spri = BITMAP_ADDR8(sprite_priority_bitmap, sy, 0);
 
 		if (flipx) { source+=15-(sx-ox); x_index=-1; } else { x_index=1; source+=(sx-ox); }
 
@@ -1018,9 +1012,9 @@ static void custom_tilemap_draw(
 			else
 				column_offset=0;
 
-			p=(((UINT16*)src_bitmap0->line[(src_y + column_offset)&height_mask])[src_x]);
+			p=*BITMAP_ADDR16(src_bitmap0, (src_y + column_offset)&height_mask, src_x);
 			if (src_bitmap1)
-				p|=(((((UINT16*)src_bitmap1->line[(src_y + column_offset)&height_mask])[src_x]))&combine_mask)<<combine_shift;
+				p|=(*BITMAP_ADDR16(src_bitmap1, (src_y + column_offset)&height_mask, src_x)&combine_mask)<<combine_shift;
 
 			src_x=(src_x+1)&width_mask;
 			if ((flags&TILEMAP_IGNORE_TRANSPARENCY) || (p&trans_mask))
@@ -1028,7 +1022,7 @@ static void custom_tilemap_draw(
 				plot_pixel(bitmap, x, y, Machine->pens[p]);
 				if (priority_bitmap)
 				{
-					UINT8 *pri = priority_bitmap->line[y];
+					UINT8 *pri = BITMAP_ADDR8(priority_bitmap, y, 0);
 					pri[x]|=priority;
 				}
 			}

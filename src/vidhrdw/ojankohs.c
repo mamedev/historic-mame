@@ -285,8 +285,6 @@ VIDEO_START( ojankohs )
 	ojankohs_colorram = auto_malloc(0x1000);
 	ojankohs_paletteram = auto_malloc(0x800);
 
-	if (!ojankohs_tilemap) return 1;
-
 	return 0;
 }
 
@@ -296,8 +294,6 @@ VIDEO_START( ojankoy )
 	ojankohs_videoram = auto_malloc(0x2000);
 	ojankohs_colorram = auto_malloc(0x1000);
 	ojankohs_paletteram = auto_malloc(0x800);
-
-	if (!ojankohs_tilemap) return 1;
 
 	return 0;
 }

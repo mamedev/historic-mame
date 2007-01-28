@@ -94,9 +94,6 @@ VIDEO_START( thoop2 )
 	pant[0] = tilemap_create(get_tile_info_thoop2_screen0,tilemap_scan_rows,TILEMAP_SPLIT,16,16,32,32);
 	pant[1] = tilemap_create(get_tile_info_thoop2_screen1,tilemap_scan_rows,TILEMAP_SPLIT,16,16,32,32);
 
-	if (!pant[0] || !pant[1])
-		return 1;
-
 	tilemap_set_transmask(pant[0],0,0xff01,0x00ff); /* pens 1-7 opaque, pens 0, 8-15 transparent */
 	tilemap_set_transmask(pant[1],0,0xff01,0x00ff); /* pens 1-7 opaque, pens 0, 8-15 transparent */
 

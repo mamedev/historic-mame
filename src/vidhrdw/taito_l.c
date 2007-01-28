@@ -79,9 +79,6 @@ VIDEO_START( taitol )
 	bg19_tilemap = tilemap_create(get_bg19_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,32);
 	ch1a_tilemap = tilemap_create(get_ch1a_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
-	if (!ch1a_tilemap || !bg18_tilemap || !bg19_tilemap)
-		return 1;
-
 	bankc[0] = bankc[1] = bankc[2] = bankc[3] = 0;
 	horshoes_gfxbank = 0;
 	cur_ctrl = 0;

@@ -31,8 +31,8 @@ static void draw_triangle_tex1555(VERTEX v1, VERTEX v2, VERTEX v3)
 			INT64 u, v, z;
 			INT64 u2, v2;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT16 *p = (UINT16*)bitmap3d->line[y];
-			UINT32 *d = (UINT32*)zbuffer->line[y];
+			UINT16 *p = BITMAP_ADDR16(bitmap3d, y, 0);
+			UINT32 *d = BITMAP_ADDR32(zbuffer, y, 0);
 
 			x1 = scan->sx;
 			x2 = scan->ex;
@@ -155,8 +155,8 @@ static void draw_triangle_tex1555_trans(VERTEX v1, VERTEX v2, VERTEX v3)
 			INT64 u, v, z;
 			INT64 u2, v2;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT16 *p = (UINT16*)bitmap3d->line[y];
-			UINT32 *d = (UINT32*)zbuffer->line[y];
+			UINT16 *p = BITMAP_ADDR16(bitmap3d, y, 0);
+			UINT32 *d = BITMAP_ADDR32(zbuffer, y, 0);
 
 			x1 = scan->sx;
 			x2 = scan->ex;
@@ -288,8 +288,8 @@ static void draw_triangle_tex1555_alpha(VERTEX v1, VERTEX v2, VERTEX v3)
 			INT64 u, v, z;
 			INT64 u2, v2;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT16 *p = (UINT16*)bitmap3d->line[y];
-			UINT32 *d = (UINT32*)zbuffer->line[y];
+			UINT16 *p = BITMAP_ADDR16(bitmap3d, y, 0);
+			UINT32 *d = BITMAP_ADDR32(zbuffer, y, 0);
 
 			x1 = scan->sx;
 			x2 = scan->ex;
@@ -425,8 +425,8 @@ static void draw_triangle_tex4444(VERTEX v1, VERTEX v2, VERTEX v3)
 			INT64 u, v, z;
 			INT64 u2, v2;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT16 *p = (UINT16*)bitmap3d->line[y];
-			UINT32 *d = (UINT32*)zbuffer->line[y];
+			UINT16 *p = BITMAP_ADDR16(bitmap3d, y, 0);
+			UINT32 *d = BITMAP_ADDR32(zbuffer, y, 0);
 
 			x1 = scan->sx;
 			x2 = scan->ex;
@@ -552,8 +552,8 @@ static void draw_triangle_tex4444_alpha(VERTEX v1, VERTEX v2, VERTEX v3)
 			INT64 u, v, z;
 			INT64 u2, v2;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT16 *p = (UINT16*)bitmap3d->line[y];
-			UINT32 *d = (UINT32*)zbuffer->line[y];
+			UINT16 *p = BITMAP_ADDR16(bitmap3d, y, 0);
+			UINT32 *d = BITMAP_ADDR32(zbuffer, y, 0);
 
 			x1 = scan->sx;
 			x2 = scan->ex;
@@ -686,8 +686,8 @@ static void draw_triangle_color(VERTEX v1, VERTEX v2, VERTEX v3, UINT16 color)
 			int x1, x2;
 			INT64 z;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT16 *p = (UINT16*)bitmap3d->line[y];
-			UINT32 *d = (UINT32*)zbuffer->line[y];
+			UINT16 *p = BITMAP_ADDR16(bitmap3d, y, 0);
+			UINT32 *d = BITMAP_ADDR32(zbuffer, y, 0);
 
 			x1 = scan->sx;
 			x2 = scan->ex;
@@ -744,8 +744,8 @@ static void draw_triangle_color_trans(VERTEX v1, VERTEX v2, VERTEX v3, UINT16 co
 			UINT32 fr, fg, fb;
 			UINT32 pr, pg, pb;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT16 *p = (UINT16*)bitmap3d->line[y];
-			UINT32 *d = (UINT32*)zbuffer->line[y];
+			UINT16 *p = BITMAP_ADDR16(bitmap3d, y, 0);
+			UINT32 *d = BITMAP_ADDR32(zbuffer, y, 0);
 
 			x1 = scan->sx;
 			x2 = scan->ex;

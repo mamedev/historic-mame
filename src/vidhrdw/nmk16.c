@@ -96,9 +96,6 @@ VIDEO_START( bioship )
 	spriteram_old2 = auto_malloc(spriteram_size);
 	background_bitmap = auto_bitmap_alloc(8192,512);
 
-	if (!bg_tilemap || !background_bitmap)
-		return 1;
-
 	tilemap_set_transparent_pen(bg_tilemap,15);
 	tilemap_set_transparent_pen(tx_tilemap,15);
 	bioship_background_bank=0;
@@ -120,9 +117,6 @@ VIDEO_START( strahl )
 	spriteram_old = auto_malloc(spriteram_size);
 	spriteram_old2 = auto_malloc(spriteram_size);
 
-	if (!bg_tilemap || !fg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap,15);
 	tilemap_set_transparent_pen(tx_tilemap,15);
 
@@ -141,9 +135,6 @@ VIDEO_START( macross )
 	spriteram_old = auto_malloc(spriteram_size);
 	spriteram_old2 = auto_malloc(spriteram_size);
 
-	if (!bg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(tx_tilemap,15);
 
 	memset(spriteram_old,0,spriteram_size);
@@ -161,9 +152,6 @@ VIDEO_START( gunnail )
 	tx_tilemap = tilemap_create(macross_get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
 	spriteram_old = auto_malloc(spriteram_size);
 	spriteram_old2 = auto_malloc(spriteram_size);
-
-	if (!bg_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(tx_tilemap,15);
 	tilemap_set_scroll_rows(bg_tilemap,512);
@@ -185,9 +173,6 @@ VIDEO_START( macross2 )
 	spriteram_old = auto_malloc(spriteram_size);
 	spriteram_old2 = auto_malloc(spriteram_size);
 
-	if (!bg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(tx_tilemap,15);
 
 	memset(spriteram_old,0,spriteram_size);
@@ -206,9 +191,6 @@ VIDEO_START( tdragon2 )
 	spriteram_old = auto_malloc(spriteram_size);
 	spriteram_old2 = auto_malloc(spriteram_size);
 
-	if (!bg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(tx_tilemap,15);
 
 	memset(spriteram_old,0,spriteram_size);
@@ -225,9 +207,6 @@ VIDEO_START( bjtwin )
 	bg_tilemap = tilemap_create(bjtwin_get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,8,8,64,32);
 	spriteram_old = auto_malloc(spriteram_size);
 	spriteram_old2 = auto_malloc(spriteram_size);
-
-	if (!bg_tilemap)
-		return 1;
 
 	memset(spriteram_old,0,spriteram_size);
 	memset(spriteram_old2,0,spriteram_size);

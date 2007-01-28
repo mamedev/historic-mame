@@ -61,8 +61,6 @@ static int make_mixer_table(int voices, int gain)
 
 	/* allocate memory */
 	mixer_table = auto_malloc(256 * voices * sizeof(INT16));
-	if (!mixer_table)
-		return 1;
 
 	/* find the middle of the table */
 	mixer_lookup = mixer_table + (128 * voices);
@@ -169,8 +167,7 @@ void *gomoku_sh_start(int clock, const struct CustomSound_interface *config)
 	stream = stream_create(0, 1, samplerate, NULL, gomoku_update_mono);
 
 	/* allocate a pair of buffers to mix into - 1 second's worth should be more than enough */
-	if ((mixer_buffer = auto_malloc(2 * sizeof(short) * samplerate)) == 0)
-		return NULL;
+	mixer_buffer = auto_malloc(2 * sizeof(short) * samplerate);
 	mixer_buffer_2 = mixer_buffer + samplerate;
 
 	/* build the mixer table */

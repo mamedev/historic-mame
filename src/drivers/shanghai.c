@@ -81,7 +81,6 @@ static int HD63484_start(void)
 {
 	fifo_counter = 0;
 	HD63484_ram = auto_malloc(HD63484_RAM_SIZE);
-	if (!HD63484_ram) return 1;
 	memset(HD63484_ram,0,HD63484_RAM_SIZE);
 	return 0;
 }

@@ -128,8 +128,6 @@ VIDEO_START( toki )
 	background_layer = tilemap_create(get_back_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	foreground_layer = tilemap_create(get_fore_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 
-	if (!text_layer || !background_layer || !foreground_layer) return 1;
-
 	tilemap_set_transparent_pen(text_layer,15);
 	tilemap_set_transparent_pen(background_layer,15);
 	tilemap_set_transparent_pen(foreground_layer,15);

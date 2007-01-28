@@ -98,9 +98,6 @@ VIDEO_START( pspikes )
 	bg1_tilemap = tilemap_create(get_pspikes_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
 	/* no bg2 in this game */
 
-	if (!bg1_tilemap)
-		return 1;
-
 	sprite_gfx = 1;
 
 	return 0;
@@ -111,9 +108,6 @@ VIDEO_START( karatblz )
 {
 	bg1_tilemap = tilemap_create(karatblz_bg1_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,64);
 	bg2_tilemap = tilemap_create(karatblz_bg2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
-
-	if (!bg1_tilemap || !bg2_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(bg2_tilemap,15);
 
@@ -130,9 +124,6 @@ VIDEO_START( spinlbrk )
 
 	bg1_tilemap = tilemap_create(spinlbrk_bg1_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,64);
 	bg2_tilemap = tilemap_create(karatblz_bg2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
-
-	if (!bg1_tilemap || !bg2_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(bg2_tilemap,15);
 
@@ -161,9 +152,6 @@ VIDEO_START( turbofrc )
 	bg1_tilemap = tilemap_create(get_bg1_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,64);
 	bg2_tilemap = tilemap_create(get_bg2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 
-	if (!bg1_tilemap || !bg2_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(bg2_tilemap,15);
 
 	spritepalettebank = 0;
@@ -177,9 +165,6 @@ VIDEO_START( wbbc97 )
 {
 	bg1_tilemap = tilemap_create(get_pspikes_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 	/* no bg2 in this game */
-
-	if (!bg1_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(bg1_tilemap,15);
 
@@ -589,7 +574,7 @@ static void wbbc97_draw_bitmap(mame_bitmap *bitmap)
 
 			/* data is GRB; convert to RGB */
 			color = (color & 0x1f) | ((color & 0x3e0) << 5) | ((color & 0x7c00) >> 5);
-			((UINT16 *)bitmap->line[y])[(10+x-aerofgt_rasterram[(y & 0x7f)])&0x1ff] = color;
+			*BITMAP_ADDR16(bitmap, y, (10+x-aerofgt_rasterram[(y & 0x7f)])&0x1ff) = color;
 
 			count++;
 			count &= 0x1ffff;

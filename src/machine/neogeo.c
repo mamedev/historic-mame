@@ -19,7 +19,6 @@ UINT8 *neogeo_memcard;		/* Pointer to 2kb RAM zone */
 
 UINT8 *neogeo_game_vectors;
 
-static void neogeo_custom_memory(void);
 static void neogeo_register_sub_savestate(void);
 
 

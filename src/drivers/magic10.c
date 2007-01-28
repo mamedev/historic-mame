@@ -298,9 +298,6 @@ VIDEO_START( magic10 )
 	layer1_tilemap = tilemap_create(get_layer1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	layer2_tilemap = tilemap_create(get_layer2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,64);
 
-	if(!layer0_tilemap || !layer1_tilemap || !layer2_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(layer1_tilemap,0);
 	tilemap_set_transparent_pen(layer2_tilemap,0);
 

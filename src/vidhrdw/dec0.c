@@ -273,7 +273,7 @@ static void custom_tilemap_draw(mame_bitmap *bitmap,
 			if (col_scroll_enabled)
 				column_offset=colscroll_ptr[((src_x >> 3) >> (control1[2]&0xf))&(0x3f>>(control1[2]&0xf))];
 
-			p = (((UINT16*)src_bitmap->line[(src_y + column_offset)&height_mask])[src_x&width_mask]);
+			p = *BITMAP_ADDR16(src_bitmap, (src_y + column_offset)&height_mask, src_x&width_mask);
 
 			src_x++;
 			if ((flags&TILEMAP_IGNORE_TRANSPARENCY) || (p&0xf))
@@ -713,11 +713,6 @@ VIDEO_START( dec0_nodma )
 	pf3_tilemap_0 = tilemap_create(get_pf3_tile_info,tile_shape0_scan,    TILEMAP_TRANSPARENT,16,16, 64, 16);
 	pf3_tilemap_1 = tilemap_create(get_pf3_tile_info,tile_shape1_scan,    TILEMAP_TRANSPARENT,16,16, 32, 32);
 	pf3_tilemap_2 = tilemap_create(get_pf3_tile_info,tile_shape2_scan,    TILEMAP_TRANSPARENT,16,16, 16, 64);
-
-	if (!pf1_tilemap_0 || !pf1_tilemap_1 || !pf1_tilemap_2
-		|| !pf2_tilemap_0 || !pf2_tilemap_1 || !pf2_tilemap_2
-		|| !pf3_tilemap_0 || !pf3_tilemap_1 || !pf3_tilemap_2)
-		return 1;
 
 	dec0_spriteram=spriteram16;
 

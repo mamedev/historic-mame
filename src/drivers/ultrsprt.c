@@ -27,7 +27,7 @@ static VIDEO_UPDATE( ultrsprt )
 	{
 		for (j=0; j < 400; j++)
 		{
-			UINT16 *bmp = bitmap->line[j];
+			UINT16 *bmp = BITMAP_ADDR16(bitmap, j, 0);
 			int fb_index = j * 1024;
 
 			for (i=0; i < 512; i++)

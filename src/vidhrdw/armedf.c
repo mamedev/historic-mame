@@ -112,9 +112,6 @@ VIDEO_START( armedf )
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,64,32);
 	armedf_tx_tilemap = tilemap_create(get_tx_tile_info,armedf_scan,TILEMAP_TRANSPARENT,8,8,64,32);
 
-	if (!bg_tilemap || !fg_tilemap || !armedf_tx_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap,0xf);
 	tilemap_set_transparent_pen(armedf_tx_tilemap,0xf);
 	tilemap_set_transparent_pen(bg_tilemap,0xf);

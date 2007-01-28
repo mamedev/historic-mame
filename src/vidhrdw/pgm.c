@@ -138,7 +138,7 @@ static void pgm_drawsprite_new_zoomed(int wide, int high, int xpos, int ypos, in
 			else yoffset = ( (high-ycnt-1)*(wide*16));
 			if ((ydrawpos >= 0) && (ydrawpos < 224))
 			{
-				dest = (UINT16*)bitmap->line[ydrawpos];
+				dest = BITMAP_ADDR16(bitmap, ydrawpos, 0);
 				pgm_drawspriteline(wide, dest, xzoom, xgrow, yoffset, flip, xpos);
 			}
 			ycntdraw++;
@@ -148,7 +148,7 @@ static void pgm_drawsprite_new_zoomed(int wide, int high, int xpos, int ypos, in
 			else yoffset = ( (high-ycnt-1)*(wide*16));
 			if ((ydrawpos >= 0) && (ydrawpos < 224))
 			{
-				dest = (UINT16*)bitmap->line[ydrawpos];
+				dest = BITMAP_ADDR16(bitmap, ydrawpos, 0);
 				pgm_drawspriteline(wide, dest, xzoom, xgrow, yoffset, flip, xpos);
 			}
 			ycntdraw++;
@@ -168,7 +168,7 @@ static void pgm_drawsprite_new_zoomed(int wide, int high, int xpos, int ypos, in
 			else yoffset = ( (high-ycnt-1)*(wide*16));
 			if ((ydrawpos >= 0) && (ydrawpos < 224))
 			{
-				dest = (UINT16*)bitmap->line[ydrawpos];
+				dest = BITMAP_ADDR16(bitmap, ydrawpos, 0);
 				pgm_drawspriteline(wide, dest, xzoom, xgrow, yoffset, flip, xpos);
 			}
 			ycntdraw++;

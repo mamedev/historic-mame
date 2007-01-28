@@ -384,7 +384,7 @@ void deco32_drawsprite(mame_bitmap *dest,const gfx_element *gfx,
 	for( y=0; y<16-cy; y++ )
 	{
 		UINT8 *source = gfx->gfxdata + ((source_base+y_index) * gfx->line_modulo);
-		UINT16 *destb = (UINT16 *)dest->line[sy];
+		UINT16 *destb = BITMAP_ADDR16(dest, sy, 0);
 
 		if (flipx) { source+=15-(sx-ox); x_index=-1; } else { x_index=1; source+=(sx-ox); }
 
@@ -576,8 +576,8 @@ INLINE void dragngun_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -600,7 +600,7 @@ INLINE void dragngun_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -623,8 +623,8 @@ INLINE void dragngun_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-								UINT8 *pri = pri_buffer->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
+								UINT8 *pri = BITMAP_ADDR8(pri_buffer, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -647,7 +647,7 @@ INLINE void dragngun_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -967,9 +967,6 @@ VIDEO_START( captaven )
 	pf3_tilemap = tilemap_create(get_ca_pf3_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	deco32_raster_display_list=auto_malloc(10 * 256);
 
-	if (!pf1_tilemap || !pf1a_tilemap ||!pf2_tilemap || !pf3_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(pf1_tilemap,0);
 	tilemap_set_transparent_pen(pf1a_tilemap,0);
 	tilemap_set_transparent_pen(pf2_tilemap,0);
@@ -991,7 +988,7 @@ VIDEO_START( fghthist )
 	pf1a_tilemap =0;
 	dirty_palette = auto_malloc(4096);
 
-	if (!deco_allocate_sprite_bitmap() || !pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
+	if (!deco_allocate_sprite_bitmap())
 		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);
@@ -1015,9 +1012,6 @@ VIDEO_START( dragngun )
 	pf1a_tilemap =tilemap_create(get_pf1a_tile_info,   deco16_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 	dirty_palette = auto_malloc(4096);
 	deco32_raster_display_list = auto_malloc(10 * 256);
-
-	if (!pf1_tilemap || !pf1a_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);
 	tilemap_set_transparent_pen(pf2_tilemap,0);
@@ -1043,9 +1037,6 @@ VIDEO_START( lockload )
 	pf1a_tilemap =tilemap_create(get_pf1a_tile_info,   deco16_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 	dirty_palette = auto_malloc(4096);
 	deco32_raster_display_list = auto_malloc(10 * 256);
-
-	if (!pf1_tilemap || !pf1a_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);
 	tilemap_set_transparent_pen(pf2_tilemap,0);
@@ -1074,9 +1065,6 @@ VIDEO_START( nslasher )
 	sprite0_mix_bitmap=auto_bitmap_alloc_format( Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16 );
 	sprite1_mix_bitmap=auto_bitmap_alloc_format( Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16 );
 	tilemap_alpha_bitmap=auto_bitmap_alloc_format( Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16 );
-
-	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);
 	tilemap_set_transparent_pen(pf2_tilemap,0);
@@ -1178,9 +1166,9 @@ static void combined_tilemap_draw(mame_bitmap *bitmap)
 	for (y=8; y<248; y++) {
 		const int py=(y_src+y)&height_mask;
 
-		bitmap0_y=bitmap0->line[py];
-		bitmap1_y=bitmap1->line[py];
-		bitmap2_y=bitmap->line[y];
+		bitmap0_y=BITMAP_ADDR16(bitmap0, py, 0);
+		bitmap1_y=BITMAP_ADDR16(bitmap1, py, 0);
+		bitmap2_y=BITMAP_ADDR32(bitmap, y, 0);
 
 		/* Todo:  Should add row enable, and col scroll, but never used as far as I can see */
 		x_src=(deco32_pf34_control[1] + deco32_pf3_rowscroll[py])&width_mask;
@@ -1455,11 +1443,11 @@ static void mixDualAlphaSprites(mame_bitmap *bitmap, const gfx_element *gfx0, co
 
 	/* Mix sprites into main bitmap, based on priority & alpha */
 	for (y=8; y<248; y++) {
-		UINT8* tilemapPri=(UINT8 *)priority_bitmap->line[y];
-		UINT16* sprite0=(UINT16 *)sprite0_mix_bitmap->line[y];
-		UINT16* sprite1=(UINT16 *)sprite1_mix_bitmap->line[y];
-		UINT32* destLine=(UINT32 *)bitmap->line[y];
-		UINT16* alphaTilemap=(UINT16 *)tilemap_alpha_bitmap->line[y];
+		UINT8* tilemapPri=BITMAP_ADDR8(priority_bitmap, y, 0);
+		UINT16* sprite0=BITMAP_ADDR16(sprite0_mix_bitmap, y, 0);
+		UINT16* sprite1=BITMAP_ADDR16(sprite1_mix_bitmap, y, 0);
+		UINT32* destLine=BITMAP_ADDR32(bitmap, y, 0);
+		UINT16* alphaTilemap=BITMAP_ADDR16(tilemap_alpha_bitmap, y, 0);
 
 		for (x=0; x<320; x++) {
 			UINT16 priColAlphaPal0=sprite0[x];

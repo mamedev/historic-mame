@@ -188,20 +188,11 @@ VIDEO_START( 1943 )
 	bg2_tilemap = tilemap_create(c1943_get_bg2_tile_info, tilemap_scan_cols,
 		TILEMAP_OPAQUE, 32, 32, 2048, 8);
 
-	if ( !bg2_tilemap )
-		return 1;
-
 	bg_tilemap = tilemap_create(c1943_get_bg_tile_info, tilemap_scan_cols,
 		TILEMAP_TRANSPARENT, 32, 32, 2048, 8);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	fg_tilemap = tilemap_create(c1943_get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
-
-	if ( !fg_tilemap )
-		return 1;
 
 	tilemap_set_transparent_pen(bg_tilemap, 0);
 	tilemap_set_transparent_pen(fg_tilemap, 0);

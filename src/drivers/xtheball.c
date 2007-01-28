@@ -62,7 +62,7 @@ static VIDEO_UPDATE( xtheball )
 	/* loop over scanlines */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		UINT16 *dst = (UINT16 *)bitmap->line[y];
+		UINT16 *dst = BITMAP_ADDR16(bitmap, y, 0);
 
 		/* bit value 0x13 controls which foreground mode to use */
 		if (!bitvals[0x13])

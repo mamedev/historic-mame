@@ -90,9 +90,6 @@ VIDEO_START( actfancr )
 	pf1_alt_tilemap = tilemap_create(get_tile_info,actfancr_scan2,TILEMAP_OPAQUE,16,16,128,32);
 	pf2_tilemap = tilemap_create(get_pf2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!pf1_tilemap || !pf1_alt_tilemap || !pf2_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(pf2_tilemap,0);
 
 	register_savestate();
@@ -104,9 +101,6 @@ VIDEO_START( triothep )
 {
 	pf1_tilemap = tilemap_create(get_trio_tile_info,triothep_scan,TILEMAP_OPAQUE,16,16,32,32);
 	pf2_tilemap = tilemap_create(get_pf2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
-
-	if (!pf1_tilemap || !pf2_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(pf2_tilemap,0);
 

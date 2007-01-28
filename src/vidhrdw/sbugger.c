@@ -33,9 +33,6 @@ VIDEO_START(sbugger)
 
 	sbugger_tilemap = tilemap_create(get_sbugger_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE, 8, 16,64,16);
 
-	if (!sbugger_tilemap)
-		return 1;
-
 	return 0;
 }
 

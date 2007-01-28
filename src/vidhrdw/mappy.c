@@ -250,9 +250,6 @@ VIDEO_START( superpac )
 	bg_tilemap = tilemap_create(superpac_get_tile_info,superpac_tilemap_scan,TILEMAP_TRANSPARENT_COLOR,8,8,36,28);
 	sprite_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
-	if (!bg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(bg_tilemap, 31);
 
 	spriteram = mappy_spriteram + 0x780;
@@ -266,9 +263,6 @@ VIDEO_START( phozon )
 {
 	bg_tilemap = tilemap_create(phozon_get_tile_info,superpac_tilemap_scan,TILEMAP_TRANSPARENT_COLOR,8,8,36,28);
 
-	if (!bg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(bg_tilemap, 15);
 
 	spriteram = mappy_spriteram + 0x780;
@@ -281,9 +275,6 @@ VIDEO_START( phozon )
 VIDEO_START( mappy )
 {
 	bg_tilemap = tilemap_create(mappy_get_tile_info,mappy_tilemap_scan,TILEMAP_TRANSPARENT_COLOR,8,8,36,60);
-
-	if (!bg_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(bg_tilemap, 31);
 	tilemap_set_scroll_cols(bg_tilemap, 36);

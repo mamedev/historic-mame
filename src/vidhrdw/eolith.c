@@ -11,11 +11,11 @@ static void plot_pixel_rgb(int x, int y, int color)
 		UINT32 r = (color & 0x001f) << 3;
 		UINT32 g = (color & 0x03e0) >> 2;
 		UINT32 b = (color & 0x7c00) >> 7;
-		((UINT32 *)bitmaps[eolith_buffer]->line[y])[x] = b | (g<<8) | (r<<16);
+		*BITMAP_ADDR32(bitmaps[eolith_buffer], y, x) = b | (g<<8) | (r<<16);
 	}
 	else
 	{
-		((UINT16 *)bitmaps[eolith_buffer]->line[y])[x] = color;
+		*BITMAP_ADDR16(bitmaps[eolith_buffer], y, x) = color;
 	}
 }
 

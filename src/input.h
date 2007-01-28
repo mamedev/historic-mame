@@ -149,6 +149,7 @@ enum
 	KEYCODE_LWIN,
 	KEYCODE_RWIN,
 	KEYCODE_MENU,
+	KEYCODE_CANCEL,
 
 	/* digital joystick codes */
 	JOYCODE_1_LEFT,

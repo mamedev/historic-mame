@@ -583,11 +583,11 @@ VIDEO_UPDATE( cvs )
 
         for(sx=255;sx>7;sx--)
         {
-        	UINT32 *sp1 = (UINT32 *)s2636_1_bitmap->line[sx];
-	    	UINT32 *sp2 = (UINT32 *)s2636_2_bitmap->line[sx];
-		    UINT32 *sp3 = (UINT32 *)s2636_3_bitmap->line[sx];
-	        UINT64 *dst = (UINT64 *)bitmap->line[sx];
-		    UINT8  *spb = (UINT8  *)scrolled_background->line[sx];
+        	UINT32 *sp1 = (UINT32 *)BITMAP_ADDR8(s2636_1_bitmap, sx, 0);
+	    	UINT32 *sp2 = (UINT32 *)BITMAP_ADDR8(s2636_2_bitmap, sx, 0);
+		    UINT32 *sp3 = (UINT32 *)BITMAP_ADDR8(s2636_3_bitmap, sx, 0);
+	        UINT64 *dst = (UINT64 *)BITMAP_ADDR16(bitmap, sx, 0);
+		    UINT8  *spb = (UINT8  *)BITMAP_ADDR8(scrolled_background, sx, 0);
 
             for(offs=0;offs<62;offs++)
             {

@@ -3560,6 +3560,7 @@ static int z80_execute(int cycles)
 		IFF1 = 0;
 		PUSH( pc );
 		PCD = 0x0066;
+		change_pc(PCD);
 		z80_ICount -= 11;
 		Z80.nmi_pending = FALSE;
 	}

@@ -1145,9 +1145,6 @@ static VIDEO_START( cps )
 	cps1_bg_tilemap[1] = tilemap_create(get_tile1_info,tilemap1_scan,TILEMAP_SPLIT,16,16,64,64);
 	cps1_bg_tilemap[2] = tilemap_create(get_tile2_info,tilemap2_scan,TILEMAP_SPLIT,32,32,64,64);
 
-	if (!cps1_bg_tilemap[0] || !cps1_bg_tilemap[1] || !cps1_bg_tilemap[2])
-		return 1;
-
 	/* front masks will change at runtime to handle sprite occluding */
 	cps1_update_transmasks();
 	memset(empty_tile,0xff,sizeof(empty_tile));

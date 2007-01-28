@@ -93,9 +93,6 @@ VIDEO_START( lwings )
 	fg_tilemap  = tilemap_create(get_fg_tile_info,        tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
 	bg1_tilemap = tilemap_create(lwings_get_bg1_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     16,16,32,32);
 
-	if (!fg_tilemap || !bg1_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap,3);
 
 	return 0;
@@ -107,16 +104,12 @@ VIDEO_START( trojan )
 	bg1_tilemap = tilemap_create(trojan_get_bg1_tile_info,tilemap_scan_cols,    TILEMAP_SPLIT,     16,16,32,32);
 	bg2_tilemap = tilemap_create(get_bg2_tile_info,       get_bg2_memory_offset,TILEMAP_OPAQUE,    16,16,32,16);
 
-	if( fg_tilemap && bg1_tilemap && bg2_tilemap )
-	{
 		tilemap_set_transparent_pen(fg_tilemap,3);
 		tilemap_set_transmask(bg1_tilemap,0,0xffff,0x0001); /* split type 0 is totally transparent in front half */
 		tilemap_set_transmask(bg1_tilemap,1,0xf07f,0x0f81); /* split type 1 has pens 7-11 opaque in front half */
 
 		bAvengersHardware = 0;
 		return 0;
-	}
-	return 1; /* error */
 }
 
 VIDEO_START( avengers )

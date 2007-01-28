@@ -413,8 +413,8 @@ static void draw_triangle(VERTEX v1, VERTEX v2, VERTEX v3, UINT32 color)
 			int x1, x2;
 			INT64 z;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT32 *fb = (UINT32*)K001005_bitmap->line[y];
-			UINT32 *zb = (UINT32*)K001005_zbuffer->line[y];
+			UINT32 *fb = BITMAP_ADDR32(K001005_bitmap, y, 0);
+			UINT32 *zb = BITMAP_ADDR32(K001005_zbuffer, y, 0);
 
 			x1 = scan->sx;
 			x2 = scan->ex;
@@ -486,8 +486,8 @@ static void draw_triangle_tex(VERTEX v1, VERTEX v2, VERTEX v3, UINT32 color)
 			int x1, x2;
 			INT64 u, v, z;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT32 *fb = (UINT32*)K001005_bitmap->line[y];
-			UINT32 *zb = (UINT32*)K001005_zbuffer->line[y];
+			UINT32 *fb = BITMAP_ADDR32(K001005_bitmap, y, 0);
+			UINT32 *zb = BITMAP_ADDR32(K001005_zbuffer, y, 0);
 
 			x1 = scan->sx;
 			x2 = scan->ex;
@@ -879,8 +879,8 @@ void K001005_draw(mame_bitmap *bitmap, const rectangle *cliprect)
 
 	for (j=cliprect->min_y; j <= cliprect->max_y; j++)
 	{
-		UINT32 *bmp = (UINT32*)bitmap->line[j];
-		UINT32 *src = (UINT32*)K001005_bitmap->line[j];
+		UINT32 *bmp = BITMAP_ADDR32(bitmap, j, 0);
+		UINT32 *src = BITMAP_ADDR32(K001005_bitmap, j, 0);
 
 		for (i=cliprect->min_x; i <= cliprect->max_x; i++)
 		{

@@ -112,9 +112,11 @@ VIDEO_START( mcr )
 		case 91490:
 			bg_tilemap = tilemap_create(mcr_91490_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,30);
 			break;
+
+		default:
+			assert_always(0, "Unknown mcr board");
+			break;
 	}
-	if (!bg_tilemap)
-		return 1;
 	return 0;
 }
 
@@ -275,8 +277,8 @@ static void render_sprites_91399(mame_bitmap *bitmap, const rectangle *cliprect)
 			if (sy >= cliprect->min_y && sy <= cliprect->max_y)
 			{
 				UINT8 *src = gfx->gfxdata + gfx->char_modulo * code + gfx->line_modulo * (y ^ vflip);
-				UINT16 *dst = (UINT16 *)bitmap->line[sy];
-				UINT8 *pri = priority_bitmap->line[sy];
+				UINT16 *dst = BITMAP_ADDR16(bitmap, sy, 0);
+				UINT8 *pri = BITMAP_ADDR8(priority_bitmap, sy, 0);
 
 				/* loop over columns */
 				for (x = 0; x < 32; x++)
@@ -345,8 +347,8 @@ static void render_sprites_91464(mame_bitmap *bitmap, const rectangle *cliprect,
 			if (sy >= cliprect->min_y && sy <= cliprect->max_y)
 			{
 				UINT8 *src = gfx->gfxdata + gfx->char_modulo * code + gfx->line_modulo * (y ^ vflip);
-				UINT16 *dst = (UINT16 *)bitmap->line[sy];
-				UINT8 *pri = priority_bitmap->line[sy];
+				UINT16 *dst = BITMAP_ADDR16(bitmap, sy, 0);
+				UINT8 *pri = BITMAP_ADDR8(priority_bitmap, sy, 0);
 
 				/* loop over columns */
 				for (x = 0; x < 32; x++)

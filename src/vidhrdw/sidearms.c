@@ -159,21 +159,15 @@ VIDEO_START( sidearms )
 		bg_tilemap = tilemap_create(get_sidearms_bg_tile_info, sidearms_tilemap_scan,
 			TILEMAP_TRANSPARENT, 32, 32, 128, 128);
 
-		if ( !bg_tilemap ) return 1;
-
 		tilemap_set_transparent_pen(bg_tilemap, 15);
 	}
 	else
 	{
 		bg_tilemap = tilemap_create(get_philko_bg_tile_info, sidearms_tilemap_scan,TILEMAP_OPAQUE, 32, 32, 128, 128);
-
-		if ( !bg_tilemap ) return 1;
 	}
 
 	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 64, 64);
-
-	if ( !fg_tilemap ) return 1;
 
 	tilemap_set_transparent_pen(fg_tilemap, 3);
 
@@ -227,7 +221,7 @@ static void sidearms_draw_starfield( mame_bitmap *bitmap )
 	int pixadv, lineadv;
 
 	// clear starfield background
-	lineptr = (UINT16 *)bitmap->line[16] + 64;
+	lineptr = BITMAP_ADDR16(bitmap, 16, 64);
 	lineadv = bitmap->rowpixels;
 
 	for (i=224; i; i--) { memset(lineptr, 0, 768); lineptr += lineadv; }
@@ -247,13 +241,13 @@ static void sidearms_draw_starfield( mame_bitmap *bitmap )
 #if 0 // old loop (for reference; easier to read)
 	if (!flipon)
 	{
-		lineptr = (UINT16 *)bitmap->line[0];
+		lineptr = bitmap->base;
 		pixadv  = 1;
 		lineadv = lineadv - 512;
 	}
 	else
 	{
-		lineptr = (UINT16 *)bitmap->line[255] + 512 - 1;
+		lineptr = BITMAP_ADDR16(bitmap, 255, 512 - 1);
 		pixadv  = -1;
 		lineadv = -lineadv + 512;
 	}
@@ -290,13 +284,13 @@ static void sidearms_draw_starfield( mame_bitmap *bitmap )
 #else // optimized loop
 	if (!flipon)
 	{
-		lineptr = (UINT16 *)bitmap->line[16] + 64;
+		lineptr = BITMAP_ADDR16(bitmap, 16, 64);
 		pixadv  = 1;
 		lineadv = lineadv - 384;
 	}
 	else
 	{
-		lineptr = (UINT16 *)bitmap->line[239] + 512 - 64 - 1;
+		lineptr = BITMAP_ADDR16(bitmap, 239, 512 - 64 - 1);
 		pixadv  = -1;
 		lineadv = -lineadv + 384;
 	}

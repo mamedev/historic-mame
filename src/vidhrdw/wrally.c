@@ -82,9 +82,6 @@ VIDEO_START( wrally )
 	pant[0] = tilemap_create(get_tile_info_wrally_screen0,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 	pant[1] = tilemap_create(get_tile_info_wrally_screen1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 
-	if (!pant[0] || !pant[1])
-		return 1;
-
 	tilemap_set_transparent_pen(pant[0],0);
 	tilemap_set_transparent_pen(pant[1],0);
 

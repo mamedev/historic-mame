@@ -177,14 +177,7 @@ static void output_oslog(running_machine *machine, const char *buffer)
 {
 	extern int win_erroroslog;
 	if (win_erroroslog)
-	{
-		TCHAR *t_buffer = tstring_from_utf8(buffer);
-		if (t_buffer != NULL)
-		{
-			OutputDebugString(t_buffer);
-			free(t_buffer);
-		}
-	}
+		win_output_debug_string_utf8(buffer);
 }
 
 

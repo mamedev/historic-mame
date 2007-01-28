@@ -93,7 +93,7 @@ DrawRozHelper(
 			int x = sx;
 			UINT32 cx = startx;
 			UINT32 cy = starty;
-			UINT16 *dest = ((UINT16 *)bitmap->line[sy]) + sx;
+			UINT16 *dest = BITMAP_ADDR16(bitmap, sy, sx);
 			while( x <= clip->max_x )
 			{
 				UINT32 xpos = (cx>>16);
@@ -108,9 +108,9 @@ DrawRozHelper(
 					goto L_SkipPixel;
 				}
 
-				if( ((UINT8 *)transparency_bitmap->line[ypos])[xpos]&TILE_FLAG_FG_OPAQUE )
+				if( *BITMAP_ADDR8(transparency_bitmap, ypos, xpos)&TILE_FLAG_FG_OPAQUE )
 				{
-					*dest = ((UINT16 *)srcbitmap->line[ypos])[xpos]+rozInfo->color;
+					*dest = *BITMAP_ADDR16(srcbitmap, ypos, xpos)+rozInfo->color;
 				}
 L_SkipPixel:
 				cx += rozInfo->incxx;
@@ -328,7 +328,6 @@ VIDEO_START( namcos2 )
 	if( namco_tilemap_init(2,memory_region(REGION_GFX4),TilemapCB)==0 )
 	{
 		tilemap_roz = tilemap_create(get_tile_info_roz,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,256,256);
-		if( tilemap_roz )
 		{
 			tilemap_set_transparent_pen(tilemap_roz,0xff);
 			DrawSpriteInit();

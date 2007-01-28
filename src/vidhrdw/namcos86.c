@@ -136,9 +136,6 @@ VIDEO_START( namcos86 )
 	bg_tilemap[2] = tilemap_create(get_tile_info2,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 	bg_tilemap[3] = tilemap_create(get_tile_info3,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
-	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2] || !bg_tilemap[3])
-		return 1;
-
 	tilemap_set_transparent_pen(bg_tilemap[0],7);
 	tilemap_set_transparent_pen(bg_tilemap[1],7);
 	tilemap_set_transparent_pen(bg_tilemap[2],7);

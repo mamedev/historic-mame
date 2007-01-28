@@ -58,9 +58,6 @@ VIDEO_START( orbit )
 {
 	bg_tilemap = tilemap_create(get_tile_info, get_memory_offset, 0, 16, 16, 32, 30);
 
-	if (bg_tilemap == NULL)
-		return 1;
-
 	return 0;
 }
 

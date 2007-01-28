@@ -33,11 +33,6 @@ VIDEO_START( videopin )
 {
 	bg_tilemap = tilemap_create(get_tile_info, get_memory_offset, TILEMAP_OPAQUE, 8, 8, 48, 32);
 
-	if (bg_tilemap == NULL)
-	{
-		return 1;
-	}
-
 	return 0;
 }
 

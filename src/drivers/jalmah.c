@@ -185,14 +185,8 @@ VIDEO_START( jalmah )
 	sc2_tilemap = tilemap_create(get_sc2_tile_info,bg_scan,TILEMAP_TRANSPARENT,16,16,256,32);
 	sc3_tilemap = tilemap_create(get_sc3_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,256,32);
 
-	if(!sc2_tilemap || !sc3_tilemap || !sc0_tilemap || !sc1_tilemap)
-		return 1;
-
 	jm_scrollram = auto_malloc(0x80);
 	jm_vregs = auto_malloc(0x40);
-
-	if (!jm_scrollram || !jm_vregs)
-		return 1;
 
 	tilemap_set_transparent_pen(sc0_tilemap,15);
 	tilemap_set_transparent_pen(sc1_tilemap,15);

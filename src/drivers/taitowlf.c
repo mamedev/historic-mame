@@ -46,7 +46,7 @@ static void draw_char(mame_bitmap *bitmap, const rectangle *cliprect, const gfx_
 
 	for (j=y; j < y+8; j++)
 	{
-		UINT16 *p = bitmap->line[j];
+		UINT16 *p = BITMAP_ADDR16(bitmap, j, 0);
 		for (i=x; i < x+8; i++)
 		{
 			UINT8 pen = dp[index++];

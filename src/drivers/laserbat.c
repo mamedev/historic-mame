@@ -535,9 +535,6 @@ VIDEO_START( laserbat )
 
 	collision_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width,Machine->screen[0].height,BITMAP_FORMAT_INDEXED8);
 
-	if (!bg_tilemap)
-		return 1;
-
 	s2636_x_offset = -19;
 
 	return 0;
@@ -565,29 +562,29 @@ VIDEO_UPDATE( laserbat )
 
 static struct SN76477interface sn76477_interface =
 {
-	RES_K(47), 		/*  4  noise_res         R21    47K */
-	0,				/*  5  filter_res        */
-	CAP_P(1000),	/*  6  filter_cap        C21    1000 pF */
-	0,				/*  7  decay_res         */
-	0,				/*  8  attack_decay_cap  */
-	0,				/* 10  attack_res        */
-	RES_K(47),		/* 11  amplitude_res     R26    47K */
-	0,				/* 12  feedback_res      */
-	1.6,			/* 16  vco_voltage       */
-	0,				/* 17  vco_cap           */
-	0,				/* 18  vco_res           */
-	5,				/* 19  pitch_voltage     */
-	RES_K(27),		/* 20  slf_res           R54    27K */
-	CAP_U(4.7),		/* 21  slf_cap           C24    4.7 uF */
-	0,				/* 23  oneshot_cap       */
-	0,				/* 24  oneshot_res       */
-	0,			    /* 22    vco                    */
-	1,			    /* 26 mixer A           */
-	1,			    /* 25 mixer B           */
-	1,			    /* 27 mixer C           */
-	1,			    /* 1  envelope 1        */
+	RES_K(47), 		/*  4 noise_res         R21    47K */
+	0,				/*  5 filter_res (variable) */
+	CAP_P(1000),	/*  6 filter_cap        C21    1000 pF */
+	0,				/*  7 decay_res         */
+	0,				/*  8 attack_decay_cap  */
+	0,				/* 10 attack_res        */
+	RES_K(47),		/* 11 amplitude_res     R26    47K */
+	0,				/* 12 feedback_res (variable) */
+	5.0 * RES_K(2.2) / (RES_K(2.2) + RES_K(4.7)),	/* 16  vco_voltage       */
+	0,				/* 17 vco_cap           */
+	0,				/* 18 vco_res (variable) */
+	5.0,			/* 19 pitch_voltage     */
+	0,				/* 20 slf_res (variable) */
+	CAP_U(4.7),		/* 21 slf_cap           C24    4.7 uF */
+	0,				/* 23 oneshot_cap       */
+	0,				/* 24 oneshot_res       */
+	0,			    /* 22 vco (variable) */
+	0,			    /* 26 mixer A           */
+	0,			    /* 25 mixer B (variable) */
+	0,			    /* 27 mixer C           */
+	0,			    /* 1  envelope 1        */
 	1,			    /* 28 envelope 2        */
-	0			    /* 9  enable (variable) */
+	1			    /* 9  enable (variable) */
 };
 
 /* Cat'N Mouse sound ***********************************/

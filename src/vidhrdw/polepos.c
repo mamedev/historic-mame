@@ -200,9 +200,6 @@ VIDEO_START( polepos )
 	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,8,8,64,16);
 	tx_tilemap = tilemap_create(tx_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT_COLOR,8,8,32,32);
 
-	if (!bg_tilemap || !tx_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(tx_tilemap, 0x2f);
 
 	return 0;

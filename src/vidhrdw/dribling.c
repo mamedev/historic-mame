@@ -65,7 +65,7 @@ VIDEO_UPDATE( dribling )
 	/* loop over rows */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		UINT16 *dst = bitmap->line[y];
+		UINT16 *dst = BITMAP_ADDR16(bitmap, y, 0);
 
 		/* loop over columns */
 		for (x = cliprect->min_x; x <= cliprect->max_x; x++)

@@ -310,9 +310,6 @@ VIDEO_START( glfgreat )
 
 	roz_tilemap = tilemap_create(glfgreat_get_roz_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,512,512);
 
-	if (!roz_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(roz_tilemap,0);
 
 	K053936_wraparound_enable(0, 1);
@@ -342,9 +339,6 @@ VIDEO_START( prmrsocr )
 		return 1;
 
 	roz_tilemap = tilemap_create(prmrsocr_get_roz_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,512,256);
-
-	if (!roz_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(roz_tilemap,0);
 

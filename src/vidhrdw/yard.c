@@ -212,9 +212,6 @@ VIDEO_START( yard )
 	bg_tilemap = tilemap_create(yard_get_bg_tile_info, yard_tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 64, 32);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	scroll_panel_bitmap = auto_bitmap_alloc(SCROLL_PANEL_WIDTH, Machine->screen[0].height);
 
 	return 0;

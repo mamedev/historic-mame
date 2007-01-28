@@ -457,8 +457,8 @@ static void taito_f2_tc360_spritemixdraw( mame_bitmap *dest_bmp,const gfx_elemen
 			for( y=sy; y<ey; y++ )
 			{
 				UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-				UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-				UINT8 *pri = priority_bitmap->line[y];
+				UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+				UINT8 *pri = BITMAP_ADDR8(priority_bitmap, y, 0);
 
 				int x, x_index = x_index_base;
 				for( x=sx; x<ex; x++ )

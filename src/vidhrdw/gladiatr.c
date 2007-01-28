@@ -56,9 +56,6 @@ VIDEO_START( ppking )
 	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,64);
 	fg_tilemap = tilemap_create(fg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,64);
 
-	if (!bg_tilemap || !fg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap,0);
 
 	tilemap_set_scroll_cols(bg_tilemap, 0x10);
@@ -72,9 +69,6 @@ VIDEO_START( gladiatr )
 {
 	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
 	fg_tilemap = tilemap_create(fg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-
-	if (!bg_tilemap || !fg_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(fg_tilemap,0);
 
@@ -287,10 +281,10 @@ VIDEO_UPDATE( ppking )
 			int x = sx;
 			int y = (sy + fg_scrolly) & 0x1ff;
 
-			UINT16 *dest = ((UINT16 *)bitmap->line[sy]) + sx;
+			UINT16 *dest = BITMAP_ADDR16(bitmap, sy, sx);
 			while( x <= cliprect->max_x )
 			{
-				if( ((UINT8 *)transparency_bitmap->line[y])[x]&TILE_FLAG_FG_OPAQUE )
+				if( *BITMAP_ADDR8(transparency_bitmap, y, x)&TILE_FLAG_FG_OPAQUE )
 				{
 					*dest += 512;
 				}

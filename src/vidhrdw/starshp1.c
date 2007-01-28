@@ -57,10 +57,7 @@ VIDEO_START( starshp1 )
 
 	int i;
 
-	if ((bg_tilemap = tilemap_create(get_tile_info, get_memory_offset, TILEMAP_TRANSPARENT, 16, 8, 32, 32)) == 0)
-	{
-		return 1;
-	}
+	bg_tilemap = tilemap_create(get_tile_info, get_memory_offset, TILEMAP_TRANSPARENT, 16, 8, 32, 32);
 
 	tilemap_set_transparent_pen(bg_tilemap, 0);
 
@@ -163,7 +160,7 @@ static void draw_starfield(mame_bitmap* bitmap)
 	{
 		const UINT16* p = LSFR + (UINT16) (512 * y);
 
-		UINT16* pLine = bitmap->line[y];
+		UINT16* pLine = BITMAP_ADDR16(bitmap, y, 0);
 
 		for (x = 0; x < bitmap->width; x++)
 		{
@@ -271,7 +268,7 @@ static void draw_circle_line(mame_bitmap *bitmap, int x, int y, int l)
 	{
 		const UINT16* p = LSFR + (UINT16) (512 * y);
 
-		UINT16* pLine = bitmap->line[y];
+		UINT16* pLine = BITMAP_ADDR16(bitmap, y, 0);
 
 		int h1 = x - 2 * l;
 		int h2 = x + 2 * l;
@@ -339,7 +336,7 @@ static int spaceship_collision(mame_bitmap* bitmap, rectangle* rect)
 
 	for (y = rect->min_y; y <= rect->max_y; y++)
 	{
-		const UINT16* pLine = helper->line[y];
+		const UINT16* pLine = BITMAP_ADDR16(helper, y, 0);
 
 		for (x = rect->min_x; x <= rect->max_x; x++)
 		{

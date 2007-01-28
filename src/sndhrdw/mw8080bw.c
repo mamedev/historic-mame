@@ -19,8 +19,6 @@
  *************************************/
 
 
-#define MW8080BW_XAL_D		((double)MW8080BW_XAL)
-
 static UINT8 port_1_last;
 static UINT8 port_2_last;
 static UINT8 port_3_last;
@@ -71,7 +69,7 @@ MACHINE_START( mw8080bw_sndhrdw )
 		DISCRETE_INPUT_DATA (MIDWAY_TONE_DATA_L) \
 		DISCRETE_INPUT_DATA (MIDWAY_TONE_DATA_H) \
 		DISCRETE_TRANSFORM4(MIDWAY_TONE_TRASFORM_OUT, 1, MIDWAY_TONE_DATA_H, 0x40, MIDWAY_TONE_DATA_L, 0x02, "01*23*+") \
-		DISCRETE_NOTE(MIDWAY_TONE_BEFORE_AMP_SND, 1, MW8080BW_XAL_D/10/2, MIDWAY_TONE_TRASFORM_OUT, 0xfff, 1, DISC_CLK_IS_FREQ) \
+		DISCRETE_NOTE(MIDWAY_TONE_BEFORE_AMP_SND, 1, (double)MW8080BW_MASTER_CLOCK/10/2, MIDWAY_TONE_TRASFORM_OUT, 0xfff, 1, DISC_CLK_IS_FREQ) \
 		DISCRETE_OP_AMP_TRIG_VCA(MIDWAY_TONE_SND, MIDWAY_TONE_BEFORE_AMP_SND, MIDWAY_TONE_EN, 0, 12, 0, &discrete_op_amp_tvca_info)
 
 
@@ -1844,7 +1842,7 @@ WRITE8_HANDLER( spcenctr_sh_port_3_w )
 
 	/* if (data & 0x02)  enable ENEMY SHOT sound */
 
-	output_set_value("STROBE", (data >> 2) & 0x01);
+	spcenctr_set_strobe_state((data >> 2) & 0x01);
 
 	output_set_value("LAMP", (data >> 3) & 0x01);
 
@@ -2133,7 +2131,7 @@ WRITE8_HANDLER( invaders_sh_port_2_w )
 	/* the flip screen line is only connected on the cocktail PCB */
 	if (invaders_is_cabinet_cocktail())
 	{
-		flip_screen_set((data >> 5) & 0x01);
+		invaders_set_flip_screen((data >> 5) & 0x01);
 	}
 
 	/* D6 and D7 are not connected */

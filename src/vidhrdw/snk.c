@@ -259,7 +259,6 @@ VIDEO_UPDATE( tnk3 )
 VIDEO_START( sgladiat )
 {
 	dirtybuffer = auto_malloc( MAX_VRAM_SIZE );
-	if(!dirtybuffer) return 1;
 	tmpbitmap = auto_bitmap_alloc( 512, 256 );
 	memset( dirtybuffer, 0xff, MAX_VRAM_SIZE );
 	return 0;

@@ -860,14 +860,14 @@ static WRITE8_HANDLER( schaser_sh_port3_w )
 	explosion = (data >> 5) & 0x01;
 	if (explosion)
 	{
-		SN76477_set_amplitude_res(0, 1.0 / (1.0/RES_K(200) + 1.0/RES_K(68)));
+		SN76477_amplitude_res_w(0, 1.0 / (1.0/RES_K(200) + 1.0/RES_K(68)));
 	}
 	else
 	{
-		SN76477_set_amplitude_res(0, RES_K(200));
+		SN76477_amplitude_res_w(0, RES_K(200));
 	}
 	SN76477_enable_w(0, !(schaser_effect_555_is_low || explosion));
-//  SN76477_set_one_shot_cap_voltage(0, !(schaser_effect_555_is_low || explosion) ? 0 : SN76477_EXTERNAL_VOLTAGE_DISCONNECT);
+	SN76477_one_shot_cap_voltage_w(0, !(schaser_effect_555_is_low || explosion) ? 0 : SN76477_EXTERNAL_VOLTAGE_DISCONNECT);
 	SN76477_mixer_b_w(0, explosion);
 }
 
@@ -910,7 +910,7 @@ void schaser_effect_555_cb(int effect)
 	}
 	timer_adjust(schaser_effect_555_timer, new_time, effect, 0);
 	SN76477_enable_w(0, !(schaser_effect_555_is_low || explosion));
-//  SN76477_set_one_shot_cap_voltage(0, !(schaser_effect_555_is_low || explosion) ? 0 : SN76477_EXTERNAL_VOLTAGE_DISCONNECT);
+	SN76477_one_shot_cap_voltage_w(0, !(schaser_effect_555_is_low || explosion) ? 0 : SN76477_EXTERNAL_VOLTAGE_DISCONNECT);
 }
 
 MACHINE_RESET( schaser )

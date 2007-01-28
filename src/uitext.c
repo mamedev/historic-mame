@@ -335,8 +335,6 @@ int uistring_init (mame_file *langfile)
 
 					/* Allocate storage and copy the string */
 						trans_text[str] = auto_strdup(transline);
-						if (!trans_text[str])
-							return 1;
 					}
 					str++;
 				}

@@ -1949,18 +1949,6 @@ input_port_entry *input_port_initialize(input_port_init_params *iip, UINT32 type
 	port->mask = mask;
 	port->default_value = defval;
 
-	/* automatically attach crosshairs to lightguns */
-	if (port->type == IPT_LIGHTGUN_X)
-	{
-		port->analog.crossaxis = CROSSHAIR_AXIS_X;
-		port->analog.crossscale = 1.0f;
-	}
-	else if (port->type == IPT_LIGHTGUN_Y)
-	{
-		port->analog.crossaxis = CROSSHAIR_AXIS_Y;
-		port->analog.crossscale = 1.0f;
-	}
-
 	/* sets up default port codes */
 	switch (port->type)
 	{

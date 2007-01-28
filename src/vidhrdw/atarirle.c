@@ -995,7 +995,7 @@ void draw_rle_zoom(mame_bitmap *bitmap, const struct atarirle_info *gfx,
 	/* loop top to bottom */
 	for (y = sy; y <= ey; y++, sourcey += dy)
 	{
-		UINT16 *dest = &((UINT16 *)bitmap->line[y])[sx];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, sx);
 		int j, sourcex = dx / 2, rle_end = 0;
 		const UINT16 *base;
 		int entry_count;
@@ -1058,7 +1058,7 @@ void draw_rle_zoom(mame_bitmap *bitmap, const struct atarirle_info *gfx,
 		/* clipped case */
 		else
 		{
-			const UINT16 *end = &((const UINT16 *)bitmap->line[y])[ex];
+			const UINT16 *end = BITMAP_ADDR16(bitmap, y, ex);
 			int to_be_skipped = pixels_to_skip;
 
 			/* decode the pixels */
@@ -1184,7 +1184,7 @@ void draw_rle_zoom_hflip(mame_bitmap *bitmap, const struct atarirle_info *gfx,
 	/* loop top to bottom */
 	for (y = sy; y <= ey; y++, sourcey += dy)
 	{
-		UINT16 *dest = &((UINT16 *)bitmap->line[y])[ex];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, ex);
 		int j, sourcex = dx / 2, rle_end = 0;
 		const UINT16 *base;
 		int entry_count;
@@ -1247,7 +1247,7 @@ void draw_rle_zoom_hflip(mame_bitmap *bitmap, const struct atarirle_info *gfx,
 		/* clipped case */
 		else
 		{
-			const UINT16 *start = &((const UINT16 *)bitmap->line[y])[sx];
+			const UINT16 *start = BITMAP_ADDR16(bitmap, y, sx);
 			int to_be_skipped = pixels_to_skip;
 
 			/* decode the pixels */

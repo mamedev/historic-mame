@@ -143,9 +143,6 @@ VIDEO_START(flower)
 	flower_text_tilemap       = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
 	flower_text_right_tilemap = tilemap_create(get_text_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT, 8, 8, 2,32);
 
-	if(!flower_bg0_tilemap || !flower_bg1_tilemap || !flower_text_tilemap || !flower_text_right_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(flower_bg1_tilemap,15);
 	tilemap_set_transparent_pen(flower_text_tilemap,3);
 	tilemap_set_transparent_pen(flower_text_right_tilemap,3);

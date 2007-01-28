@@ -540,55 +540,34 @@ Newer version of the I/O chip ?
 
 /* These scanline drawing routines lifted from Taito F3: optimise / merge ? */
 
-#undef ADJUST_FOR_ORIENTATION
-#define ADJUST_FOR_ORIENTATION(type, orientation, bitmapi, bitmapp, x, y)	\
-	type *dsti = &((type *)bitmapi->line[y])[x];							\
-	UINT8 *dstp = &((UINT8 *)bitmapp->line[y])[x];							\
-	int xadv = 1;															\
-	if (orientation)														\
-	{																		\
-		int dy = (type *)bitmap->line[1] - (type *)bitmap->line[0];			\
-		int tx = x, ty = y;													\
-		if ((orientation) & ORIENTATION_FLIP_X)								\
-			tx = bitmap->width - 1 - tx;									\
-		if ((orientation) & ORIENTATION_FLIP_Y)								\
-			ty = bitmap->height - 1 - ty;									\
-		/* can't lookup line because it may be negative! */					\
-		dsti = (type *)((type *)bitmapi->line[0] + dy * ty) + tx;			\
-		dstp = (UINT8 *)((UINT8 *)bitmapp->line[0] + dy * ty / sizeof(type)) + tx;	\
-	}
-
 INLINE void taitoic_drawscanline(
 		mame_bitmap *bitmap,int x,int y,
 		const UINT16 *src,int transparent,UINT32 orient,int pri, const rectangle *cliprect)
 {
-	ADJUST_FOR_ORIENTATION(UINT16, orient, bitmap, priority_bitmap, x, y);
-	{
-		int length=cliprect->max_x - cliprect->min_x + 1;
-		src+=cliprect->min_x;
-		dsti+=xadv * cliprect->min_x;
-		dstp+=xadv * cliprect->min_x;
-		if (transparent) {
-			while (length--) {
-				UINT32 spixel = *src++;
-				if (spixel<0x7fff) {
-					*dsti = spixel;
-					*dstp = pri;
-				}
-				dsti += xadv;
-				dstp += xadv;
-			}
-		} else { /* Not transparent case */
-			while (length--) {
-				*dsti = *src++;
+	UINT16 *dsti = BITMAP_ADDR16(bitmap, y, x);
+	UINT8 *dstp = BITMAP_ADDR8(priority_bitmap, y, x);
+	int length=cliprect->max_x - cliprect->min_x + 1;
+
+	src+=cliprect->min_x;
+	dsti+=cliprect->min_x;
+	dstp+=cliprect->min_x;
+	if (transparent) {
+		while (length--) {
+			UINT32 spixel = *src++;
+			if (spixel<0x7fff) {
+				*dsti = spixel;
 				*dstp = pri;
-				dsti += xadv;
-				dstp += xadv;
 			}
+			dsti++;
+			dstp++;
+		}
+	} else { /* Not transparent case */
+		while (length--) {
+			*dsti++ = *src++;
+			*dstp++ = pri;
 		}
 	}
 }
-#undef ADJUST_FOR_ORIENTATION
 
 
 
@@ -827,9 +806,6 @@ int PC080SN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int y_invert
 		}
 
 		PC080SN_ram[i] = auto_malloc(PC080SN_RAM_SIZE);
-
-		if (!PC080SN_tilemap[i][0] || !PC080SN_tilemap[i][1])
-			return 1;
 
 		PC080SN_bg_ram[i][0]       = PC080SN_ram[i] + 0x0000 /2;
 		PC080SN_bg_ram[i][1]       = PC080SN_ram[i] + 0x8000 /2;
@@ -1144,8 +1120,8 @@ static void topspeed_custom_draw(mame_bitmap *bitmap,const rectangle *cliprect,i
 
 		x_index = sx - (PC080SN_bgscroll_ram[chip][layer][row_index]);
 
-		src16 = (UINT16 *)srcbitmap->line[src_y_index];
-		tsrc  = (UINT8 *)transbitmap->line[src_y_index];
+		src16 = BITMAP_ADDR16(srcbitmap, src_y_index, 0);
+		tsrc  = BITMAP_ADDR8(transbitmap, src_y_index, 0);
 		dst16 = scanline;
 
 		if (flags & TILEMAP_IGNORE_TRANSPARENCY)
@@ -1569,9 +1545,6 @@ int TC0080VCO_vh_start(int gfxnum,int has_fg0,int bg_xoffs,int bg_yoffs,int bg_f
 	TC0080VCO_tilemap[1] = tilemap_create(TC0080VCO_get_bg1_tile_info_0,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 	TC0080VCO_ram = auto_malloc(TC0080VCO_RAM_SIZE);
 
-	if ( !TC0080VCO_tilemap[0] || !TC0080VCO_tilemap[1])
-		return 1;
-
 	memset( TC0080VCO_ram,0,TC0080VCO_RAM_SIZE );
 	TC0080VCO_set_layer_ptrs();
 
@@ -1594,9 +1567,6 @@ int TC0080VCO_vh_start(int gfxnum,int has_fg0,int bg_xoffs,int bg_yoffs,int bg_f
 	{
 		TC0080VCO_tilemap[2] = tilemap_create(TC0080VCO_get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 		TC0080VCO_char_dirty = auto_malloc(TC0080VCO_TOTAL_CHARS);
-
-		if (!TC0080VCO_tilemap[2])
-			return 1;
 
 		TC0080VCO_dirty_chars();
 		state_save_register_func_postload(TC0080VCO_dirty_chars);
@@ -1908,8 +1878,8 @@ static void TC0080VCO_bg0_tilemap_draw(mame_bitmap *bitmap,const rectangle *clip
 
 			x_index = sx - ((TC0080VCO_bgscroll_ram[row_index] << 16));
 
-			src16 = (UINT16 *)srcbitmap->line[src_y_index];
-			tsrc  = (UINT8 *)transbitmap->line[src_y_index];
+			src16 = BITMAP_ADDR16(srcbitmap, src_y_index, 0);
+			tsrc  = BITMAP_ADDR8(transbitmap, src_y_index, 0);
 			dst16 = scanline;
 
 			x_step = zoomx;
@@ -2361,12 +2331,6 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
 		TC0100SCN_ram[i] = auto_malloc(TC0100SCN_RAM_SIZE);
 		TC0100SCN_char_dirty[i] = auto_malloc(TC0100SCN_TOTAL_CHARS);
 
-		if (
-				!TC0100SCN_tilemap[i][0][0] || !TC0100SCN_tilemap[i][0][1] ||
-				!TC0100SCN_tilemap[i][1][0] || !TC0100SCN_tilemap[i][1][1] ||
-				!TC0100SCN_tilemap[i][2][0] || !TC0100SCN_tilemap[i][2][1] )
-			return 1;
-
 		TC0100SCN_set_layer_ptrs(i);
 		TC0100SCN_dirty_chars(i);
 		memset(TC0100SCN_ram[i],0,TC0100SCN_RAM_SIZE);
@@ -2778,14 +2742,14 @@ static void TC0100SCN_tilemap_draw_fg(mame_bitmap *bitmap,const rectangle *clipr
 		// Col offsets are 'tilemap' space 0-511, and apply to blocks of 8 pixels at once
 		for (x=0; x<=(cliprect->max_x - cliprect->min_x); x++) {
 			column_offset=TC0100SCN_colscroll_ram[chip][(src_x&0x3ff) / 8];
-			p=(((UINT16*)src_bitmap->line[(src_y - column_offset)&height_mask])[src_x]);
+			p=*BITMAP_ADDR16(src_bitmap, (src_y - column_offset)&height_mask, src_x);
 
 			if ((p&0xf)!=0 || (flags & TILEMAP_IGNORE_TRANSPARENCY))
 			{
 				plot_pixel(bitmap, x + cliprect->min_x, y, Machine->pens[p]);
 				if (priority_bitmap)
 				{
-					UINT8 *pri = priority_bitmap->line[y];
+					UINT8 *pri = BITMAP_ADDR8(priority_bitmap, y, 0);
 					pri[x + cliprect->min_x]|=priority;
 				}
 			}
@@ -2854,9 +2818,6 @@ int TC0280GRD_vh_start(int gfxnum)
 {
 	TC0280GRD_ram = auto_malloc(TC0280GRD_RAM_SIZE);
 	TC0280GRD_tilemap = tilemap_create(TC0280GRD_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
-
-	if (!TC0280GRD_tilemap)
-		return 1;
 
 	state_save_register_global_pointer(TC0280GRD_ram, TC0280GRD_RAM_SIZE/2);
 	state_save_register_global_array(TC0280GRD_ctrl);
@@ -3257,14 +3218,6 @@ int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_
 
 		TC0480SCP_ram = auto_malloc(TC0480SCP_RAM_SIZE);
 		TC0480SCP_char_dirty = auto_malloc(TC0480SCP_TOTAL_CHARS);
-
-		if (
-				!TC0480SCP_tilemap[0][0] || !TC0480SCP_tilemap[0][1] ||
-				!TC0480SCP_tilemap[1][0] || !TC0480SCP_tilemap[1][1] ||
-				!TC0480SCP_tilemap[2][0] || !TC0480SCP_tilemap[2][1] ||
-				!TC0480SCP_tilemap[3][0] || !TC0480SCP_tilemap[3][1] ||
-				!TC0480SCP_tilemap[4][0] || !TC0480SCP_tilemap[4][1])
-			return 1;
 
 		TC0480SCP_set_layer_ptrs();
 		TC0480SCP_dirty_chars();
@@ -3756,8 +3709,8 @@ static void TC0480SCP_bg01_draw(mame_bitmap *bitmap,const rectangle *cliprect,in
 			x_index = sx - ((TC0480SCP_bgscroll_ram[layer][row_index] << 16))
 				- ((TC0480SCP_bgscroll_ram[layer][row_index+0x800] << 8) &0xffff);
 
-			src16 = (UINT16 *)srcbitmap->line[src_y_index];
-			tsrc  = (UINT8 *)transbitmap->line[src_y_index];
+			src16 = BITMAP_ADDR16(srcbitmap, src_y_index, 0);
+			tsrc  = BITMAP_ADDR8(transbitmap, src_y_index, 0);
 			dst16 = scanline;
 
 			x_step = zoomx;
@@ -3924,8 +3877,8 @@ static void TC0480SCP_bg23_draw(mame_bitmap *bitmap,const rectangle *cliprect,in
 				x_step -= (((row_zoom &0xff) * 256) &0xffff);
 		}
 
-		src16 = (UINT16 *)srcbitmap->line[src_y_index];
-		tsrc  = (UINT8 *)transbitmap->line[src_y_index];
+		src16 = BITMAP_ADDR16(srcbitmap, src_y_index, 0);
+		tsrc  = BITMAP_ADDR8(transbitmap, src_y_index, 0);
 		dst16 = scanline;
 
 		if (flags & TILEMAP_IGNORE_TRANSPARENCY)

@@ -101,9 +101,6 @@ VIDEO_START( deniam )
 	fg_tilemap = tilemap_create(get_fg_tile_info,scan_pages,       TILEMAP_TRANSPARENT,8,8,128,64);
 	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8, 64,32);
 
-	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap,0);
 	tilemap_set_transparent_pen(tx_tilemap,0);
 
@@ -269,9 +266,9 @@ static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x &&
 								y >= cliprect->min_y && y <= cliprect->max_y)
 							{
-								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)
+								if ((*BITMAP_ADDR8(priority_bitmap, y, sx+x) & primask) == 0)
 									plot_pixel(bitmap,sx+x,y,Machine->pens[color*16+(rom[i]&0x0f)]);
-								((UINT8 *)priority_bitmap->line[y])[sx+x] = 8;
+								*BITMAP_ADDR8(priority_bitmap, y, sx+x) = 8;
 							}
 						}
 						x++;
@@ -289,9 +286,9 @@ static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x &&
 								y >= cliprect->min_y && y <= cliprect->max_y)
 							{
-								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)
+								if ((*BITMAP_ADDR8(priority_bitmap, y, sx+x) & primask) == 0)
 									plot_pixel(bitmap,sx+x,y,Machine->pens[color*16+(rom[i]>>4)]);
-								((UINT8 *)priority_bitmap->line[y])[sx+x] = 8;
+								*BITMAP_ADDR8(priority_bitmap, y, sx+x) = 8;
 							}
 						}
 						x++;
@@ -313,9 +310,9 @@ static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x &&
 								y >= cliprect->min_y && y <= cliprect->max_y)
 							{
-								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)
+								if ((*BITMAP_ADDR8(priority_bitmap, y, sx+x) & primask) == 0)
 									plot_pixel(bitmap,sx+x,y,Machine->pens[color*16+(rom[i]>>4)]);
-								((UINT8 *)priority_bitmap->line[y])[sx+x] = 8;
+								*BITMAP_ADDR8(priority_bitmap, y, sx+x) = 8;
 							}
 						}
 						x++;
@@ -333,9 +330,9 @@ static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 							if (sx+x >= cliprect->min_x && sx+x <= cliprect->max_x &&
 								y >= cliprect->min_y && y <= cliprect->max_y)
 							{
-								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)
+								if ((*BITMAP_ADDR8(priority_bitmap, y, sx+x) & primask) == 0)
 									plot_pixel(bitmap,sx+x,y,Machine->pens[color*16+(rom[i]&0x0f)]);
-								((UINT8 *)priority_bitmap->line[y])[sx+x] = 8;
+								*BITMAP_ADDR8(priority_bitmap, y, sx+x) = 8;
 							}
 						}
 						x++;

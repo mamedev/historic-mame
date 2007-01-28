@@ -246,8 +246,8 @@ static void draw_sprite( //*
 			while( ycount>=height ){
 				if( sy>=cliprect->min_y && sy<=cliprect->max_y ){
 					source = addr;
-					dest = (UINT16 *)bitmap->line[sy];
-					pri = priority_bitmap->line[sy];
+					dest = BITMAP_ADDR16(bitmap, sy, 0);
+					pri = BITMAP_ADDR8(priority_bitmap, sy, 0);
 					sx = x0;
 					xcount = 0;
 					for( x=width; x; x-=2 ){
@@ -302,8 +302,8 @@ static void draw_sprite( //*
 			while( ycount>=height ){
 				if( sy>=cliprect->min_y && sy<=cliprect->max_y ){
 					source = addr;
-					dest = (UINT16 *)bitmap->line[sy];
-					pri = priority_bitmap->line[sy];
+					dest = BITMAP_ADDR16(bitmap, sy, 0);
+					pri = BITMAP_ADDR8(priority_bitmap, sy, 0);
 					sx = x0;
 					xcount = 0;
 					for( x=width; x; x-=2 ){
@@ -818,7 +818,7 @@ VIDEO_START( system16 ){
 	if(!strcmp(Machine->gamedrv->name, "hangon"))
 		num_sprites = 128;
 
-	if( background && foreground && text_layer ){
+	{
 		/* initialize all entries to black - needed for Golden Axe*/
 		int i;
 		for( i=0; i<Machine->drv->total_colors; i++ ){
@@ -859,7 +859,6 @@ VIDEO_START( system16 ){
 
 		return 0;
 	}
-	return 1;
 }
 
 VIDEO_START( system18old ){
@@ -889,12 +888,9 @@ VIDEO_START( system18old ){
 		8,8,
 		64*2,32*2 );
 
+	if( video_start_system16(machine) )
+		return 1;
 
-
-
-
-	if( background2 && foreground2 ){
-		if( video_start_system16(machine)==0 ){
 			tilemap_set_transparent_pen( foreground2, 0 );
 
 			if(sys18_splittab_fg_x){
@@ -918,9 +914,6 @@ VIDEO_START( system18old ){
 			sys16_fg_priority_value=0x2000;
 
 			return 0;
-		}
-	}
-	return 1;
 }
 
 /***************************************************************************/

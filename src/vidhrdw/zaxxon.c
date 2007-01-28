@@ -138,8 +138,6 @@ static int video_start_common(void (*fg_tile_info)(int))
 	/* create a background and foreground tilemap */
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,512);
 	fg_tilemap = tilemap_create(fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 32,32);
-	if (fg_tilemap == NULL || bg_tilemap == NULL)
-		return 1;
 
 	/* configure the foreground tilemap */
 	tilemap_set_transparent_pen(fg_tilemap, 0);

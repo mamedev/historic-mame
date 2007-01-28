@@ -17,46 +17,46 @@ WRITE8_HANDLER( laserbat_csound2_w )
 
 	if (data & 0x01)
 	{
-		int filter_res = 0, vco_res = 0;
+		int noise_filter_res = 0, vco_res = 0;
 
 		switch(csound1 & 0x07)
 		{
 		case 0x00:
-			filter_res = RES_K(270);
+			noise_filter_res = RES_K(270);
 			vco_res = RES_K(47);
 			break;
 		case 0x01:
-			filter_res = RES_K(220);
+			noise_filter_res = RES_K(220);
 			vco_res = RES_K(27);
 			break;
 		case 0x02:
-			filter_res = RES_K(150);
+			noise_filter_res = RES_K(150);
 			vco_res = RES_K(22);
 			break;
 		case 0x03:
-			filter_res = RES_K(120);
+			noise_filter_res = RES_K(120);
 			vco_res = RES_K(15);
 			break;
 		case 0x04:
-			filter_res = RES_K(82);
+			noise_filter_res = RES_K(82);
 			vco_res = RES_K(12);
 			break;
 		case 0x05:
-			filter_res = RES_K(60);
+			noise_filter_res = RES_K(68);
 			vco_res = RES_K(8.2);
 			break;
 		case 0x06:
-			filter_res = RES_K(47);
-			vco_res = RES_K(6.0);
+			noise_filter_res = RES_K(47);
+			vco_res = RES_K(6.8);
 			break;
 		case 0x07:
-			filter_res = RES_K(33);
+			noise_filter_res = RES_K(33);
 			vco_res = RES_K(4.7);
 			break;
 		}
 
-		SN76477_set_filter_res(0, filter_res);
-		SN76477_set_vco_res(0, vco_res);
+		SN76477_noise_filter_res_w(0, noise_filter_res);
+		SN76477_vco_res_w(0, vco_res);
 
 		SN76477_enable_w(0, (csound1 & 0x08) ? 1 : 0); // AB SOUND
 		SN76477_mixer_b_w(0, (csound1 & 0x10) ? 1 : 0); // _VCO/NOISE
@@ -72,16 +72,16 @@ WRITE8_HANDLER( laserbat_csound2_w )
 	switch((data & 0x1c) >> 2)
 	{
 	case 0x00:
-		SN76477_set_slf_res(0, RES_K(27));
+		SN76477_slf_res_w(0, RES_K(27));
 		break;
 	case 0x01:
-		SN76477_set_slf_res(0, RES_K(22));
+		SN76477_slf_res_w(0, RES_K(22));
 		break;
 	case 0x02:
-		SN76477_set_slf_res(0, RES_K(22));
+		SN76477_slf_res_w(0, RES_K(22));
 		break;
 	case 0x03:
-		SN76477_set_slf_res(0, RES_K(12));
+		SN76477_slf_res_w(0, RES_K(12));
 		break;
 	case 0x04: // not connected
 		break;

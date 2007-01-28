@@ -156,9 +156,6 @@ VIDEO_START( kaneko16_1xVIEW2 )
 
 	sprites_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
-	if (	!kaneko16_tmap_0 || !kaneko16_tmap_1	)
-		return 1;
-
 	{
 		int dx, xdim = Machine->screen[0].width;
 		int dy, ydim = Machine->screen[0].height;
@@ -202,8 +199,6 @@ VIDEO_START( kaneko16_2xVIEW2 )
 	kaneko16_tmap_3 = tilemap_create(	get_tile_info_3, tilemap_scan_rows,
 										TILEMAP_TRANSPARENT, 16,16, 0x20,0x20	);
 
-	if (	!kaneko16_tmap_2 || !kaneko16_tmap_3	)
-		return 1;
 	{
 		int dx, xdim = Machine->screen[0].width;
 		int dy, ydim = Machine->screen[0].height;
@@ -539,8 +534,8 @@ static void kaneko16_draw_sprites_custom(mame_bitmap *dest_bmp,const gfx_element
 			for( y=sy; y<ey; y++ )
 			{
 				UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-				UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-				UINT8 *pri = priority_bitmap->line[y];
+				UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+				UINT8 *pri = BITMAP_ADDR8(priority_bitmap, y, 0);
 
 				int x, x_index = x_index_base;
 				for( x=sx; x<ex; x++ )

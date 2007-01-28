@@ -167,7 +167,7 @@ void ssv_drawgfx(	mame_bitmap *bitmap, const gfx_element *gfx,
 		if ( sy >= cliprect->min_y && sy <= cliprect->max_y )					\
 		{																		\
 			source	=	addr;													\
-			dest	=	(UINT16 *)bitmap->line[sy];								\
+			dest	=	BITMAP_ADDR16(bitmap, sy, 0);							\
 																				\
 			for ( sx = x0; sx != x1; sx += dx )									\
 			{																	\
@@ -237,9 +237,6 @@ VIDEO_START( gdfs )
 
 	gdfs_tmap			=	tilemap_create(	get_tile_info_0, tilemap_scan_rows,
 											TILEMAP_TRANSPARENT, 16,16, 0x100,0x100	);
-
-	if ( !gdfs_tmap)
-		return 1;
 
 	tilemap_set_transparent_pen(gdfs_tmap, 0);
 

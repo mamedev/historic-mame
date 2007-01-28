@@ -3837,9 +3837,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( liberate )	/* (c) 1984  Data East Corporation */
 	DRIVER( dualaslt )	/* (c) 1984  Data East USA (US) */
 	DRIVER( liberatb )	/* bootleg */
-	DRIVER( bwing )		/* (c) 1984 */
 	DRIVER( bwings )	/* (c) 1984 */
-	DRIVER( batwings )	/* (c) 1984 */
+	DRIVER( bwingso )	/* (c) 1984 */
+	DRIVER( bwingsa )	/* (c) 1984 */
 	DRIVER( zaviga )	/* (c) */
 	DRIVER( zavigaj )	/* (c) */
 	DRIVER( kchamp )	/* (c) 1984 Data East USA (US) */
@@ -6374,6 +6374,10 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	/* Seta Aleck64 and similar (N64 based) */
 	DRIVER( 11beat )
 	DRIVER( mtetrisc )
+	DRIVER( starsldr )
+	DRIVER( vivdolls )
+	DRIVER( srmvs )
+	DRIVER( twrshaft )
 
 	/* Atlus games */
 	DRIVER( powerins )	/* (c) 1993 Atlus (Japan) */

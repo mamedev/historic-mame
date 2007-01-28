@@ -99,9 +99,6 @@ VIDEO_START( jcross )
 	bg_tilemap = tilemap_create(get_bg_tilemap_info,tilemap_scan_cols,TILEMAP_OPAQUE,8,8,64,64);
 	tx_tilemap = tilemap_create(get_tx_tilemap_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!bg_tilemap ||  !tx_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(bg_tilemap,0x0f);
 	tilemap_set_transparent_pen(tx_tilemap,0xf);
 	tilemap_set_scrolldx( bg_tilemap,   16, 22 );

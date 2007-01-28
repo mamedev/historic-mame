@@ -960,13 +960,16 @@ void cpu_compute_scanline_timing(void)
 
 	/* recompute the scanline period */
 	scanline_period = refresh_period;
-	if (Machine->screen[0].vblank != 0)
+	if (Machine->drv->screen[0].tag != NULL)
 	{
-		scanline_period.subseconds -= DOUBLE_TO_SUBSECONDS(Machine->screen[0].vblank);
-		scanline_period.subseconds /= Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y + 1;
+		if (Machine->screen[0].vblank != 0)
+		{
+			scanline_period.subseconds -= DOUBLE_TO_SUBSECONDS(Machine->screen[0].vblank);
+			scanline_period.subseconds /= Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y + 1;
+		}
+		else
+			scanline_period.subseconds /= Machine->screen[0].height;
 	}
-	else
-		scanline_period.subseconds /= Machine->screen[0].height;
 
 	LOG(("cpu_compute_scanline_timing: refresh=%.9f vblank=%.9f scanline=%.9f\n", mame_time_to_double(refresh_period), mame_time_to_double(vblank_period), mame_time_to_double(scanline_period)));
 }

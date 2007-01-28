@@ -157,9 +157,6 @@ VIDEO_START( stfight )
 	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,
 			TILEMAP_TRANSPARENT_COLOR,8,8,32,32);
 
-	if (!fg_tilemap || !bg_tilemap || !tx_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap,0x0F);
 	tilemap_set_transparent_pen(tx_tilemap,256);
 

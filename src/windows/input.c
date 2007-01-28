@@ -404,6 +404,8 @@ const int win_key_trans_table[][4] =
 	{ KEYCODE_LWIN, 		DIK_LWIN,			VK_LWIN, 		0 },
 	{ KEYCODE_RWIN, 		DIK_RWIN,			VK_RWIN, 		0 },
 	{ KEYCODE_MENU, 		DIK_APPS,			VK_APPS, 		0 },
+	{ KEYCODE_PAUSE, 		DIK_PAUSE,			VK_PAUSE,		0 },
+	{ KEYCODE_CANCEL,		0,					VK_CANCEL,		0 },
 
 	// New keys introduced in Windows 2000. These have no MAME codes to
 	// preserve compatibility with old config files that may refer to them

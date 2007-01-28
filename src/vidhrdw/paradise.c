@@ -180,9 +180,6 @@ VIDEO_START( paradise )
 	paletteram	=	auto_malloc(0x1800);
 	videoram	=	auto_malloc(0x8000);
 
-	if (!tilemap_0 || !tilemap_1 || !tilemap_2 )
-		return 1;
-
 	tilemap_set_transparent_pen(tilemap_0,0x0f);
 	tilemap_set_transparent_pen(tilemap_1,0xff);
 	tilemap_set_transparent_pen(tilemap_2,0xff);

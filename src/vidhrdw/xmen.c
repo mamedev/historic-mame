@@ -153,11 +153,11 @@ VIDEO_UPDATE( xmen6p )
 
 		for(y=0;y<32*8;y++)
 		{
-			UINT16* line_dest = (UINT16 *)(bitmap->line[y]);
+			UINT16* line_dest = BITMAP_ADDR16(bitmap, y, 0);
 			UINT16* line_src;
 
-			if (screen==0) line_src = (UINT16 *)(screen_left->line[y]);
-			else line_src = (UINT16 *)(screen_right->line[y]);
+			if (screen==0) line_src = BITMAP_ADDR16(screen_left, y, 0);
+			else line_src = BITMAP_ADDR16(screen_right, y, 0);
 
 			for (x=12*8;x<52*8;x++)
 			{

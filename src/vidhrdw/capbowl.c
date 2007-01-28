@@ -173,7 +173,7 @@ VIDEO_UPDATE( capbowl )
 	/* now regenerate the bitmap */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		UINT16 *dest = (UINT16 *)bitmap->line[y];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
 		UINT8 *src = &state.vram[256 * y];
 		int ybase = 16 * y;
 

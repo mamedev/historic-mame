@@ -108,8 +108,6 @@ VIDEO_START( dbz )
 	dbz_bg1_tilemap = tilemap_create(get_dbz_bg1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16,64,32);
 	dbz_bg2_tilemap = tilemap_create(get_dbz_bg2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16,64,32);
 
-	if (!dbz_bg1_tilemap || !dbz_bg2_tilemap) return 1;
-
 	tilemap_set_transparent_pen(dbz_bg1_tilemap,0);
 	tilemap_set_transparent_pen(dbz_bg2_tilemap,0);
 

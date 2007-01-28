@@ -163,14 +163,10 @@ WRITE16_HANDLER( aquarium_bak_videoram_w )
 VIDEO_START(aquarium)
 {
 	aquarium_txt_tilemap = tilemap_create(get_aquarium_txt_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,64);
-	if (!aquarium_txt_tilemap) return 1;
 	tilemap_set_transparent_pen(aquarium_txt_tilemap,0);
 
 	aquarium_bak_tilemap = tilemap_create(get_aquarium_bak_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE, 16, 16,32,32);
-	if (!aquarium_bak_tilemap) return 1;
-
 	aquarium_mid_tilemap = tilemap_create(get_aquarium_mid_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16,32,32);
-	if (!aquarium_mid_tilemap) return 1;
 	tilemap_set_transparent_pen(aquarium_mid_tilemap,0);
 
 	return 0;

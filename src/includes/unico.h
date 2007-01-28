@@ -1,7 +1,3 @@
-/*----------- defined in drivers/unico.c -----------*/
-
-extern int unico_has_lightgun;
-
 /*----------- defined in vidhrdw/unico.c -----------*/
 
 extern UINT16 *unico_vram_0,   *unico_scrollx_0, *unico_scrolly_0;

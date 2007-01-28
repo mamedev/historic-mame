@@ -39,11 +39,6 @@ static void a600xl_mmu(UINT8 new_mmu);
 
 static void pokey_reset(running_machine *machine);
 
-static void make_chksum(UINT8 * chksum, UINT8 data);
-static void clr_serout(int expect_data);
-static void clr_serin(int ser_delay);
-static void add_serin(UINT8 data, int with_checksum);
-
 void atari_interrupt_cb(int mask)
 {
 

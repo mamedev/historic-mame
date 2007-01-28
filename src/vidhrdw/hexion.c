@@ -46,9 +46,6 @@ VIDEO_START( hexion )
 	bg_tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 	bg_tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,32);
 
-	if (!bg_tilemap[0] || !bg_tilemap[1])
-		return 1;
-
 	tilemap_set_transparent_pen(bg_tilemap[0],0);
 	tilemap_set_scrollx(bg_tilemap[1],0,-4);
 	tilemap_set_scrolly(bg_tilemap[1],0,4);

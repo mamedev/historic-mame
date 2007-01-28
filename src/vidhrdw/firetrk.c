@@ -303,11 +303,6 @@ VIDEO_START( firetrk )
 	tilemap1 = tilemap_create(get_tile_info1, get_memory_offset, TILEMAP_OPAQUE, 16, 16, 16, 16);
 	tilemap2 = tilemap_create(get_tile_info2, get_memory_offset, TILEMAP_OPAQUE, 16, 16, 16, 16);
 
-	if (tilemap1 == NULL || tilemap2 == NULL)
-	{
-		return 1;
-	}
-
 	memset(&car[0], 0, sizeof (struct sprite_data));
 	memset(&car[1], 0, sizeof (struct sprite_data));
 

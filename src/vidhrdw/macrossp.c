@@ -157,9 +157,6 @@ VIDEO_START(macrossp)
 	macrossp_scrb_tilemap = tilemap_create(get_macrossp_scrb_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 	macrossp_scrc_tilemap = tilemap_create(get_macrossp_scrc_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 
-	if (!macrossp_text_tilemap || !macrossp_scra_tilemap || !macrossp_scrb_tilemap || !macrossp_scrc_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(macrossp_text_tilemap,0);
 	tilemap_set_transparent_pen(macrossp_scra_tilemap,0);
 	tilemap_set_transparent_pen(macrossp_scrb_tilemap,0);

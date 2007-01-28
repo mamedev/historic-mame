@@ -4,9 +4,20 @@
 
 ****************************************************************************/
 
-/*----------- defined in drivers/mw8080bw.c -----------*/
 
-#define MW8080BW_XAL					(19968000)
+#define MW8080BW_MASTER_CLOCK	(19968000)
+#define MW8080BW_CPU_CLOCK		(MW8080BW_MASTER_CLOCK / 10)
+#define MW8080BW_PIXEL_CLOCK	(MW8080BW_MASTER_CLOCK / 4)
+#define MW8080BW_HTOTAL			(320)
+#define MW8080BW_VTOTAL			(262)
+#define MW8080BW_HBEND			(0)
+#define MW8080BW_HBSTART		(256)
+#define MW8080BW_VBEND			(0)
+#define MW8080BW_VBSTART		(224)
+
+
+
+/*----------- defined in drivers/mw8080bw.c -----------*/
 
 #define SEAWOLF_GUN_PORT_TAG			("GUN")
 
@@ -21,8 +32,16 @@ void desertgun_set_controller_select(UINT8 data);
 
 void clowns_set_controller_select(UINT8 data);
 
-UINT8 phantom2_get_cloud_pos(void);
+void spcenctr_set_strobe_state(UINT8 data);
+UINT8 spcenctr_get_trench_width(void);
+UINT8 spcenctr_get_trench_center(void);
+UINT8 spcenctr_get_trench_slope(UINT8 addr);
 
+UINT16 phantom2_get_cloud_counter(void);
+void phantom2_set_cloud_counter(UINT16 data);
+
+UINT8 invaders_is_flip_screen(void);
+void invaders_set_flip_screen(UINT8 data);
 int invaders_is_cabinet_cocktail(void);
 
 #define BLUESHRK_SPEAR_PORT_TAG			("SPEAR")
@@ -117,8 +136,11 @@ WRITE8_HANDLER( invad2ct_sh_port_4_w );
 
 /*----------- defined in vidhrdw/mw8080bw.c -----------*/
 
-PALETTE_INIT( phantom2 );
-
 VIDEO_UPDATE( mw8080bw );
+
+VIDEO_UPDATE( spcenctr );
+
 VIDEO_UPDATE( phantom2 );
+VIDEO_EOF( phantom2 );
+
 VIDEO_UPDATE( invaders );

@@ -229,10 +229,10 @@ case 0x0F: /*      RRCA */
   }
   break;
 case 0x10: /*      STOP */
-  if ( gb_speed_change_pending ) {
-    gb_speed = ( gb_speed == 1 ) ? 2 : 1;
+  if ( Regs.w.gb_speed_change_pending ) {
+    Regs.w.gb_speed = ( Regs.w.gb_speed == 1 ) ? 2 : 1;
   }
-  gb_speed_change_pending = 0;
+  Regs.w.gb_speed_change_pending = 0;
   break;
 case 0x11: /*      LD DE,n16 */
 
@@ -775,21 +775,13 @@ case 0x76: /*      HALT */
 	Regs.w.leavingHALT--;
   } else {
 	if ( Regs.w.enable & IME ) {
-		UINT32 skip_cycles;
+/*      UINT32 skip_cycles; */
 		CheckInterrupts = 1;
 		Regs.w.enable |= HALTED;
 		Regs.w.PC--;
-
-		/* Calculate nr of cycles which can be skipped */
-		skip_cycles = (0x100 << gb_timer_shift) - gb_timer_count;
-		if (skip_cycles > z80gb_ICount) skip_cycles = z80gb_ICount;
-
-		/* round cycles to multiple of 4 always round upwards */
-		skip_cycles = (skip_cycles+3) & ~3;
-		if (skip_cycles > ICycles) ICycles += skip_cycles - ICycles;
 	} else {
 		/* check for pending interrupts to perform the HALT bug */
-		if ( ISWITCH & IFLAGS ) {
+		if ( Regs.w.IE & Regs.w.IF ) {
 			Regs.w.doHALTbug = 1;
 		}
 	}

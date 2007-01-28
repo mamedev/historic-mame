@@ -14,6 +14,7 @@
 #include <tchar.h>
 
 #include "osdcore.h"
+#include "winutil.h"
 #include "strconv.h"
 
 
@@ -55,12 +56,7 @@ void osd_break_into_debugger(const char *message)
 {
 	if (IsDebuggerPresent())
 	{
-		TCHAR *t_message = tstring_from_utf8(message);
-		if (t_message != NULL)
-		{
-			OutputDebugString(t_message);
-			free(t_message);
-		}
+		win_output_debug_string_utf8(message);
 		DebugBreak();
 	}
 }

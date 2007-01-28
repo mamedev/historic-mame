@@ -16,6 +16,7 @@
 #define __TIMER_H__
 
 #include "mamecore.h"
+#include <math.h>
 
 
 /***************************************************************************
@@ -197,7 +198,7 @@ INLINE mame_time double_to_mame_time(double _time)
 		return time_never;
 
 	/* set seconds to the integral part */
-	abstime.seconds = (seconds_t)_time;
+	abstime.seconds = floor(_time);
 
 	/* set subseconds to the fractional part */
 	_time -= (double)abstime.seconds;

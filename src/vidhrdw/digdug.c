@@ -150,9 +150,6 @@ VIDEO_START( digdug )
 	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan,TILEMAP_OPAQUE,     8,8,36,28);
 	tx_tilemap = tilemap_create(tx_get_tile_info,tilemap_scan,TILEMAP_TRANSPARENT,8,8,36,28);
 
-	if (!bg_tilemap | !tx_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(tx_tilemap, 0);
 
 	spriteram   = digdug_objram + 0x380;

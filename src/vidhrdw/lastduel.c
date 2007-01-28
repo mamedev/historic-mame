@@ -89,9 +89,6 @@ VIDEO_START( lastduel )
 	fg_tilemap = tilemap_create(ld_get_fg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,16,16,64,64);
 	tx_tilemap = tilemap_create(get_fix_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
-	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
-		return 1;
-
 	tilemap_set_transmask(fg_tilemap,0,0xffff,0x0001);
 	tilemap_set_transmask(fg_tilemap,1,0xf07f,0x0f81);
 	tilemap_set_transparent_pen(tx_tilemap,3);
@@ -107,9 +104,6 @@ VIDEO_START( madgear )
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,64,32);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_SPLIT,16,16,64,32);
 	tx_tilemap = tilemap_create(get_fix_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-
-	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
-		return 1;
 
 	tilemap_set_transmask(fg_tilemap,0,0xffff,0x8000);
 	tilemap_set_transmask(fg_tilemap,1,0x80ff,0xff00);

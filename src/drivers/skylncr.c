@@ -77,9 +77,6 @@ VIDEO_START( skylncr )
 							TILEMAP_TRANSPARENT, 8,32,
 							TILES_PER_PAGE_X*PAGES_PER_TMAP_X,TILES_PER_PAGE_Y*PAGES_PER_TMAP_Y );
 
-	if ( !tmap || !tmap2 )
-		return 1;
-
 	tilemap_set_transparent_pen(tmap,  0);
 	tilemap_set_transparent_pen(tmap2, 0);
 

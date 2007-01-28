@@ -75,9 +75,6 @@ VIDEO_START(bestleag)
 	bg_tilemap = tilemap_create(get_bg_tile_info,bsb_bg_scan,TILEMAP_OPAQUE,16,16,128, 64);
 	fg_tilemap = tilemap_create(get_fg_tile_info,bsb_bg_scan,TILEMAP_TRANSPARENT,16,16,128, 64);
 
-	if(!tx_tilemap || !bg_tilemap || !fg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(tx_tilemap,15);
 	tilemap_set_transparent_pen(fg_tilemap,15);
 

@@ -379,7 +379,7 @@ INLINE void SET_SUBA_RGB_INPUT(UINT8 **input_r, UINT8 **input_g, UINT8 **input_b
 		case 4:		*input_r = &shade_color.r;		*input_g = &shade_color.g;		*input_b = &shade_color.b;		break;
 		case 5:		*input_r = &env_color.r;		*input_g = &env_color.g;		*input_b = &env_color.b;		break;
 		case 6:		*input_r = &one_color.r;		*input_g = &one_color.g;		*input_b = &one_color.b;		break;
-		case 7:		fatalerror("SET_SUBA_RGB_INPUT: noise\n"); break;
+		case 7:		break; //TODO fatalerror("SET_SUBA_RGB_INPUT: noise\n"); break;
 		case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15:
 		{
 			*input_r = &zero_color.r;		*input_g = &zero_color.g;		*input_b = &zero_color.b;		break;
@@ -3435,8 +3435,8 @@ void rdp_process_list(void)
 
 		if (((rdp_cmd_ptr-rdp_cmd_cur) * 4) < rdp_command_length[cmd])
 		{
-			//return;
-			fatalerror("rdp_process_list: not enough rdp command data: cur = %d, ptr = %d, expected = %d\n", rdp_cmd_cur, rdp_cmd_ptr, rdp_command_length[cmd]);
+			return;
+			//fatalerror("rdp_process_list: not enough rdp command data: cur = %d, ptr = %d, expected = %d\n", rdp_cmd_cur, rdp_cmd_ptr, rdp_command_length[cmd]);
 		}
 
 #if LOG_RDP_EXECUTION

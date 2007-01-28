@@ -20,7 +20,7 @@ static UINT32 *prom_tab = NULL;
 
 static void blit_horiz_pixel_line(mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
-	UINT16* lineadr = &(((UINT16*)b->line[y])[x]);
+	UINT16* lineadr = BITMAP_ADDR16(b, y, x);
 	while(w-->0)
 	{
 		*lineadr++ = (UINT16)(*pens);

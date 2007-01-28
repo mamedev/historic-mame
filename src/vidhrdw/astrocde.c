@@ -218,11 +218,11 @@ INTERRUPT_GEN( gorf_interrupt )
 
 	if (interrupt_enable && (InterruptFlag & 0x10) && (CurrentScan==GorfDelay))
 	{
-		cpunum_set_input_line_and_vector(0, 0, PULSE_LINE, interrupt_vector & 0xf0);
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, interrupt_vector & 0xf0);
 	}
 	else if ((InterruptFlag & 0x08) && (CurrentScan == NextScanInt))
 	{
-		cpunum_set_input_line_and_vector(0, 0, PULSE_LINE, interrupt_vector);
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, interrupt_vector);
 	}
 }
 

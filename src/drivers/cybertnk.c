@@ -144,9 +144,6 @@ VIDEO_START( cybertnk )
 {
 	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,128,32);
 
-	if(!tx_tilemap)
-		return 1;
-
 	return 0;
 }
 

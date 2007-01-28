@@ -391,17 +391,6 @@ VIDEO_START( fromanc2 )
 	fromanc2_paletteram[0] = auto_malloc(0x800 * 2);
 	fromanc2_paletteram[1] = auto_malloc(0x800 * 2);
 
-	if (!fromanc2_tilemap[0][0] ||
-		!fromanc2_tilemap[0][1] ||
-		!fromanc2_tilemap[0][2] ||
-		!fromanc2_tilemap[0][3] ||
-		!fromanc2_tilemap[1][0] ||
-		!fromanc2_tilemap[1][1] ||
-		!fromanc2_tilemap[1][2] ||
-		!fromanc2_tilemap[1][3]) {
-		return 1;
-	}
-
 	tilemap_set_transparent_pen(fromanc2_tilemap[0][1], 0x000);
 	tilemap_set_transparent_pen(fromanc2_tilemap[0][2], 0x000);
 	tilemap_set_transparent_pen(fromanc2_tilemap[0][3], 0x000);
@@ -433,15 +422,6 @@ VIDEO_START( fromancr )
 	fromanc2_paletteram[0] = auto_malloc(0x800 * 2);
 	fromanc2_paletteram[1] = auto_malloc(0x800 * 2);
 
-	if (!fromanc2_tilemap[0][0] ||
-		!fromanc2_tilemap[0][1] ||
-		!fromanc2_tilemap[0][2] ||
-		!fromanc2_tilemap[1][0] ||
-		!fromanc2_tilemap[1][1] ||
-		!fromanc2_tilemap[1][2]) {
-		return 1;
-	}
-
 	tilemap_set_transparent_pen(fromanc2_tilemap[0][1], 0x0ff);
 	tilemap_set_transparent_pen(fromanc2_tilemap[0][2], 0x0ff);
 	tilemap_set_transparent_pen(fromanc2_tilemap[1][1], 0x0ff);
@@ -471,15 +451,6 @@ VIDEO_START( fromanc4 )
 
 	fromanc2_paletteram[0] = auto_malloc(0x800 * 2);
 	fromanc2_paletteram[1] = auto_malloc(0x800 * 2);
-
-	if (!fromanc2_tilemap[0][0] ||
-		!fromanc2_tilemap[0][1] ||
-		!fromanc2_tilemap[0][2] ||
-		!fromanc2_tilemap[1][0] ||
-		!fromanc2_tilemap[1][1] ||
-		!fromanc2_tilemap[1][2]) {
-		return 1;
-	}
 
 	tilemap_set_transparent_pen(fromanc2_tilemap[0][1], 0x000);
 	tilemap_set_transparent_pen(fromanc2_tilemap[0][2], 0x000);

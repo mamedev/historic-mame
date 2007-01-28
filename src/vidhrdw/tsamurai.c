@@ -58,9 +58,6 @@ VIDEO_START( tsamurai )
 	background = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	foreground = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!background || !foreground)
-		return 1;
-
 	tilemap_set_transparent_pen(background,0);
 	tilemap_set_transparent_pen(foreground,0);
 
@@ -267,7 +264,6 @@ static void get_vsgongf_tile_info(int tile_index)
 VIDEO_START( vsgongf )
 {
 	foreground = tilemap_create(get_vsgongf_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
-	if (!foreground) return 1;
 	return 0;
 }
 

@@ -145,9 +145,6 @@ VIDEO_START( esd16 )
 	esdtilemap_1_16x16 = tilemap_create(	get_tile_info_1_16x16, tilemap_scan_rows,
 								TILEMAP_TRANSPARENT,	16,16,	0x40,0x40);
 
-	if ( !esdtilemap_0 || !esdtilemap_1 || !esdtilemap_1_16x16 )
-		return 1;
-
 	tilemap_set_scrolldx(esdtilemap_0, -0x60 + 2, -0x60     );
 	tilemap_set_scrolldx(esdtilemap_1, -0x60    , -0x60 + 2 );
 	tilemap_set_scrolldx(esdtilemap_1_16x16, -0x60    , -0x60 + 2 );

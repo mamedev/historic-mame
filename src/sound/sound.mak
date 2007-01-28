@@ -440,7 +440,7 @@ SOUNDOBJS += $(OBJ)/sound/multipcm.o
 endif
 
 ifneq ($(filter SCSP,$(SOUNDS)),)
-SOUNDOBJS += $(OBJ)/sound/scsp.o
+SOUNDOBJS += $(OBJ)/sound/scsp.o $(OBJ)/sound/scspdsp.o
 endif
 
 

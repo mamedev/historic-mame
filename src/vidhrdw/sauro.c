@@ -99,14 +99,8 @@ VIDEO_START( sauro )
 	bg_tilemap = tilemap_create(get_tile_info_bg, tilemap_scan_cols,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	if (!bg_tilemap)
-		return 1;
-
 	fg_tilemap = tilemap_create(get_tile_info_fg, tilemap_scan_cols,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
-
-	if (!fg_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(fg_tilemap, 0);
 
@@ -178,9 +172,6 @@ VIDEO_START( trckydoc )
 {
 	bg_tilemap = tilemap_create(get_tile_info_bg, tilemap_scan_cols,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
-
-	if (!bg_tilemap)
-		return 1;
 
 	return 0;
 }

@@ -92,9 +92,6 @@ VIDEO_START( xain )
 	bgram1_tilemap = tilemap_create(get_bgram1_tile_info,back_scan,    TILEMAP_TRANSPARENT,16,16,32,32);
 	char_tilemap = tilemap_create(get_char_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
 
-	if (!bgram0_tilemap || !bgram1_tilemap || !char_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(bgram0_tilemap,0);
 	tilemap_set_transparent_pen(bgram1_tilemap,0);
 	tilemap_set_transparent_pen(char_tilemap,0);

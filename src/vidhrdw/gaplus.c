@@ -198,9 +198,6 @@ VIDEO_START( gaplus )
 {
 	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan,TILEMAP_TRANSPARENT_COLOR,8,8,36,28);
 
-	if (!bg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(bg_tilemap, 0xff);
 
 	spriteram = gaplus_spriteram + 0x780;

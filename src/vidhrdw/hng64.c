@@ -251,7 +251,7 @@ static void hng64_transition_control(mame_bitmap *bitmap)
 		{
 			for (j = Machine->screen[0].visarea.min_y; j < Machine->screen[0].visarea.max_y; j++)
 			{
-				UINT32* thePixel = &((UINT32 *)(bitmap->line[j]))[i] ;
+				UINT32* thePixel = BITMAP_ADDR32(bitmap, j, i);
 
 				finR = (INT32)RGB_RED(*thePixel) ;
 				finG = (INT32)RGB_GREEN(*thePixel) ;
@@ -1023,12 +1023,12 @@ static int gatherPixelsForLine(mame_bitmap *tilemapBitmap,
 	{
 		if (steep)
 		{
-			penList[retVal] = ((UINT16*)tilemapBitmap->line[startY])[startX] ;
+			penList[retVal] = *BITMAP_ADDR16(tilemapBitmap, startY, startX);
 			retVal++ ;
 		}
 		else
 		{
-			penList[retVal] = ((UINT16*)tilemapBitmap->line[startX])[startY] ;
+			penList[retVal] = *BITMAP_ADDR16(tilemapBitmap, startX, startY) ;
 			retVal++ ;
 		}
 		while (e >= 0)
@@ -1071,7 +1071,7 @@ static void plotTilemap3Line(mame_bitmap *tilemapBitmap,
 	pixOffset = 0 ;
 
 	if (numPix == 0)
-		penList[0] = ((UINT16*)tilemapBitmap->line[1024])[1024] ;
+		penList[0] = *BITMAP_ADDR16(tilemapBitmap, 1024, 1024);
 
 //  mame_printf_debug("numpix %d ps %f po %f s(%d,%d) e(%d,%d)\n", numPix, pixStride, pixOffset, startX, startY, endX, endY) ;
 
@@ -1081,7 +1081,7 @@ static void plotTilemap3Line(mame_bitmap *tilemapBitmap,
 		// Nearest-neighbor interpolation for now (but i doubt it does linear)
 		UINT16 tmPen = penList[(int)pixOffset] ;
 
-		((UINT32 *)(bitmap->line[screenY]))[i] = palette_get_color(Machine, tmPen) | 0xff000000;
+		*BITMAP_ADDR32(bitmap, screenY, i) = palette_get_color(Machine, tmPen) | 0xff000000;
 
 		pixOffset += pixStride ;
 	}
@@ -1567,7 +1567,7 @@ static void PerformFrustumClip(struct polygon *p)
 
 static void plot(INT32 x, INT32 y, INT32 color, mame_bitmap *bitmap)
 {
-	((UINT32 *)(bitmap->line[y]))[x] = MAKE_ARGB((UINT8)255, (UINT8)color, (UINT8)color, (UINT8)color) ;
+	*BITMAP_ADDR32(bitmap, y, x) = MAKE_ARGB((UINT8)255, (UINT8)color, (UINT8)color, (UINT8)color) ;
 }
 
 // Stolen from http://en.wikipedia.org/wiki/Bresenham's_line_algorithm (no copyright denoted) - the non-optimized version
@@ -1734,15 +1734,15 @@ INLINE void FillSmoothTexPCHorizontalLine(mame_bitmap *Color,
 				if (paletteEntry != 0)
 				{
 					// Greyscale texture - for Buriki...
-					// ((UINT32 *)(Color->line[y]))[x_start] = MAKE_ARGB(255, (UINT8)paletteEntry, (UINT8)paletteEntry, (UINT8)paletteEntry) ;
+					// *BITMAP_ADDR32(Color, y, x_start) = MAKE_ARGB(255, (UINT8)paletteEntry, (UINT8)paletteEntry, (UINT8)paletteEntry) ;
 
-					((UINT32 *)(Color->line[y]))[x_start] = Machine->pens[(128*(Filtering))+paletteEntry] ;
+					*BITMAP_ADDR32(Color, y, x_start) = Machine->pens[(128*(Filtering))+paletteEntry] ;
 					*dp = z_start ;
 				}
 			}
 			else
 			{
-				((UINT32 *)(Color->line[y]))[x_start] = MAKE_ARGB(255, (UINT8)(r_start/w_start), (UINT8)(g_start/w_start), (UINT8)(b_start/w_start)) ;
+				*BITMAP_ADDR32(Color, y, x_start) = MAKE_ARGB(255, (UINT8)(r_start/w_start), (UINT8)(g_start/w_start), (UINT8)(b_start/w_start)) ;
 				*dp = z_start;
 			}
 		}

@@ -63,9 +63,6 @@ VIDEO_START( jack )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols_flipy, TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	return 0;
 }
 
@@ -148,9 +145,6 @@ static void joinem_get_bg_tile_info(int tile_index)
 VIDEO_START( joinem )
 {
 	bg_tilemap = tilemap_create(joinem_get_bg_tile_info, tilemap_scan_cols_flipy, TILEMAP_OPAQUE, 8, 8, 32, 32);
-
-	if ( !bg_tilemap )
-		return 1;
 
 	return 0;
 }

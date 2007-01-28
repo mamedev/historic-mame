@@ -83,9 +83,6 @@ VIDEO_START( battlex )
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 64, 32);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	return 0;
 }
 

@@ -82,7 +82,7 @@ VIDEO_UPDATE( exterm )
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
 		UINT16 *bgsrc = &exterm_master_videoram[256 * y];
-		UINT16 *dest = bitmap->line[y];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
 
 		/* on the top/bottom of the screen, it's all background */
 		if (y < 40 || y > 238)

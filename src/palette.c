@@ -240,18 +240,25 @@ void palette_init(running_machine *machine)
 	switch (format)
 	{
 		case BITMAP_FORMAT_INDEXED16:
+			/* indexed modes are fine for everything */
+			break;
+
 		case BITMAP_FORMAT_RGB15:
 		case BITMAP_FORMAT_RGB32:
+			/* RGB modes can't use color tables */
+			assert(machine->drv->color_table_len == 0);
 			break;
+
+		case BITMAP_FORMAT_INVALID:
+			/* invalid format means no palette - or at least it should */
+			assert(machine->drv->total_colors == 0);
+			assert(machine->drv->color_table_len == 0);
+			return;
 
 		default:
 			fatalerror("Unsupported screen bitmap format!");
 			break;
 	}
-
-	/* ensure that RGB direct video modes don't have a colortable */
-//  assert_always(!(machine->drv->video_attributes & VIDEO_RGB_DIRECT) || machine->drv->color_table_len == 0,
-//      "Error: VIDEO_RGB_DIRECT requires color_table_len to be 0.");
 
 	/* compute the total colors, including shadows and highlights */
 	palette->total_colors = machine->drv->total_colors;
@@ -476,6 +483,10 @@ void palette_config(running_machine *machine)
 			palette->white_pen = MAKE_RGB(0xff,0xff,0xff);
 			break;
 		}
+
+		/* screenless case */
+		case BITMAP_FORMAT_INVALID:
+			break;
 
 		default:
 			fatalerror("Unhandled bitmap format!");
@@ -705,7 +716,7 @@ int palette_get_total_colors_with_ui(running_machine *machine)
 		result += machine->drv->total_colors;
 	if (machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS && format == BITMAP_FORMAT_INDEXED16)
 		result += machine->drv->total_colors;
-	if (result <= 65534)
+	if (result <= 65534 && format != BITMAP_FORMAT_INVALID)
 		result += 2;
 	return result;
 }

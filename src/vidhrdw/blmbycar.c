@@ -133,8 +133,6 @@ VIDEO_START( blmbycar )
 	tilemap_1 = tilemap_create(	get_tile_info_1, tilemap_scan_rows,
 								TILEMAP_TRANSPARENT, 16,16, DIM_NX, DIM_NY );
 
-	if (tilemap_0 && tilemap_1)
-	{
 		tilemap_set_scroll_rows(tilemap_0,1);
 		tilemap_set_scroll_cols(tilemap_0,1);
 		tilemap_set_transparent_pen(tilemap_0,0);
@@ -144,8 +142,6 @@ VIDEO_START( blmbycar )
 		tilemap_set_transparent_pen(tilemap_1,0);
 
 		return 0;
-	}
-	else return 1;
 }
 
 

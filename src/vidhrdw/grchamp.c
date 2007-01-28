@@ -115,8 +115,6 @@ VIDEO_START( grchamp )
 	state->left_tilemap = tilemap_create(get_left_tile_info, get_memory_offset, TILEMAP_OPAQUE, 8,8, 64,32);
 	state->right_tilemap = tilemap_create(get_right_tile_info, get_memory_offset, TILEMAP_OPAQUE, 8,8, 64,32);
 	state->center_tilemap = tilemap_create(get_center_tile_info, get_memory_offset, TILEMAP_OPAQUE, 8,8, 64,32);
-	if (!state->left_tilemap || !state->center_tilemap || !state->right_tilemap)
-		return 1;
 
 	return 0;
 }

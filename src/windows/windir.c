@@ -9,7 +9,9 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <shlwapi.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <tchar.h>
 
 #include "osdcore.h"
@@ -127,3 +129,21 @@ void osd_closedir(osd_directory *dir)
 		CloseHandle(dir->find);
 	free(dir);
 }
+
+
+//============================================================
+//  osd_is_absolute_path
+//============================================================
+
+int osd_is_absolute_path(const char *path)
+{
+	int result = FALSE;
+	TCHAR *t_path = tstring_from_utf8(path);
+	if (t_path != NULL)
+	{
+		result = !PathIsRelative(t_path);
+		free(t_path);
+	}
+	return result;
+}
+

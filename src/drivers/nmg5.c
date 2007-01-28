@@ -608,9 +608,6 @@ VIDEO_START( nmg5 )
 	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,64);
 	fg_tilemap = tilemap_create(fg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 
-	if (!bg_tilemap || !fg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap,0);
 
 	return 0;
@@ -829,7 +826,7 @@ static MACHINE_DRIVER_START( nmg5 )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_ADD(YM3812, 3579545) /* 14.31818MHz OSC divided by 4 */
 	MDRV_SOUND_CONFIG(ym3812_intf)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 

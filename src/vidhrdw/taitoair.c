@@ -271,7 +271,7 @@ static void fill_slope(mame_bitmap *bitmap, int color, INT32 x1, INT32 x2, INT32
 				xx2 = view.x2;
 
 			while(xx1 <= xx2) {
-				((UINT16 *)(bitmap->line[y1]))[xx1] = color;
+				*BITMAP_ADDR16(bitmap, y1, xx1) = color;
 				xx1++;
 			}
 		}

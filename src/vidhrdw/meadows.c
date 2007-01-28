@@ -37,8 +37,6 @@ static void get_tile_info(int tile_index)
 VIDEO_START( meadows )
 {
 	bg_tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,30);
-	if (!bg_tilemap)
-		return 1;
 	return 0;
 }
 

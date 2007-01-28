@@ -142,7 +142,7 @@ static void project_point_direct(struct point *p)
 
 static void draw_hline(mame_bitmap *bitmap, int x1, int x2, int y, int color)
 {
-	UINT16 *base = (UINT16 *)(bitmap->line[y]);
+	UINT16 *base = BITMAP_ADDR16(bitmap, y, 0);
 	while(x1 <= x2) {
 		base[x1] = color;
 		x1++;
@@ -151,7 +151,7 @@ static void draw_hline(mame_bitmap *bitmap, int x1, int x2, int y, int color)
 
 static void draw_hline_moired(mame_bitmap *bitmap, int x1, int x2, int y, int color)
 {
-	UINT16 *base = (UINT16 *)(bitmap->line[y]);
+	UINT16 *base = BITMAP_ADDR16(bitmap, y, 0);
 	while(x1 <= x2) {
 		if((x1^y)&1)
 			base[x1] = color;
@@ -390,7 +390,7 @@ static void draw_line(mame_bitmap *bitmap, int color, int x1, int y1, int x2, in
 	cur = 0;
 	while(x != x2 || y != y2) {
 		if(x>=view.x1 && x<=view.x2 && y>=view.y1 && y<=view.y2)
-			((UINT16 *)(bitmap->line[y]))[x] = color;
+			*BITMAP_ADDR16(bitmap, y, x) = color;
 		x += s1x;
 		y += s1y;
 		cur += d2;
@@ -401,7 +401,7 @@ static void draw_line(mame_bitmap *bitmap, int color, int x1, int y1, int x2, in
 		}
 	}
 	if(x>=view.x1 && x<=view.x2 && y>=view.y1 && y<=view.y2)
-		((UINT16 *)(bitmap->line[y]))[x] = color;
+		*BITMAP_ADDR16(bitmap, y, x) = color;
 }
 #endif
 static int comp_quads(const void *q1, const void *q2)

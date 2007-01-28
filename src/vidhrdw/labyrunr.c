@@ -97,9 +97,6 @@ VIDEO_START( labyrunr )
 	layer0 = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	layer1 = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!layer0 || !layer1)
-		return 1;
-
 	tilemap_set_transparent_pen(layer0,0);
 	tilemap_set_transparent_pen(layer1,0);
 

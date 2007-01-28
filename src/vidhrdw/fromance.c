@@ -83,10 +83,6 @@ VIDEO_START( fromance )
 	/* allocate local palette RAM */
 	local_paletteram = auto_malloc(0x800 * 2);
 
-	/* handle failure */
-	if (!bg_tilemap || !fg_tilemap)
-		return 1;
-
 	/* configure tilemaps */
 	tilemap_set_transparent_pen(fg_tilemap,15);
 
@@ -107,10 +103,6 @@ VIDEO_START( nekkyoku )
 
 	/* allocate local palette RAM */
 	local_paletteram = auto_malloc(0x800 * 2);
-
-	/* handle failure */
-	if (!bg_tilemap || !fg_tilemap)
-		return 1;
 
 	/* configure tilemaps */
 	tilemap_set_transparent_pen(fg_tilemap,15);

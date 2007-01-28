@@ -77,9 +77,6 @@ VIDEO_START( perfrman )
 {
 	pf1_tilemap = tilemap_create(get_pf_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
-	if (!pf1_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(pf1_tilemap,0);
 
 	return 0;
@@ -89,9 +86,6 @@ VIDEO_START( slapfight )
 {
 	pf1_tilemap = tilemap_create(get_pf1_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
 	fix_tilemap = tilemap_create(get_fix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-
-	if (!pf1_tilemap || !fix_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(fix_tilemap,0);
 

@@ -144,9 +144,6 @@ VIDEO_START( contra )
 	private_spriteram = auto_malloc(0x800);
 	private_spriteram_2 = auto_malloc(0x800);
 
-	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
-		return 1;
-
 	bg_clip = Machine->screen[0].visarea;
 	bg_clip.min_x += 40;
 

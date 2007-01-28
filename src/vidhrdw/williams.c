@@ -212,8 +212,6 @@ VIDEO_START( williams2 )
 
 	/* create the tilemap */
 	bg_tilemap = tilemap_create(get_tile_info, tilemap_scan_cols, TILEMAP_OPAQUE, 24,16, 128,16);
-	if (!bg_tilemap)
-		return 1;
 	tilemap_set_scrolldx(bg_tilemap, 2, 0);
 
 	state_save_register();
@@ -236,7 +234,7 @@ VIDEO_UPDATE( williams )
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
 		UINT8 *source = &williams_videoram[y];
-		UINT16 *dest = bitmap->line[y];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
 
 		/* loop over columns */
 		for (x = cliprect->min_x & ~1; x <= cliprect->max_x; x += 2)
@@ -263,7 +261,7 @@ VIDEO_UPDATE( blaster )
 	{
 		int erase_behind = blaster_video_control & blaster_scanline_control[y] & 2;
 		UINT8 *source = &williams_videoram[y];
-		UINT16 *dest = bitmap->line[y];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
 
 		/* latch a new color0 pen? */
 		if (blaster_video_control & blaster_scanline_control[y] & 1)
@@ -301,7 +299,7 @@ VIDEO_UPDATE( williams2 )
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
 		UINT8 *source = &williams_videoram[y];
-		UINT16 *dest = bitmap->line[y];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
 
 		/* loop over columns */
 		for (x = cliprect->min_x & ~1; x <= cliprect->max_x; x += 2)

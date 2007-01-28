@@ -143,9 +143,6 @@ VIDEO_START( darkhors )
 	darkhors_tmap2			=	tilemap_create(	get_tile_info_1, tilemap_scan_rows,
 												TILEMAP_TRANSPARENT, 16,16, 0x40,0x40	);
 
-	if ( !darkhors_tmap || !darkhors_tmap2 )
-		return 1;
-
 	tilemap_set_transparent_pen(darkhors_tmap, 0);
 	tilemap_set_transparent_pen(darkhors_tmap2, 0);
 

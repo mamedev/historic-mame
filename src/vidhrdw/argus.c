@@ -310,9 +310,6 @@ VIDEO_START( argus )
 	bg1_tilemap = tilemap_create(argus_get_bg1_tile_info,  tilemap_scan_cols, TILEMAP_TRANSPARENT, 16, 16, 32, 32);
 	tx_tilemap  = tilemap_create(argus_get_tx_tile_info,   tilemap_scan_cols, TILEMAP_TRANSPARENT,  8,  8, 32, 32);
 
-	if ( !tx_tilemap || !bg0_tilemap || !bg1_tilemap )
-		return 1;
-
 	/* dummy RAM for back ground */
 	argus_dummy_bg0ram = auto_malloc( 0x800 );
 	memset( argus_dummy_bg0ram, 0, 0x800 );
@@ -335,9 +332,6 @@ VIDEO_START( valtric )
 	bg1_tilemap = tilemap_create(valtric_get_bg_tile_info,  tilemap_scan_cols, TILEMAP_OPAQUE,      16, 16, 32, 32);
 	tx_tilemap  = tilemap_create(valtric_get_tx_tile_info,  tilemap_scan_cols, TILEMAP_TRANSPARENT,  8,  8, 32, 32);
 
-	if ( !tx_tilemap || !bg1_tilemap )
-		return 1;
-
 	tilemap_set_transparent_pen( bg1_tilemap, 15 );
 	tilemap_set_transparent_pen( tx_tilemap,  15 );
 	mosaicbitmap=auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
@@ -353,9 +347,6 @@ VIDEO_START( butasan )
 	bg0_tilemap = tilemap_create(butasan_get_bg0_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      16, 16, 32, 32);
 	bg1_tilemap = tilemap_create(butasan_get_bg1_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      16, 16, 32, 32);
 	tx_tilemap  = tilemap_create(butasan_get_tx_tile_info,  tilemap_scan_rows, TILEMAP_TRANSPARENT,  8,  8, 32, 32);
-
-	if ( !tx_tilemap || !bg0_tilemap || !bg1_tilemap )
-		return 1;
 
 	butasan_txram = auto_malloc( BUTASAN_TEXT_RAMSIZE );
 	butasan_bg0ram = auto_malloc( BUTASAN_BG0_RAMSIZE );
@@ -424,9 +415,6 @@ VIDEO_START( bombsa )
 #if 0
 	bombsa_tx_alt_ram = auto_malloc(0x800);
 #endif
-
-//  if ( !tx_tilemap || !bg1_tilemap )
-//      return 1;
 
 //  tilemap_set_transparent_pen( bg1_tilemap, 15 );
 	tilemap_set_transparent_pen( tx_tilemap,  15 );
@@ -1599,14 +1587,14 @@ VIDEO_UPDATE( valtric )
 
 					if(y<Machine->screen[0].height && x< Machine->screen[0].width)
 					{
-						c=((UINT32 *)mosaicbitmap->line[y])[x];
+						c=*BITMAP_ADDR32(mosaicbitmap, y, x);
 					}
 
 					if(valtric_mosaic<0)
 					{
 						if(y+step-1<Machine->screen[0].height && x+step-1< Machine->screen[0].width)
 						{
-							c = ((UINT32 *)mosaicbitmap->line[y+step-1])[x+step-1];
+							c = *BITMAP_ADDR32(mosaicbitmap, y+step-1, x+step-1);
 						}
 					}
 					for(yy=0;yy<step;yy++)
@@ -1614,7 +1602,7 @@ VIDEO_UPDATE( valtric )
 					 {
 							if(xx+x < Machine->screen[0].width && yy+y<Machine->screen[0].height)
 							{
-					 			dest=((UINT32 *)bitmap->line[y+yy]) +x+xx;
+					 			dest=BITMAP_ADDR32(bitmap, y+yy, x+xx);
 								*dest=c;
 							}
 					 }

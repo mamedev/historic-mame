@@ -287,11 +287,8 @@ struct _game_driver
 
 #define MDRV_CPU_REPLACE(tag, type, clock)								\
 	cpu = driver_find_cpu(machine, tag);								\
-	if (cpu)															\
-	{																	\
-		cpu->cpu_type = (CPU_##type);									\
-		cpu->cpu_clock = (clock);										\
-	}																	\
+	cpu->cpu_type = (CPU_##type);										\
+	cpu->cpu_clock = (clock);											\
 
 
 /* CPU parameters */
@@ -476,8 +473,7 @@ struct _game_driver
 
 #define MDRV_SOUND_MODIFY(tag)											\
 	sound = driver_find_sound(machine, tag);							\
-	if (sound)															\
-		sound->routes = 0;												\
+	sound->routes = 0;													\
 
 #define MDRV_SOUND_CONFIG(_config)										\
 	if (sound)															\

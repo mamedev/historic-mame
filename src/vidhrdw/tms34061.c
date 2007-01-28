@@ -83,14 +83,10 @@ int tms34061_start(struct tms34061_interface *interface)
 
 	/* allocate memory for VRAM */
 	tms34061.vram = auto_malloc(tms34061.intf.vramsize + 256 * 2);
-	if (!tms34061.vram)
-		return 1;
 	memset(tms34061.vram, 0, tms34061.intf.vramsize + 256 * 2);
 
 	/* allocate memory for latch RAM */
 	tms34061.latchram = auto_malloc(tms34061.intf.vramsize + 256 * 2);
-	if (!tms34061.latchram)
-		return 1;
 	memset(tms34061.latchram, 0, tms34061.intf.vramsize + 256 * 2);
 
 	/* add some buffer space for VRAM and latch RAM */

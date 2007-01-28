@@ -206,9 +206,6 @@ VIDEO_START( galivan )
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,   16,16,128,128);
 	tx_tilemap = tilemap_create(get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!bg_tilemap || !tx_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(tx_tilemap,15);
 
 	/* register for saving */
@@ -229,9 +226,6 @@ VIDEO_START( ninjemak )
 
 	bg_tilemap = tilemap_create(ninjemak_get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,   16,16,512,32);
 	tx_tilemap = tilemap_create(ninjemak_get_tx_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
-
-	if (!bg_tilemap || !tx_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(tx_tilemap,15);
 

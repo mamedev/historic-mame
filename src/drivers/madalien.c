@@ -227,20 +227,11 @@ VIDEO_START( madalien )
 	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_x,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
-	if ( !fg_tilemap )
-		return 1;
-
 	bg_tilemap_l = tilemap_create(get_bg_tile_info_l, tilemap_scan_cols_flip_x,
 		TILEMAP_OPAQUE, 16, 16, 16, 16);
 
-	if ( !bg_tilemap_l )
-		return 1;
-
 	bg_tilemap_r = tilemap_create(get_bg_tile_info_r, tilemap_scan_cols_flip_x,
 		TILEMAP_OPAQUE, 16, 16, 16, 16);
-
-	if ( !bg_tilemap_r )
-		return 1;
 
 	tilemap_set_transparent_pen( fg_tilemap, 0 );
 

@@ -205,8 +205,8 @@ static int render_poly(UINT32 *polydata)
 				for (y = scans->sy; y <= scans->ey; y++)
 				{
 					const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-					UINT16 *dest = (UINT16 *)screenbits->line[midy - y] + midx;
-					UINT16 *zbuf = zbuffer->line[midy - y];
+					UINT16 *dest = BITMAP_ADDR16(screenbits, midy - y, midx);
+					UINT16 *zbuf = BITMAP_ADDR16(zbuffer, midy - y, 0);
 					float uoz = (uoz_dy * y + scan->sx * uoz_dx + uoz_base) * zbase;
 					float voz = (voz_dy * y + scan->sx * voz_dx + voz_base) * zbase;
 
@@ -259,8 +259,8 @@ static int render_poly(UINT32 *polydata)
 				for (y = scans->sy; y <= scans->ey; y++)
 				{
 					const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-					UINT16 *dest = (UINT16 *)screenbits->line[midy - y] + midx;
-					UINT16 *zbuf = zbuffer->line[midy - y];
+					UINT16 *dest = BITMAP_ADDR16(screenbits, midy - y, midx);
+					UINT16 *zbuf = BITMAP_ADDR16(zbuffer, midy - y, 0);
 					float ooz = ooz_dy * y + scan->sx * ooz_dx + ooz_base;
 					float uoz = uoz_dy * y + scan->sx * uoz_dx + uoz_base;
 					float voz = voz_dy * y + scan->sx * voz_dx + voz_base;
@@ -325,8 +325,8 @@ static int render_poly(UINT32 *polydata)
 				for (y = scans->sy; y <= scans->ey; y++)
 				{
 					const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-					UINT16 *dest = (UINT16 *)screenbits->line[midy - y] + midx;
-					UINT16 *zbuf = zbuffer->line[midy - y];
+					UINT16 *dest = BITMAP_ADDR16(screenbits, midy - y, midx);
+					UINT16 *zbuf = BITMAP_ADDR16(zbuffer, midy - y, 0);
 					float ooz = ooz_dy * y + scan->sx * ooz_dx + ooz_base;
 					float uoz = uoz_dy * y + scan->sx * uoz_dx + uoz_base;
 					float voz = voz_dy * y + scan->sx * voz_dx + voz_base;
@@ -513,7 +513,7 @@ VIDEO_UPDATE( gaelco3d )
 
 		for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		{
-			UINT16 *dest = bitmap->line[y];
+			UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
 			for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			{
 				int offs = (yv + y - cliprect->min_y) * 4096 + xv + x - cliprect->min_x;

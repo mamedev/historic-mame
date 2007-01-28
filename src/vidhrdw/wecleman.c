@@ -279,7 +279,7 @@ static void do_blit_zoom16(mame_bitmap *bitmap, const rectangle *cliprect, struc
 	for (sy = y1; sy != y2; sy += dy)
 	{
 		UINT8 *row_base = sprite->pen_data + (src_f0y>>PRECISION_Y) * sprite->line_offset;
-		UINT16 *dst_ptr = (UINT16 *)bitmap->line[sy];
+		UINT16 *dst_ptr = BITMAP_ADDR16(bitmap, sy, 0);
 		src_fpx = src_f0x;
 
 		if (!sprite->shadow_mode)
@@ -573,7 +573,7 @@ static void wecleman_draw_road(mame_bitmap *bitmap, const rectangle *cliprect, i
 		// draw sky; each scanline is assumed to be dword aligned
 		for (sy=cliprect->min_y-BMP_PAD; sy<DST_HEIGHT; sy++)
 		{
-			UINT16 *dst = (UINT16 *)bitmap->line[sy+BMP_PAD] + BMP_PAD;
+			UINT16 *dst = BITMAP_ADDR16(bitmap, sy+BMP_PAD, BMP_PAD);
 			UINT16 pix, road;
 
 			road = wecleman_roadram[sy];
@@ -599,7 +599,7 @@ static void wecleman_draw_road(mame_bitmap *bitmap, const rectangle *cliprect, i
 
 		for (sy=cliprect->min_y-BMP_PAD; sy<DST_HEIGHT; sy++)
 		{
-			UINT16 *dst = (UINT16 *)bitmap->line[sy+BMP_PAD] + BMP_PAD;
+			UINT16 *dst = BITMAP_ADDR16(bitmap, sy+BMP_PAD, BMP_PAD);
 			UINT16 pix, road;
 
 			road = wecleman_roadram[sy];
@@ -937,8 +937,6 @@ VIDEO_START( wecleman )
 								 TILEMAP_TRANSPARENT,
 								 8,8,
 								 PAGE_NX * 1, PAGE_NY * 1);
-
-	if (!(bg_tilemap && fg_tilemap && txt_tilemap)) return 1;
 
 	tilemap_set_scroll_rows(bg_tilemap, TILEMAP_DIMY);	/* Screen-wise scrolling */
 	tilemap_set_scroll_cols(bg_tilemap, 1);

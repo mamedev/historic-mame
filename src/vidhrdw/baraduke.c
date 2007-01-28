@@ -123,9 +123,6 @@ VIDEO_START( baraduke )
 	bg_tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 	bg_tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
-	if (!tx_tilemap || !bg_tilemap[0] || !bg_tilemap[1])
-		return 1;
-
 	tilemap_set_transparent_pen(tx_tilemap,3);
 	tilemap_set_transparent_pen(bg_tilemap[0],7);
 	tilemap_set_transparent_pen(bg_tilemap[1],7);

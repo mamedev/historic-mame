@@ -213,8 +213,6 @@ VIDEO_START( powerins )
 								8,8,
 								DIM_NX_1, DIM_NY_1 );
 
-	if (tilemap_0 && tilemap_1)
-	{
 		tilemap_set_scroll_rows(tilemap_0,1);
 		tilemap_set_scroll_cols(tilemap_0,1);
 		tilemap_set_transparent_pen(tilemap_0,15);
@@ -224,8 +222,6 @@ VIDEO_START( powerins )
 		tilemap_set_transparent_pen(tilemap_1,15);
 
 		return 0;
-	}
-	else return 1;
 }
 
 

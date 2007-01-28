@@ -203,11 +203,7 @@ VIDEO_START( adder2 )
 
 	tilemap0 = tilemap_create(get_tile0_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 50, 35);
 
-	if ( !tilemap0 ) return 1;
-
 	tilemap1 = tilemap_create(get_tile1_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 50, 35);
-
-	if ( !tilemap1 ) return 1;
 
 	return 0;
 }

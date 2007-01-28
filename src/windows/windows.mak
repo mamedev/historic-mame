@@ -96,10 +96,7 @@ DEFS := $(filter-out -DX86_ASM,$(DEFS))
 DEFS += -D_CRT_SECURE_NO_DEPRECATE -DXML_STATIC -D__inline__=__inline -Dsnprintf=_snprintf -Dvsnprintf=_vsnprintf
 
 # make msvcprep into a pre-build step
-OSPREBUILD = msvcprep
-
-# rules for building vconv using the mingw tools for bootstrapping
-msvcprep: $(OBJ)/vconv.exe
+OSPREBUILD = $(OBJ)/vconv.exe
 
 $(OBJ)/vconv.exe: $(OBJ)/windows/vconv.o
 	@echo Linking $@...
@@ -155,7 +152,7 @@ CFLAGS += -DWIN95_MULTIMON
 endif
 
 # add the windows libaries
-LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm -ladvapi32 -lcomctl32
+LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm -ladvapi32 -lcomctl32 -lshlwapi
 
 ifdef PTR64
 LIBS += -lbufferoverflowu

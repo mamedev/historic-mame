@@ -254,10 +254,7 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( bking2 )
 {
-	if ((bg_tilemap = tilemap_create(get_tile_info, get_memory_offset, 0, 8, 8, 32, 32)) == NULL)
-	{
-		return 1;
-	}
+	bg_tilemap = tilemap_create(get_tile_info, get_memory_offset, 0, 8, 8, 32, 32);
 	helper0 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	helper1 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 
@@ -353,8 +350,8 @@ VIDEO_EOF( bking2 )
 
 		for (y = rect.min_y; y <= rect.max_y; y++)
 		{
-			const UINT16* p0 = helper0->line[y];
-			const UINT16* p1 = helper1->line[y];
+			const UINT16* p0 = BITMAP_ADDR16(helper0, y, 0);
+			const UINT16* p1 = BITMAP_ADDR16(helper1, y, 0);
 
 			for (x = rect.min_x; x <= rect.max_x; x++)
 			{

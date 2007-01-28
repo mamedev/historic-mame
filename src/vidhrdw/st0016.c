@@ -365,7 +365,7 @@ static void drawsprites( mame_bitmap *bitmap, const rectangle *cliprect)
 								UINT16 drawypos;
 
 								if (!flipy) {drawypos = ypos+yloop;} else {drawypos = (ypos+8-1)-yloop;}
-								destline = (UINT16 *)(bitmap->line[drawypos]);
+								destline = BITMAP_ADDR16(bitmap, drawypos, 0);
 
 								for (xloop=0; xloop<8; xloop++)
 								{
@@ -550,7 +550,7 @@ static void drawbgmap(mame_bitmap *bitmap,const rectangle *cliprect, int priorit
 								UINT16 drawypos;
 
 								if (!flipy) {drawypos = ypos+yloop;} else {drawypos = (ypos+8-1)-yloop;}
-								destline = (UINT16 *)(bitmap->line[drawypos]);
+								destline = BITMAP_ADDR16(bitmap, drawypos, 0);
 
 								for (xloop=0; xloop<8; xloop++)
 								{

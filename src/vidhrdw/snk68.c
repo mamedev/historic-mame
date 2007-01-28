@@ -81,9 +81,6 @@ VIDEO_START( pow )
 {
 	fix_tilemap = tilemap_create(get_pow_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!fix_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fix_tilemap,0);
 
 	return 0;
@@ -93,9 +90,6 @@ VIDEO_START( searchar )
 {
 	fix_tilemap = tilemap_create(get_sar_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!fix_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fix_tilemap,0);
 
 	return 0;
@@ -104,9 +98,6 @@ VIDEO_START( searchar )
 VIDEO_START( ikari3 )
 {
 	fix_tilemap = tilemap_create(get_ikari3_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
-
-	if (!fix_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(fix_tilemap,0);
 

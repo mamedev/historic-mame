@@ -136,9 +136,6 @@ struct _element_component
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-/* core functions */
-static void rendlay_exit(void);
-
 /* layout elements */
 static void layout_element_scale(mame_bitmap *dest, const mame_bitmap *source, const rectangle *sbounds, void *param);
 static void layout_element_draw_rect(mame_bitmap *dest, const rectangle *bounds, const render_color *color);

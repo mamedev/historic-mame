@@ -58,7 +58,6 @@ static void traverse_root_node(UINT32 address);
 extern int model3_irq_state;
 
 extern int model3_step;
-extern int model3_draw_crosshair;
 
 extern UINT32 *model3_vrom;
 
@@ -187,7 +186,7 @@ static void draw_tile_4bit(mame_bitmap *bitmap, int tx, int ty, int tilenum)
 	tile = &tile_base[tile_index];
 
 	for(y = ty; y < ty+8; y++) {
-		UINT16 *d = (UINT16*)bitmap->line[y^1];
+		UINT16 *d = BITMAP_ADDR16(bitmap, y^1, 0);
 		for(x = tx; x < tx+8; x+=2) {
 			UINT8 tile0, tile1;
 			UINT16 pix0, pix1;
@@ -222,7 +221,7 @@ static void draw_tile_8bit(mame_bitmap *bitmap, int tx, int ty, int tilenum)
 	tile = &tile_base[tile_index];
 
 	for(y = ty; y < ty+8; y++) {
-		UINT16 *d = (UINT16*)bitmap->line[y];
+		UINT16 *d = BITMAP_ADDR16(bitmap, y, 0);
 		int xx = 0;
 		for(x = tx; x < tx+8; x++) {
 			UINT8 tile0;
@@ -244,7 +243,7 @@ static void draw_texture_sheet(mame_bitmap *bitmap, const rectangle *cliprect)
 	int x,y;
 	for(y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		UINT16 *d = (UINT16*)bitmap->line[y];
+		UINT16 *d = BITMAP_ADDR16(bitmap, y, 0);
 		int index = (y*2)*2048;
 		for(x = cliprect->min_x; x <= cliprect->max_x; x++) {
 			UINT16 pix = texture_ram[0][index];
@@ -335,8 +334,8 @@ static void copy_screen(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int x,y;
 	for(y=cliprect->min_y; y <= cliprect->max_y; y++) {
-		UINT16 *d = (UINT16*)bitmap->line[y];
-		UINT16 *s = (UINT16*)bitmap3d->line[y];
+		UINT16 *d = BITMAP_ADDR16(bitmap, y, 0);
+		UINT16 *s = BITMAP_ADDR16(bitmap3d, y, 0);
 		for(x=cliprect->min_x; x <= cliprect->max_x; x++) {
 			UINT16 pix = s[x];
 			if(!(pix & 0x8000)) {

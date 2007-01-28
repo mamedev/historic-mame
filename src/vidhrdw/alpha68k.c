@@ -74,9 +74,6 @@ VIDEO_START( alpha68k )
 {
 	fix_tilemap = tilemap_create(get_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!fix_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fix_tilemap,0);
 
 	return 0;

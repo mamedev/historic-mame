@@ -166,9 +166,6 @@ VIDEO_START( marvins )
 	bg_tilemap = tilemap_create(get_bg_tilemap_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
 	tx_tilemap = tilemap_create(get_tx_tilemap_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!fg_tilemap || !bg_tilemap || !tx_tilemap)
-		return 1;
-
 	{
 		tilemap_clip = Machine->screen[0].visarea;
 		if (snk_gamegroup != 1) // not Mad Crasher

@@ -112,6 +112,10 @@
  *
  * - SIM fixed
  *
+ * 28-Jan-2007 Zsolt Vasvari
+ *
+ * - Removed archaic i8080_EXACT flag.
+ *
  *****************************************************************************/
 
 /*int survival_prot = 0; */

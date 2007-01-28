@@ -75,9 +75,6 @@ VIDEO_START( fstarfrc )
 	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	tx_tilemap = tilemap_create(tx_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 
-	if (!fg_tilemap || !bg_tilemap || !tx_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap,0);
 	tilemap_set_transparent_pen(bg_tilemap,0);
 	tilemap_set_transparent_pen(tx_tilemap,0);
@@ -102,9 +99,6 @@ VIDEO_START( ginkun )
 	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 	tx_tilemap = tilemap_create(tx_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 
-	if (!fg_tilemap || !bg_tilemap || !tx_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap,0);
 	tilemap_set_transparent_pen(bg_tilemap,0);
 	tilemap_set_transparent_pen(tx_tilemap,0);
@@ -126,9 +120,6 @@ VIDEO_START( riot )
 	fg_tilemap = tilemap_create(fg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 	tx_tilemap = tilemap_create(tx_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
-
-	if (!fg_tilemap || !bg_tilemap || !tx_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(fg_tilemap,0);
 	tilemap_set_transparent_pen(bg_tilemap,0);
@@ -267,16 +258,16 @@ static void blendbitmaps(
 		pen_t *paldata = Machine->pens;
 		UINT32 *end;
 
-		UINT16 *sd1 = ((UINT16 *)src1->line[0]);								/* source data   */
-		UINT16 *sd2 = ((UINT16 *)src2->line[0]);
-		UINT16 *sd3 = ((UINT16 *)src3->line[0]);
+		UINT16 *sd1 = src1->base;												/* source data   */
+		UINT16 *sd2 = src2->base;
+		UINT16 *sd3 = src3->base;
 
 		int sw = ex-sx+1;														/* source width  */
 		int sh = ey-sy+1;														/* source height */
-		int sm = ((UINT16 *)src1->line[1]) - ((UINT16 *)src1->line[0]);			/* source modulo */
+		int sm = src1->rowpixels;												/* source modulo */
 
-		UINT32 *dd = ((UINT32 *)dest->line[sy]) + sx;							/* dest data     */
-		int dm = ((UINT32 *)dest->line[1]) - ((UINT32 *)dest->line[0]);			/* dest modulo   */
+		UINT32 *dd = BITMAP_ADDR32(dest, sy, sx);								/* dest data     */
+		int dm = dest->rowpixels;												/* dest modulo   */
 
 		sd1 += (sx-ox);
 		sd1 += sm * (sy-oy);

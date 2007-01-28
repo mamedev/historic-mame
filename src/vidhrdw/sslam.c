@@ -146,9 +146,6 @@ VIDEO_START(sslam)
 	sslam_md_tilemap = tilemap_create(get_sslam_md_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	sslam_tx_tilemap = tilemap_create(get_sslam_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 
-	if (!sslam_bg_tilemap || !sslam_md_tilemap || !sslam_tx_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(sslam_md_tilemap,0);
 	tilemap_set_transparent_pen(sslam_tx_tilemap,0);
 
@@ -160,9 +157,6 @@ VIDEO_START(sslam)
 VIDEO_START(powerbls)
 {
 	sslam_bg_tilemap = tilemap_create(get_powerbls_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,64);
-
-	if (!sslam_bg_tilemap)
-		return 1;
 
 	sprites_x_offset = -21;
 

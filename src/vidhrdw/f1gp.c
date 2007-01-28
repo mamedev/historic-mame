@@ -57,9 +57,6 @@ VIDEO_START( f1gp )
 	roz_tilemap = tilemap_create(f1gp_get_roz_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     16,16,64,64);
 	fg_tilemap =  tilemap_create(get_fg_tile_info,      tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 
-	if (!fg_tilemap || !roz_tilemap)
-		return 1;
-
 	K053936_wraparound_enable(0, 1);
 	K053936_set_offset(0, -58, -2);
 
@@ -77,9 +74,6 @@ VIDEO_START( f1gp2 )
 {
 	roz_tilemap = tilemap_create(f1gp2_get_roz_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 	fg_tilemap =  tilemap_create(get_fg_tile_info,       tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
-
-	if (!fg_tilemap || !roz_tilemap)
-		return 1;
 
 	K053936_wraparound_enable(0, 1);
 	K053936_set_offset(0, -48, -21);

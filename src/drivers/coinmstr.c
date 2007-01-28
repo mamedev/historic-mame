@@ -537,9 +537,6 @@ VIDEO_START( coinmstr )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE, 8, 8, 46, 64);
 
-	if(!bg_tilemap)
-		return 1;
-
 	return 0;
 }
 

@@ -674,7 +674,10 @@ void amiga_render_scanline(int scanline)
 
 			/* compute the pixel fetch parameters */
 			ddf_start_pixel = ( CUSTOM_REG(REG_DDFSTRT) & 0xfc ) * 2 + (hires ? 9 : 17);
-			ddf_stop_pixel = ( CUSTOM_REG(REG_DDFSTOP) & 0xfc ) * 2 + (hires ? (9 + 23) : (17 + 15));
+			ddf_stop_pixel = ( CUSTOM_REG(REG_DDFSTOP) & 0xfc ) * 2 + (hires ? (9 + 15) : (17 + 15));
+
+			if ( ( CUSTOM_REG(REG_DDFSTRT) ^ CUSTOM_REG(REG_DDFSTOP) ) & 0x04 )
+				ddf_stop_pixel += 8;
 
 			/* compute the horizontal start/stop */
 			hstart = CUSTOM_REG(REG_DIWSTRT) & 0xff;
@@ -703,16 +706,22 @@ void amiga_render_scanline(int scanline)
 			odelay = CUSTOM_REG(REG_BPLCON1) & 0xf;
 			edelay = ( CUSTOM_REG(REG_BPLCON1) >> 4 ) & 0x0f;
 
-#if 0 /* Fixes NZS scrolling, but breaks Arcadia hires boot menu */
-			if ( CUSTOM_REG(REG_DDFSTRT) & 0x04 )
+			if ( hires )
 			{
-				odelay = ( odelay + 8 ) & 0x0f;
-				edelay = ( edelay + 8 ) & 0x0f;
+				obitoffs = 15 + ( odelay << 1 );
+				ebitoffs = 15 + ( edelay << 1 );
 			}
-#endif
+			else
+			{
+				if ( CUSTOM_REG(REG_DDFSTRT) & 0x04 )
+				{
+					odelay = ( odelay + 8 ) & 0x0f;
+					edelay = ( edelay + 8 ) & 0x0f;
+				}
 
-			obitoffs = 15 + odelay;
-			ebitoffs = 15 + edelay;
+				obitoffs = 15 + odelay;
+				ebitoffs = 15 + edelay;
+			}
 
 			for (p = 0; p < 6; p++)
 				CUSTOM_REG(REG_BPL1DAT + p) = 0;
@@ -829,7 +838,7 @@ void amiga_render_scanline(int scanline)
 				CUSTOM_REG(REG_CLXDAT) |= 0x001;
 
 			/* if we are within the display region, render */
-			if (x >= hstart && x <= hstop)
+			if (x >= hstart && x < hstop)
 			{
 				/* hold-and-modify mode -- assume low-res (hi-res not supported by the hardware) */
 				if (ham)

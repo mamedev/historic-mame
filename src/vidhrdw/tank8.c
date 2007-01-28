@@ -96,11 +96,6 @@ VIDEO_START( tank8 )
 	tilemap1 = tilemap_create(tank8_get_tile_info1, tilemap_scan_rows, TILEMAP_OPAQUE, 16, 16, 32, 32);
 	tilemap2 = tilemap_create(tank8_get_tile_info2, tilemap_scan_rows, TILEMAP_OPAQUE, 16, 16, 32, 32);
 
-	if (tilemap2 == NULL)
-		return 1;
-	if (tilemap1 == NULL)
-		return 1;
-
 	/* VBLANK starts on scanline #256 and ends on scanline #24 */
 
 	tilemap_set_scrolly(tilemap1, 0, 2 * 24);
@@ -206,9 +201,9 @@ VIDEO_EOF( tank8 )
 	{
 		int state = 0;
 
-		const UINT16* p1 = (UINT16*) helper1->line[y];
-		const UINT16* p2 = (UINT16*) helper2->line[y];
-		const UINT16* p3 = (UINT16*) helper3->line[y];
+		const UINT16* p1 = BITMAP_ADDR16(helper1, y, 0);
+		const UINT16* p2 = BITMAP_ADDR16(helper2, y, 0);
+		const UINT16* p3 = BITMAP_ADDR16(helper3, y, 0);
 
 		if (y % 2 != cpu_getcurrentframe() % 2)
 		{

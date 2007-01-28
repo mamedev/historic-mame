@@ -1530,7 +1530,7 @@ static int load_layout_files(render_target *target, const char *layoutfile, int 
 	}
 
 	/* now do the built-in layouts for single-screen games */
-	if (Machine->drv->screen[1].tag == NULL)
+	if (Machine->drv->screen[0].tag != NULL && Machine->drv->screen[1].tag == NULL)
 	{
 		if (Machine->gamedrv->flags & ORIENTATION_SWAP_XY)
 			*nextfile = layout_file_load(NULL, layout_vertical);

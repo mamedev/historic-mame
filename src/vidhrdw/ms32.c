@@ -75,9 +75,6 @@ VIDEO_START( ms32 )
 	ms32_bg_tilemap = tilemap_create(get_ms32_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 	ms32_roz_tilemap = tilemap_create(get_ms32_roz_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,128,128);
 
-	if (!ms32_tx_tilemap || !ms32_roz_tilemap || !ms32_bg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(ms32_tx_tilemap,0);
 	tilemap_set_transparent_pen(ms32_bg_tilemap,0);
 	tilemap_set_transparent_pen(ms32_roz_tilemap,0);

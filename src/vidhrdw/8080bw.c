@@ -28,8 +28,6 @@ static WRITE8_HANDLER( invadpt2_videoram_w );
 static WRITE8_HANDLER( cosmo_videoram_w );
 static WRITE8_HANDLER( shuttlei_videoram_w );
 
-static VIDEO_UPDATE( 8080bw_common );
-
 static void plot_pixel_8080(int x, int y, int col);
 
 /* smoothed colors, overlays are not so contrasted */

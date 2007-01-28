@@ -233,8 +233,6 @@ VIDEO_START( combasc )
 	memset(private_spriteram[0],0,0x800);
 	memset(private_spriteram[1],0,0x800);
 
-	if (bg_tilemap[0] && bg_tilemap[1] && textlayer)
-	{
 		tilemap_set_transparent_pen(bg_tilemap[0],0);
 		tilemap_set_transparent_pen(bg_tilemap[1],0);
 		tilemap_set_transparent_pen(textlayer,0);
@@ -242,9 +240,6 @@ VIDEO_START( combasc )
 		tilemap_set_scroll_rows(textlayer,32);
 
 		return 0;
-	}
-
-	return 1;
 }
 
 VIDEO_START( combascb )
@@ -260,8 +255,6 @@ VIDEO_START( combascb )
 	memset(private_spriteram[0],0,0x800);
 	memset(private_spriteram[1],0,0x800);
 
-	if (bg_tilemap[0] && bg_tilemap[1] && textlayer)
-	{
 		tilemap_set_transparent_pen(bg_tilemap[0],0);
 		tilemap_set_transparent_pen(bg_tilemap[1],0);
 		tilemap_set_transparent_pen(textlayer,0);
@@ -270,9 +263,6 @@ VIDEO_START( combascb )
 		tilemap_set_scroll_rows(bg_tilemap[1],32);
 
 		return 0;
-	}
-
-	return 1;
 }
 
 /***************************************************************************

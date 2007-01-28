@@ -307,9 +307,9 @@ static extended_keyboard_code at_keyboard_extended_codes_set_2_3[]=
 };
 
 static void at_keyboard_queue_insert(UINT8 data);
-static int at_keyboard_queue_size(void);
 
 #ifdef MESS
+static int at_keyboard_queue_size(void);
 static int at_keyboard_queue_chars(const unicode_char *text, size_t text_len);
 static int at_keyboard_accept_char(unicode_char ch);
 static int at_keyboard_charqueue_empty(void);

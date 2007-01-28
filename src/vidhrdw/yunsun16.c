@@ -113,8 +113,6 @@ VIDEO_START( yunsun16 )
 								16,16,
 								TILES_PER_PAGE_X*PAGES_PER_TMAP_X,TILES_PER_PAGE_Y*PAGES_PER_TMAP_Y);
 
-	if (!tilemap_0 || !tilemap_1)	return 1;
-
 	sprites_scrolldx = -0x40;
 	sprites_scrolldy = -0x0f;
 	tilemap_set_scrolldx(tilemap_0,-0x34,0);

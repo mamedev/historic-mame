@@ -100,9 +100,6 @@ VIDEO_START( playch10 )
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	ppu2c0x_init( &ppu_interface );
 
 	return 0;

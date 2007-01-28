@@ -466,8 +466,6 @@ VIDEO_START( seta_2_layers )
 	tilemap_3 = tilemap_create(	get_tile_info_3, tilemap_scan_rows,
 								TILEMAP_TRANSPARENT, 16,16, 64,32 );
 
-	if (tilemap_0 && tilemap_1 && tilemap_2 && tilemap_3)
-	{
 		tilemaps_flip = 0;
 
 		tilemap_set_transparent_pen(tilemap_0,0);
@@ -479,8 +477,6 @@ VIDEO_START( seta_2_layers )
 		seta_samples_bank = -1;	// set the samples bank to an out of range value at start-up
 
 		return 0;
-	}
-	else return 1;
 }
 
 
@@ -502,8 +498,6 @@ VIDEO_START( seta_1_layer )
 	tilemap_2 = 0;
 	tilemap_3 = 0;
 
-	if (tilemap_0 && tilemap_1)
-	{
 		tilemaps_flip = 0;
 
 		tilemap_set_transparent_pen(tilemap_0,0);
@@ -513,8 +507,6 @@ VIDEO_START( seta_1_layer )
 		seta_samples_bank = -1;	// set the samples bank to an out of range value at start-up
 
 		return 0;
-	}
-	else return 1;
 }
 
 VIDEO_START( twineagl_1_layer )
@@ -534,8 +526,6 @@ VIDEO_START( twineagl_1_layer )
 	tilemap_2 = 0;
 	tilemap_3 = 0;
 
-	if (tilemap_0 && tilemap_1)
-	{
 		tilemaps_flip = 0;
 
 		tilemap_set_transparent_pen(tilemap_0,0);
@@ -545,8 +535,6 @@ VIDEO_START( twineagl_1_layer )
 		seta_samples_bank = -1;	// set the samples bank to an out of range value at start-up
 
 		return 0;
-	}
-	else return 1;
 }
 
 

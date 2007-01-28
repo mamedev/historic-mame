@@ -114,9 +114,6 @@ VIDEO_START( cop01 )
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,      8,8,64,32);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!bg_tilemap || !fg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap,15);
 
 	/* priority doesn't exactly work this way, see above */

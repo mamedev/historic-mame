@@ -257,8 +257,8 @@ renderscanline_uvi_full( mame_bitmap *bitmap, const rectangle *clip, const edge 
 	}
 
 	{
-		const UINT8 *pCharPri = (UINT8 *)priority_bitmap->line[sy];
-		UINT32 *pDest = (UINT32 *)bitmap->line[sy];
+		const UINT8 *pCharPri = BITMAP_ADDR8(priority_bitmap, sy, 0);
+		UINT32 *pDest = BITMAP_ADDR32(bitmap, sy, 0);
 		int x0 = (int)e1->x;
 		int x1 = (int)e2->x;
 		int w = x1-x0;
@@ -859,8 +859,8 @@ mydrawgfxzoom(
 				for( y=sy; y<ey; y++ )
 				{
 					UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-					UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-					const UINT8 *pCharPri = (UINT8 *)priority_bitmap->line[y];
+					UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
+					const UINT8 *pCharPri = BITMAP_ADDR8(priority_bitmap, y, 0);
 					int x, x_index = x_index_base;
 					for( x=sx; x<ex; x++ )
 					{
@@ -923,7 +923,7 @@ ApplyGamma( mame_bitmap *bitmap )
 		const UINT8 *blut = (const UINT8 *)&namcos22_gamma[0x300/4];
 		for( y=0; y<bitmap->height; y++ )
 		{
-			UINT32 *dest = (UINT32 *)bitmap->line[y];
+			UINT32 *dest = BITMAP_ADDR32(bitmap, y, 0);
 			for( x=0; x<bitmap->width; x++ )
 			{
 				int rgb = dest[x];
@@ -941,7 +941,7 @@ ApplyGamma( mame_bitmap *bitmap )
 		const UINT8 *blut = 0x200+(const UINT8 *)memory_region(REGION_USER1);
 		for( y=0; y<bitmap->height; y++ )
 		{
-			UINT32 *dest = (UINT32 *)bitmap->line[y];
+			UINT32 *dest = BITMAP_ADDR32(bitmap, y, 0);
 			for( x=0; x<bitmap->width; x++ )
 			{
 				int rgb = dest[x];

@@ -1267,8 +1267,6 @@ int segaic16_tilemap_init(int which, int type, int colorbase, int xoffs, int num
 
 	/* create the tilemap for the text layer */
 	info->textmap = tilemap_create(get_text_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 64,28);
-	if (!info->textmap)
-		return 1;
 
 	/* configure it */
 	info->textmap_info.rambase = info->textram;
@@ -1284,8 +1282,6 @@ int segaic16_tilemap_init(int which, int type, int colorbase, int xoffs, int num
 	{
 		/* each page is 64x32 */
 		info->tilemaps[pagenum] = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 64,32);
-		if (!info->tilemaps[pagenum])
-			return 1;
 
 		/* configure the tilemap */
 		info->tilemap_info[pagenum].rambase = info->tileram + pagenum * 64*32;
@@ -1552,8 +1548,8 @@ static void segaic16_sprites_hangon_draw(struct sprite_info *info, mame_bitmap *
 			/* skip drawing if not within the cliprect */
 			if (y >= cliprect->min_y && y <= cliprect->max_y)
 			{
-				UINT16 *dest = (UINT16 *)bitmap->line[y];
-				UINT8 *pri = (UINT8 *)priority_bitmap->line[y];
+				UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
+				UINT8 *pri = BITMAP_ADDR8(priority_bitmap, y, 0);
 				int xacc = 0x00;
 
 				/* note that the System 16A sprites have a design flaw that allows the address */
@@ -1717,8 +1713,8 @@ static void segaic16_sprites_sharrier_draw(struct sprite_info *info, mame_bitmap
 			/* skip drawing if not within the cliprect */
 			if (y >= cliprect->min_y && y <= cliprect->max_y)
 			{
-				UINT16 *dest = (UINT16 *)bitmap->line[y];
-				UINT8 *pri = (UINT8 *)priority_bitmap->line[y];
+				UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
+				UINT8 *pri = BITMAP_ADDR8(priority_bitmap, y, 0);
 				int xacc = 0x00;
 
 				/* note that the System 16A sprites have a design flaw that allows the address */
@@ -1885,8 +1881,8 @@ static void segaic16_sprites_16a_draw(struct sprite_info *info, mame_bitmap *bit
 			/* skip drawing if not within the cliprect */
 			if (y >= cliprect->min_y && y <= cliprect->max_y)
 			{
-				UINT16 *dest = (UINT16 *)bitmap->line[y];
-				UINT8 *pri = (UINT8 *)priority_bitmap->line[y];
+				UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
+				UINT8 *pri = BITMAP_ADDR8(priority_bitmap, y, 0);
 
 				/* note that the System 16A sprites have a design flaw that allows the address */
 				/* to carry into the flip flag, which is the topmost bit -- it is very important */
@@ -2061,8 +2057,8 @@ static void segaic16_sprites_16b_draw(struct sprite_info *info, mame_bitmap *bit
 			/* skip drawing if not within the cliprect */
 			if (y >= cliprect->min_y && y <= cliprect->max_y)
 			{
-				UINT16 *dest = (UINT16 *)bitmap->line[y];
-				UINT8 *pri = (UINT8 *)priority_bitmap->line[y];
+				UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
+				UINT8 *pri = BITMAP_ADDR8(priority_bitmap, y, 0);
 				int xacc;
 
 				/* compute the initial X zoom accumulator; this is verified on the real PCB */
@@ -2213,8 +2209,8 @@ static void segaic16_sprites_yboard_16b_draw(struct sprite_info *info, mame_bitm
 			/* skip drawing if not within the cliprect */
 			if (y >= cliprect->min_y && y <= cliprect->max_y)
 			{
-				UINT16 *dest = (UINT16 *)bitmap->line[y];
-				UINT8 *pri = (UINT8 *)priority_bitmap->line[y];
+				UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
+				UINT8 *pri = BITMAP_ADDR8(priority_bitmap, y, 0);
 				int xacc;
 
 				/* compute the initial X zoom accumulator; this is verified on the real PCB */
@@ -2381,8 +2377,8 @@ static void segaic16_sprites_outrun_draw(struct sprite_info *info, mame_bitmap *
 			/* skip drawing if not within the cliprect */
 			if (y >= cliprect->min_y && y <= cliprect->max_y)
 			{
-				UINT16 *dest = (UINT16 *)bitmap->line[y];
-				UINT8 *pri = (UINT8 *)priority_bitmap->line[y];
+				UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
+				UINT8 *pri = BITMAP_ADDR8(priority_bitmap, y, 0);
 				int xacc = 0;
 
 				/* non-flipped case */
@@ -2496,7 +2492,7 @@ static void segaic16_sprites_yboard_draw(struct sprite_info *info, mame_bitmap *
 	/* clear out any scanlines we might be using */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		if (!(rotatebase[y & ~1] & 0xc000))
-			memset(&((UINT16 *)bitmap->line[y])[cliprect->min_x], 0xff, (cliprect->max_x - cliprect->min_x + 1) * sizeof(UINT16));
+			memset(BITMAP_ADDR16(bitmap, y, cliprect->min_x), 0xff, (cliprect->max_x - cliprect->min_x + 1) * sizeof(UINT16));
 
 	/* now scan backwards and render the sprites in order */
 	for (data = info->spriteram; !(data[0] & 0x8000) && !visited[next]; data = info->spriteram + next * 8)
@@ -2541,7 +2537,7 @@ static void segaic16_sprites_yboard_draw(struct sprite_info *info, mame_bitmap *
 			/* skip drawing if not within the cliprect */
 			if (y >= cliprect->min_y && y <= cliprect->max_y)
 			{
-				UINT16 *dest = (UINT16 *)bitmap->line[y];
+				UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
 				int minx = rotatebase[y & ~1];
 				int maxx = rotatebase[y |  1];
 				int xacc = 0;
@@ -2938,7 +2934,7 @@ static void segaic16_road_hangon_draw(struct road_info *info, mame_bitmap *bitma
 
 			for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 			{
-				UINT16 *dest = (UINT16 *)bitmap->line[y];
+				UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
 				UINT8 *src = info->gfx + ((y + dy) & 0xff) * 512;
 				for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 					dest[x] = src[(x + dx) & 0x3ff];
@@ -2956,7 +2952,7 @@ static void segaic16_road_hangon_draw(struct road_info *info, mame_bitmap *bitma
 	/* loop over scanlines */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		UINT16 *dest = (UINT16 *)bitmap->line[y];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
 		int control = roadram[0x000 + y];
 		int hpos = roadram[0x100 + (control & 0xff)];
 		int color0 = roadram[0x200 + (control & 0xff)];
@@ -3258,7 +3254,7 @@ static void segaic16_road_outrun_draw(struct road_info *info, mame_bitmap *bitma
 //          { 0x80,0x81,0x81,0x83,0,0,0,0x00 },
 //          { 0x81,0x87,0x87,0x8f,0,0,0,0x00 }
 		};
-		UINT16 *dest = (UINT16 *)bitmap->line[y];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
 		int data0 = roadram[0x000 + y];
 		int data1 = roadram[0x100 + y];
 
@@ -3590,9 +3586,9 @@ void segaic16_rotate_draw(int which, mame_bitmap *bitmap, const rectangle *clipr
 	/* loop over screen Y coordinates */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		UINT16 *dest = (UINT16 *)bitmap->line[y];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
 		UINT16 *src = (UINT16 *)srcbitmap->base;
-		UINT8 *pri = (UINT8 *)priority_bitmap->line[y];
+		UINT8 *pri = BITMAP_ADDR8(priority_bitmap, y, 0);
 		INT32 tx = currx;
 		INT32 ty = curry;
 

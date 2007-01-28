@@ -272,7 +272,7 @@ static void rabbit_clearspritebitmap( mame_bitmap *bitmap, const rectangle *clip
 
 	for (y=0; y<amounty;y++)
 	{
-		dstline = (UINT16 *)(rabbit_sprite_bitmap->line[(starty+y)&0xfff]);
+		dstline = BITMAP_ADDR16(rabbit_sprite_bitmap, (starty+y)&0xfff, 0);
 		memset(dstline+startx,0x00,amountx*2);
 	}
 }
@@ -312,8 +312,8 @@ static void rabbit_drawsprite_bitmap( mame_bitmap *bitmap, const rectangle *clip
 
 		if ((ydrawpos >= cliprect->min_y) && (ydrawpos <= cliprect->max_y))
 		{
-			srcline = (UINT16 *)(rabbit_sprite_bitmap->line[(starty+(y>>7))&0xfff]);
-			dstline = (UINT16 *)(bitmap->line[ydrawpos]);
+			srcline = BITMAP_ADDR16(rabbit_sprite_bitmap, (starty+(y>>7))&0xfff, 0);
+			dstline = BITMAP_ADDR16(bitmap, ydrawpos, 0);
 
 			for (x=0;x<xsize;x+=0x80)
 			{

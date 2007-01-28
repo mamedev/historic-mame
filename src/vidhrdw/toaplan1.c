@@ -260,9 +260,6 @@ static int toaplan1_create_tilemaps(void)
 	pf3_tilemap = tilemap_create(get_pf3_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 	pf4_tilemap = tilemap_create(get_pf4_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 
-	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(pf1_tilemap,0);
 	tilemap_set_transparent_pen(pf2_tilemap,0);
 	tilemap_set_transparent_pen(pf3_tilemap,0);
@@ -1047,8 +1044,8 @@ static void toaplan1_draw_sprite_custom(mame_bitmap *dest_bmp,const gfx_element 
 			for( y=sy; y<ey; y++ )
 			{
 				UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-				UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-				UINT8 *pri = priority_bitmap->line[y];
+				UINT16 *dest = BITMAP_ADDR16(dest_bmp, y, 0);
+				UINT8 *pri = BITMAP_ADDR8(priority_bitmap, y, 0);
 
 				int x, x_index = x_index_base;
 				for( x=sx; x<ex; x++ )

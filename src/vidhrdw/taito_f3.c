@@ -607,9 +607,6 @@ VIDEO_START( f3 )
 	tile_opaque_sp = (UINT8 *)auto_malloc(Machine->gfx[2]->total_elements);
 	tile_opaque_pf = (UINT8 *)auto_malloc(Machine->gfx[1]->total_elements);
 
-	if (!vram_layer || !pixel_layer)
-		return 1;
-
 	tilemap_set_transparent_pen(pf1_tilemap,0);
 	tilemap_set_transparent_pen(pf2_tilemap,0);
 	tilemap_set_transparent_pen(pf3_tilemap,0);
@@ -1414,7 +1411,7 @@ INLINE void f3_drawscanlines(
 		yadv = -yadv;
 	}
 
-	dstp0 = (UINT8 *)pri_alp_bitmap->line[ty] + x;
+	dstp0 = BITMAP_ADDR8(pri_alp_bitmap, ty, x);
 
 	pdest_2a = f3_alpha_level_2ad ? 0x10 : 0;
 	pdest_2b = f3_alpha_level_2bd ? 0x20 : 0;
@@ -1427,7 +1424,7 @@ INLINE void f3_drawscanlines(
 
 	{
 		UINT32 *dsti0,*dsti;
-		dsti0 = (UINT32 *)bitmap->line[ty] + x;
+		dsti0 = BITMAP_ADDR32(bitmap, ty, x);
 		while(1)
 		{
 			int cx=0;
@@ -2076,11 +2073,11 @@ static void get_line_ram_info(tilemap *tmap, int sx, int sy, int pos, UINT32 *f3
 
 			/* set pixmap index */
 			line_t->x_count[y]=x_index_fx & 0xffff; // Fractional part
-			line_t->src_s[y]=src_s=(unsigned short *)srcbitmap->line[y_index];
+			line_t->src_s[y]=src_s=BITMAP_ADDR16(srcbitmap, y_index, 0);
 			line_t->src_e[y]=&src_s[width_mask+1];
 			line_t->src[y]=&src_s[x_index_fx>>16];
 
-			line_t->tsrc_s[y]=tsrc_s=(unsigned char *)transbitmap->line[y_index];
+			line_t->tsrc_s[y]=tsrc_s=BITMAP_ADDR8(transbitmap, y_index, 0);
 			line_t->tsrc[y]=&tsrc_s[x_index_fx>>16];
 		}
 
@@ -2197,16 +2194,16 @@ static void get_vram_info(tilemap *vram_tilemap, tilemap *pixel_tilemap, int sx,
 			/* set pixmap index */
 			line_t->x_count[y]=0xffff;
 			if (usePixelLayer)
-				line_t->src_s[y]=src_s=(unsigned short *)srcbitmap_pixel->line[sy&0xff];
+				line_t->src_s[y]=src_s=BITMAP_ADDR16(srcbitmap_pixel, sy&0xff, 0);
 			else
-				line_t->src_s[y]=src_s=(unsigned short *)srcbitmap_vram->line[sy&0x1ff];
+				line_t->src_s[y]=src_s=BITMAP_ADDR16(srcbitmap_vram, sy&0x1ff, 0);
 			line_t->src_e[y]=&src_s[vram_width_mask+1];
 			line_t->src[y]=&src_s[sx];
 
 			if (usePixelLayer)
-				line_t->tsrc_s[y]=tsrc_s=(unsigned char *)transbitmap_pixel->line[sy&0xff];
+				line_t->tsrc_s[y]=tsrc_s=BITMAP_ADDR8(transbitmap_pixel, sy&0xff, 0);
 			else
-				line_t->tsrc_s[y]=tsrc_s=(unsigned char *)transbitmap_vram->line[sy&0x1ff];
+				line_t->tsrc_s[y]=tsrc_s=BITMAP_ADDR8(transbitmap_vram, sy&0x1ff, 0);
 			line_t->tsrc[y]=&tsrc_s[sx];
 		}
 
@@ -2738,8 +2735,8 @@ INLINE void f3_drawgfx( mame_bitmap *dest_bmp,const gfx_element *gfx,
 					int y=ey-sy;
 					int x=(ex-sx-1)|(tile_opaque_sp[code % gfx->total_elements]<<4);
 					UINT8 *source0 = gfx->gfxdata + (source_base+y_index) * 16 + x_index_base;
-					UINT32 *dest0 = (UINT32 *)dest_bmp->line[sy]+sx;
-					UINT8 *pri0 = (UINT8 *)pri_alp_bitmap->line[sy]+sx;
+					UINT32 *dest0 = BITMAP_ADDR32(dest_bmp, sy, sx);
+					UINT8 *pri0 = BITMAP_ADDR8(pri_alp_bitmap, sy, sx);
 					int yadv = dest_bmp->rowpixels;
 					dy=dy*16;
 					while(1)
@@ -2904,8 +2901,8 @@ INLINE void f3_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 					for( y=sy; y<ey; y++ )
 					{
 						UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * 16;
-						UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-						UINT8 *pri = pri_alp_bitmap->line[y];
+						UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
+						UINT8 *pri = BITMAP_ADDR8(pri_alp_bitmap, y, 0);
 
 						int x, x_index = x_index_base;
 						for( x=sx; x<ex; x++ )

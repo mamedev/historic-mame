@@ -575,9 +575,6 @@ VIDEO_START( decocass )
 	bg_tilemap_r = tilemap_create( get_bg_r_tile_info, bgvideoram_scan_cols, TILEMAP_TRANSPARENT, 16, 16, 32, 32 );
 	fg_tilemap = tilemap_create( get_fg_tile_info, fgvideoram_scan_cols, TILEMAP_TRANSPARENT,  8,  8, 32, 32 );
 
-	if (!bg_tilemap_l || !bg_tilemap_r || !fg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen( bg_tilemap_l, 0 );
 	tilemap_set_transparent_pen( bg_tilemap_r, 0 );
 	tilemap_set_transparent_pen( fg_tilemap, 0 );

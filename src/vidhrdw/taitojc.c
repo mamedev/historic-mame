@@ -163,7 +163,7 @@ static void draw_object(mame_bitmap *bitmap, const rectangle *cliprect, UINT32 w
 
 	for (j=y1; j < y2; j++)
 	{
-		UINT16 *d = bitmap->line[j];
+		UINT16 *d = BITMAP_ADDR16(bitmap, j,  0);
 		int index = (iy * width) + ix;
 
 		for (i=x1; i < x2; i++)
@@ -282,7 +282,7 @@ VIDEO_UPDATE( taitojc )
         int j;
         for (j=cliprect->min_y; j <= cliprect->max_y; j++)
         {
-            UINT16 *d = bitmap->line[j];
+            UINT16 *d = BITMAP_ADDR16(bitmap, j, 0);
             int index = 2048 * j;
 
             for (i=cliprect->min_x; i <= cliprect->max_x; i++)
@@ -349,8 +349,8 @@ static void render_solid_tri(VERTEX *v1, VERTEX *v2, VERTEX *v3)
 			int x1, x2;
 			INT64 z;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT16 *fb = (UINT16*)framebuffer->line[y];
-			UINT16 *zb = (UINT16*)zbuffer->line[y];
+			UINT16 *fb = BITMAP_ADDR16(framebuffer, y, 0);
+			UINT16 *zb = BITMAP_ADDR16(zbuffer, y, 0);
 
 			x1 = scan->sx;
 			x2 = scan->ex;
@@ -402,8 +402,8 @@ static void render_shade_tri(VERTEX *v1, VERTEX *v2, VERTEX *v3)
 			int x1, x2;
 			INT64 color, z;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT16 *fb = (UINT16*)framebuffer->line[y];
-			UINT16 *zb = (UINT16*)zbuffer->line[y];
+			UINT16 *fb = BITMAP_ADDR16(framebuffer, y, 0);
+			UINT16 *zb = BITMAP_ADDR16(zbuffer, y, 0);
 
 			x1 = scan->sx;
 			x2 = scan->ex;
@@ -474,8 +474,8 @@ static void render_texture_tri(VERTEX *v1, VERTEX *v2, VERTEX *v3)
 			int x1, x2;
 			INT64 u, v, color, z;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT16 *fb = (UINT16*)framebuffer->line[y];
-			UINT16 *zb = (UINT16*)zbuffer->line[y];
+			UINT16 *fb = BITMAP_ADDR16(framebuffer, y, 0);
+			UINT16 *zb = BITMAP_ADDR16(zbuffer, y, 0);
 
 			x1 = scan->sx;
 			x2 = scan->ex;

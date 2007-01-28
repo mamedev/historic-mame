@@ -56,9 +56,6 @@ VIDEO_START( superdq )
 {
 	superdq_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	if(!superdq_tilemap)
-		return 1;
-
 	add_exit_callback(machine, video_cleanup);
 
 	return 0;

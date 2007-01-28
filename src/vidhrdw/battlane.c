@@ -90,11 +90,11 @@ WRITE8_HANDLER( battlane_bitmap_w )
 	{
 		if (data & 1 << i)
 		{
-			((UINT8 *)screen_bitmap->line[offset % 0x100])[(offset / 0x100) * 8 + i] |= orval;
+			*BITMAP_ADDR8(screen_bitmap, offset % 0x100, (offset / 0x100) * 8 + i) |= orval;
 		}
 		else
 		{
-			((UINT8 *)screen_bitmap->line[offset % 0x100])[(offset / 0x100) * 8 + i] &= ~orval;
+			*BITMAP_ADDR8(screen_bitmap, offset % 0x100, (offset / 0x100) * 8 + i) &= ~orval;
 		}
 	}
 }
@@ -149,10 +149,7 @@ VIDEO_START( battlane )
 	bg_tilemap = tilemap_create(get_tile_info_bg, battlane_tilemap_scan_rows_2x2,
 		TILEMAP_OPAQUE, 16, 16, 32, 32);
 
-	if (!bg_tilemap)
-		return 1;
-
-	screen_bitmap = auto_bitmap_alloc(32 * 8, 32 * 8);
+	screen_bitmap = auto_bitmap_alloc_format(32 * 8, 32 * 8, BITMAP_FORMAT_INDEXED8);
 
 	return 0;
 }
@@ -230,7 +227,7 @@ static void battlane_draw_fg_bitmap( mame_bitmap *bitmap )
 	{
 		for (x = 0; x < 32 * 8; x++)
 		{
-			data = ((UINT8 *)screen_bitmap->line[y])[x];
+			data = *BITMAP_ADDR8(screen_bitmap, y, x);
 
 			if (data)
 			{

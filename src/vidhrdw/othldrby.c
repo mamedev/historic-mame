@@ -66,9 +66,6 @@ VIDEO_START( othldrby )
 	vram = auto_malloc(VIDEORAM_SIZE * sizeof(vram[0]));
 	buf_spriteram = auto_malloc(2*SPRITERAM_SIZE * sizeof(buf_spriteram[0]));
 
-	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2] )
-		return 1;
-
 	buf_spriteram2 = buf_spriteram + SPRITERAM_SIZE;
 
 	tilemap_set_transparent_pen(bg_tilemap[0],0);

@@ -105,20 +105,11 @@ VIDEO_START( prehisle )
 	bg2_tilemap = tilemap_create(get_bg2_tile_info, tilemap_scan_cols,
 		TILEMAP_OPAQUE, 16, 16, 1024, 32);
 
-	if ( !bg2_tilemap )
-		return 1;
-
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols,
 		TILEMAP_TRANSPARENT, 16, 16, 256, 32);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
-
-	if ( !fg_tilemap )
-		return 1;
 
 	tilemap_set_transparent_pen(bg_tilemap, 15);
 	tilemap_set_transparent_pen(fg_tilemap, 15);

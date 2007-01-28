@@ -1,23 +1,55 @@
 /*
 
 Dream World
-(c)2000 SemiCom
+Semicom, 2000
+
+PCB Layout
+----------
+
+|-------------------------------------------------|
+|    M6295  ROM5    62256   ACTEL           ROM10 |
+|VOL M6295  ROM6    62256   A40MX04               |
+|    PAL  PAL       32MHz                         |
+| 62256  62256              PAL                   |
+| ROM1 ROM3       68EC020   PAL    PAL            |
+| ROM2 ROM4                 PAL    PAL            |
+|J 62256 62256              PAL                   |
+|A                          PAL    27MHz          |
+|M                                 PAL            |
+|M                         ACTEL    M5M44260      |
+|A             6116        A40MX04  M5M44260      |
+|              6116                               |
+|                          PAL                    |
+|              6264        PAL                    |
+|              6264                               |
+| DSW1                      ROM11                 |
+|        8752        ROM7   ROM9                  |
+| DSW2               ROM8                         |
+|-------------------------------------------------|
+Notes:
+      68020 @ 16.0MHz [32/2]
+      M6295 (both) @ 1.0MHz [32/32]. pin 7 LOW
+      8752 @ 16.0MHz [32/2]
+      HSync @ 15.2kHz
+      VSync @ 58Hz
+
 
 */
 
 #include "driver.h"
 #include "sound/okim6295.h"
 
+#define MASTER_CLOCK 32000000
+
+
 UINT32*dreamwld_bg_videoram;
 UINT32*dreamwld_bg2_videoram;
-UINT32*dreamwld_mainram;
 UINT32*dreamwld_bg_scroll;
 int dreamwld_tilebank[2], dreamwld_tilebankold[2];
 
 static tilemap *dreamwld_bg_tilemap;
 static tilemap *dreamwld_bg2_tilemap;
 
-/* this is the sprite format as it is stored in mainram for dreamwld */
 static void dreamwld_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const gfx_element *gfx = Machine->gfx[0];
@@ -27,7 +59,7 @@ static void dreamwld_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect
 
 	while( source<finish )
 	{
-		int xpos, ypos, tileno;//, flipx, flipy, chain, enable, number, count;
+		int xpos, ypos, tileno;
 		int xsize, ysize, xinc;
 		int xct, yct;
 		int xflip;
@@ -124,7 +156,7 @@ VIDEO_UPDATE(dreamwld)
 	tilemap_set_scrolly( dreamwld_bg_tilemap,0, dreamwld_bg_scroll[(0x400/4)]+32 );
 	tilemap_set_scrolly( dreamwld_bg2_tilemap,0, dreamwld_bg_scroll[(0x400/4)+2]+32 );
 	tilemap_set_scrollx( dreamwld_bg_tilemap,0, dreamwld_bg_scroll[(0x400/4)+1]+3 );
-	tilemap_set_scrollx( dreamwld_bg2_tilemap,0, dreamwld_bg_scroll[(0x400/4)+3]+3 );
+	tilemap_set_scrollx( dreamwld_bg2_tilemap,0, dreamwld_bg_scroll[(0x400/4)+3]+5 );
 
 	dreamwld_tilebank[0] = (dreamwld_bg_scroll[(0x400/4)+4]>>6)&1;
 	dreamwld_tilebank[1] = (dreamwld_bg_scroll[(0x400/4)+5]>>6)&1;
@@ -143,7 +175,6 @@ VIDEO_UPDATE(dreamwld)
 
 	tilemap_draw(bitmap,cliprect,dreamwld_bg_tilemap,0,0);
 	tilemap_draw(bitmap,cliprect,dreamwld_bg2_tilemap,0,0);
-
 
 	dreamwld_drawsprites(bitmap,cliprect);
 
@@ -206,18 +237,21 @@ static WRITE32_HANDLER(dreamwld_6295_0_w)
 	}
 }
 
+static void dreamwld_oki_setbank( UINT8 chip, UINT8 bank )
+{
+	/* 0x30000-0x3ffff is banked.
+        banks are at 0x30000,0x40000,0x50000 and 0x60000 in rom */
+	UINT8 *sound = chip?memory_region(REGION_SOUND1):memory_region(REGION_SOUND2);
+	logerror("OKI%d: set bank %02x\n",chip,bank);
+	memcpy(sound+0x30000, sound+0xb0000+0x10000*bank, 0x10000);
+}
+
+
 static WRITE32_HANDLER( dreamwld_6295_0_bank_w )
 {
 	if (!(mem_mask & 0x000000ff))
 	{
-		/* 0x30000-0x3ffff is banked.
-         banks are at 0x30000,0x40000,0x50000 and 0x60000 in rom */
-		int bank;
-		UINT8 *sound = memory_region(REGION_SOUND1);
-		bank = data&0x3;
-		logerror("OKI0: set bank %02x\n",data&0xff);
-		memcpy(sound+0x30000, sound+0xb0000+0x10000*bank, 0x10000);
-
+		dreamwld_oki_setbank(0,data&0x3);
 	}
 	else
 	{
@@ -246,13 +280,7 @@ static WRITE32_HANDLER( dreamwld_6295_1_bank_w )
 {
 	if (!(mem_mask & 0x000000ff))
 	{
-		/* 0x30000-0x3ffff is banked.
-         banks are at 0x30000,0x40000,0x50000 and 0x60000 in rom */
-		int bank;
-		UINT8 *sound = memory_region(REGION_SOUND2);
-		bank = data&0x3;
-		logerror("OKI1: set bank %02x\n",data&0xff);
-		memcpy(sound+0x30000, sound+0xb0000+0x10000*bank, 0x10000);
+		dreamwld_oki_setbank(1,data&0x3);
 	}
 	else
 	{
@@ -416,18 +444,16 @@ static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles16x16_layout, 0, 0x100 },
 	{ REGION_GFX2, 0, &tiles16x16_layout, 0, 0x100 },
-//  { REGION_GFX3, 0, &tiles16x16_layout, 0, 0x100 },
-//  { REGION_GFX4, 0, &tiles16x16_layout, 0, 0x100 },
 	{ -1 }
 };
 
 static MACHINE_DRIVER_START( dreamwld )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68EC020, 16000000)
+	MDRV_CPU_ADD(M68EC020, MASTER_CLOCK/2)
 	MDRV_CPU_PROGRAM_MAP(dreamwld_map, 0)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1) // 4, 5, or 6, all point to the same place
 
-	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_REFRESH_RATE(58)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -444,21 +470,18 @@ static MACHINE_DRIVER_START( dreamwld )
 
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 1000000)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7high)
+	MDRV_SOUND_ADD(OKIM6295, MASTER_CLOCK/32)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1_pin7low)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 
-	MDRV_SOUND_ADD(OKIM6295, 1000000)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_2_pin7high)
+	MDRV_SOUND_ADD(OKIM6295, MASTER_CLOCK/32)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2_pin7low)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
-DRIVER_INIT( dreamwld )
-{
-	/* nothing for now ..*/
-}
+
 
 ROM_START( dreamwld )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
@@ -502,4 +525,4 @@ ROM_START( dreamwld )
 ROM_END
 
 
-GAME( 2000, dreamwld, 0,        dreamwld, dreamwld, dreamwld, ROT0,  "SemiCom", "Dream World", 0 )
+GAME( 2000, dreamwld, 0,        dreamwld, dreamwld, 0, ROT0,  "SemiCom", "Dream World", 0 )

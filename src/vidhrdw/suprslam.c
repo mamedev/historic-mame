@@ -146,9 +146,6 @@ VIDEO_START( suprslam )
 	suprslam_bg_tilemap = tilemap_create(get_suprslam_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE, 16, 16,64,64);
 	suprslam_screen_tilemap = tilemap_create(get_suprslam_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 
-	if (!suprslam_bg_tilemap || !suprslam_screen_tilemap)
-		return 1;
-
 	K053936_wraparound_enable(0, 1);
 	K053936_set_offset(0, -45, -21);
 

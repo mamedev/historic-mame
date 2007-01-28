@@ -139,14 +139,14 @@ static void attckufo_draw_character (int ybegin, int yend,
 		for (y = ybegin; y <= yend; y++)
 		{
 			code = attckufo_dma_read ((chargenaddr + ch * 8 + y) );
-			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff) = color[code >> 7];
-			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff + 1) = color[(code >> 6) & 1];
-			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff + 2) = color[(code >> 5) & 1];
-			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff + 3) = color[(code >> 4) & 1];
-			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff + 4) = color[(code >> 3) & 1];
-			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff + 5) = color[(code >> 2) & 1];
-			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff + 6) = color[(code >> 1) & 1];
-			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff + 7) = color[code & 1];
+			*BITMAP_ADDR16(tmpbitmap, y + yoff, xoff + 0) = color[code >> 7];
+			*BITMAP_ADDR16(tmpbitmap, y + yoff, xoff + 1) = color[(code >> 6) & 1];
+			*BITMAP_ADDR16(tmpbitmap, y + yoff, xoff + 2) = color[(code >> 5) & 1];
+			*BITMAP_ADDR16(tmpbitmap, y + yoff, xoff + 3) = color[(code >> 4) & 1];
+			*BITMAP_ADDR16(tmpbitmap, y + yoff, xoff + 4) = color[(code >> 3) & 1];
+			*BITMAP_ADDR16(tmpbitmap, y + yoff, xoff + 5) = color[(code >> 2) & 1];
+			*BITMAP_ADDR16(tmpbitmap, y + yoff, xoff + 6) = color[(code >> 1) & 1];
+			*BITMAP_ADDR16(tmpbitmap, y + yoff, xoff + 7) = color[code & 1];
 		}
 	}
 }

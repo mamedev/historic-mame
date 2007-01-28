@@ -53,9 +53,6 @@ VIDEO_START( circus )
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	return 0;
 }
 
@@ -238,7 +235,7 @@ static void ripcord_draw_skydiver( mame_bitmap *bitmap )
 	src_pitch = gfx->line_modulo;
 	dst_pitch = bitmap->rowpixels;
 
-	dst_lineptr = (UINT16*)bitmap->line[sy];
+	dst_lineptr = BITMAP_ADDR16(bitmap, sy, 0);
 	dst_pixend = (sx + dst_width) & 0xff;
 	dst_lineend = dst_lineptr + dst_pitch * dst_height;
 

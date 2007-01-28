@@ -29,11 +29,6 @@ VIDEO_START( sprint2 )
 
 	bg_tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16, 8, 32, 32);
 
-	if (bg_tilemap == NULL)
-	{
-		return 1;
-	}
-
 	return 0;
 }
 

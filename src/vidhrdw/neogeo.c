@@ -478,11 +478,11 @@ WRITE16_HANDLER( neo_game_fix_16_w )
 /******************************************************************************/
 
 
-static void NeoMVSDrawGfxLine(UINT16 **line,const gfx_element *gfx,
+static void NeoMVSDrawGfxLine(UINT16 *base,int rowpixels,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int sx,int sy,
 		int zx,int yoffs,const rectangle *clip)
 {
-	UINT16 *bm = line[sy]+sx;
+	UINT16 *bm = base + rowpixels * sy + sx;
 	int col;
 	int mydword;
 
@@ -605,7 +605,7 @@ static void NeoMVSDrawGfxLine(UINT16 **line,const gfx_element *gfx,
 /******************************************************************************/
 
 
-static void neogeo_draw_sprite( int my, int sx, int sy, int zx, int zy, int offs, int fullmode, UINT16 **line, const rectangle *cliprect, int scanline )
+static void neogeo_draw_sprite( int my, int sx, int sy, int zx, int zy, int offs, int fullmode, UINT16 *base, int rowpixels, const rectangle *cliprect, int scanline )
 {
 	int drawn_lines = 0;
 	UINT8 *zoomy_rom;
@@ -691,7 +691,7 @@ static void neogeo_draw_sprite( int my, int sx, int sy, int zx, int zy, int offs
 
 	if (tileatr & 0x02) yoffs ^= 0x0f;	/* flip y */
 
-	NeoMVSDrawGfxLine((UINT16 **)line,
+	NeoMVSDrawGfxLine(base, rowpixels,
 			gfx,
 			tileno,
 			tileatr >> 8,
@@ -803,7 +803,6 @@ VIDEO_UPDATE( neogeo )
 	int offs;
 	int t1,t2,t3;
 	char fullmode = 0;
-	void **line=bitmap->line;
 	int scan;
 
 	fillbitmap(bitmap,Machine->pens[4095],cliprect);
@@ -862,7 +861,7 @@ VIDEO_UPDATE( neogeo )
 
 			offs = count<<6;
 
-			neogeo_draw_sprite( my, sx, sy, zx, zy, offs, fullmode, (UINT16 **)line, cliprect, scan );
+			neogeo_draw_sprite( my, sx, sy, zx, zy, offs, fullmode, bitmap->base, bitmap->rowpixels, cliprect, scan );
 		}  /* for count */
 	}
 	neogeo_draw_s_layer(bitmap,cliprect);

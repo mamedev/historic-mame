@@ -130,9 +130,6 @@ VIDEO_START( mario )
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	state_save_register_global(gfx_bank);
 	state_save_register_global(palette_bank);
 

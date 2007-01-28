@@ -1,6 +1,6 @@
 /*
 
- TSI S14001A emulator v1.0
+ TSI S14001A emulator v1.1
  By Jonathan Gevaryahu ("Lord Nightmare") with help from Kevin Horton ("kevtris")
  MAME conversion and integration by R. Belmont
 
@@ -145,6 +145,9 @@ typedef struct
 	UINT8 audioout; // filtered audio output
 	UINT8 *SpeechRom; // array to hold rom contents, mame will not need this, will use a pointer
 	UINT8 filtervals[8];
+        UINT8 VSU1000_amp; // amplitude setting on VSU-1000 board
+        UINT16 VSU1000_freq; // frequency setting on VSU-1000 board
+        UINT16 VSU1000_counter; // counter for freq divider
 } S14001AChip;
 
 //#define DEBUGSTATE
@@ -286,7 +289,6 @@ void s14001a_clock(S14001AChip *chip) /* called once per clock */
         {
 		chip->audioout = audiofilter(chip); // function to handle output filtering by internal capacitance based on clock speed and such
 		shiftIntoFilter(chip, chip->audioout); // shift over all the filter outputs and stick in audioout
-		chip->LatchedWord = chip->WordInput; // latch word from input bus (is this really neccessary? or even correct?)
 	}
 	else // odd clock
 	{
@@ -424,8 +426,12 @@ static void s14001a_pcm_update(void *param, stream_sample_t **inputs, stream_sam
 	mixp = &mix[0];
 	for (i = 0; i < length; i++)
 	{
-		s14001a_clock(chip);
-		outputs[0][i] = chip->audioout<<6;
+		if (--chip->VSU1000_counter==0)
+		  {
+		  s14001a_clock(chip);
+		  chip->VSU1000_counter = chip->VSU1000_freq;
+		  }
+		outputs[0][i] = (chip->audioout<<4)*chip->VSU1000_amp;
 	}
 }
 
@@ -442,6 +448,9 @@ static void *s14001a_start(int sndindex, int clock, const void *config)
 	chip->GlobalSilenceState = 1;
 	chip->OldDelta = 0x02;
 	chip->DACOutput = SILENCE;
+	chip->VSU1000_amp = 0; /* reset by /reset line */
+	chip->VSU1000_freq = 1; /* base-1; reset by /reset line */
+	chip->VSU1000_counter = 1; /* base-1; not reset by /reset line but this is the best place to reset it */
 
 	for (i = 0; i < 8; i++)
 	{
@@ -468,7 +477,7 @@ static void s14001a_set_info(void *token, UINT32 state, sndinfo *info)
 int S14001A_bsy_0_r(void)
 {
 	S14001AChip *chip = sndti_token(SOUND_S14001A, 0);
-
+        stream_update(chip->stream);
 #ifdef DEBUGSTATE
 	fprintf(stderr,"busy state checked: %d\n",(chip->machineState != 0) );
 #endif
@@ -478,22 +487,31 @@ int S14001A_bsy_0_r(void)
 void S14001A_reg_0_w(int data)
 {
 	S14001AChip *chip = sndti_token(SOUND_S14001A, 0);
-
+	stream_update(chip->stream);
 	chip->WordInput = data;
-        stream_update(chip->stream);
 }
 
 void S14001A_rst_0_w(int data)
 {
 	S14001AChip *chip = sndti_token(SOUND_S14001A, 0);
-
 	stream_update(chip->stream);
+        chip->LatchedWord = chip->WordInput;
 	chip->resetState = (data==1);
 	chip->machineState = chip->resetState ? 1 : chip->machineState;
 }
 
 void S14001A_set_rate(int newrate)
 {
+  	S14001AChip *chip = sndti_token(SOUND_S14001A, 0);
+        stream_update(chip->stream);
+        chip->VSU1000_freq = newrate;
+}
+
+void S14001A_set_volume(int volume)
+{
+	S14001AChip *chip = sndti_token(SOUND_S14001A, 0);
+        stream_update(chip->stream);
+        chip->VSU1000_amp = volume;
 }
 
 void s14001a_get_info(void *token, UINT32 state, sndinfo *info)
@@ -511,7 +529,7 @@ void s14001a_get_info(void *token, UINT32 state, sndinfo *info)
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case SNDINFO_STR_NAME:						info->s = "S14001A";			break;
 		case SNDINFO_STR_CORE_FAMILY:					info->s = "TSI S14001A";		break;
-		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";			break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.1";			break;
 		case SNDINFO_STR_CORE_FILE:					info->s = __FILE__;			break;
 		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2007 Jonathan Gevaryahu"; break;
 	}

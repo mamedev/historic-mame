@@ -219,7 +219,6 @@ WRITE16_HANDLER( welltris_charvideoram_w )
 VIDEO_START( welltris )
 {
 	char_tilemap = tilemap_create(get_welltris_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64, 32);
-	if (!char_tilemap) return 1;
 
 	tilemap_set_transparent_pen(char_tilemap, 15);
 

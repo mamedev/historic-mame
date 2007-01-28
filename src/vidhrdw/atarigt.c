@@ -139,8 +139,6 @@ VIDEO_START( atarigt )
 
 	/* initialize the playfield */
 	atarigen_playfield_tilemap = tilemap_create(get_playfield_tile_info, atarigt_playfield_scan, TILEMAP_OPAQUE, 8,8, 128,64);
-	if (!atarigen_playfield_tilemap)
-		return 1;
 
 	/* initialize the motion objects */
 	if (!atarirle_init(0, &adjusted_modesc))
@@ -148,8 +146,6 @@ VIDEO_START( atarigt )
 
 	/* initialize the alphanumerics */
 	atarigen_alpha_tilemap = tilemap_create(get_alpha_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 64,32);
-	if (!atarigen_alpha_tilemap)
-		return 1;
 
 	/* allocate temp bitmaps */
 	pf_bitmap = auto_bitmap_alloc_format(Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16);

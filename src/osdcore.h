@@ -267,6 +267,21 @@ const osd_directory_entry *osd_readdir(osd_directory *dir);
 void osd_closedir(osd_directory *dir);
 
 
+/*-----------------------------------------------------------------------------
+    osd_is_absolute_path: returns whether the specified path is absolute
+
+    Parameters:
+
+        path - the path in question
+
+    Return value:
+
+        non-zero if the path is absolute, zero otherwise
+
+-----------------------------------------------------------------------------*/
+int osd_is_absolute_path(const char *path);
+
+
 
 /***************************************************************************
     TIMING INTERFACES

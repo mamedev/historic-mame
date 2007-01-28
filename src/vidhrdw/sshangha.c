@@ -37,8 +37,8 @@ static void sshangha_tilemap_draw(mame_bitmap *bitmap)
 
 	for (y=0; y<240; y++) {
 		for (x=0; x<320; x++) {
-			p=(((UINT16*)bitmap0->line[y])[x])&0xf;
-			p|=((((UINT16*)bitmap1->line[y])[x])&0xf)<<4;
+			p=*BITMAP_ADDR16(bitmap0, y, x)&0xf;
+			p|=(*BITMAP_ADDR16(bitmap1, y, x)&0xf)<<4;
 
 			plot_pixel(bitmap, x, y, Machine->pens[p|0x300]);
 		}
@@ -180,9 +180,6 @@ VIDEO_START( sshangha )
 	pf1_8x8_tilemap   = tilemap_create(get_pf1_8x8_tile_info,  tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 	pf1_16x16_tilemap = tilemap_create(get_pf1_16x16_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	pf2_tilemap = tilemap_create(get_pf2_tile_info,tilemap_scan_rows,    TILEMAP_OPAQUE,     16,16,32,32);
-
-	if (!pf1_8x8_tilemap || !pf1_16x16_tilemap || !pf2_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(pf1_8x8_tilemap,0);
 	tilemap_set_transparent_pen(pf1_16x16_tilemap,0);

@@ -163,9 +163,6 @@ static int gottlieb_video_start_common(void)
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	tilemap_set_transparent_pen(bg_tilemap, 0);
 
 	return 0;

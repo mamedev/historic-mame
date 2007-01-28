@@ -46,9 +46,6 @@ VIDEO_START(pirates)
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     8,8,64,32);
 
-	if (!tx_tilemap || !fg_tilemap || !bg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(tx_tilemap,0);
 	tilemap_set_transparent_pen(fg_tilemap,0);
 

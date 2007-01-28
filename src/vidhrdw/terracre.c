@@ -202,12 +202,8 @@ VIDEO_START( amazon )
 {
 	background = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,16,16,64,32);
 	foreground = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
-	if( background && foreground )
-	{
 		tilemap_set_transparent_pen(foreground,0xf);
 		return 0;
-	}
-	return 1;
 }
 
 VIDEO_UPDATE( amazon )

@@ -113,8 +113,8 @@ static void draw_sprite( /* slow slow slow, but it's ok for now */
 				int sy = (flipy)?(ypos+height-1-y):(ypos+y);
 				if( sy>=16 && sy<256-16 )
 				{
-					UINT16 *dest = (UINT16 *)bitmap->line[sy];
-					UINT8 *pdest = (UINT8 *)priority_bitmap->line[sy];
+					UINT16 *dest = BITMAP_ADDR16(bitmap, sy, 0);
+					UINT8 *pdest = BITMAP_ADDR8(priority_bitmap, sy, 0);
 
 					for( x=0; x<width; x++ )
 					{
@@ -377,8 +377,8 @@ static void draw_layer( mame_bitmap *bitmap, int opaque ){
 						{
 							for( y=y1; y!=y2; y+=yd )
 							{
-								UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
-								UINT8 *pdest = ((UINT8 *)priority_bitmap->line[ypos+y])+xpos;
+								UINT16 *dest = BITMAP_ADDR16(bitmap, ypos+y, xpos);
+								UINT8 *pdest = BITMAP_ADDR8(priority_bitmap, ypos+y, xpos);
 
 								data = *gfx_data++;
 								dest[7] = pal_data[(data>>4*3)&0xf];
@@ -407,8 +407,8 @@ static void draw_layer( mame_bitmap *bitmap, int opaque ){
 						{
 							for( y=y1; y!=y2; y+=yd )
 							{
-								UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
-								UINT8 *pdest = ((UINT8 *)priority_bitmap->line[ypos+y])+xpos;
+								UINT16 *dest = BITMAP_ADDR16(bitmap, ypos+y, xpos);
+								UINT8 *pdest = BITMAP_ADDR8(priority_bitmap, ypos+y, xpos);
 
 								data = *gfx_data++;
 								if( data )
@@ -437,8 +437,8 @@ static void draw_layer( mame_bitmap *bitmap, int opaque ){
 						{
 							for( y=y1; y!=y2; y+=yd )
 							{
-								UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
-								UINT8 *pdest = ((UINT8 *)priority_bitmap->line[ypos+y])+xpos;
+								UINT16 *dest = BITMAP_ADDR16(bitmap, ypos+y, xpos);
+								UINT8 *pdest = BITMAP_ADDR8(priority_bitmap, ypos+y, xpos);
 
 								data = *gfx_data++;
 								*dest++ = pal_data[(data>>4*3)&0xf];
@@ -468,8 +468,8 @@ static void draw_layer( mame_bitmap *bitmap, int opaque ){
 						{
 							for( y=y1; y!=y2; y+=yd )
 							{
-								UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
-								UINT8 *pdest = ((UINT8 *)priority_bitmap->line[ypos+y])+xpos;
+								UINT16 *dest = BITMAP_ADDR16(bitmap, ypos+y, xpos);
+								UINT8 *pdest = BITMAP_ADDR8(priority_bitmap, ypos+y, xpos);
 
 								data = *gfx_data++;
 								if( data )
@@ -511,9 +511,6 @@ VIDEO_START( twin16 )
 	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows_flip_y,
 		TILEMAP_TRANSPARENT, 8, 8, 64, 32);
 
-	if ( !fg_tilemap )
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap, 0);
 
 	return 0;
@@ -523,9 +520,6 @@ VIDEO_START( fround )
 {
 	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 8, 8, 64, 32);
-
-	if ( !fg_tilemap )
-		return 1;
 
 	tilemap_set_transparent_pen(fg_tilemap, 0);
 

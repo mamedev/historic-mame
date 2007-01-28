@@ -172,9 +172,6 @@ VIDEO_START( popper )
 	popper_ol_p123_tilemap = tilemap_create( get_popper_ol_p123_tile_info,tilemap_scan_cols,TILEMAP_SPLIT,8,8,2 ,32 );
 	popper_ol_p0_tilemap   = tilemap_create( get_popper_ol_p0_tile_info,  tilemap_scan_cols,TILEMAP_SPLIT,8,8,2 ,32 );
 
-	if (!popper_p123_tilemap || !popper_p0_tilemap || !popper_ol_p123_tilemap || !popper_ol_p0_tilemap)
-		return 1;
-
 	tilemap_set_transmask(popper_p123_tilemap,   0,0x0f,0x01);
 	tilemap_set_transmask(popper_p123_tilemap,   1,0x01,0x0f);
 	tilemap_set_transmask(popper_p0_tilemap,     0,0x0f,0x0e);

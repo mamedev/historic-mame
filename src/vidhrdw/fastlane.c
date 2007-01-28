@@ -88,9 +88,6 @@ VIDEO_START( fastlane )
 
 	tilemap_set_scroll_rows( layer0, 32 );
 
-	if (!layer0 || !layer1)
-		return 1;
-
 	clip0 = Machine->screen[0].visarea;
 	clip0.min_x += 40;
 

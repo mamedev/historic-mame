@@ -349,7 +349,7 @@ VIDEO_UPDATE( btoads )
 		UINT16 *bg0_base = &btoads_vram_bg0[((y + yscroll0) & 0xff) * TOWORD(0x4000)];
 		UINT16 *bg1_base = &btoads_vram_bg1[((y + yscroll1) & 0xff) * TOWORD(0x4000)];
 		UINT8 *spr_base = &vram_fg_display[y * TOWORD(0x4000)];
-		UINT16 *dst = (UINT16 *)bitmap->line[y];
+		UINT16 *dst = BITMAP_ADDR16(bitmap, y, 0);
 
 		/* for each scanline, switch off the render mode */
 		switch (screen_control & 3)

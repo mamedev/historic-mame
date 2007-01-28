@@ -73,9 +73,6 @@ int gcpinbal_core_vh_start (void)
 	gcpinbal_tilemap[1] = tilemap_create(get_bg1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	gcpinbal_tilemap[2] = tilemap_create(get_fg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 
-	if (!gcpinbal_tilemap[0] || !gcpinbal_tilemap[1] || !gcpinbal_tilemap[2] )
-		return 1;
-
 	tilemap_set_transparent_pen( gcpinbal_tilemap[0],0 );
 	tilemap_set_transparent_pen( gcpinbal_tilemap[1],0 );
 	tilemap_set_transparent_pen( gcpinbal_tilemap[2],0 );

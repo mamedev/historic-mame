@@ -40,9 +40,6 @@ VIDEO_START( speedbal )
 	bg_tilemap = tilemap_create(get_tile_info_bg, tilemap_scan_cols_flip_x, TILEMAP_SPLIT, 16, 16, 16, 16);
 	fg_tilemap = tilemap_create(get_tile_info_fg, tilemap_scan_cols_flip_x, TILEMAP_SPLIT,  8,  8, 32, 32);
 
-	if (!bg_tilemap || !fg_tilemap)
-		return 1;
-
 	tilemap_set_transmask(bg_tilemap,0,0xffff,0x0000); /* split type 0 is totally transparent in front half */
 	tilemap_set_transmask(bg_tilemap,1,0x00f7,0x0000); /* split type 1 has pen 0-2, 4-7 transparent in front half */
 

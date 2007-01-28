@@ -297,7 +297,7 @@ static struct CustomSound_interface custom_interface =
 static MACHINE_DRIVER_START( berzerk )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", Z80, 2500000)        /* 2.5 MHz */
+	MDRV_CPU_ADD_TAG("main", Z80, 10000000/4)        /* 2.5 MHz */
 	MDRV_CPU_PROGRAM_MAP(berzerk_map,0)
 	MDRV_CPU_IO_MAP(port_map,0)
 	MDRV_CPU_VBLANK_INT(berzerk_interrupt,8)
@@ -323,9 +323,9 @@ static MACHINE_DRIVER_START( berzerk )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(S14001A, 2500000/16/8)	/* CPU clock divided by 16 divided by a programmable TTL setup */
+	MDRV_SOUND_ADD(S14001A, 5000000)	/* CPU clock divided by 16 divided by a programmable TTL setup */
 	MDRV_SOUND_CONFIG(berzerk_s14001a_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
 	MDRV_SOUND_ADD(CUSTOM, 0)
 	MDRV_SOUND_CONFIG(custom_interface)
@@ -392,10 +392,10 @@ ROM_START( frenzy )
 ROM_END
 
 /*
-   The original / prototype version of moonwar appears to run on Frenzy hardware, however the only board found
+   The original / prototype version of moon war appears to run on Frenzy hardware, however the only board found
    had been stripped for parts, leaving only the sound ROMs.
 
-   The more common version of MoonWar runs on modified Super Cobra (scobra.c) hardware and is often called
+   The more common version of Moon War runs on modified Super Cobra (scobra.c) hardware and is often called
    'Moon War 2' because it is the second version, and many of the PCBs are labeled as such
 */
 ROM_START( moonwarp )
@@ -411,4 +411,4 @@ ROM_END
 GAME( 1980, berzerk,  0,       berzerk, berzerk, 0, ROT0, "Stern", "Berzerk (set 1)", 0 )
 GAME( 1980, berzerk1, berzerk, berzerk, berzerk, 0, ROT0, "Stern", "Berzerk (set 2)", 0 )
 GAME( 1982, frenzy,   0,       frenzy,  frenzy,  0, ROT0, "Stern", "Frenzy", 0 )
-GAME( 1982, moonwarp, 0,       frenzy,  frenzy,  0, ROT0, "Stern", "Moonwar (prototype on Frenzy hardware)", GAME_NOT_WORKING )
+GAME( 1981, moonwarp, 0,       frenzy,  frenzy,  0, ROT0, "Stern", "Moon War (prototype on Frenzy hardware)", GAME_NOT_WORKING )

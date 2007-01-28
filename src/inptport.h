@@ -700,7 +700,7 @@ struct _inp_header
 	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CENTERDELTA, delta_),
 
 #define PORT_CROSSHAIR(axis, scale, offset, altaxis) \
-	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CROSSHAIR, (axis) | ((INT32)((altaxis) * 65536.0f) << 8)), \
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CROSSHAIR, CROSSHAIR_AXIS_##axis | ((INT32)((altaxis) * 65536.0f) << 8)), \
 	INPUT_PORT_UINT32_PAIR((INT32)((scale) * 65536.0f), (INT32)((offset) * 65536.0f)),
 
 /* custom callbacks */
@@ -747,7 +747,7 @@ struct _inp_header
 	INPUT_PORT_UINT32(INPUT_TOKEN_CATEGORY_NAME), INPUT_PORT_UINT32_PAIR(mask, default), INPUT_PORT_PTR(name),
 
 #define PORT_CATEGORY_ITEM(default,name,category) 					\
-	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CATEGORY_SETTING, default), INPUT_PORT_PTR(name),
+	INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CATEGORY_SETTING, default), INPUT_PORT_PTR(name), INPUT_PORT_UINT32_PAIR(INPUT_TOKEN_CATEGORY, category),
 #endif /* MESS */
 
 

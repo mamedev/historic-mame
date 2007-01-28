@@ -1014,18 +1014,21 @@ static void update_tilemap_zoom(struct layer_info *layer, const rectangle *clipr
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
 		UINT16 *extents = &clip_extents.extent[clip_extents.scan_extent[y]][0];
-		UINT16 *dst = (UINT16 *)bitmap->line[y];
+		UINT16 *dst = BITMAP_ADDR16(bitmap, y, 0);
 		int clipdraw = clipdraw_start;
 
 		/* optimize for the case where we are clipped out */
 		if (clipdraw || extents[1] <= cliprect->max_x)
 		{
+			mame_bitmap *tm0, *tm1;
 			int transparent = 0;
 			UINT16 *src[2];
 
 			/* look up the pages and get their source pixmaps */
-			src[0] = tilemap_get_pixmap(tilemaps[((srcy >> 27) & 2) + 0])->line[(srcy >> 20) & 0xff];
-			src[1] = tilemap_get_pixmap(tilemaps[((srcy >> 27) & 2) + 1])->line[(srcy >> 20) & 0xff];
+			tm0 = tilemap_get_pixmap(tilemaps[((srcy >> 27) & 2) + 0]);
+			tm1 = tilemap_get_pixmap(tilemaps[((srcy >> 27) & 2) + 1]);
+			src[0] = BITMAP_ADDR16(tm0, (srcy >> 20) & 0xff, 0);
+			src[1] = BITMAP_ADDR16(tm1, (srcy >> 20) & 0xff, 0);
 
 			/* loop over extents */
 			srcx = srcx_start;
@@ -1136,12 +1139,13 @@ static void update_tilemap_rowscroll(struct layer_info *layer, const rectangle *
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
 		UINT16 *extents = &clip_extents.extent[clip_extents.scan_extent[y]][0];
-		UINT16 *dst = (UINT16 *)bitmap->line[y];
+		UINT16 *dst = BITMAP_ADDR16(bitmap, y, 0);
 		int clipdraw = clipdraw_start;
 
 		/* optimize for the case where we are clipped out */
 		if (clipdraw || extents[1] <= cliprect->max_x)
 		{
+			mame_bitmap *tm0, *tm1;
 			int transparent = 0;
 			UINT16 *src[2];
 			int srcxstep;
@@ -1177,8 +1181,10 @@ static void update_tilemap_rowscroll(struct layer_info *layer, const rectangle *
 			}
 
 			/* look up the pages and get their source pixmaps */
-			src[0] = tilemap_get_pixmap(tilemaps[((srcy >> 7) & 2) + 0])->line[srcy & 0xff];
-			src[1] = tilemap_get_pixmap(tilemaps[((srcy >> 7) & 2) + 1])->line[srcy & 0xff];
+			tm0 = tilemap_get_pixmap(tilemaps[((srcy >> 7) & 2) + 0]);
+			tm1 = tilemap_get_pixmap(tilemaps[((srcy >> 7) & 2) + 1]);
+			src[0] = BITMAP_ADDR16(tm0, srcy & 0xff, 0);
+			src[1] = BITMAP_ADDR16(tm1, srcy & 0xff, 0);
 
 			/* loop over extents */
 			while (1)
@@ -1269,7 +1275,7 @@ static void update_tilemap_text(struct layer_info *layer, const rectangle *clipr
 			/* non-flipped case */
 			if (!flip)
 			{
-				UINT16 *dst = ((UINT16 *)bitmap->line[y * 8]) + x * 8;
+				UINT16 *dst = BITMAP_ADDR16(bitmap, y * 8, x * 8);
 
 				/* loop over rows */
 				for (iy = 0; iy < 8; iy++)
@@ -1328,7 +1334,7 @@ static void update_tilemap_text(struct layer_info *layer, const rectangle *clipr
 			{
 				int effdstx = Machine->screen[0].visarea.max_x - x * 8;
 				int effdsty = Machine->screen[0].visarea.max_y - y * 8;
-				UINT16 *dst = ((UINT16 *)bitmap->line[effdsty]) + effdstx;
+				UINT16 *dst = BITMAP_ADDR16(bitmap, effdsty, effdstx);
 
 				/* loop over rows */
 				for (iy = 0; iy < 8; iy++)
@@ -1420,7 +1426,7 @@ static void update_bitmap(struct layer_info *layer, const rectangle *cliprect)
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
 		UINT16 *extents = &clip_extents.extent[clip_extents.scan_extent[y]][0];
-		UINT16 *dst = (UINT16 *)bitmap->line[y];
+		UINT16 *dst = BITMAP_ADDR16(bitmap, y, 0);
 		int clipdraw = clipdraw_start;
 
 		/* optimize for the case where we are clipped out */
@@ -1502,7 +1508,7 @@ static void update_background(struct layer_info *layer, const rectangle *cliprec
 
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		UINT16 *dst = (UINT16 *)bitmap->line[y];
+		UINT16 *dst = BITMAP_ADDR16(bitmap, y, 0);
 		int color;
 
 		/* determine the color */
@@ -1821,7 +1827,7 @@ static int draw_one_sprite(UINT16 *data, int xoffs, int yoffs, const rectangle *
 		if (y >= clipin->min_y && y <= clipin->max_y)
 		{
 			int do_clipout = (y >= clipout->min_y && y <= clipout->max_y);
-			UINT16 *dest = (UINT16 *)bitmap->line[y];
+			UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
 			int xacc = 0;
 
 			/* 4bpp case */
@@ -2019,7 +2025,7 @@ INLINE UINT16 *get_layer_scanline(int layer, int scanline)
 {
 	if (layer_data[layer].transparent[scanline])
 		return (layer == MIXER_LAYER_SPRITES) ? solid_ffff : solid_0000;
-	return (UINT16 *)layer_data[layer].bitmap->line[scanline];
+	return BITMAP_ADDR16(layer_data[layer].bitmap, scanline, 0);
 }
 
 static void mix_all_layers(int which, int xoffs, mame_bitmap *bitmap, const rectangle *cliprect, UINT8 enablemask)
@@ -2198,7 +2204,7 @@ static void mix_all_layers(int which, int xoffs, mame_bitmap *bitmap, const rect
 	/* loop over rows */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++, spry += sprdy)
 	{
-		UINT32 *dest = (UINT32 *)bitmap->line[y] + xoffs;
+		UINT32 *dest = BITMAP_ADDR32(bitmap, y, xoffs);
 		UINT16 *layerbase[8];
 
 		/* get the starting address for each layer */

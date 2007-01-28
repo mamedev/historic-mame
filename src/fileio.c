@@ -220,6 +220,10 @@ static mame_file_error fopen_internal(const char *searchpath, const char *filena
 	(*file)->debug_cookie = DEBUG_COOKIE;
 #endif
 
+	/* if the path is absolute, null out the search path */
+	if (searchpath && osd_is_absolute_path(searchpath))
+		searchpath = NULL;
+
 	/* determine the maximum length of a composed filename, plus some extra space for .zip extensions */
 	maxlen = (UINT32)strlen(filename) + 5 + path_iterator_init(&iterator, searchpath) + 1;
 

@@ -2,19 +2,19 @@
 <mamelayout version="2">
 	<element name="overlay">
 		<rect>
-			<bounds left="0" top="0" right="224" bottom="240" />
+			<bounds left="0" top="0" right="224" bottom="260" />
 			<color red="1" green="1" blue="1" />
 		</rect>
 		<rect>
-			<bounds left="0" top="176" right="224" bottom="232" />
+			<bounds left="0" top="184" right="224" bottom="240" />
 			<color red="0.125" green="1" blue="0.125" />
 		</rect>
 		<rect>
-			<bounds left="16" top="232" right="134" bottom="240" />
+			<bounds left="16" top="240" right="134" bottom="260" />
 			<color red="0.125" green="1" blue="0.125" />
 		</rect>
 		<rect>
-			<bounds left="0" top="24" right="224" bottom="56" />
+			<bounds left="0" top="32" right="224" bottom="64" />
 			<color red="1" green="0.125" blue="0.125" />
 		</rect>
 	</element>

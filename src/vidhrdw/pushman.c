@@ -52,9 +52,6 @@ VIDEO_START( pushman )
 	bg_tilemap = tilemap_create(get_back_tile_info,background_scan_rows,TILEMAP_OPAQUE,     32,32,128,64);
 	tx_tilemap = tilemap_create(get_text_tile_info,tilemap_scan_rows,   TILEMAP_TRANSPARENT, 8, 8, 32,32);
 
-	if (!tx_tilemap || !bg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(tx_tilemap,3);
 
 	return 0;

@@ -38,15 +38,15 @@ static void blendbitmaps(
 		pen_t *paldata = Machine->pens;
 		UINT32 *end;
 
-		UINT16 *sd1 = ((UINT16 *)src1->line[0]);								/* source data   */
-		UINT16 *sd2 = ((UINT16 *)src2->line[0]);
+		UINT16 *sd1 = src1->base;												/* source data   */
+		UINT16 *sd2 = src2->base;
 
 		int sw = ex-sx+1;														/* source width  */
 		int sh = ey-sy+1;														/* source height */
-		int sm = ((UINT16 *)src1->line[1]) - ((UINT16 *)src1->line[0]);			/* source modulo */
+		int sm = src1->rowpixels;												/* source modulo */
 
-		UINT32 *dd = ((UINT32 *)dest->line[sy]) + sx;							/* dest data     */
-		int dm = ((UINT32 *)dest->line[1]) - ((UINT32 *)dest->line[0]);			/* dest modulo   */
+		UINT32 *dd = BITMAP_ADDR32(dest, sy, sx);								/* dest data     */
+		int dm = dest->rowpixels;												/* dest modulo   */
 
 		sd1 += (sx-ox);
 		sd1 += sm * (sy-oy);

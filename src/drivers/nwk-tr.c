@@ -228,16 +228,6 @@ int K001604_vh_start(int chip)
 		K001604_layer_16x16[chip][1] = tilemap_create(K001604_1_tile_info_layer_16x16, K001604_scan_layer_16x16_1, TILEMAP_OPAQUE, 16, 16, 64, 64);
 	}
 
-	if (!K001604_layer_8x8[chip][0] ||
-		!K001604_layer_8x8[chip][1] ||
-		!K001604_layer_8x8[chip][2] ||
-		!K001604_layer_8x8[chip][3] ||
-		!K001604_layer_16x16[chip][0] ||
-		!K001604_layer_16x16[chip][1])
-	{
-		return 1;
-	}
-
 	tilemap_set_transparent_pen(K001604_layer_8x8[chip][0], 0);
 	tilemap_set_transparent_pen(K001604_layer_8x8[chip][1], 0);
 	tilemap_set_transparent_pen(K001604_layer_8x8[chip][2], 0);

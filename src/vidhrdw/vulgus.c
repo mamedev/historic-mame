@@ -123,9 +123,6 @@ VIDEO_START( vulgus )
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT_COLOR, 8, 8,32,32);
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE           ,16,16,32,32);
 
-	if (!fg_tilemap || !bg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap,47);
 
 	return 0;

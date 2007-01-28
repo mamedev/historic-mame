@@ -277,9 +277,6 @@ VIDEO_START( darkseal )
 	pf2_tilemap = tilemap_create(get_bg_tile_info2,darkseal_scan,    TILEMAP_TRANSPARENT,16,16,64,64);
 	pf3_tilemap = tilemap_create(get_bg_tile_info3,darkseal_scan,    TILEMAP_OPAQUE,     16,16,64,64);
 
-	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(pf1_tilemap,0);
 	tilemap_set_transparent_pen(pf2_tilemap,0);
 

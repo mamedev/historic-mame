@@ -74,9 +74,6 @@ VIDEO_START( deadang )
 	pf1_layer = tilemap_create(get_pf1_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16, 32, 32);
 	text_layer = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
-	if (!text_layer || !pf1_layer || !pf2_layer || !pf3_layer)
-		return 1;
-
 	tilemap_set_transparent_pen(pf2_layer, 15);
 	tilemap_set_transparent_pen(pf1_layer, 15);
 	tilemap_set_transparent_pen(text_layer, 15);

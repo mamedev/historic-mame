@@ -183,9 +183,6 @@ VIDEO_START( afega )
 								8,8,
 								32,32);
 
-	if ( !tilemap_0 || !tilemap_1 )
-		return 1;
-
 	tilemap_set_transparent_pen(tilemap_0,0x0);
 	tilemap_set_transparent_pen(tilemap_1,0xf);
 	return 0;
@@ -203,9 +200,6 @@ VIDEO_START( twinactn )
 								8,8,
 								32,32);
 
-	if ( !tilemap_0 || !tilemap_1 )
-		return 1;
-
 	tilemap_set_transparent_pen(tilemap_0,0x0);
 	tilemap_set_transparent_pen(tilemap_1,0xf);
 	return 0;
@@ -222,9 +216,6 @@ VIDEO_START( firehawk )
 								TILEMAP_TRANSPARENT,
 								8,8,
 								32,32);
-
-	if ( !tilemap_0 || !tilemap_1 )
-		return 1;
 
 	tilemap_set_transparent_pen(tilemap_0,0x0);
 	tilemap_set_transparent_pen(tilemap_1,0xf);

@@ -106,6 +106,22 @@ done:
 
 
 //============================================================
+//  win_output_debug_string_utf8
+//============================================================
+
+void win_output_debug_string_utf8(const char *string)
+{
+	TCHAR *t_string = tstring_from_utf8(string);
+	if (t_string != NULL)
+	{
+		OutputDebugString(t_string);
+		free(t_string);
+	}
+}
+
+
+
+//============================================================
 //  win_error_to_mame_file_error
 //============================================================
 

@@ -163,9 +163,6 @@ VIDEO_START( ironhors )
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	tilemap_set_scroll_rows(bg_tilemap, 32);
 
 	return 0;

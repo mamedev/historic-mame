@@ -58,8 +58,6 @@ static int make_mixer_table(int voices, int gain)
 
 	/* allocate memory */
 	mixer_table = auto_malloc(256 * voices * sizeof(INT16));
-	if (!mixer_table)
-		return 1;
 
 	/* find the middle of the table */
 	mixer_lookup = mixer_table + (128 * voices);

@@ -164,9 +164,6 @@ VIDEO_START(realbrk)
 								8,8,
 								0x40, 0x20);
 
-	if ( !tilemap_0 || !tilemap_1 || !tilemap_2 )
-		return 1;
-
 	tilemap_set_transparent_pen(tilemap_0,0);
 	tilemap_set_transparent_pen(tilemap_1,0);
 	tilemap_set_transparent_pen(tilemap_2,0);

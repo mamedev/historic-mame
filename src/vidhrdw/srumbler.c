@@ -53,9 +53,6 @@ VIDEO_START( srumbler )
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_cols,TILEMAP_SPLIT,    16,16,64,64);
 
-	if (!fg_tilemap || !bg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap,3);
 
 	tilemap_set_transmask(bg_tilemap,0,0xffff,0x0000); /* split type 0 is totally transparent in front half */

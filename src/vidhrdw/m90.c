@@ -60,9 +60,6 @@ VIDEO_START( m90 )
 	pf2_layer =      tilemap_create(get_pf2_tile_info, tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,64);
 	pf2_wide_layer = tilemap_create(get_pf2w_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,128,64);
 
-	if (!pf1_layer || !pf1_wide_layer || !pf2_layer || !pf2_wide_layer)
-		return 1;
-
 	tilemap_set_transparent_pen(pf1_layer,0);
 	tilemap_set_transparent_pen(pf1_wide_layer,0);
 

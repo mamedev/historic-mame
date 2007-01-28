@@ -64,8 +64,6 @@ VIDEO_START( mcr68 )
 {
 	/* initialize the background tilemap */
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16,16, 32,32);
-	if (!bg_tilemap)
-		return 1;
 	tilemap_set_transparent_pen(bg_tilemap, 0);
 	return 0;
 }
@@ -80,13 +78,9 @@ VIDEO_START( zwackery )
 
 	/* initialize the background tilemap */
 	bg_tilemap = tilemap_create(zwackery_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,32);
-	if (!bg_tilemap)
-		return 1;
 
 	/* initialize the foreground tilemap */
 	fg_tilemap = tilemap_create(zwackery_get_fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16,16, 32,32);
-	if (!fg_tilemap)
-		return 1;
 	tilemap_set_transparent_pen(fg_tilemap, 0);
 
 	/* "colorize" each code */

@@ -275,8 +275,6 @@ VIDEO_START( gaelco2 )
 	pant[0] = tilemap_create(get_tile_info_gaelco2_screen0,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 	pant[1] = tilemap_create(get_tile_info_gaelco2_screen1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 
-	if (!pant[0] || !pant[1]) return 1;
-
 	/* set tilemap properties */
 	tilemap_set_transparent_pen(pant[0],0);
 	tilemap_set_transparent_pen(pant[1],0);
@@ -298,8 +296,6 @@ VIDEO_START( gaelco2_dual )
 	/* create tilemaps */
 	pant[0] = tilemap_create(get_tile_info_gaelco2_screen0_dual,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 	pant[1] = tilemap_create(get_tile_info_gaelco2_screen1_dual,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
-
-	if (!pant[0] || !pant[1]) return 1;
 
 	/* set tilemap properties */
 	tilemap_set_transparent_pen(pant[0],0);
@@ -409,7 +405,7 @@ static void gaelco2_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect,
 						for (py = 0; py < gfx->height; py++){
 							/* get a pointer to the current line in the screen bitmap */
 							int ypos = ((sy + ey*16 + py) & 0x1ff);
-							UINT16 *srcy = ((UINT16 *)bitmap->line[ypos]);
+							UINT16 *srcy = BITMAP_ADDR16(bitmap, ypos, 0);
 
 							int gfx_py = yflip ? (gfx->height - 1 - py) : py;
 

@@ -46,11 +46,7 @@ WRITE8_HANDLER( djboy_videoram_w )
 VIDEO_START( djboy )
 {
 	background = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,16,16,64,32);
-	if( background )
-	{
 		return 0;
-	}
-	return -1;
 }
 
 static void

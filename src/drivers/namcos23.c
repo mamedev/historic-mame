@@ -414,7 +414,7 @@ DrawLine( mame_bitmap *bitmap, int x0, int y0, int x1, int y1 )
 			dy = ((y1-y0)<<16)/(x1-x0);
 			for( sx=x0; sx<x1; sx++ )
 			{
-				UINT16 *pDest = (UINT16 *)bitmap->line[sy>>16];
+				UINT16 *pDest = BITMAP_ADDR16(bitmap, sy>>16, 0);
 				pDest[sx] = 1;
 				sy += dy;
 			}

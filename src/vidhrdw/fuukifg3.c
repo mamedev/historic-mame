@@ -106,9 +106,6 @@ VIDEO_START( fuuki32 )
 	tilemap_3 = tilemap_create(	get_tile_info_3, tilemap_scan_rows,
 								TILEMAP_TRANSPARENT,  8,  8, 64,32);
 
-	if ( !tilemap_0 || !tilemap_1 || !tilemap_2 || !tilemap_3 )
-		return 1;
-
 	tilemap_set_transparent_pen(tilemap_0,0xff);	// 8 bits
 	tilemap_set_transparent_pen(tilemap_1,0xff);	// 8 bits
 	tilemap_set_transparent_pen(tilemap_2,0x0f);	// 4 bits

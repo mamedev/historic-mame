@@ -88,15 +88,6 @@ VIDEO_START( sprint8 )
 	tilemap1 = tilemap_create(get_tile_info1, tilemap_scan_rows, TILEMAP_OPAQUE, 16, 8, 32, 32);
 	tilemap2 = tilemap_create(get_tile_info2, tilemap_scan_rows, TILEMAP_OPAQUE, 16, 8, 32, 32);
 
-	if (tilemap2 == NULL)
-	{
-		return 1;
-	}
-	if (tilemap1 == NULL)
-	{
-		return 1;
-	}
-
 	tilemap_set_scrolly(tilemap1, 0, +24);
 	tilemap_set_scrolly(tilemap2, 0, +24);
 
@@ -152,8 +143,8 @@ VIDEO_EOF( sprint8 )
 
 	for (y = Machine->screen[0].visarea.min_y; y <= Machine->screen[0].visarea.max_y; y++)
 	{
-		const UINT16* p1 = (UINT16*) helper1->line[y];
-		const UINT16* p2 = (UINT16*) helper2->line[y];
+		const UINT16* p1 = BITMAP_ADDR16(helper1, y, 0);
+		const UINT16* p2 = BITMAP_ADDR16(helper2, y, 0);
 
 		for (x = Machine->screen[0].visarea.min_x; x <= Machine->screen[0].visarea.max_x; x++)
 		{

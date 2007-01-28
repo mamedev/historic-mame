@@ -409,9 +409,6 @@ static int create_tilemaps_0(void)
 	fg_tilemap[0] = tilemap_create(get_fg0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	bg_tilemap[0] = tilemap_create(get_bg0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 
-	if (!top_tilemap[0] || !fg_tilemap[0] || !bg_tilemap[0])
-		return 1;
-
 	tilemap_set_transparent_pen(top_tilemap[0],0);
 	tilemap_set_transparent_pen(fg_tilemap[0],0);
 	tilemap_set_transparent_pen(bg_tilemap[0],0);
@@ -424,9 +421,6 @@ static int create_tilemaps_1(void)
 	top_tilemap[1] = tilemap_create(get_top1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	fg_tilemap[1] = tilemap_create(get_fg1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	bg_tilemap[1] = tilemap_create(get_bg1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
-
-	if (!top_tilemap[1] || !fg_tilemap[1] || !bg_tilemap[1])
-		return 1;
 
 	tilemap_set_transparent_pen(top_tilemap[1],0);
 	tilemap_set_transparent_pen(fg_tilemap[1],0);
@@ -441,9 +435,6 @@ static int truxton2_create_tilemaps_0(void)
 	top_tilemap[0] = tilemap_create(get_top0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	fg_tilemap[0] = tilemap_create(get_fg0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	bg_tilemap[0] = tilemap_create(get_bg0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
-
-	if (!tx_tilemap || !top_tilemap[0] || !fg_tilemap[0] || !bg_tilemap[0])
-		return 1;
 
 	tilemap_set_scroll_rows(tx_tilemap,8*32);	/* line scrolling */
 	tilemap_set_scroll_cols(tx_tilemap,1);
@@ -462,9 +453,6 @@ static int batrider_create_tilemaps_0(void)
 	top_tilemap[0] = tilemap_create(batrider_get_top0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	fg_tilemap[0] = tilemap_create(batrider_get_fg0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	bg_tilemap[0] = tilemap_create(batrider_get_bg0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
-
-	if (!tx_tilemap || !top_tilemap[0] || !fg_tilemap[0] || !bg_tilemap[0])
-		return 1;
 
 	tilemap_set_scroll_rows(tx_tilemap,8*32);	/* line scrolling */
 	tilemap_set_scroll_cols(tx_tilemap,1);

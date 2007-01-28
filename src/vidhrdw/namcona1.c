@@ -229,7 +229,6 @@ VIDEO_START( namcona1 )
 			tilemap_scan_rows,
 			TILEMAP_BITMASK,8,8,64,64 );
 
-		if( bg_tilemap[i]==NULL ) return -1;
 		tilemap_palette_bank[i] = -1;
 	}
 
@@ -303,8 +302,8 @@ static void pdraw_masked_tile(
 			for( y=0; y<8; y++ )
 			{
 				int ypos = sy+(flipy?7-y:y);
-				UINT8 *pri = (UINT8 *)priority_bitmap->line[ypos];
-				UINT16 *dest = (UINT16 *)bitmap->line[ypos];
+				UINT8 *pri = BITMAP_ADDR8(priority_bitmap, ypos, 0);
+				UINT16 *dest = BITMAP_ADDR16(bitmap, ypos, 0);
 				if( flipx )
 				{
 					dest += sx+7;
@@ -345,8 +344,8 @@ static void pdraw_masked_tile(
 			for( y=0; y<8; y++ )
 			{
 				int ypos = sy+(flipy?7-y:y);
-				UINT8 *pri = (UINT8 *)priority_bitmap->line[ypos];
-				UINT16 *dest = (UINT16 *)bitmap->line[ypos];
+				UINT8 *pri = BITMAP_ADDR8(priority_bitmap, ypos, 0);
+				UINT16 *dest = BITMAP_ADDR16(bitmap, ypos, 0);
 				if( flipx )
 				{
 					dest += sx+7;
@@ -419,8 +418,8 @@ static void pdraw_opaque_tile(
 		for( y=0; y<8; y++ )
 		{
 			ypos = sy+(flipy?7-y:y);
-			pri = (UINT8 *)priority_bitmap->line[ypos];
-			dest = (UINT16 *)bitmap->line[ypos];
+			pri = BITMAP_ADDR8(priority_bitmap, ypos, 0);
+			dest = BITMAP_ADDR16(bitmap, ypos, 0);
 			if( flipx )
 			{
 				dest += sx+7;
@@ -599,8 +598,8 @@ static void draw_background( mame_bitmap *bitmap, const rectangle *cliprect, int
                  * feature, Numan Athletics.
                  */
 				draw_pixel_line(
-					bitmap->line[line],
-					priority_bitmap->line[line],
+					BITMAP_ADDR16(bitmap, line, 0),
+					BITMAP_ADDR8(priority_bitmap, line, 0),
 					namcona1_sparevram + (ydata-0x4000) + 25,
 					paldata );
 			}

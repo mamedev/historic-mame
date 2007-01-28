@@ -336,9 +336,6 @@ VIDEO_START( pasha2 )
 	bitmap0 = auto_malloc(0x40000);
 	bitmap1 = auto_malloc(0x40000);
 
-	if(!bitmap0 || !bitmap1)
-		return 1;
-
 	return 0;
 }
 

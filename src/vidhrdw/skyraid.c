@@ -133,8 +133,8 @@ static void draw_trapezoid(mame_bitmap* dst, mame_bitmap* src)
 
 	for (y = 0; y < dst->height; y++)
 	{
-		UINT16* pSrc = src->line[y];
-		UINT16* pDst = dst->line[y];
+		UINT16* pSrc = BITMAP_ADDR16(src, y, 0);
+		UINT16* pDst = BITMAP_ADDR16(dst, y, 0);
 
 		int x1 = 0x000 + p[(y & ~1) + 0];
 		int x2 = 0x100 + p[(y & ~1) + 1];

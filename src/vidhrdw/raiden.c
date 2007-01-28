@@ -89,9 +89,6 @@ VIDEO_START( raiden )
 	tx_layer = tilemap_create(get_text_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
 	ALTERNATE=0;
 
-	if (!bg_layer || !fg_layer || !tx_layer)
-		return 1;
-
 	tilemap_set_transparent_pen(fg_layer,15);
 	tilemap_set_transparent_pen(tx_layer,15);
 
@@ -104,9 +101,6 @@ VIDEO_START( raidena )
 	fg_layer = tilemap_create(get_fore_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,16,16,32,32);
 	tx_layer = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	ALTERNATE=1;
-
-	if (!bg_layer || !fg_layer || !tx_layer)
-		return 1;
 
 	tilemap_set_transparent_pen(fg_layer,15);
 	tilemap_set_transparent_pen(tx_layer,15);

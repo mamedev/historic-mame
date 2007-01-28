@@ -352,7 +352,6 @@ WRITE8_HANDLER( m92_master_control_w )
 
 VIDEO_START( m92 )
 {
-
 	pf1_layer = tilemap_create(
 		get_pf1_tile_info,tilemap_scan_rows,
 		TILEMAP_SPLIT,
@@ -389,9 +388,6 @@ VIDEO_START( m92 )
 	);
 
 	paletteram = auto_malloc(0x1000);
-
-	if (!pf1_layer || !pf2_layer || !pf3_layer || !pf1_wide_layer || !pf3_wide_layer)
-		return 1;
 
 	/* split type 0 - totally transparent in front half */
 	tilemap_set_transmask(pf1_layer,0,0xffff,0x0001);

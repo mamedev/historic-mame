@@ -130,9 +130,6 @@ VIDEO_START( skykid )
 	tx_tilemap = tilemap_create(tx_get_tile_info,tx_tilemap_scan,  TILEMAP_TRANSPARENT,8,8,36,28);
 	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,32);
 
-	if (!tx_tilemap || !bg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(tx_tilemap, 0);
 
 	spriteram = skykid_spriteram + 0x780;

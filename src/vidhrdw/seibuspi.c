@@ -307,7 +307,7 @@ static void draw_blend_gfx(mame_bitmap *bitmap, const rectangle *cliprect, const
 	// draw
 	for (j=y1; j <= y2; j++)
 	{
-		UINT16 *p = bitmap->line[j];
+		UINT16 *p = BITMAP_ADDR16(bitmap, j, 0);
 		int dp_i = (py * width) + px;
 		py += yd;
 
@@ -575,9 +575,9 @@ static void combine_tilemap(mame_bitmap *bitmap, const rectangle *cliprect, tile
 			rx += rowscroll[(j+y) & yscroll_mask];
 		}
 
-		d = bitmap->line[j];
-		s = pen_bitmap->line[(j+y) & yscroll_mask];
-		t = trans_bitmap->line[(j+y) & yscroll_mask];
+		d = BITMAP_ADDR16(bitmap, j, 0);
+		s = BITMAP_ADDR16(pen_bitmap, (j+y) & yscroll_mask, 0);
+		t = BITMAP_ADDR8(trans_bitmap, (j+y) & yscroll_mask, 0);
 		for (i=cliprect->min_x+rx; i <= cliprect->max_x+rx; i++)
 		{
 			if (opaque || (t[i & xscroll_mask] & (TILE_FLAG_FG_OPAQUE | TILE_FLAG_BG_OPAQUE)))

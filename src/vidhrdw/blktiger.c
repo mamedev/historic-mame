@@ -76,9 +76,6 @@ VIDEO_START( blktiger )
 	bg_tilemap8x4 = tilemap_create(get_bg_tile_info,bg8x4_scan,       TILEMAP_SPLIT,   16,16,128,64);
 	bg_tilemap4x8 = tilemap_create(get_bg_tile_info,bg4x8_scan,       TILEMAP_SPLIT,   16,16,64,128);
 
-	if (!tx_tilemap || !bg_tilemap8x4 || !bg_tilemap4x8)
-		return 1;
-
 	tilemap_set_transparent_pen(tx_tilemap,3);
 
 	tilemap_set_transmask(bg_tilemap8x4,0,0xffff,0x8000);	/* split type 0 is totally transparent in front half */

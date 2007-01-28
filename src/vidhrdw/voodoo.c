@@ -498,7 +498,7 @@ void voodoo_update(int which, mame_bitmap *bitmap, const rectangle *cliprect)
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
 		UINT16 *src = v->fbi.rgb[drawbuf] + y * v->fbi.rowpixels;
-		UINT32 *dst = (UINT32 *)bitmap->line[y];
+		UINT32 *dst = BITMAP_ADDR32(bitmap, y, 0);
 		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			dst[x] = v->fbi.pen[src[x]];
 	}
@@ -520,7 +520,7 @@ void voodoo_update(int which, mame_bitmap *bitmap, const rectangle *cliprect)
 		for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		{
 			UINT16 *src = v->fbi.aux + y * v->fbi.rowpixels;
-			UINT32 *dst = (UINT32 *)bitmap->line[y];
+			UINT32 *dst = BITMAP_ADDR32(bitmap, y, 0);
 			for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 				dst[x] = ((src[x] << 8) & 0xff0000) | ((src[x] >> 0) & 0xff00) | ((src[x] >> 8) & 0xff);
 		}

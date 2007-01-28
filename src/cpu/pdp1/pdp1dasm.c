@@ -289,5 +289,5 @@ unsigned pdp1_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opr
 		etime = 5;
 		break;
 	}
-	return 1;
+	return 4;
 }

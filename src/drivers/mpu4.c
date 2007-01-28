@@ -1,7 +1,11 @@
 /***************************************************************************
 MPU4 highly preliminary driver by J.Wallace, and Anonymous.
 
+  24-01-2007: J Wallace: With thanks to Canonman and System 80, I was able to confirm a seemingly
+              ghastly misuse of a PIA is actually on the real hardware. This fixes the meters.
+
   30-12-2006: J Wallace: Fixed init routines, state saving is theoretically supported.
+
   23-09-2006: Converted 7Segment code to cleaner version, but have yet to add new 16k EPROM, as
               the original image was purported to come from a Barcrest BBS service, and is probably
               more 'official'.
@@ -261,7 +265,7 @@ IRQ line connected to CPU
  TODO: - confirm map, based on 6809 code.
        - Get MPU4 board working properly, so that video layer will operate.
        - Confirm that MC6850 emulation is sufficient.
-       - MPU4 Master clock balue taken from schematic, but 68k value is not.
+       - MPU4 Master clock value taken from schematic, but 68k value is not.
 *****************************************************************************************/
 
 #include "driver.h"
@@ -305,8 +309,7 @@ IRQ line connected to CPU
 #define VIDEO_MASTER_CLOCK (10000000)
 
 // local vars /////////////////////////////////////////////////////////////
-static int mmtr_latch;		  // mechanical meter latch
-static int drive;
+static int mmtr_data;		  // mechanical meter latch
 static int alpha_data_line;
 static int alpha_clock;
 static int ay8910_address;
@@ -331,10 +334,8 @@ static int optic_pattern;
 static UINT16 lamp_strobe;
 static UINT8  lamp_data;
 
-static UINT8  IC3ca1;
 static UINT8  yamdata;
 
-//static int   led_mux_strobe;
 static UINT8 chr_data[128];
 static UINT16 chr16_data[128];
 static UINT8 led_segs[8];
@@ -371,7 +372,6 @@ static int    output_strobe;  // same
 static UINT8 m6840_irq_state;
 extern UINT8 m6850_irq_state;
 static UINT8 scn2674_irq_state;
-static void update_irq(void);
 
 int vid_rx;
 
@@ -561,7 +561,6 @@ static MACHINE_RESET( mpu4_vid )
 		optic_pattern = pattern;
 	}
 
-	//led_mux_strobe = 0;
 	lamp_strobe    = 0;
 	lamp_data      = 0;
 
@@ -589,7 +588,6 @@ void cpu0_firq(int state)
 
 static WRITE8_HANDLER( bankswitch_w )
 {
-//  memory_set_bank(1,data & 0x07);//BFM setting, may not be correct
 	LOG(("Bank %d \n",data & 0x07));
 }
 
@@ -610,7 +608,6 @@ static WRITE8_HANDLER( ic2_o1_callback )
 static WRITE8_HANDLER( ic2_o2_callback )
 {
 	pia_set_input_ca1(0, data); // copy output value to IC3 ca1
-	IC3ca1 = data;
 	ptm6840_set_c3(   0, data); // copy output value to IC2 c3
 }
 
@@ -656,18 +653,6 @@ static WRITE8_HANDLER( pia_ic3_portb_w )
 	update_lamps();
 }
 
-static READ8_HANDLER( pia_ic3_ca1_r )
-{
-    LOG_IC3(("%04x IC3 PIA Read CA1 (PTM) %x \n",activecpu_get_previouspc(),IC3ca1));
-    return IC3ca1;
-}
-
-static READ8_HANDLER( pia_ic3_ca2_r )
-{
-	LOG_IC3(("%04x IC3 PIA Read CA2\n",activecpu_get_previouspc()));
-	return alpha_data_line;
-}
-
 static WRITE8_HANDLER( pia_ic3_ca2_w )
 {
 	LOG_IC3(("%04x IC3 PIA Write CA2 (alpha data), %02X\n", activecpu_get_previouspc(),data&0xFF));
@@ -682,19 +667,11 @@ static WRITE8_HANDLER( pia_ic3_cb2_w )
 	if ( data & 1 ) vfd_reset(0);
 }
 
-/*
-UNUSED FUNCTION
-static READ8_HANDLER( pia_ic3_cb1_r )
-{
-//  LOG_IC3(("%04x IC3 PIA Read CB1\n",activecpu_get_previouspc()));
-    return 0;
-}*/
-
 // IC3, lamp data lines + alpha numeric display
 
 static const pia6821_interface pia_ic3_intf =
 {
-	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, pia_ic3_ca2_r, 0,
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_ic3_porta_w, pia_ic3_portb_w, pia_ic3_ca2_w, pia_ic3_cb2_w,
 	/*irqs   : A/B             */ 0, 0
 };
@@ -734,7 +711,6 @@ static WRITE8_HANDLER( pia_ic4_porta_w )
 
 static READ8_HANDLER( pia_ic4_portb_r )
 {
-
 	if ( serial_data  )
 	{
 		ic4_input_b |=  0x80;
@@ -768,12 +744,6 @@ static READ8_HANDLER( pia_ic4_portb_r )
 	return ic4_input_b;
 }
 
-static READ8_HANDLER( pia_ic4_ca1_r )
-{
-	LOG(("%04x IC4 50Hz %x\n",activecpu_get_previouspc(),signal_50hz));
-	return signal_50hz;
-}
-
 static WRITE8_HANDLER( pia_ic4_ca2_w )
 {
 	LOG_IC3(("%04x IC4 PIA Write CA (input MUX strobe /LED B), %02X\n", activecpu_get_previouspc(),data&0xFF));
@@ -785,41 +755,12 @@ static WRITE8_HANDLER( pia_ic4_ca2_w )
 	IC23GB = data;
 }
 
-static WRITE8_HANDLER( pia_ic4_cb2_w )
-{
-	LOG_IC3(("%04x IC4 W CB2 (Reel Optics) (T39, connector PL13 pin 2), %02X\n",activecpu_get_previouspc(),data&0xff));
-}
-
-/*
-UNUSED FUNCTION
-static READ8_HANDLER( pia_ic4_cb1_r )
-{
-    return 0; //serial data
-}
-
-static WRITE8_HANDLER( pia_ic4_portb_w )
-{
-    logerror("%04x IC4 PIA Port B Set to %2x\n", activecpu_get_previouspc(),data);
-}
-
-static READ8_HANDLER( pia_ic4_porta_r )
-{
-    logerror("%04x IC4 PIA Read of Port A\n",activecpu_get_previouspc());
-    return 0;
-}
-
-static READ8_HANDLER( pia_ic4_cb2_r )
-{
-    return 0;
-}
-*/
-
 // IC4, 7 seg leds, 50Hz timer reel sensors, current sensors
 
 static const pia6821_interface pia_ic4_intf =
 {
-	/*inputs : A/B,CA/B1,CA/B2 */ 0, pia_ic4_portb_r, pia_ic4_ca1_r, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ pia_ic4_porta_w, 0, pia_ic4_ca2_w, pia_ic4_cb2_w,
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, pia_ic4_portb_r, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ pia_ic4_porta_w, 0, pia_ic4_ca2_w, 0,
 	/*irqs   : A/B             */ cpu0_irq, cpu0_irq
 };
 
@@ -827,17 +768,12 @@ static READ8_HANDLER( pia_ic5_porta_r )
 {
 	LOG(("%04x IC5 PIA Read of Port A (AUX1)\n",activecpu_get_previouspc()));
 	return readinputportbytag("AUX1");
-//  return 0;
 }
 
 static READ8_HANDLER( pia_ic5_portb_r )
 {
-	//int result = 0;
 	LOG(("%04x IC5 PIA Read of Port B (coin input AUX2)\n",activecpu_get_previouspc()));
-
-	//result = coin_latch()
 	return readinputportbytag("AUX2");
-	//return result;
 }
 
 static WRITE8_HANDLER( pia_ic5_ca2_w )
@@ -850,48 +786,13 @@ static WRITE8_HANDLER( pia_ic5_cb2_w )
 {
 	LOG(("%04x IC5 PIA Write CB2 %2x\n",activecpu_get_previouspc(),data));
 	//ay8912 chipsel
-
-/*
-UNUSED FUNCTION
-static READ8_HANDLER( pia_ic5_cb1_r )
-{
-    LOG(("%04x IC5 PIA Read of CB1\n",activecpu_get_previouspc()));
-    return readinputportbytag("AUX2") & 0x80;
-}
-
-static WRITE8_HANDLER( pia_ic5_portb_w )
-{
-    LOG(("%04x IC5 PIA Port B Set to %2x\n", activecpu_get_previouspc(), data));
-//  pia_set_input_b(2, data);
-//  led_mux_strobe = data;
-}
-
-static READ8_HANDLER( pia_ic5_ca1_r )
-{
-    LOG(("%04x IC5 PIA Read of CA1\n",activecpu_get_previouspc()));
-    return 0;
-}
-
-static READ8_HANDLER( pia_ic5_ca2_r )
-{
-    LOG(("%04x IC5 PIA Read of CA2\n",activecpu_get_previouspc()));
-    return 0;
-}
-
-static READ8_HANDLER( pia_ic5_cb2_r )
-{
-    LOG(("%04x IC5 PIA Read of CB2\n",activecpu_get_previouspc()));
-    return 0;
-}
-
-*/
 }
 
 static const pia6821_interface pia_ic5_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic5_porta_r, pia_ic5_portb_r, 0, 0, 0, 0,//CB1 connected to PB7 Aux 2
 	/*outputs: A/B,CA/B2       */ 0, 0, pia_ic5_ca2_w,  pia_ic5_cb2_w,
-	/*irqs   : A/B             */ 0, 0
+	/*irqs   : A/B             */ cpu0_irq,cpu0_irq
 };
 
 /* ---------------------------------------
@@ -900,7 +801,7 @@ static const pia6821_interface pia_ic5_intf =
 The databus of the Yamaha sound chip is connected to IC6 Port A.
 Data is read from/written to the Yamaha chip through this port.
 
-If this sounds familiar, Amstrad did something very similar with their home computers
+If this sounds familiar, Amstrad did something very similar with their home computers.
 
 The PSG function, defined by the BC1,BC2 and BDIR signals, is controlled by CA2 and CB2 of IC6.
 
@@ -911,9 +812,9 @@ BDIR = IC6 CB2 and BC1 = IC6 CA2
 Pin            | PSG Function
 BDIR BC1       |
 0    0         | Inactive
-0    1         | Read from selected PSG register. When function is set, the PSG will make the register data available to Port A
-1    0         | Write to selected PSG register. When set, the PSG will take the data at Port A and write it into the selected PSG register
-1    1         | Select PSG register. When set, the PSG will take the data at Port A and select a register
+0    1         | Read from selected PSG register. When function is set, the PSG will make the register data available to Port A.
+1    0         | Write to selected PSG register. When set, the PSG will take the data at Port A and write it into the selected PSG register.
+1    1         | Select PSG register. When set, the PSG will take the data at Port A and select a register.
 */
 /* PSG function selected */
 
@@ -951,21 +852,12 @@ static void update_yam(void)
 	}
 }
 
-static READ8_HANDLER( pia_ic6_porta_r )
-{
-	LOG(("%04x IC6 PIA Read of Port A\n",activecpu_get_previouspc()));
-	update_yam();
-	return yamdata;
-}
-
 static WRITE8_HANDLER( pia_ic6_portb_w )
 {
 	LOG(("%04x IC6 PIA Port B Set to %2x (Reel A and B)\n", activecpu_get_previouspc(),data));
 
-//  Stepper_update(0, (data >> 4) & 0x0F );
-//  Stepper_update(1, data        & 0x0F );
-	Stepper_update(0, data >> 4);
-	Stepper_update(1, (data));
+	Stepper_update(0, (data >> 4) & 0x0F );
+	Stepper_update(1, data        & 0x0F );
 
 	if ( Stepper_optic_state(0) ) optic_pattern |=  0x01;
 	else                          optic_pattern &= ~0x01;
@@ -975,7 +867,6 @@ static WRITE8_HANDLER( pia_ic6_portb_w )
 	if (!optic_pattern == 0)
 	pia_set_input_cb2(1,0);	// signal is connected to IC4 CB2
 	pia_set_input_cb2(1,1);
-
 }
 
 static WRITE8_HANDLER( pia_ic6_porta_w )
@@ -1005,36 +896,11 @@ static WRITE8_HANDLER( pia_ic6_cb2_w )
 	update_yam();
 }
 
-/*
-UNUSED FUNCTION
-static READ8_HANDLER( pia_ic6_portb_r )
-{
-    LOG(("%04x IC6 PIA Read of Port B\n",activecpu_get_previouspc()));
-    return 0;
-}
-
-static READ8_HANDLER( pia_ic6_ca2_r )
-{
-    return ay8910_address & 0x01;
-}
-
-static READ8_HANDLER( pia_ic6_cb2_r )
-{
-    return ay8910_address & 0x02;
-}
-
-static READ8_HANDLER( pia_ic6_cb1_r )
-{
-    return 0;
-}
-
-*/
-
 static const pia6821_interface pia_ic6_intf =
 {
-	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic6_porta_r, 0, 0, 0, 0, 0,
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_ic6_porta_w, pia_ic6_portb_w, pia_ic6_ca2_w, pia_ic6_cb2_w,
-	/*irqs   : A/B             */ 0, 0
+	/*irqs   : A/B             */ cpu0_irq,cpu0_irq
 };
 
 static WRITE8_HANDLER( pia_ic7_porta_w )
@@ -1047,25 +913,35 @@ static WRITE8_HANDLER( pia_ic7_porta_w )
 
 static WRITE8_HANDLER( pia_ic7_portb_w )
 {
-	int  changed = mmtr_latch ^ data;
 	long cycles  = MAME_TIME_TO_CYCLES(0, mame_timer_get_time() );
 
-	mmtr_latch = data;
-	if (drive)
+// The meters are connected to a voltage drop sensor, where current
+// flowing through them also passes through pin B7, meaning that when
+// any meter is activated, pin B7 goes high.
+// As for why they connected this to an output port rather than using
+// CB1, no idea.
+// This appears to have confounded the schematic drawer, who has assumed that
+// all eight meters are driven from this port, giving the 8 line driver chip
+// 9 connections in total.
+
+	mmtr_data = data;
+	if (mmtr_data)
 	{
-		if ( changed & 0x01 )	Mechmtr_update(0, cycles, data & 0x01 );
-		if ( changed & 0x02 )	Mechmtr_update(1, cycles, data & 0x02 );
-		if ( changed & 0x04 )	Mechmtr_update(2, cycles, data & 0x04 );
-		if ( changed & 0x08 )	Mechmtr_update(3, cycles, data & 0x08 );
-		if ( changed & 0x10 )	Mechmtr_update(4, cycles, data & 0x10 );
-		if ( changed & 0x20 )	Mechmtr_update(5, cycles, data & 0x20 );
-		if ( changed & 0x40 )	Mechmtr_update(6, cycles, data & 0x40 );
-		if ( changed & 0x80 )	Mechmtr_update(7, cycles, data & 0x80 );
+		pia_set_input_b(4,mmtr_data|0x80);
+		if ( mmtr_data & 0x01 )	Mechmtr_update(0, cycles, mmtr_data & 0x01 );
+		if ( mmtr_data & 0x02 )	Mechmtr_update(1, cycles, mmtr_data & 0x02 );
+		if ( mmtr_data & 0x04 )	Mechmtr_update(2, cycles, mmtr_data & 0x04 );
+		if ( mmtr_data & 0x08 )	Mechmtr_update(3, cycles, mmtr_data & 0x08 );
+		if ( mmtr_data & 0x10 )	Mechmtr_update(4, cycles, mmtr_data & 0x10 );
+		if ( mmtr_data & 0x20 )	Mechmtr_update(5, cycles, mmtr_data & 0x20 );
+		if ( mmtr_data & 0x40 )	Mechmtr_update(6, cycles, mmtr_data & 0x40 );
+	}
+	else
+	{
+		pia_set_input_b(4,mmtr_data&~0x80);
 	}
 
 	LOG(("%04x IC7 PIA Port B Set to %2x (Meters, Reel E and F)\n", activecpu_get_previouspc(),data));
-//  Stepper_update(4, (data >> 4) & 0x0F );
-//  Stepper_update(5, data        & 0x0F );
 }
 
 static WRITE8_HANDLER( pia_ic7_ca2_w )
@@ -1082,35 +958,22 @@ static WRITE8_HANDLER( pia_ic7_ca2_w )
 
 static WRITE8_HANDLER( pia_ic7_cb2_w )
 {
-	LOG(("%04x IC7 PIA write CB2 %2x (meter driver PL3)\n", activecpu_get_previouspc(),data));
-	drive = data;
+// The eighth meter is connected here, because the voltage sensor
+// is on PB7.
+	long cycles  = MAME_TIME_TO_CYCLES(0, mame_timer_get_time() );
+	if (data)
+	{
+		pia_set_input_b(4,mmtr_data|0x80);
+		Mechmtr_update(7, cycles, data );
+	}
+	LOG(("%04x IC7 PIA write CB2 %2x \n", activecpu_get_previouspc(),data));
 }
 
-/*
-UNUSED FUNCTION
-static READ8_HANDLER( pia_ic7_porta_r )
-{
-    logerror("%04x IC7 PIA Read of Port A\n",activecpu_get_previouspc());
-    return 0;
-}
-
-static READ8_HANDLER( pia_ic7_portb_r )
-{
-    logerror("%04x IC7 PIA Read of Port B\n",activecpu_get_previouspc());
-    return 0;
-}
-
-static READ8_HANDLER( pia_ic7_cb2_r )
-{
-    logerror("%04x IC7 PIA read CB2 (meter driver PL3)\n", activecpu_get_previouspc());
-    return 0;
-}
-*/
 static const pia6821_interface pia_ic7_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_ic7_porta_w, pia_ic7_portb_w, pia_ic7_ca2_w, pia_ic7_cb2_w,
-	/*irqs   : A/B             */ 0,0
+	/*irqs   : A/B             */ cpu0_irq, cpu0_irq
 };
 
 static READ8_HANDLER( pia_ic8_porta_r )
@@ -1130,12 +993,6 @@ static WRITE8_HANDLER( pia_ic8_portb_w )
 	LOG_IC8(("%04x IC8 PIA Port B Set to %2x (OUTPUT PORT, TRIACS)\n", activecpu_get_previouspc(),data));
 }
 
-static READ8_HANDLER( pia_ic8_ca2_r )
-{
-	LOG_IC8(("%04x IC8 PIA Read of CA2 (LED Multiplexer 'C')\n",activecpu_get_previouspc()));
-	return IC23GC;
-}
-
 static WRITE8_HANDLER( pia_ic8_ca2_w )
 {
 	LOG_IC8(("%04x IC8 PIA write CA2 (input_strobe bit 2 / LED C) %02X\n", activecpu_get_previouspc(), data & 0xFF));
@@ -1146,12 +1003,6 @@ static WRITE8_HANDLER( pia_ic8_ca2_w )
 	output_strobe = input_strobe; // same strobe lines are used for input and output
 
 	IC23GC = data;
-}
-
-static READ8_HANDLER( pia_ic8_cb2_r )
-{
-	LOG_IC8(("%04x IC8 PIA Read of CB2 (Alpha CLK)\n",activecpu_get_previouspc()));
-	return alpha_clock;
 }
 
 static WRITE8_HANDLER( pia_ic8_cb2_w )
@@ -1165,33 +1016,11 @@ static WRITE8_HANDLER( pia_ic8_cb2_w )
 	alpha_clock = data;
 }
 
-/*
-UNUSED FUNCTION
-
-static WRITE8_HANDLER( pia_ic8_porta_w )
-{
-    LOG_IC8(("%04x IC8 PIA Port A Set to %2x (MUX'd Inputs)\n", activecpu_get_previouspc(),data));
-}
-
-static READ8_HANDLER( pia_ic8_portb_r )
-{
-    LOG_IC8(("%04x IC8 PIA Read of Port B\n (Triacs)",activecpu_get_previouspc()));
-    return 0;
-}
-
-static READ8_HANDLER( pia_ic8_ca1_r )
-{
-    LOG_IC8(("%04x IC8 PIA Read of CA1 (Should be unconnected)\n",activecpu_get_previouspc()));
-    return 0;
-}
-
-
-*/
 static const pia6821_interface pia_ic8_intf =
 {
-	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic8_porta_r, 0, 0, 0, pia_ic8_ca2_r, pia_ic8_cb2_r,
+	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic8_porta_r, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, pia_ic8_portb_w, pia_ic8_ca2_w, pia_ic8_cb2_w,
-	/*irqs   : A/B             */ 0,0
+	/*irqs   : A/B             */ cpu0_irq,cpu0_irq
 };
 
 // Video
@@ -1959,13 +1788,6 @@ WRITE16_HANDLER( ef9369_address_w )
 
 }
 
-#if 0
-/* 6850 emulation */
-
-UINT8 mpu4_vid_6850_status_register;
-UINT8 mpu4_vid_6850_received_data;
-UINT8 mpu4_vid_6850_send_data;
-
 /*
 Status Register (R/O)
 
@@ -1990,44 +1812,7 @@ hex  bit
 0x20 5 - CR5  (Transmit Control 1)
 0x40 6 - CR6  (Transmit Control 2)
 0x80 7 - CR7  (Receive Interrupt Enable)
-
 */
-
-READ16_HANDLER( mpu4_vid_6850_r )
-{
-//  data &=0x00ff;
-	switch (offset)
-	{
-		case 0: return mpu4_vid_6850_status_register;
-		case 1: return mpu4_vid_6850_received_data;
-	}
-
-	return 0xffff;
-}
-
-void mpu4_vid_6850_control_register_w (UINT8 data)
-{
-
-}
-
-void mpu4_vid_6850_data_w (UINT8 data)
-{
-	mpu4_vid_6850_send_data = data;
-}
-
-
-WRITE16_HANDLER ( mpu4_vid_6850_w )
-{
-	data &=0x00ff;
-
-	switch (offset)
-	{
-		case 0: mpu4_vid_6850_control_register_w(data);break;
-		case 1: mpu4_vid_6850_data_w(data);break;
-	}
-	LOGSTUFF(("6850 write to %02x = %02x\n",offset,data));
-}
-#endif
 
 // input ports for MPU4 board ////////////////////////////////////////
 
@@ -2292,7 +2077,6 @@ MACHINE_START( mpu4_vid )
 	pia_config(4, PIA_STANDARD_ORDERING, &pia_ic7_intf);
 	pia_config(5, PIA_STANDARD_ORDERING, &pia_ic8_intf);
 
-
 	pia_reset();
 
 // setup ptm ////////////////////////////////////////////////////////////
@@ -2300,9 +2084,9 @@ MACHINE_START( mpu4_vid )
 	ptm6840_config(0, &ptm_ic2b_intf );
 	ptm6840_config(1, &ptm_vid_intf );
 
-// setup 224 lamps //////////////////////////////////////////////////////
+// setup 128 lamps //////////////////////////////////////////////////////
 
-	Lamps_init(224);
+	Lamps_init(128);
 
 // setup 8 mechanical meters ////////////////////////////////////////////
 
@@ -2310,10 +2094,10 @@ MACHINE_START( mpu4_vid )
 
 // setup 4 default 96 half step reels ///////////////////////////////////
 
-	Stepper_init(0, STEPPER_48STEP_REEL);
-	Stepper_init(1, STEPPER_48STEP_REEL);
-	Stepper_init(2, STEPPER_48STEP_REEL);
-	Stepper_init(3, STEPPER_48STEP_REEL);
+	Stepper_init(0, BARCREST_48STEP_REEL);
+	Stepper_init(1, BARCREST_48STEP_REEL);
+	Stepper_init(2, BARCREST_48STEP_REEL);
+	Stepper_init(3, BARCREST_48STEP_REEL);
 
 // setup the standard oki MSC1937 display ///////////////////////////////
 
@@ -2337,9 +2121,9 @@ static MACHINE_START( mpu4 )
 
 	ptm6840_config(0, &ptm_ic2_intf );
 
-// setup 224 lamps //////////////////////////////////////////////////////
+// setup 128 lamps //////////////////////////////////////////////////////
 
-	Lamps_init(224);
+	Lamps_init(128);
 
 // setup 8 mechanical meters ////////////////////////////////////////////
 
@@ -2347,12 +2131,10 @@ static MACHINE_START( mpu4 )
 
 // setup 4 default 96 half step reels ///////////////////////////////////
 
-	Stepper_init(0, STEPPER_48STEP_REEL);
-	Stepper_init(1, STEPPER_48STEP_REEL);
-	Stepper_init(2, STEPPER_48STEP_REEL);
-	Stepper_init(3, STEPPER_48STEP_REEL);
-	// Stepper_init(4, STEPPER_48STEP_REEL);
-	// Stepper_init(5, STEPPER_48STEP_REEL);
+	Stepper_init(0, BARCREST_48STEP_REEL);
+	Stepper_init(1, BARCREST_48STEP_REEL);
+	Stepper_init(2, BARCREST_48STEP_REEL);
+	Stepper_init(3, BARCREST_48STEP_REEL);
 
 // setup the standard oki MSC1937 display ///////////////////////////////
 
@@ -2422,16 +2204,16 @@ static WRITE8_HANDLER( characteriser_w )
 {
 	int x;
 	int call=data;
-		LOG_CHR(("Characteriser write offset %02X data %02X\n",offset,data));
-		for ( x = prot_col; x < 128; x++ )
+	LOG_CHR(("Characteriser write offset %02X data %02X\n",offset,data));
+	for ( x = prot_col; x < 128; x++ )
+	{
+		if	((chr_data[(x)] == call) && ((x & 1) == 0))
 		{
-			if	((chr_data[(x)] == call) && ((x & 1) == 0))
-			{
-				prot_col = (x)+1;
-				LOG_CHR(("Characteriser find column %02X\n",prot_col));
-				break;
-			}
+			prot_col = (x)+1;
+			LOG_CHR(("Characteriser find column %02X\n",prot_col));
+			break;
 		}
+	}
 }
 
 static READ8_HANDLER( characteriser_r )
@@ -2445,16 +2227,16 @@ static WRITE16_HANDLER( characteriser16_w )
 {
 	int x;
 	int call=data;
-		LOG_CHR(("Characteriser write offset %02X data %02X\n",offset,data));
-		for ( x = prot_col+1; x < 128; x++ )
+	LOG_CHR(("Characteriser write offset %02X data %02X\n",offset,data));
+	for ( x = prot_col+1; x < 128; x++ )
+	{
+		if	((chr16_data[(x)] == call) && ((x & 1) == 1))
 		{
-			if	((chr16_data[(x)] == call) && ((x & 1) == 1))
-			{
-				prot_col = (x)-1;
-				LOG_CHR(("Characteriser find column %02X\n",prot_col));
-				break;
-			}
+			prot_col = (x)-1;
+			LOG_CHR(("Characteriser find column %02X\n",prot_col));
+			break;
 		}
+	}
 }
 
 static READ16_HANDLER( characteriser16_r )
@@ -2502,7 +2284,7 @@ static ADDRESS_MAP_START( mpu4_vid_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xff9000, 0xff900f) AM_READ(  ptm6840_1_lsb_r)
 	AM_RANGE(0xff9000, 0xff900f) AM_WRITE( ptm6840_1_lsb_w)
 
-	/* characterizer??? */
+	/* characterizer */
 	AM_RANGE(0xffd000, 0xffd00f) AM_READWRITE(characteriser16_r, characteriser16_w)
 
 ADDRESS_MAP_END
@@ -2619,7 +2401,7 @@ static MACHINE_DRIVER_START( mpu4_vid )
 	MDRV_SOUND_ADD(AY8910, MPU4_MASTER_CLOCK/4)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
-	MDRV_SPEAKER_STANDARD_STEREO("left", "right")	// Present on all video cards
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")// Present on all video cards
 	MDRV_SOUND_ADD(SAA1099, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.00)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.00)
@@ -2833,7 +2615,7 @@ ROM_END
 
 /*    YEAR   NAME    PARENT   MACHINE   INPUT     INIT   MONITOR COMPANY            FULLNAME                                                            FLAGS (0 if none)  */
 
-GAME( 198?, connect4,0,       mpu4,     connect4, 0,		0,   "Dolbeck Systems", "Connect 4",														GAME_NOT_WORKING|GAME_IMPERFECT_SOUND )
+GAME( 198?, connect4,0,       mpu4,     connect4, 0,		0,   "Dolbeck Systems", "Connect 4",														GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 GAME( 199?, bctvidbs,0,       mpu4,		mpu4,	  0,     ROT0,   "Barcrest", 		"MPU4 Video Firmware",												NOT_A_DRIVER )
 
 GAME( 1994, crmaze,  bctvidbs,mpu4_vid, crmaze,   crmaze,ROT0,   "Barcrest", 		"The Crystal Maze: Team Challenge (SWP)",							GAME_NOT_WORKING|GAME_NO_SOUND )

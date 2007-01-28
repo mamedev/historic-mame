@@ -134,8 +134,8 @@ static void mcatadv_drawsprites ( mame_bitmap *bitmap, const rectangle *cliprect
 				drawypos = y+ycnt-global_y;
 
 				if ((drawypos >= cliprect->min_y) && (drawypos <= cliprect->max_y)) {
-					destline = (UINT16 *)(bitmap->line[drawypos]);
-					priline = (UINT8 *)(priority_bitmap->line[drawypos]);
+					destline = BITMAP_ADDR16(bitmap, drawypos, 0);
+					priline = BITMAP_ADDR8(priority_bitmap, drawypos, 0);
 
 					for (xcnt = xstart; xcnt != xend; xcnt += xinc) {
 						drawxpos = x+xcnt-global_x;
@@ -265,9 +265,6 @@ VIDEO_START( mcatadv )
 
 	spriteram_old = auto_malloc(spriteram_size);
 	vidregs_old = auto_malloc(0xf);
-
-	if(!mcatadv_tilemap1 || !mcatadv_tilemap2)
-		return 1;
 
 	memset(spriteram_old,0,spriteram_size);
 

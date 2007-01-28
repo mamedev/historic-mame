@@ -467,9 +467,6 @@ VIDEO_START( pangpang )
 	pf1_alt_tilemap = tilemap_create(pangpang_get_bg1_tile_info,tumblep_scan,TILEMAP_TRANSPARENT,16,16,64,32);
 	pf2_tilemap =     tilemap_create(pangpang_get_bg2_tile_info,tumblep_scan,TILEMAP_OPAQUE,     16,16,64,32);
 
-	if (!pf1_tilemap || !pf1_alt_tilemap || !pf2_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(pf1_tilemap,0);
 	tilemap_set_transparent_pen(pf1_alt_tilemap,0);
 	bcstory_tilebank = 0;
@@ -484,9 +481,6 @@ VIDEO_START( tumblepb )
 	pf1_alt_tilemap = tilemap_create(get_bg1_tile_info,tumblep_scan,TILEMAP_TRANSPARENT,16,16,64,32);
 	pf2_tilemap =     tilemap_create(get_bg2_tile_info,tumblep_scan,TILEMAP_OPAQUE,     16,16,64,32);
 
-	if (!pf1_tilemap || !pf1_alt_tilemap || !pf2_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(pf1_tilemap,0);
 	tilemap_set_transparent_pen(pf1_alt_tilemap,0);
 	bcstory_tilebank = 0;
@@ -499,9 +493,6 @@ VIDEO_START( fncywld )
 	pf1_tilemap =     tilemap_create(get_fncywld_fg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 	pf1_alt_tilemap = tilemap_create(get_fncywld_bg1_tile_info,tumblep_scan,TILEMAP_TRANSPARENT,16,16,64,32);
 	pf2_tilemap =     tilemap_create(get_fncywld_bg2_tile_info,tumblep_scan,TILEMAP_OPAQUE,     16,16,64,32);
-
-	if (!pf1_tilemap || !pf1_alt_tilemap || !pf2_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,15);
 	tilemap_set_transparent_pen(pf1_alt_tilemap,15);
@@ -801,9 +792,6 @@ VIDEO_START( suprtrio )
 	pf1_tilemap =     tilemap_create(get_fg_tile_info, tilemap_scan_rows,TILEMAP_OPAQUE, 8, 8,64,32);
 	pf1_alt_tilemap = tilemap_create(get_bg1_tile_info,tumblep_scan,TILEMAP_TRANSPARENT,16,16,64,32);
 	pf2_tilemap =     tilemap_create(get_bg2_tile_info,tumblep_scan,TILEMAP_OPAQUE,     16,16,64,32);
-
-	if (!pf1_tilemap || !pf1_alt_tilemap || !pf2_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(pf1_alt_tilemap,0);
 	bcstory_tilebank = 0;

@@ -261,11 +261,10 @@ VPATH = src $(wildcard src/cpu/*)
 #-------------------------------------------------
 
 OBJDIRS = \
-	obj \
-	$(OBJ) \
 	$(OBJ)/cpu \
 	$(OBJ)/sound \
 	$(OBJ)/debug \
+	$(OBJ)/tools \
 	$(OBJ)/drivers \
 	$(OBJ)/layout \
 	$(OBJ)/machine \
@@ -274,7 +273,7 @@ OBJDIRS = \
 	$(OBJ)/$(MAMEOS) \
 
 ifdef MESS
-OBJDIRS += 
+OBJDIRS +=
 	$(OBJ)/mess \
 	$(OBJ)/mess/systems \
 	$(OBJ)/mess/machine \
@@ -362,7 +361,7 @@ emulator: maketree $(EMULATOR)
 
 extra: $(TOOLS)
 
-maketree: $(sort $(OBJDIRS)) $(OSPREBUILD)
+maketree: $(sort $(OBJDIRS))
 
 clean:
 	@echo Deleting object tree $(OBJ)...
@@ -379,7 +378,7 @@ clean:
 #-------------------------------------------------
 
 $(sort $(OBJDIRS)):
-	$(MD) $@
+	$(MD) -p $@
 
 
 
@@ -393,19 +392,19 @@ $(EMULATOR): $(COREOBJS) $(OSOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(EXPAT) $(Z
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@ $(MAPFLAGS)
 
-file2str$(EXE): $(OBJ)/file2str.o $(OSDCORELIB)
+file2str$(EXE): $(OBJ)/tools/file2str.o $(OSDCORELIB)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(OBJ)/mamecore.o $(ZLIB) $(OSDCORELIB)
+romcmp$(EXE): $(OBJ)/tools/romcmp.o $(OBJ)/unzip.o $(OBJ)/mamecore.o $(ZLIB) $(OSDCORELIB)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSDCORELIB)
+chdman$(EXE): $(OBJ)/tools/chdman.o $(OBJ)/chd.o $(OBJ)/tools/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSDCORELIB)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
-jedutil$(EXE): $(OBJ)/jedutil.o $(OBJ)/jedparse.o $(OSDCORELIB)
+jedutil$(EXE): $(OBJ)/tools/jedutil.o $(OBJ)/jedparse.o $(OSDCORELIB)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
@@ -437,19 +436,19 @@ $(OBJ)/libz.a: $(OBJ)/zlib/adler32.o $(OBJ)/zlib/compress.o $(OBJ)/zlib/crc32.o 
 # generic rules
 #-------------------------------------------------
 
-$(OBJ)/$(MAMEOS)/%.o: src/$(MAMEOS)/%.c
+$(OBJ)/$(MAMEOS)/%.o: src/$(MAMEOS)/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGSOSDEPEND) -c $< -o $@
 
-$(OBJ)/%.o: src/%.c
+$(OBJ)/%.o: src/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 
-$(OBJ)/%.pp: src/%.c
+$(OBJ)/%.pp: src/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -E $< -o $@
 
-$(OBJ)/%.s: src/%.c
+$(OBJ)/%.s: src/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -S $< -o $@
 

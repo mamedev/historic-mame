@@ -42,9 +42,6 @@ VIDEO_START( gotcha )
 	fg_tilemap = tilemap_create(fg_get_tile_info,gotcha_tilemap_scan,TILEMAP_TRANSPARENT,16,16,64,32);
 	bg_tilemap = tilemap_create(bg_get_tile_info,gotcha_tilemap_scan,TILEMAP_OPAQUE,     16,16,64,32);
 
-	if (!bg_tilemap || !fg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(fg_tilemap,0);
 
 	tilemap_set_scrolldx(fg_tilemap,-1,0);

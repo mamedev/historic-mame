@@ -88,10 +88,6 @@ VIDEO_START( rpunch )
 	background[0] = tilemap_create(get_bg0_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     8,8,64,64);
 	background[1] = tilemap_create(get_bg1_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,64);
 
-	/* if anything failed, clean up and return an error */
-	if (!background[0] || !background[1])
-		return 1;
-
 	/* configure the tilemaps */
 	tilemap_set_transparent_pen(background[1],15);
 

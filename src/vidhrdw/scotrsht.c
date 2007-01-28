@@ -159,9 +159,6 @@ VIDEO_START( scotrsht )
 {
 	bg_tilemap = tilemap_create(scotrsht_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 64, 32);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	tilemap_set_scroll_cols(bg_tilemap, 64);
 
 	return 0;

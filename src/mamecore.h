@@ -136,9 +136,6 @@ struct _mame_bitmap
 	int bpp;					/* bits per pixel */
 	void *base;					/* pointer to pixel (0,0) (adjusted for padding) */
 	int rowpixels;				/* pixels per row (including padding) */
-
-	/* obsolete way of accessing the pixels */
-	void **line;				/* pointers to the start of each line - can be UINT8 **, UINT16 ** or UINT32 ** */
 };
 
 

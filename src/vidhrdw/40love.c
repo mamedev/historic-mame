@@ -112,9 +112,6 @@ VIDEO_START( fortyl )
 
 	background  = tilemap_create(get_bg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8,8,64,32);
 
-	if (!background)
-		return 1;
-
 	tilemap_set_scroll_rows(background,32);
 	tilemap_set_transparent_pen(background,0);
 

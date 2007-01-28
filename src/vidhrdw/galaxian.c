@@ -516,9 +516,6 @@ static int video_start_common(UINT32 (*get_memory_offset)(UINT32,UINT32,UINT32,U
 {
 	bg_tilemap = tilemap_create(get_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!bg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(bg_tilemap,0);
 
 
@@ -900,9 +897,6 @@ VIDEO_START( drivfrcg )
 {
 	bg_tilemap = tilemap_create(drivfrcg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!bg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(bg_tilemap,0);
 	tilemap_set_scroll_cols(bg_tilemap, 32);
 	tilemap_set_scroll = tilemap_set_scrolly;
@@ -941,9 +935,6 @@ VIDEO_START( drivfrcg )
 VIDEO_START( ad2083 )
 {
 	bg_tilemap = tilemap_create(drivfrcg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
-
-	if (!bg_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(bg_tilemap,0);
 	tilemap_set_scroll_cols(bg_tilemap, 32);
@@ -1003,9 +994,6 @@ static void racknrol_get_tile_info(int tile_index)
 VIDEO_START( racknrol )
 {
 	bg_tilemap = tilemap_create(racknrol_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
-
-	if (!bg_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(bg_tilemap,0);
 	tilemap_set_scroll_cols(bg_tilemap, 32);
@@ -1093,12 +1081,7 @@ VIDEO_START( dambustr )
 
 	/* make a copy of the tilemap to emulate background priority */
 	dambustr_videoram2 = auto_malloc(0x0400);
-	if (!dambustr_videoram2)
-		return 1;
 	dambustr_tilemap2 = tilemap_create(dambustr_get_tile_info2,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
-
-	if (!dambustr_tilemap2)
-		return 1;
 
 	tilemap_set_transparent_pen(dambustr_tilemap2,0);
 

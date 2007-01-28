@@ -208,9 +208,6 @@ VIDEO_START( apache3 )
 	shadow_pen_array = auto_malloc(8192);
 	temp_bitmap = auto_bitmap_alloc_format(512, 512, BITMAP_FORMAT_RGB32);
 
-	if (!tx_layer)
-		return 1;
-
 	memset(shadow_pen_array, 0, 8192);
 	tilemap_set_transparent_pen(tx_layer,0);
 	return 0;
@@ -222,9 +219,6 @@ VIDEO_START( roundup5 )
 	shadow_pen_array = auto_malloc(8192);
 	roundup5_vram = auto_malloc(0x48000 * 4);
 
-	if (!tx_layer)
-		return 1;
-
 	memset(shadow_pen_array, 0, 8192);
 	tilemap_set_transparent_pen(tx_layer,0);
 	return 0;
@@ -235,9 +229,6 @@ VIDEO_START( cyclwarr )
 	bg_layer = tilemap_create(get_bg_tile_info_cyclwarr,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,256,256);
 	tx_layer = tilemap_create(get_text_tile_info_cyclwarr,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 	shadow_pen_array = auto_malloc(8192);
-
-	if (!bg_layer || !tx_layer)
-		return 1;
 
 	memset(shadow_pen_array, 0, 8192);
 	tilemap_set_transparent_pen(bg_layer,0);
@@ -402,7 +393,7 @@ INLINE void roundupt_drawgfxzoomrotate( mame_bitmap *dest_bmp,const gfx_element 
 
 							for( y=sy; y<ey; y++ )
 							{
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
 								int cx = startx;
 								int cy = starty;
 
@@ -434,8 +425,8 @@ INLINE void roundupt_drawgfxzoomrotate( mame_bitmap *dest_bmp,const gfx_element 
 							for( y=sy; y<ey; y++ )
 							{
 								UINT8 *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-								UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-								UINT8 *priority_dest = (UINT8 *)dest_bmp->line[y];
+								UINT32 *dest = BITMAP_ADDR32(dest_bmp, y, 0);
+								UINT8 *priority_dest = BITMAP_ADDR8(dest_bmp, y, 0);
 
 								int x, x_index = x_index_base;
 								for( x=sx; x<ex; x++ )
@@ -501,13 +492,13 @@ void mycopyrozbitmap_core(mame_bitmap *bitmap,mame_bitmap *srcbitmap,
 			x = sx;
 			cx = startx;
 			cy = starty;
-			dest = ((UINT32 *)bitmap->line[sy]) + sx;
+			dest = BITMAP_ADDR32(bitmap, sy, sx);
 
 			while (x <= ex)
 			{
 				if (cx < widthshifted && cy < heightshifted)
 				{
-					int c = ((UINT32 *)srcbitmap->line[cy >> 16])[cx >> 16];
+					int c = *BITMAP_ADDR32(srcbitmap, cy >> 16, cx >> 16);
 
 					if (c != transparent_color)
 						*dest = c;
@@ -842,7 +833,7 @@ offset is from last pixel of first road segment?
 		/* Fill in left of road segment */
 		for (x=0; x<startPos && x<320; x++) {
 			int col = linedata[0]&0xf;
-			UINT8 shadow=((UINT8*)shadow_bitmap->line[y])[x];
+			UINT8 shadow=*BITMAP_ADDR8(shadow_bitmap, y, x);
 			if (shadow)
 				plot_pixel(bitmap,x,y,Machine->pens[768 + pal*16 + col]);
 			else
@@ -861,7 +852,7 @@ offset is from last pixel of first road segment?
 		for (x=startPos; x<320 && (samplePos>>11)<0x80; x++) {
 			// look up colour
 			int col = linedata[(samplePos>>11)&0x7f]&0xf;
-			UINT8 shadow=((UINT8*)shadow_bitmap->line[y])[x];
+			UINT8 shadow=*BITMAP_ADDR8(shadow_bitmap, y, x);
 
 			/* Clamp if we have reached the end of the pixel data */
 			//if ((samplePos>>11) > 0x7f)
@@ -892,7 +883,7 @@ offset is from last pixel of first road segment?
 		/* Fill pixels */
 		for (x=startPos; x<320 && x<endPos; x++) {
 			int col = linedata[0x80]&0xf;
-			UINT8 shadow=((UINT8*)shadow_bitmap->line[y])[x];
+			UINT8 shadow=*BITMAP_ADDR8(shadow_bitmap, y, x);
 
 			/* Clamp if we have reached the end of the pixel data */
 			//if ((samplePos>>11) > 0x7f)
@@ -916,7 +907,7 @@ offset is from last pixel of first road segment?
 		for (/*x=endPos*/; x<320; x++) {
 			// look up colour
 			int col = linedata[((samplePos>>11)&0x7f) + 0x200]&0xf;
-			UINT8 shadow=((UINT8*)shadow_bitmap->line[y])[x];
+			UINT8 shadow=*BITMAP_ADDR8(shadow_bitmap, y, x);
 
 			/* Clamp if we have reached the end of the pixel data */
 			if ((samplePos>>11) > 0x7f)

@@ -60,9 +60,6 @@ int wgp_core_vh_start (int x_offs,int y_offs,int piv_xoffs,int piv_yoffs)
 	wgp_piv_tilemap[1] = tilemap_create(get_piv1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 	wgp_piv_tilemap[2] = tilemap_create(get_piv2_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 
-	if (!wgp_piv_tilemap[0] || !wgp_piv_tilemap[1] || !wgp_piv_tilemap[2] )
-		return 1;
-
 	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,x_offs,y_offs,0,0,0,0,0))
 		return 1;
 
@@ -515,31 +512,13 @@ if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
                        CUSTOM DRAW
 *********************************************************/
 
-/* These scanline drawing routines lifted from Taito F3: optimise / merge ? */
-
-#undef ADJUST_FOR_ORIENTATION
-#define ADJUST_FOR_ORIENTATION(type, orientation, bitmapi, bitmapp, x, y)	\
-	type *dsti = &((type *)bitmapi->line[y])[x];							\
-	UINT8 *dstp = &((UINT8 *)bitmapp->line[y])[x];							\
-	int xadv = 1;															\
-	if (orientation)														\
-	{																		\
-		int dy = (type *)bitmap->line[1] - (type *)bitmap->line[0];			\
-		int tx = x, ty = y;													\
-		if ((orientation) & ORIENTATION_FLIP_X)								\
-			tx = bitmap->width - 1 - tx;									\
-		if ((orientation) & ORIENTATION_FLIP_Y)								\
-			ty = bitmap->height - 1 - ty;									\
-		/* can't lookup line because it may be negative! */					\
-		dsti = (type *)((type *)bitmapi->line[0] + dy * ty) + tx;			\
-		dstp = (UINT8 *)((UINT8 *)bitmapp->line[0] + dy * ty / sizeof(type)) + tx;	\
-	}
-
 INLINE void bryan2_drawscanline(
 		mame_bitmap *bitmap,int x,int y,int length,
 		const UINT16 *src,int transparent,UINT32 orient,int pri)
 {
-	ADJUST_FOR_ORIENTATION(UINT16, orient, bitmap, priority_bitmap, x, y);
+	UINT16 *dsti = BITMAP_ADDR16(bitmap, y, x);
+	UINT8 *dstp = BITMAP_ADDR8(priority_bitmap, y, x);
+
 	if (transparent) {
 		while (length--) {
 			UINT32 spixel = *src++;
@@ -547,19 +526,16 @@ INLINE void bryan2_drawscanline(
 				*dsti = spixel;
 				*dstp = pri;
 			}
-			dsti += xadv;
-			dstp += xadv;
+			dsti++;
+			dstp++;
 		}
 	} else { /* Not transparent case */
 		while (length--) {
-			*dsti = *src++;
-			*dstp = pri;
-			dsti += xadv;
-			dstp += xadv;
+			*dsti++ = *src++;
+			*dstp++ = pri;
 		}
 	}
 }
-#undef ADJUST_FOR_ORIENTATION
 
 
 
@@ -647,8 +623,8 @@ static void wgp_piv_layer_draw(mame_bitmap *bitmap,const rectangle *cliprect,int
 		}
 
 		x_max = x_index + screen_width * x_step;
-		src16 = (UINT16 *)srcbitmap->line[src_y_index];
-		tsrc  = (UINT8 *)transbitmap->line[src_y_index];
+		src16 = BITMAP_ADDR16(srcbitmap, src_y_index, 0);
+		tsrc  = BITMAP_ADDR8(transbitmap, src_y_index, 0);
 		dst16 = scanline;
 
 		if (flags & TILEMAP_IGNORE_TRANSPARENCY)

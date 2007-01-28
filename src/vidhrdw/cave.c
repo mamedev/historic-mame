@@ -409,7 +409,6 @@ int cave_vh_start( int num )
 		case 4:
 			tilemap_3 = tilemap_create(	get_tile_info_3, tilemap_scan_rows,
 										TILEMAP_TRANSPARENT, 8,8, 512/8,512/8 );
-			if (!tilemap_3)	return 1;
 			tilemap_set_transparent_pen(tilemap_3, 0);
 			tilemap_set_scroll_rows(tilemap_3, 1);
 			tilemap_set_scroll_cols(tilemap_3, 1);
@@ -417,7 +416,6 @@ int cave_vh_start( int num )
 		case 3:
 			tilemap_2 = tilemap_create(	get_tile_info_2, tilemap_scan_rows,
 										TILEMAP_TRANSPARENT, 8,8, 512/8,512/8 );
-			if (!tilemap_2)	return 1;
 			tilemap_set_transparent_pen(tilemap_2, 0);
 			tilemap_set_scroll_rows(tilemap_2, 1);
 			tilemap_set_scroll_cols(tilemap_2, 1);
@@ -425,7 +423,6 @@ int cave_vh_start( int num )
 		case 2:
 			tilemap_1 = tilemap_create(	get_tile_info_1, tilemap_scan_rows,
 										TILEMAP_TRANSPARENT, 8,8, 512/8,512/8 );
-			if (!tilemap_1)	return 1;
 			tilemap_set_transparent_pen(tilemap_1, 0);
 			tilemap_set_scroll_rows(tilemap_1, 1);
 			tilemap_set_scroll_cols(tilemap_1, 1);
@@ -433,7 +430,6 @@ int cave_vh_start( int num )
 		case 1:
 			tilemap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
 										TILEMAP_TRANSPARENT, 8,8, 512/8,512/8 );
-			if (!tilemap_0)	return 1;
 			tilemap_set_transparent_pen(tilemap_0, 0);
 			tilemap_set_scroll_rows(tilemap_0, 1);
 			tilemap_set_scroll_cols(tilemap_0, 1);
@@ -489,7 +485,6 @@ VIDEO_START( sailormn_3_layers )
 	/* Layer 2 (8x8) needs to be handled differently */
 	tilemap_2 = tilemap_create(	sailormn_get_tile_info_2, tilemap_scan_rows,
 								TILEMAP_TRANSPARENT, 8,8, 512/8,512/8 );
-	if (!tilemap_2)	return 1;
 	tilemap_set_transparent_pen(tilemap_2, 0);
 	tilemap_set_scroll_rows(tilemap_2, 1);
 	tilemap_set_scroll_cols(tilemap_2, 1);
@@ -747,8 +742,8 @@ static int sprite_init_cave(void)
 	}
 
 	sprite_zbuf = auto_bitmap_alloc_format( Machine->screen[0].width, Machine->screen[0].height, BITMAP_FORMAT_INDEXED16 );
-	blit.baseaddr_zbuf = sprite_zbuf->line[0];
-	blit.line_offset_zbuf = ((UINT8 *)sprite_zbuf->line[1])-((UINT8 *)sprite_zbuf->line[0]);
+	blit.baseaddr_zbuf = sprite_zbuf->base;
+	blit.line_offset_zbuf = sprite_zbuf->rowpixels * sprite_zbuf->bpp / 8;
 
 	num_sprites = spriteram_size / 0x10 / 2;
 	sprite_cave = auto_malloc( num_sprites * sizeof(struct sprite_cave) );
@@ -1425,8 +1420,8 @@ VIDEO_UPDATE( cave )
 	int pri, pri2;
 	int layers_ctrl = -1;
 
-	blit.baseaddr = bitmap->line[0];
-	blit.line_offset = ((UINT8 *)bitmap->line[1])-((UINT8 *)bitmap->line[0]);
+	blit.baseaddr = bitmap->base;
+	blit.line_offset = bitmap->rowpixels * bitmap->bpp / 8;
 
 	/* Choose the tilemap to display (8x8 tiles or 16x16 tiles) */
 	if (tilemap_0)

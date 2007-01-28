@@ -46,9 +46,10 @@ enum _laserdisc_state
 {
 	LASERDISC_EJECTED,						/* no disc present */
 	LASERDISC_EJECTING,						/* in the process of ejecting */
-	LASERDISC_LOADED,						/* disc just loaded; same as LASERDISC_PARKED */
+	LASERDISC_LOADED,						/* disc just loaded */
 	LASERDISC_LOADING,						/* in the process of loading */
-	LASERDISC_PARKED,						/* disc loaded, not playing */
+	LASERDISC_PARKED,						/* disc loaded, not playing, head on parked position */
+	LASERDISC_SPINUP,						/* disc loaded, spinning up to speed */
 
 	LASERDISC_SEARCHING_FRAME,				/* searching (seeking) to a new frame */
 	LASERDISC_SEARCH_FINISHED,				/* finished searching; same as stopped */
@@ -89,6 +90,7 @@ typedef enum _laserdisc_state laserdisc_state;
 #define STOP_SPEED					INT_TO_FRAC(0)		/* no movement */
 #define PLAY_SPEED					INT_TO_FRAC(1)		/* regular playback speed */
 
+#define GENERIC_SPINUP_TIME			(make_mame_time(3, 0))
 #define GENERIC_LOAD_TIME			(make_mame_time(10, 0))
 #define GENERIC_RESET_SPEED			INT_TO_FRAC(5000)
 
@@ -389,6 +391,7 @@ INLINE int audio_channel_active(laserdisc_info *info, int channel)
 		case LASERDISC_EJECTED:
 		case LASERDISC_EJECTING:
 		case LASERDISC_LOADING:
+		case LASERDISC_SPINUP:
 		case LASERDISC_PARKED:
 		case LASERDISC_LOADED:
 		case LASERDISC_SEARCHING_FRAME:
@@ -432,6 +435,7 @@ INLINE int video_active(laserdisc_info *info)
 		case LASERDISC_EJECTED:
 		case LASERDISC_EJECTING:
 		case LASERDISC_LOADING:
+		case LASERDISC_SPINUP:
 		case LASERDISC_PARKED:
 		case LASERDISC_LOADED:
 		case LASERDISC_SEARCHING_FRAME:
@@ -457,6 +461,7 @@ INLINE int laserdisc_ready(laserdisc_info *info)
 		case LASERDISC_EJECTED:
 		case LASERDISC_EJECTING:
 		case LASERDISC_LOADING:
+		case LASERDISC_SPINUP:
 		case LASERDISC_PARKED:
 			return FALSE;
 
@@ -494,6 +499,7 @@ INLINE int laserdisc_active(laserdisc_info *info)
 		case LASERDISC_EJECTING:
 		case LASERDISC_LOADED:
 		case LASERDISC_LOADING:
+		case LASERDISC_SPINUP:
 		case LASERDISC_PARKED:
 			return FALSE;
 
@@ -851,6 +857,7 @@ void laserdisc_vsync(laserdisc_info *info)
 
 		/* loading; keep searching until we hit the target, then go into the stopped state */
 		case LASERDISC_LOADING:
+		case LASERDISC_SPINUP:
 
 			/* if we hit the target, go into search finished state */
 			if (hittarget)
@@ -902,6 +909,7 @@ const char *laserdisc_describe_state(laserdisc_info *info)
 		{ LASERDISC_EJECTING, "Ejecting" },
 		{ LASERDISC_LOADED, "Loaded" },
 		{ LASERDISC_LOADING, "Loading" },
+		{ LASERDISC_SPINUP, "Spinning Up" },
 		{ LASERDISC_PARKED, "Parked" },
 		{ LASERDISC_SEARCHING_FRAME, "Searching Frame" },
 		{ LASERDISC_SEARCH_FINISHED, "Search Finished" },
@@ -1132,7 +1140,9 @@ static int update_position(laserdisc_info *info)
 		int frame = frame_from_metadata(&info->metadata[fieldnum]);
 		int direction;
 
-		assert(info->targetframe != 0);
+		/* if we have no target, don't do anything */
+		if (info->targetframe == 0)
+			return TRUE;
 
 		/* if we didn't get any frame information this field, move onto the next */
 		if (frame == -1)
@@ -1749,8 +1759,17 @@ static void pr7820_enter_w(laserdisc_info *info, UINT8 newstate)
 				set_state(info, LASERDISC_PLAYING_FORWARD, PLAY_SPEED, NULL_TARGET_FRAME);
 			else
 			{
-				set_state(info, LASERDISC_LOADING, STOP_SPEED, NULL_TARGET_FRAME);
-				set_hold_state(info, GENERIC_LOAD_TIME, LASERDISC_PLAYING_FORWARD, PLAY_SPEED);
+				if (info->state == LASERDISC_PARKED)
+				{
+					set_state(info, LASERDISC_SPINUP, STOP_SPEED, NULL_TARGET_FRAME);
+					set_hold_state(info, GENERIC_SPINUP_TIME, LASERDISC_PLAYING_FORWARD, PLAY_SPEED);
+				}
+				else
+				{
+					set_state(info, LASERDISC_LOADING, STOP_SPEED, NULL_TARGET_FRAME);
+					set_hold_state(info, GENERIC_LOAD_TIME, LASERDISC_PLAYING_FORWARD, PLAY_SPEED);
+				}
+
 				info->curfractrack = ONE_TRACK;
 			}
 			break;
@@ -1810,6 +1829,7 @@ static UINT8 pr7820_status_r(laserdisc_info *info)
 			case LASERDISC_EJECTED:					status |= 0x0d;		break;
 			case LASERDISC_EJECTING:				status |= 0x0d;		break;
 			case LASERDISC_LOADED:					status |= 0x01;		break;
+			case LASERDISC_SPINUP:					status |= 0x01;		break;
 			case LASERDISC_LOADING:					status |= 0x01;		break;
 			case LASERDISC_PARKED:					status |= 0x01;		break;
 
@@ -2001,11 +2021,20 @@ static void pr8210_command(laserdisc_info *info)
 							set_state(info, LASERDISC_PLAYING_FORWARD, PLAY_SPEED, NULL_TARGET_FRAME);
 						else
 						{
-							/* if we're already loading, ignore */
-							if ( info->state != LASERDISC_LOADING )
+							/* if we're already spinning up or loading, ignore */
+							if (info->state != LASERDISC_SPINUP && info->state != LASERDISC_LOADING)
 							{
-								set_state(info, LASERDISC_LOADING, STOP_SPEED, NULL_TARGET_FRAME);
-								set_hold_state(info, GENERIC_LOAD_TIME, LASERDISC_PLAYING_FORWARD, PLAY_SPEED);
+								if (info->state == LASERDISC_PARKED)
+								{
+									set_state(info, LASERDISC_SPINUP, STOP_SPEED, NULL_TARGET_FRAME);
+									set_hold_state(info, GENERIC_SPINUP_TIME, LASERDISC_PLAYING_FORWARD, PLAY_SPEED);
+								}
+								else
+								{
+									set_state(info, LASERDISC_LOADING, STOP_SPEED, NULL_TARGET_FRAME);
+									set_hold_state(info, GENERIC_LOAD_TIME, LASERDISC_PLAYING_FORWARD, PLAY_SPEED);
+								}
+
 								info->curfractrack = ONE_TRACK;
 							}
 						}
@@ -2410,9 +2439,8 @@ static void ldv1000_data_w(laserdisc_info *info, UINT8 prev, UINT8 data)
 			break;
 
 		case 0xf9:	CMDPRINTF(("ldv1000: Reject\n"));
-			/* eject the disc */
-			set_state(info, LASERDISC_EJECTING, STOP_SPEED, NULL_TARGET_FRAME);
-			set_hold_state(info, GENERIC_LOAD_TIME, LASERDISC_EJECTED, STOP_SPEED);
+			/* move the head to parked position, and stop rotation */
+			set_state(info, LASERDISC_PARKED, STOP_SPEED, NULL_TARGET_FRAME);
 			break;
 
 		case 0xfb:	CMDPRINTF(("ldv1000: %d Stop/Wait\n", info->parameter));
@@ -2441,8 +2469,17 @@ static void ldv1000_data_w(laserdisc_info *info, UINT8 prev, UINT8 data)
 				set_state(info, LASERDISC_PLAYING_FORWARD, PLAY_SPEED, NULL_TARGET_FRAME);
 			else
 			{
-				set_state(info, LASERDISC_LOADING, STOP_SPEED, NULL_TARGET_FRAME);
-				set_hold_state(info, GENERIC_LOAD_TIME, LASERDISC_PLAYING_FORWARD, PLAY_SPEED);
+				if (info->state == LASERDISC_PARKED)
+				{
+					set_state(info, LASERDISC_SPINUP, STOP_SPEED, NULL_TARGET_FRAME);
+					set_hold_state(info, GENERIC_SPINUP_TIME, LASERDISC_PLAYING_FORWARD, PLAY_SPEED);
+				}
+				else
+				{
+					set_state(info, LASERDISC_LOADING, STOP_SPEED, NULL_TARGET_FRAME);
+					set_hold_state(info, GENERIC_LOAD_TIME, LASERDISC_PLAYING_FORWARD, PLAY_SPEED);
+				}
+
 				info->curfractrack = ONE_TRACK;
 			}
 			break;
@@ -2543,6 +2580,7 @@ static UINT8 ldv1000_status_r(laserdisc_info *info)
 				case LASERDISC_EJECTED:					status = 0xe0;		break;
 				case LASERDISC_EJECTING:				status = 0x60;		break;
 				case LASERDISC_LOADED:					status = 0xc8;		break;
+				case LASERDISC_SPINUP:
 				case LASERDISC_LOADING:					status = 0x48;		break;
 				case LASERDISC_PARKED:					status = 0xfc;		break;
 
@@ -2672,6 +2710,7 @@ static void ldp1450_compute_status(laserdisc_info *info)
 		case LASERDISC_EJECTED:					statusbytes = 0x86000200;	break;
 		case LASERDISC_EJECTING:				statusbytes = 0x8a000100;	break;
 		case LASERDISC_LOADED:					statusbytes = 0x80000100;	break;
+		case LASERDISC_SPINUP:
 		case LASERDISC_LOADING:					statusbytes = 0x92001100;	break;
 		case LASERDISC_PARKED:					statusbytes = 0x80000100;	break;
 		case LASERDISC_SEARCHING_FRAME:			statusbytes = 0xc0001100;	break;
@@ -2801,8 +2840,17 @@ static void ldp1450_data_w(laserdisc_info *info, UINT8 prev, UINT8 data)
 				set_state(info, LASERDISC_PLAYING_FORWARD, PLAY_SPEED, NULL_TARGET_FRAME);
 			else
 			{
-				set_state(info, LASERDISC_LOADING, STOP_SPEED, NULL_TARGET_FRAME);
-				set_hold_state(info, GENERIC_LOAD_TIME, LASERDISC_PLAYING_FORWARD, PLAY_SPEED);
+				if (info->state == LASERDISC_PARKED)
+				{
+					set_state(info, LASERDISC_SPINUP, STOP_SPEED, NULL_TARGET_FRAME);
+					set_hold_state(info, GENERIC_SPINUP_TIME, LASERDISC_PLAYING_FORWARD, PLAY_SPEED);
+				}
+				else
+				{
+					set_state(info, LASERDISC_LOADING, STOP_SPEED, NULL_TARGET_FRAME);
+					set_hold_state(info, GENERIC_LOAD_TIME, LASERDISC_PLAYING_FORWARD, PLAY_SPEED);
+				}
+
 				info->curfractrack = ONE_TRACK;
 			}
 			break;

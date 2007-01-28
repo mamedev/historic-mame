@@ -109,9 +109,6 @@ VIDEO_START( toypop )
 {
 	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan,TILEMAP_TRANSPARENT,8,8,36,28);
 
-	if (!bg_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(bg_tilemap, 0);
 
 	return 0;

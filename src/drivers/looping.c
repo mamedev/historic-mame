@@ -175,8 +175,6 @@ VIDEO_START( looping )
 	looping_state *state = machine->driver_data;
 
 	state->bg_tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
-	if (!state->bg_tilemap)
-		return 1;
 
 	tilemap_set_scroll_cols(state->bg_tilemap, 0x20);
 	return 0;

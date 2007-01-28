@@ -366,9 +366,6 @@ VIDEO_START( powerbal )
 {
 	bg_tilemap = tilemap_create(powerbal_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE, 8, 8,64,32);
 
-	if (!bg_tilemap)
-		return 1;
-
 	xoffset = -20;
 
 	tilemap_set_scrolly(bg_tilemap, 0, bg_yoffset);

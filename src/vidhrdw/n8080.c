@@ -167,7 +167,7 @@ VIDEO_UPDATE( spacefev )
 
 	for (y = 0; y < 256; y++)
 	{
-		UINT16* pLine = bitmap->line[y ^ mask];
+		UINT16* pLine = BITMAP_ADDR16(bitmap, y ^ mask, 0);
 
 		for (x = 0; x < 256; x += 8)
 		{
@@ -239,7 +239,7 @@ VIDEO_UPDATE( sheriff )
 
 	for (y = 0; y < 256; y++)
 	{
-		UINT16* pLine = bitmap->line[y ^ mask];
+		UINT16* pLine = BITMAP_ADDR16(bitmap, y ^ mask, 0);
 
 		for (x = 0; x < 256; x += 8)
 		{
@@ -289,7 +289,7 @@ VIDEO_UPDATE( helifire )
 
 	for (y = 0; y < 256; y++)
 	{
-		UINT16* pLine = bitmap->line[y];
+		UINT16* pLine = BITMAP_ADDR16(bitmap, y, 0);
 
 		int level = 120 + wave[helifire_mv & 7];
 

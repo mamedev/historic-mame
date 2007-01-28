@@ -118,9 +118,6 @@ VIDEO_START( madmotor )
 	madmotor_pf3_tilemap = tilemap_create(get_pf3_tile_info, pf3_scan, TILEMAP_OPAQUE,     16,16, 32,64);
 	madmotor_pf3a_tilemap= tilemap_create(get_pf3a_tile_info,pf3a_scan,TILEMAP_OPAQUE,     16,16,128,16);
 
-	if (!madmotor_pf1_tilemap  || !madmotor_pf2_tilemap || !madmotor_pf3_tilemap || !madmotor_pf3a_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(madmotor_pf1_tilemap,0);
 	tilemap_set_transparent_pen(madmotor_pf2_tilemap,0);
 	tilemap_set_scroll_rows(madmotor_pf1_tilemap,512);

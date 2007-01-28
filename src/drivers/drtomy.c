@@ -94,9 +94,6 @@ VIDEO_START( drtomy )
 	tilemap_bg = tilemap_create(get_tile_info_bg,tilemap_scan_rows,TILEMAP_OPAQUE,      16,16,32,32);
 	tilemap_fg = tilemap_create(get_tile_info_fg,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16,16,32,32);
 
-	if (!tilemap_bg || !tilemap_fg)
-		return 1;
-
 	tilemap_set_transparent_pen(tilemap_fg,0);
 
 	return 0;

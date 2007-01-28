@@ -193,9 +193,6 @@ VIDEO_START( ashnojoe )
 	joetilemap6 =  tilemap_create(get_joe_tile_info_6,tilemap_scan_rows,TILEMAP_OPAQUE,		16,16,32,32);
 	joetilemap7 =  tilemap_create(get_joe_tile_info_7,tilemap_scan_rows,TILEMAP_OPAQUE,		16,16,32,32);
 
-	if(	!joetilemap || !joetilemap2 || !joetilemap3 || !joetilemap4 || !joetilemap5 || !joetilemap6 || !joetilemap7 )
-		return 1;
-
 	tilemap_set_transparent_pen(joetilemap, 15);
 	tilemap_set_transparent_pen(joetilemap2,15);
 	tilemap_set_transparent_pen(joetilemap3,15);

@@ -70,13 +70,8 @@ VIDEO_START( portrait )
 	background = tilemap_create( get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      16, 16, 32, 32 );
 	foreground = tilemap_create( get_fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 32, 32 );
 
-	if( background && foreground )
-	{
 		tilemap_set_transparent_pen( foreground, 0 );
 		return 0;
-	}
-
-	return 1;
 }
 
 /* probably not right */

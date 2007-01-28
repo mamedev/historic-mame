@@ -101,14 +101,8 @@ VIDEO_START( ddragon3 )
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 16, 16, 32, 32);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
 		TILEMAP_TRANSPARENT, 16, 16, 32, 32);
-
-	if ( !fg_tilemap )
-		return 1;
 
 	tilemap_set_transparent_pen(bg_tilemap, 0);
 	tilemap_set_transparent_pen(fg_tilemap, 0);

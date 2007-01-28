@@ -594,7 +594,7 @@ VIDEO_UPDATE( itech8_2layer )
 	{
 		UINT8 *base0 = &tms_state.vram[(0x00000 + page_offset + y * 256) & 0x3ffff];
 		UINT8 *base2 = &tms_state.vram[(0x20000 + page_offset + y * 256) & 0x3ffff];
-		UINT16 *dest = (UINT16 *)bitmap->line[y];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
 
 		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 		{
@@ -627,7 +627,7 @@ VIDEO_UPDATE( itech8_2page )
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
 		UINT8 *base = &tms_state.vram[(page_offset + y * 256) & 0x3ffff];
-		UINT16 *dest = (UINT16 *)bitmap->line[y];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
 
 		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			dest[x] = base[x];
@@ -660,7 +660,7 @@ VIDEO_UPDATE( itech8_2page_large )
 	{
 		UINT8 *base = &tms_state.vram[(page_offset + y * 256) & 0x3ffff];
 		UINT8 *latch = &tms_state.latchram[(page_offset + y * 256) & 0x3ffff];
-		UINT16 *dest = (UINT16 *)bitmap->line[y];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
 
 		for (x = cliprect->min_x & ~1; x <= cliprect->max_x; x += 2)
 		{

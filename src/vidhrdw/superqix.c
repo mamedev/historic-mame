@@ -56,9 +56,6 @@ VIDEO_START( pbillian )
 {
 	bg_tilemap = tilemap_create(pb_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8,32,32);
 
-	if (!bg_tilemap)
-		return 1;
-
 	return 0;
 }
 
@@ -67,9 +64,6 @@ VIDEO_START( superqix )
 	fg_bitmap[0] = auto_bitmap_alloc(256, 256);
 	fg_bitmap[1] = auto_bitmap_alloc(256, 256);
 	bg_tilemap = tilemap_create(sqix_get_bg_tile_info, tilemap_scan_rows, TILEMAP_SPLIT, 8, 8, 32, 32);
-
-	if (!bg_tilemap)
-		return 1;
 
 	tilemap_set_transmask(bg_tilemap,0,0xffff,0x0000); /* split type 0 is totally transparent in front half */
 	tilemap_set_transmask(bg_tilemap,1,0x0001,0xfffe); /* split type 1 has pen 0 transparent in front half */

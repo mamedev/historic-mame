@@ -40,11 +40,14 @@
         * Desert Gun was originally named Road Runner. The name was changed
           when Midway merged with Bally who had a game by the same title
 
-    Known issues:
-        * Space Encounters: 'trench' circuit
-        * Phantom II: verify clouds
-        * Dog Patch: find schematics
-        * M-4: figure out Unknown DIP swithces
+    Known issues/to-do's:
+        * Space Encounters: verify trench colors
+        * Space Encounters: verify strobe light frequency
+        * Phantom II: cloud generator is implemented according to the schematics,
+          but it doesn't look right.  Cloud color mixing to be verified as well
+        * Dog Patch: find schematics and verify all assumptions
+        * M-4: figure out Unknown DIP switches
+
 
 ****************************************************************************
 
@@ -53,15 +56,19 @@
 ****************************************************************************
 
     ========================================================================
-    MAIN CPU
+    MAIN CPU memory address space
     ========================================================================
 
-    Address          Dir Data     Description
-    ---------------- --- -------- -----------------------
-    xx0xxxxxxxxxxxxx R   xxxxxxxx Program ROM (various amount populated)
-    xx1xxxxxxxxxxxxx R/W xxxxxxxx Video RAM (256x256x1 bit display)
-                                  Portion outside of visible region
-                                  used as work RAM
+    Address (15-bits) Dir Data     Description
+    ----------------- --- -------- -----------------------
+    x0xxxxxxxxxxxxx   R   xxxxxxxx Program ROM (various amounts populated)
+    -1xxxxxxxxxxxxx   R/W xxxxxxxx Video RAM (256x256x1 bit display)
+                                   Portion in VBLANK region used as work RAM
+    Legend: (x)   bit significant
+            (-)   bit ignored
+            (0/1) bit must be given value
+
+    The I/O address space is used differently from game to game.
 
 ****************************************************************************/
 
@@ -83,8 +90,7 @@
  *
  *************************************/
 
-
-static UINT16 shift_data;	/* only 15 bits */
+static UINT16 shift_data;	/* 15 bits only */
 static UINT8 shift_amount;	/* 3 bits */
 static UINT8 rev_shift_res;
 
@@ -148,16 +154,44 @@ static WRITE8_HANDLER( mw8080bw_shift_data_w )
 
 /*************************************
  *
- *  IRQ generation
+ *  Interrupt generation
  *
  *************************************/
 
+/* an interrupt is raised when the expression
+   !(!(!VPIXCOUNT14 & VPIXCOUNT15) & !VBLANK) goes from LO to HI.
+   This happens when the vertical pixel count is 0x80 and 0xda and
+   VBLANK is 0 and 1, respectively.  These correspond to lines
+   96 and 224 as displayed.  The interrupt vector is given by the
+   expression: 0xc7 | (VPIXCOUNT14 << 4) | (!VPIXCOUNT14 << 3),
+   giving 0xcf and 0xd7 for the vectors. */
 
-static INTERRUPT_GEN( mw8080bw_interrupt )
+static mame_timer *interrupt_timer;
+
+
+static void mw8080bw_interrupt_callback(int param)
 {
-	int vector = cpu_getvblank() ? 0xcf : 0xd7;  /* rst 08h/10h */
+	/* determine vector and trigger interrupt based on the current vertical position */
+	int vpos = video_screen_get_vpos(0);
 
+	UINT8 vector = (vpos & 0x80) ? 0xd7 : 0xcf;  /* rst 10h/08h */
 	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, vector);
+
+	/* set up for next interrupt */
+	vpos = (vpos == 96) ? 224 : 96;
+	mame_timer_adjust(interrupt_timer, video_screen_get_time_until_pos(0, vpos, 0), 0, time_zero);
+}
+
+
+static void mw8080bw_create_interrupt_timer(void)
+{
+	interrupt_timer = timer_alloc(mw8080bw_interrupt_callback);
+}
+
+
+static void mw8080bw_start_interrupt_timer(void)
+{
+	mame_timer_adjust(interrupt_timer, video_screen_get_time_until_pos(0, 96, 0), 0, time_zero);
 }
 
 
@@ -168,9 +202,10 @@ static INTERRUPT_GEN( mw8080bw_interrupt )
  *
  *************************************/
 
-
 static MACHINE_START( mw8080bw )
 {
+	mw8080bw_create_interrupt_timer();
+
 	/* setup for save states */
 	state_save_register_global(shift_data);
 	state_save_register_global(shift_amount);
@@ -183,10 +218,22 @@ static MACHINE_START( mw8080bw )
 
 /*************************************
  *
- *  Main CPU memory handlers
+ *  Machine reset
  *
  *************************************/
 
+static MACHINE_RESET( mw8080bw)
+{
+	mw8080bw_start_interrupt_timer();
+}
+
+
+
+/*************************************
+ *
+ *  Main CPU memory handlers
+ *
+ *************************************/
 
 static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(15) )
@@ -199,21 +246,18 @@ ADDRESS_MAP_END
 static MACHINE_DRIVER_START( root )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main",8080,MW8080BW_XAL/10)
+	MDRV_CPU_ADD_TAG("main",8080,MW8080BW_CPU_CLOCK)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 
 	MDRV_MACHINE_START(mw8080bw)
-	MDRV_CPU_VBLANK_INT(mw8080bw_interrupt,2)    /* two interrupts per frame */
+	MDRV_MACHINE_RESET(mw8080bw)
 
-	/* video hardware */
+	/* video hardware
+       +4 is added to HBSTART because the hardware displays that many pixels after
+       setting HBLANK */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
-	MDRV_SCREEN_REFRESH_RATE(60)
-	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_SCREEN_VISIBLE_AREA(0*8, 32*8-1, 4*8, 32*8-1)
-	MDRV_PALETTE_LENGTH(2)
-	MDRV_PALETTE_INIT(black_and_white)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_RGB32)
+	MDRV_SCREEN_RAW_PARAMS(MW8080BW_PIXEL_CLOCK, MW8080BW_HTOTAL, MW8080BW_HBEND, MW8080BW_HBSTART + 4, MW8080BW_VTOTAL, MW8080BW_VBEND, MW8080BW_VBSTART) \
 	MDRV_VIDEO_UPDATE(mw8080bw)
 
 MACHINE_DRIVER_END
@@ -226,7 +270,6 @@ MACHINE_DRIVER_END
  *
  *************************************/
 
-
 #define SEAWOLF_ERASE_SW_PORT_TAG	("ERASESW")
 #define SEAWOLF_ERASE_DIP_PORT_TAG	("ERASEDIP")
 
@@ -234,7 +277,7 @@ MACHINE_DRIVER_END
 static WRITE8_HANDLER( seawolf_explosion_lamp_w )
 {
 /*  D0-D3 are column drivers and D4-D7 are row drivers.
-    The folowing table shows values that light up individual lamps.
+    The following table shows values that light up individual lamps.
 
     D7 D6 D5 D4 D3 D2 D1 D0   Function
     --------------------------------------------------------------------------------------
@@ -285,7 +328,7 @@ static WRITE8_HANDLER( seawolf_explosion_lamp_w )
 
 static WRITE8_HANDLER( seawolf_periscope_lamp_w )
 {
-	/* the schamatics and the connecting diagrams show the
+	/* the schematics and the connecting diagrams show the
        torpedo light order differently, but this order is
        confirmed by the software */
 	output_set_value("TORP_LAMP_4", (data >> 0) & 0x01);
@@ -370,7 +413,7 @@ static INPUT_PORTS_START( seawolf )
 
 	/* fake port to remap to Gray code */
 	PORT_START_TAG(SEAWOLF_GUN_PORT_TAG)
-	PORT_BIT( 0x1f, 0x0f, IPT_PADDLE ) PORT_MINMAX(0x00,0x1f) PORT_CROSSHAIR(CROSSHAIR_AXIS_X, 1.0, 0.0, 0.139) PORT_SENSITIVITY(20) PORT_KEYDELTA(5) PORT_CENTERDELTA(0) PORT_PLAYER(1)
+	PORT_BIT( 0x1f, 0x0f, IPT_PADDLE ) PORT_MINMAX(0x00,0x1f) PORT_CROSSHAIR(X, 1.0, 0.0, 0.139) PORT_SENSITIVITY(20) PORT_KEYDELTA(5) PORT_CENTERDELTA(0) PORT_PLAYER(1)
 	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	/* 2 fake ports for the 'Reset High Score' input, which has a DIP to enable it */
@@ -392,6 +435,7 @@ static MACHINE_DRIVER_START( seawolf )
 	MDRV_IMPORT_FROM(root)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(seawolf_io_map,0)
+	/* there is no watchdog */
 
 	/* sound hardware */
 	MDRV_IMPORT_FROM(seawolf_sound)
@@ -405,7 +449,6 @@ MACHINE_DRIVER_END
  *  Gun Fight (PCB #597)
  *
  *************************************/
-
 
 #define GUNFIGHT_GUN_P1_PORT_TAG	("GUNP1")
 #define GUNFIGHT_GUN_P2_PORT_TAG	("GUNP2")
@@ -506,6 +549,7 @@ static MACHINE_DRIVER_START( gunfight )
 	MDRV_IMPORT_FROM(root)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(gunfight_io_map,0)
+	/* there is no watchdog */
 
 	/* sound hardware */
 	MDRV_IMPORT_FROM(gunfight_sound)
@@ -538,7 +582,6 @@ MACHINE_DRIVER_END
  *  bit on the Old Upright cabinet than the other two types.
  *
  *************************************/
-
 
 #define TORNBASE_L_HIT_PORT_TAG			("LHIT")
 #define TORNBASE_R_HIT_PORT_TAG			("RHIT")
@@ -729,6 +772,7 @@ static MACHINE_DRIVER_START( tornbase)
 	MDRV_IMPORT_FROM(root)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(tornbase_io_map,0)
+	/* there is no watchdog */
 
 	/* sound hardware */
 	MDRV_IMPORT_FROM(tornbase_sound)
@@ -742,7 +786,6 @@ MACHINE_DRIVER_END
  *  280 ZZZAP (PCB #610) / Laguna Racer (PCB #622)
  *
  *************************************/
-
 
 static ADDRESS_MAP_START( zzzap_io_map, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(3) )
@@ -857,7 +900,6 @@ MACHINE_DRIVER_END
  *
  *************************************/
 
-
 static WRITE8_HANDLER( maze_coin_counter_w )
 {
 	/* the data is not used, just pulse the counter */
@@ -932,7 +974,6 @@ MACHINE_DRIVER_END
  *  Boot Hill (PCB #612)
  *
  *************************************/
-
 
 #define BOOTHILL_GUN_P1_PORT_TAG	("GUNP1")
 #define BOOTHILL_GUN_P2_PORT_TAG	("GUNP2")
@@ -1035,7 +1076,6 @@ MACHINE_DRIVER_END
  *
  *************************************/
 
-
 static WRITE8_HANDLER( checkmat_io_w )
 {
 	if (offset & 0x01)  checkmat_sh_port_w(0, data);
@@ -1132,7 +1172,6 @@ MACHINE_DRIVER_END
  *
  *************************************/
 
-
 #define DESERTGU_DIP_SW_0_1_SET_1_TAG	("DIPSW01SET1")
 #define DESERTGU_DIP_SW_0_1_SET_2_TAG	("DIPSW01SET2")
 
@@ -1227,10 +1266,10 @@ static INPUT_PORTS_START( desertgu )
 
 	/* fake ports for reading the gun's X and Y axis */
 	PORT_START_TAG(DESERTGU_GUN_X_PORT_TAG)
-	PORT_BIT( 0xff, 0x4d, IPT_LIGHTGUN_X ) PORT_MINMAX(0x10,0x8e) PORT_SENSITIVITY(70) PORT_KEYDELTA(10)
+	PORT_BIT( 0xff, 0x4d, IPT_LIGHTGUN_X ) PORT_CROSSHAIR(X, 1.0, 0.0, 0) PORT_MINMAX(0x10,0x8e) PORT_SENSITIVITY(70) PORT_KEYDELTA(10)
 
 	PORT_START_TAG(DESERTGU_GUN_Y_PORT_TAG)
-	PORT_BIT( 0xff, 0x48, IPT_LIGHTGUN_Y ) PORT_MINMAX(0x10,0x7f) PORT_SENSITIVITY(70) PORT_KEYDELTA(10)
+	PORT_BIT( 0xff, 0x48, IPT_LIGHTGUN_Y ) PORT_CROSSHAIR(Y, 1.0, 0.0, 0) PORT_MINMAX(0x10,0x7f) PORT_SENSITIVITY(70) PORT_KEYDELTA(10)
 
 	/* bits 0 and 1 in the DIP SW input port can reflect two sets of switches depending on the controller
        select bit.  These two ports are fakes to handle this case */
@@ -1262,7 +1301,7 @@ static MACHINE_DRIVER_START( desertgu )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(desertgu_io_map,0)
 	MDRV_MACHINE_START(desertgu)
-	MDRV_WATCHDOG_VBLANK_INIT(255) /* really based on a 60Hz clock source */
+	MDRV_WATCHDOG_TIME_INIT(255 / (MW8080BW_PIXEL_CLOCK / MW8080BW_HTOTAL / MW8080BW_VTOTAL))
 
 	/* sound hardware */
 	MDRV_IMPORT_FROM(desertgu_sound)
@@ -1282,7 +1321,6 @@ MACHINE_DRIVER_END
  *  as the two players sit diagonally across from each other.
  *
  *************************************/
-
 
 #define DPLAY_L_PITCH_PORT_TAG		("LPITCH")
 #define DPLAY_R_PITCH_PORT_TAG		("RPITCH")
@@ -1464,7 +1502,7 @@ static MACHINE_DRIVER_START( dplay )
 	MDRV_IMPORT_FROM(root)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(dplay_io_map,0)
-	MDRV_WATCHDOG_VBLANK_INIT(255) /* really based on a 60Hz clock source */
+	MDRV_WATCHDOG_TIME_INIT(255 / (MW8080BW_PIXEL_CLOCK / MW8080BW_HTOTAL / MW8080BW_VTOTAL))
 
 	/* sound hardware */
 	MDRV_IMPORT_FROM(dplay_sound)
@@ -1478,7 +1516,6 @@ MACHINE_DRIVER_END
  *  Guided Missile (PCB #623)
  *
  *************************************/
-
 
 static ADDRESS_MAP_START( gmissile_io_map, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(3) )
@@ -1562,7 +1599,6 @@ MACHINE_DRIVER_END
  *
  *************************************/
 
-
 static ADDRESS_MAP_START( m4_io_map, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(3) )
 	AM_RANGE(0x00, 0x00) AM_MIRROR(0x04) AM_READ(input_port_0_r)
@@ -1629,7 +1665,7 @@ static MACHINE_DRIVER_START( m4 )
 	MDRV_IMPORT_FROM(root)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(m4_io_map,0)
-	MDRV_WATCHDOG_VBLANK_INIT(255) /* really based on a 60Hz clock source */
+	MDRV_WATCHDOG_TIME_INIT(255 / (MW8080BW_PIXEL_CLOCK / MW8080BW_HTOTAL / MW8080BW_VTOTAL))
 
 	/* sound hardware */
 	MDRV_IMPORT_FROM(m4_sound)
@@ -1643,7 +1679,6 @@ MACHINE_DRIVER_END
  *  Clowns (PCB #630)
  *
  *************************************/
-
 
 #define CLOWNS_CONTROLLER_P1_TAG		("CONTP1")
 #define CLOWNS_CONTROLLER_P2_TAG		("CONTP2")
@@ -1804,7 +1839,7 @@ static MACHINE_DRIVER_START( clowns )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(clowns_io_map,0)
 	MDRV_MACHINE_START(clowns)
-	MDRV_WATCHDOG_VBLANK_INIT(255) /* really based on a 60Hz clock source */
+	MDRV_WATCHDOG_TIME_INIT(255 / (MW8080BW_PIXEL_CLOCK / MW8080BW_HTOTAL / MW8080BW_VTOTAL))
 
 	/* sound hardware */
 	MDRV_IMPORT_FROM(clowns_sound)
@@ -1818,7 +1853,6 @@ MACHINE_DRIVER_END
  *  Shuffleboard (PCB #643)
  *
  *************************************/
-
 
 static ADDRESS_MAP_START( shuffle_io_map, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(4) )	/* yes, 4, and no mirroring on the read handlers */
@@ -1883,7 +1917,7 @@ static MACHINE_DRIVER_START( shuffle )
 	MDRV_IMPORT_FROM(root)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(shuffle_io_map,0)
-	MDRV_WATCHDOG_VBLANK_INIT(255) /* really based on a 60Hz clock source */
+	MDRV_WATCHDOG_TIME_INIT(255 / (MW8080BW_PIXEL_CLOCK / MW8080BW_HTOTAL / MW8080BW_VTOTAL))
 
 	/* sound hardware */
 	/* MDRV_IMPORT_FROM(shuffle_sound) */
@@ -1897,7 +1931,6 @@ MACHINE_DRIVER_END
  *  Dog Patch (PCB #644)
  *
  *************************************/
-
 
 #define DOGPATCH_GUN_P1_PORT_TAG	("GUNP1")
 #define DOGPATCH_GUN_P2_PORT_TAG	("GUNP2")
@@ -1987,9 +2020,9 @@ static MACHINE_DRIVER_START( dogpatch )
 	MDRV_IMPORT_FROM(root)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(dogpatch_io_map,0)
-	/* The watch dog time is an educated guess. */
-	/* All other midway boards of the era used the same circuit. */
-	MDRV_WATCHDOG_VBLANK_INIT(255) /* really based on a 60Hz clock source */
+	/* the watch dog time is unknown, but all other */
+	/* Midway boards of the era used the same circuit */
+	MDRV_WATCHDOG_TIME_INIT(255 / (MW8080BW_PIXEL_CLOCK / MW8080BW_HTOTAL / MW8080BW_VTOTAL))
 
 	/* sound hardware */
 	MDRV_IMPORT_FROM(dogpatch_sound)
@@ -2004,9 +2037,88 @@ MACHINE_DRIVER_END
  *
  *************************************/
 
-
 #define SPCENCTR_STICK_X_PORT_TAG	("STICKX")
 #define SPCENCTR_STICK_Y_PORT_TAG	("STICKY")
+#define SPCENCTR_STROBE_FREQ		(9.00)  /* Hz */
+#define SPCENCTR_STROBE_PERIOD		(1.0 / SPCENCTR_STROBE_FREQ)  /* sec */
+#define SPCENCTR_DUTY_CYCLE			(0.95)
+
+
+static mame_timer *spcenctr_strobe_on_timer;
+static mame_timer *spcenctr_strobe_off_timer;
+static UINT8 spcenctr_strobe_state;
+static UINT8 spcenctr_trench_width;
+static UINT8 spcenctr_trench_center;
+static UINT8 spcenctr_trench_slope[16];  /* 16x4 bit RAM */
+
+
+static void adjust_strobe_timers(void)
+{
+	/* the strobe light is controlled by a 555 timer, which appears to have a
+       frequency of 9Hz and a duty cycle of 95% */
+	if (spcenctr_strobe_state)
+	{
+		mame_timer_adjust(spcenctr_strobe_on_timer, time_zero, 1, double_to_mame_time(TIME_IN_SEC(SPCENCTR_STROBE_PERIOD)));
+		mame_timer_adjust(spcenctr_strobe_off_timer, double_to_mame_time(TIME_IN_SEC(SPCENCTR_STROBE_PERIOD) * SPCENCTR_DUTY_CYCLE), 0, double_to_mame_time(TIME_IN_SEC(SPCENCTR_STROBE_PERIOD)));
+	}
+	else
+	{
+		mame_timer_adjust(spcenctr_strobe_on_timer, time_never, 0, time_zero);
+		mame_timer_adjust(spcenctr_strobe_off_timer, time_never, 0, time_zero);
+	}
+}
+
+
+static void spcenctr_strobe_timer_callback(int param)
+{
+	output_set_value("STROBE", param);
+}
+
+
+static MACHINE_START( spcenctr )
+{
+	/* create timers */
+	spcenctr_strobe_on_timer = timer_alloc(spcenctr_strobe_timer_callback);
+	spcenctr_strobe_off_timer = timer_alloc(spcenctr_strobe_timer_callback);
+
+	/* setup for save states */
+	state_save_register_global(spcenctr_strobe_state);
+	state_save_register_global(spcenctr_trench_width);
+	state_save_register_global(spcenctr_trench_center);
+	state_save_register_global_array(spcenctr_trench_slope);
+	state_save_register_func_postload(adjust_strobe_timers);
+
+	return machine_start_mw8080bw(machine);
+}
+
+
+void spcenctr_set_strobe_state(UINT8 data)
+{
+	if (data != spcenctr_strobe_state)
+	{
+		spcenctr_strobe_state = data;
+
+		adjust_strobe_timers();
+	}
+}
+
+
+UINT8 spcenctr_get_trench_width(void)
+{
+	return spcenctr_trench_width;
+}
+
+
+UINT8 spcenctr_get_trench_center(void)
+{
+	return spcenctr_trench_center;
+}
+
+
+UINT8 spcenctr_get_trench_slope(UINT8 addr)
+{
+	return spcenctr_trench_slope[addr & 0x0f];
+}
 
 
 static UINT32 spcenctr_stick_input_r(void *param)
@@ -2032,27 +2144,38 @@ static UINT32 spcenctr_stick_input_r(void *param)
 
 
 static WRITE8_HANDLER( spcenctr_io_w )
-{										/* A6 A5 A4 A3 A2 A1 A0 */
+{										/* A7 A6 A5 A4 A3 A2 A1 A0 */
 	if ((offset & 0x07) == 0x02)
 	{
-		watchdog_reset_w(0, data);		/*  -  -  -  -  0  1  0 */
+		watchdog_reset_w(0, data);		/* -  -  -  -  -  0  1  0 */
 	}
 	else if ((offset & 0x5f) == 0x01)
 	{
-		spcenctr_sh_port_1_w(0, data);	/*  0  -  0  0  0  0  1 */
+		spcenctr_sh_port_1_w(0, data);	/* -  0  -  0  0  0  0  1 */
 	}
 	else if ((offset & 0x5f) == 0x09)
 	{
-		spcenctr_sh_port_2_w(0, data);	/*  0  -  0  1  0  0  1 */
+		spcenctr_sh_port_2_w(0, data);	/* -  0  -  0  1  0  0  1 */
 	}
 	else if ((offset & 0x5f) == 0x11)
 	{
-		spcenctr_sh_port_3_w(0, data);	/*  0  -  1  0  0  0  1 */
+		spcenctr_sh_port_3_w(0, data);	/* -  0  -  1  0  0  0  1 */
+	}
+	else if ((offset & 0x07) == 0x03)
+	{									/* -  -  -  -  -  0  1  1 */
+		UINT8 addr = ((offset & 0xc0) >> 4) | ((offset & 0x18) >> 3);
+		spcenctr_trench_slope[addr] = data;
+	}
+	else if ((offset & 0x07) == 0x04)
+	{
+		spcenctr_trench_center = data;	/* -  -  -  -  -  1  0  0 */
+	}
+	else if ((offset & 0x07) == 0x07)
+	{
+		spcenctr_trench_width = data;	/* -  -  -  -  -  1  1  1 */
 	}
 	else
 	{
-		/* more to come... */
-
 		logerror("%04x:  Unmapped I/O port write to %02x = %02x\n",
 				 activecpu_get_pc(), offset, data);
 	}
@@ -2060,14 +2183,14 @@ static WRITE8_HANDLER( spcenctr_io_w )
 
 
 static ADDRESS_MAP_START( spcenctr_io_map, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(7) )
-	AM_RANGE(0x00, 0x00) AM_MIRROR(0x7c) AM_READ(input_port_0_r)
-	AM_RANGE(0x01, 0x01) AM_MIRROR(0x7c) AM_READ(input_port_1_r)
-	AM_RANGE(0x02, 0x02) AM_MIRROR(0x7c) AM_READ(input_port_2_r)
-	AM_RANGE(0x03, 0x03) AM_MIRROR(0x7c) AM_READNOP
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_MIRROR(0xfc) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_MIRROR(0xfc) AM_READ(input_port_1_r)
+	AM_RANGE(0x02, 0x02) AM_MIRROR(0xfc) AM_READ(input_port_2_r)
+	AM_RANGE(0x03, 0x03) AM_MIRROR(0xfc) AM_READNOP
 
 	/* complicated addressing logic */
-	AM_RANGE(0x00, 0x7f) AM_WRITE(spcenctr_io_w)
+	AM_RANGE(0x00, 0xff) AM_WRITE(spcenctr_io_w)
 ADDRESS_MAP_END
 
 
@@ -2121,10 +2244,11 @@ static MACHINE_DRIVER_START( spcenctr )
 	MDRV_IMPORT_FROM(root)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(spcenctr_io_map,0)
-	MDRV_WATCHDOG_VBLANK_INIT(255) /* really based on a 60Hz clock source */
+	MDRV_MACHINE_START(spcenctr)
+	MDRV_WATCHDOG_TIME_INIT(255 / (MW8080BW_PIXEL_CLOCK / MW8080BW_HTOTAL / MW8080BW_VTOTAL))
 
 	/* video hardware */
-	MDRV_SCREEN_VISIBLE_AREA(1*8, 30*8-1, 4*8, 32*8-1)
+	MDRV_VIDEO_UPDATE(spcenctr)
 
 	/* sound hardware */
 	MDRV_IMPORT_FROM(spcenctr_sound)
@@ -2139,39 +2263,27 @@ MACHINE_DRIVER_END
  *
  *************************************/
 
-
-static UINT8 phantom2_cloud_pos;
+static UINT16 phantom2_cloud_counter = 0;
 
 
 static MACHINE_START( phantom2 )
 {
 	/* setup for save states */
-	state_save_register_global(phantom2_cloud_pos);
+	state_save_register_global(phantom2_cloud_counter);
 
 	return machine_start_mw8080bw(machine);
 }
 
 
-static INTERRUPT_GEN( phantom2_interrupt )
+UINT16 phantom2_get_cloud_counter(void)
 {
-	static int cloud_speed;
-
-	cloud_speed++;
-
-	if (cloud_speed >= 2)   /* every 2 frames - no idea if correct */
-	{
-		cloud_speed = 0;
-
-		phantom2_cloud_pos++;
-	}
-
-	mw8080bw_interrupt();
+	return phantom2_cloud_counter;
 }
 
 
-UINT8 phantom2_get_cloud_pos(void)
+void phantom2_set_cloud_counter(UINT16 data)
 {
-	return phantom2_cloud_pos;
+	phantom2_cloud_counter = data;
 }
 
 
@@ -2206,10 +2318,10 @@ static INPUT_PORTS_START( phantom2 )
 	PORT_DIPSETTING (    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING (    0x00, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME ( 0x06, 0x06, DEF_STR( Game_Time ) ) PORT_CONDITION("IN1",0x20,PORTCOND_EQUALS,0x20) PORT_DIPLOCATION("SW:2,3")
-	PORT_DIPSETTING (    0x00, "45 seconds + 20 extended (at 20 pts)" )
-	PORT_DIPSETTING (    0x02, "60 seconds + 25 extended (at 25 pts)" )
-	PORT_DIPSETTING (    0x04, "75 seconds + 30 extended (at 30 pts)" )
-	PORT_DIPSETTING (    0x06, "90 seconds + 35 extended (at 35 pts)" )
+	PORT_DIPSETTING (    0x00, "45 seconds + 20 extended (at 20 points)" )
+	PORT_DIPSETTING (    0x02, "60 seconds + 25 extended (at 25 points)" )
+	PORT_DIPSETTING (    0x04, "75 seconds + 30 extended (at 30 points)" )
+	PORT_DIPSETTING (    0x06, "90 seconds + 35 extended (at 35 points)" )
 	PORT_DIPNAME ( 0x08, 0x00, DEF_STR( Unused ) ) PORT_CONDITION("IN1",0x20,PORTCOND_EQUALS,0x20) PORT_DIPLOCATION("SW:4")
 	PORT_DIPSETTING (    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING (    0x08, DEF_STR( On ) )
@@ -2232,15 +2344,12 @@ static MACHINE_DRIVER_START( phantom2 )
 	MDRV_IMPORT_FROM(root)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(phantom2_io_map,0)
-	MDRV_CPU_VBLANK_INT(phantom2_interrupt,2)
 	MDRV_MACHINE_START(phantom2)
-	MDRV_WATCHDOG_VBLANK_INIT(255) /* really based on a 60Hz clock source */
+	MDRV_WATCHDOG_TIME_INIT(255 / (MW8080BW_PIXEL_CLOCK / MW8080BW_HTOTAL / MW8080BW_VTOTAL))
 
 	/* video hardware */
-	MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
-	MDRV_PALETTE_LENGTH(3)
-	MDRV_PALETTE_INIT(phantom2)
 	MDRV_VIDEO_UPDATE(phantom2)
+	MDRV_VIDEO_EOF(phantom2)
 
 	/* sound hardware */
 	MDRV_IMPORT_FROM(phantom2_sound)
@@ -2254,7 +2363,6 @@ MACHINE_DRIVER_END
  *  Bowling Alley (PCB #730)
  *
  *************************************/
-
 
 static READ8_HANDLER( bowler_shift_res_r )
 {
@@ -2373,7 +2481,7 @@ static MACHINE_DRIVER_START( bowler )
 	MDRV_IMPORT_FROM(root)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(bowler_io_map,0)
-	MDRV_WATCHDOG_VBLANK_INIT(255) /* really based on a 60Hz clock source */
+	MDRV_WATCHDOG_TIME_INIT(255 / (MW8080BW_PIXEL_CLOCK / MW8080BW_HTOTAL / MW8080BW_VTOTAL))
 
 	/* sound hardware */
 	/* MDRV_IMPORT_FROM(bowler_sound) */
@@ -2388,13 +2496,36 @@ MACHINE_DRIVER_END
  *
  *************************************/
 
-
 #define INVADERS_COIN_INPUT_PORT_TAG	("COIN")
 #define INVADERS_SW6_SW7_PORT_TAG		("SW6SW7")
 #define INVADERS_SW5_PORT_TAG			("SW5")
 #define INVADERS_CAB_TYPE_PORT_TAG		("CAB")
 #define INVADERS_P1_CONTROL_PORT_TAG	("CONTP1")
 #define INVADERS_P2_CONTROL_PORT_TAG	("CONTP2")
+
+
+static UINT8 invaders_flip_screen = 0;
+
+
+static MACHINE_START( invaders )
+{
+	/* setup for save states */
+	state_save_register_global(invaders_flip_screen);
+
+	return machine_start_mw8080bw(machine);
+}
+
+
+UINT8 invaders_is_flip_screen(void)
+{
+	return invaders_flip_screen;
+}
+
+
+void invaders_set_flip_screen(UINT8 data)
+{
+	invaders_flip_screen = data;
+}
 
 
 static UINT32 invaders_coin_input_r(void *param)
@@ -2595,10 +2726,10 @@ MACHINE_DRIVER_START( invaders )
 	MDRV_IMPORT_FROM(root)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(invaders_io_map,0)
-	MDRV_WATCHDOG_VBLANK_INIT(255) /* really based on a 60Hz clock source */
+	MDRV_MACHINE_START(invaders)
+	MDRV_WATCHDOG_TIME_INIT(255 / (MW8080BW_PIXEL_CLOCK / MW8080BW_HTOTAL / MW8080BW_VTOTAL))
 
 	/* video hardware */
-	MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
 	MDRV_VIDEO_UPDATE(invaders)
 
 	/* sound hardware */
@@ -2613,7 +2744,6 @@ MACHINE_DRIVER_END
  *  Blue Shark (PCB #742)
  *
  *************************************/
-
 
 #define BLUESHRK_COIN_INPUT_PORT_TAG	("COIN")
 
@@ -2644,7 +2774,7 @@ ADDRESS_MAP_END
 
 static INPUT_PORTS_START( blueshrk )
 	PORT_START_TAG(BLUESHRK_SPEAR_PORT_TAG)
-	PORT_BIT( 0xff, 0x45, IPT_PADDLE ) PORT_CROSSHAIR(CROSSHAIR_AXIS_X, 1.0, 0.0, 0.139) PORT_MINMAX(0x08,0x82) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_CENTERDELTA(0) PORT_PLAYER(1)
+	PORT_BIT( 0xff, 0x45, IPT_PADDLE ) PORT_CROSSHAIR(X, 1.0, 0.0, 0.139) PORT_MINMAX(0x08,0x82) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_CENTERDELTA(0) PORT_PLAYER(1)
 
 	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
@@ -2676,7 +2806,7 @@ static MACHINE_DRIVER_START( blueshrk )
 	MDRV_IMPORT_FROM(root)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(blueshrk_io_map,0)
-	MDRV_WATCHDOG_VBLANK_INIT(255) /* really based on a 60Hz clock source */
+	MDRV_WATCHDOG_TIME_INIT(255 / (MW8080BW_PIXEL_CLOCK / MW8080BW_HTOTAL / MW8080BW_VTOTAL))
 
 	/* sound hardware */
 	MDRV_IMPORT_FROM(blueshrk_sound)
@@ -2690,7 +2820,6 @@ MACHINE_DRIVER_END
  *  Space Invaders II (cocktail) (PCB #851)
  *
  *************************************/
-
 
 #define INVAD2CT_COIN_INPUT_PORT_TAG	("COIN")
 
@@ -2730,7 +2859,7 @@ static INPUT_PORTS_START( invad2ct )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNUSED )  /* labelled NAMED RESET, but not read by the software */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNUSED )  /* labeled NAMED RESET, but not read by the software */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNUSED )
 
 	PORT_START_TAG("IN1")
@@ -2773,7 +2902,7 @@ static MACHINE_DRIVER_START( invad2ct )
 	MDRV_IMPORT_FROM(root)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(invad2ct_io_map,0)
-	MDRV_WATCHDOG_VBLANK_INIT(255) /* really based on a 60Hz clock source */
+	MDRV_WATCHDOG_TIME_INIT(255 / (MW8080BW_PIXEL_CLOCK / MW8080BW_HTOTAL / MW8080BW_VTOTAL))
 
 	/* sound hardware */
 	MDRV_IMPORT_FROM(invad2ct_sound)

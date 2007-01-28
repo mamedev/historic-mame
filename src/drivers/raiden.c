@@ -310,7 +310,7 @@ static MACHINE_DRIVER_START( raiden )
 	MDRV_VIDEO_UPDATE(raiden)
 
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM3812_RAIDEN_INTERFACE(14318180/4,8000,1)
+	SEIBU_SOUND_SYSTEM_YM3812_RAIDEN_INTERFACE(14318180/4,1320000,1) // frequency and pin 7 not verified (pin set in sndhrdw\seibu.h)
 MACHINE_DRIVER_END
 
 

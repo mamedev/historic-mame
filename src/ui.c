@@ -155,7 +155,10 @@ static INT32 slider_xoffset(INT32 newval, char *buffer, int arg);
 static INT32 slider_yoffset(INT32 newval, char *buffer, int arg);
 static INT32 slider_flicker(INT32 newval, char *buffer, int arg);
 static INT32 slider_beam(INT32 newval, char *buffer, int arg);
-
+#ifdef MAME_DEBUG
+static INT32 slider_crossscale(INT32 newval, char *buffer, int arg);
+static INT32 slider_crossoffset(INT32 newval, char *buffer, int arg);
+#endif
 
 
 /***************************************************************************
@@ -1428,6 +1431,16 @@ static void slider_init(void)
 		slider_config(&slider_list[slider_count++], 0, 0, 1000, 10, slider_flicker, 0);
 		slider_config(&slider_list[slider_count++], 10, 100, 1000, 10, slider_beam, 0);
 	}
+
+#ifdef MAME_DEBUG
+	/* add crosshair adjusters */
+	for (in = Machine->input_ports; in && in->type != IPT_END; in++)
+		if (in->analog.crossaxis != CROSSHAIR_AXIS_NONE && in->player == 0)
+		{
+			slider_config(&slider_list[slider_count++], -3000, 1000, 3000, 100, slider_crossscale, in->analog.crossaxis);
+			slider_config(&slider_list[slider_count++], -3000, 0, 3000, 100, slider_crossoffset, in->analog.crossaxis);
+		}
+#endif
 }
 
 
@@ -1725,3 +1738,53 @@ static INT32 slider_beam(INT32 newval, char *buffer, int arg)
 	}
 	return floor(vector_get_beam() * 100.0f + 0.5f);
 }
+
+
+/*-------------------------------------------------
+    slider_crossscale - crosshair scale slider
+    callback
+-------------------------------------------------*/
+
+#ifdef MAME_DEBUG
+static INT32 slider_crossscale(INT32 newval, char *buffer, int arg)
+{
+	input_port_entry *in;
+
+	if (buffer != NULL)
+	{
+		for (in = Machine->input_ports; in && in->type != IPT_END; in++)
+			if (in->analog.crossaxis == arg)
+				in->analog.crossscale = (float)newval * 0.001f;
+		sprintf(buffer, "%s %s %1.3f", "Crosshair Scale", (in->analog.crossaxis == CROSSHAIR_AXIS_X) ? "X" : "Y", (float)newval * 0.001f);
+	}
+	for (in = Machine->input_ports; in && in->type != IPT_END; in++)
+		if (in->analog.crossaxis == arg)
+			return floor(in->analog.crossscale * 1000.0f + 0.5f);
+	return 0;
+}
+#endif
+
+
+/*-------------------------------------------------
+    slider_crossoffset - crosshair scale slider
+    callback
+-------------------------------------------------*/
+
+#ifdef MAME_DEBUG
+static INT32 slider_crossoffset(INT32 newval, char *buffer, int arg)
+{
+	input_port_entry *in;
+
+	if (buffer != NULL)
+	{
+		for (in = Machine->input_ports; in && in->type != IPT_END; in++)
+			if (in->analog.crossaxis == arg)
+				in->analog.crossoffset = (float)newval * 0.001f;
+		sprintf(buffer, "%s %s %1.3f", "Crosshair Offset", (in->analog.crossaxis == CROSSHAIR_AXIS_X) ? "X" : "Y", (float)newval * 0.001f);
+	}
+	for (in = Machine->input_ports; in && in->type != IPT_END; in++)
+		if (in->analog.crossaxis == arg)
+			return floor(in->analog.crossoffset * 1000.0f + 0.5f);
+	return 0;
+}
+#endif

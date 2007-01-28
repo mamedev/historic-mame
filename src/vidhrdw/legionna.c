@@ -169,12 +169,7 @@ VIDEO_START( legionna )
 	midground_layer =  tilemap_create(get_mid_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	text_layer =       tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,64,32);
 
-	if (!background_layer || !foreground_layer || !midground_layer || !text_layer)
-		return 1;
-
 	legionna_scrollram16 = auto_malloc(0x60);
-
-	if (!legionna_scrollram16)	return 1;
 
 	tilemap_set_transparent_pen(background_layer,15);
 	tilemap_set_transparent_pen(midground_layer,15);
@@ -191,12 +186,7 @@ VIDEO_START( denjinmk )
 	midground_layer =  tilemap_create(get_mid_tile_info_denji, tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	text_layer =       tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,64,32);
 
-	if (!background_layer || !foreground_layer || !midground_layer || !text_layer)
-		return 1;
-
 	legionna_scrollram16 = auto_malloc(0x60);
-
-	if (!legionna_scrollram16)	return 1;
 
 	tilemap_set_transparent_pen(background_layer,15);
 	tilemap_set_transparent_pen(midground_layer,15);
@@ -213,12 +203,7 @@ VIDEO_START( cupsoc )
 	midground_layer =  tilemap_create(get_mid_tile_info_cupsoc, tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	text_layer =       tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,64,32);
 
-	if (!background_layer || !foreground_layer || !midground_layer || !text_layer)
-		return 1;
-
 	legionna_scrollram16 = auto_malloc(0x60);
-
-	if (!legionna_scrollram16)	return 1;
 
 	tilemap_set_transparent_pen(background_layer,15);
 	tilemap_set_transparent_pen(midground_layer,15);

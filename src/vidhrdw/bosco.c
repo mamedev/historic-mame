@@ -138,9 +138,6 @@ VIDEO_START( bosco )
 	bg_tilemap = tilemap_create(bg_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 	fg_tilemap = tilemap_create(fg_get_tile_info,fg_tilemap_scan,  TILEMAP_OPAQUE,8,8, 8,32);
 
-	if (!bg_tilemap || !fg_tilemap)
-		return 1;
-
 	tilemap_set_scrolldx(bg_tilemap,3,3);
 
 	spriteram_size = 0x0c;

@@ -70,7 +70,7 @@ CopyVisiblePolyFrameBuffer( mame_bitmap *bitmap, const rectangle *clip )
 	int sy;
 	for( sy=clip->min_y; sy<=clip->max_y; sy++ )
 	{
-		UINT16 *dest = (UINT16 *)bitmap->line[sy];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, sy, 0);
 		const INT16 *pZ   = mpPolyFrameBufferZ2 + NAMCOS21_POLY_FRAME_WIDTH*sy;
 		const UINT16 *pPen = mpPolyFrameBufferPens2 + NAMCOS21_POLY_FRAME_WIDTH*sy;
 		int sx;
@@ -175,7 +175,7 @@ VIDEO_UPDATE( namcos21_winrun )
 	int sx,sy;
 	for( sy=0; sy<512; sy++ )
 	{
-		UINT16 *pDest = bitmap->line[sy];
+		UINT16 *pDest = BITMAP_ADDR16(bitmap, sy, 0);
 		for( sx=0; sx<512; sx++ )
 		{
 			int color = 0;

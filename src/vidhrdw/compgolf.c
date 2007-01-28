@@ -74,9 +74,6 @@ VIDEO_START( compgolf )
 	background_tilemap = tilemap_create(get_back_info,back_scan,TILEMAP_OPAQUE, 16, 16, 32, 32);
 	text_tilemap = tilemap_create(get_text_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
-	if (!text_tilemap || !background_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(text_tilemap,0);
 
 	return 0;

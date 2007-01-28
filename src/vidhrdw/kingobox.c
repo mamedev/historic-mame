@@ -203,14 +203,8 @@ VIDEO_START( kingofb )
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols_flip_y,
 		TILEMAP_OPAQUE, 16, 16, 16, 16);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_y,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
-
-	if ( !fg_tilemap )
-		return 1;
 
 	tilemap_set_transparent_pen(fg_tilemap, 0);
 
@@ -271,14 +265,8 @@ VIDEO_START( ringking )
 	bg_tilemap = tilemap_create(ringking_get_bg_tile_info, tilemap_scan_cols_flip_y,
 		TILEMAP_OPAQUE, 16, 16, 16, 16);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_cols_flip_y,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
-
-	if ( !fg_tilemap )
-		return 1;
 
 	tilemap_set_transparent_pen(fg_tilemap, 0);
 

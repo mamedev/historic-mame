@@ -326,9 +326,6 @@ VIDEO_START( hyprduel_14220 )
 	bg_tilemap[1] = tilemap_create(get_tile_info_1_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
 	bg_tilemap[2] = tilemap_create(get_tile_info_2_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
 
-	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2])
-		return 1;
-
 	tilemap_set_transparent_pen(bg_tilemap[0],0);
 	tilemap_set_transparent_pen(bg_tilemap[1],0);
 	tilemap_set_transparent_pen(bg_tilemap[2],0);

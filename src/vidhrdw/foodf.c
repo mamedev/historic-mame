@@ -39,8 +39,6 @@ VIDEO_START( foodf )
 {
 	/* initialize the playfield */
 	atarigen_playfield_tilemap = tilemap_create(get_playfield_tile_info, tilemap_scan_cols, TILEMAP_OPAQUE, 8,8, 32,32);
-	if (!atarigen_playfield_tilemap)
-		return 1;
 
 	/* adjust the playfield for the 8 pixel offset */
 	tilemap_set_scrollx(atarigen_playfield_tilemap, 0, -8);

@@ -107,10 +107,10 @@ VIDEO_UPDATE( fgoal )
 
 	for (y = 0; y < 256; y++)
 	{
-		UINT16* p = bitmap->line[y];
+		UINT16* p = BITMAP_ADDR16(bitmap, y, 0);
 
-		const UINT16* FG = fgbitmap->line[y];
-		const UINT16* BG = bgbitmap->line[y];
+		const UINT16* FG = BITMAP_ADDR16(fgbitmap, y, 0);
+		const UINT16* BG = BITMAP_ADDR16(bgbitmap, y, 0);
 
 		for (x = 0; x < 256; x += 8)
 		{

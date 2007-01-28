@@ -266,9 +266,6 @@ VIDEO_START( rallyx )
 		fg_tilemap = tilemap_create(locomotn_fg_get_tile_info,fg_tilemap_scan,  TILEMAP_OPAQUE,8,8, 8,32);
 	}
 
-	if (!bg_tilemap || !fg_tilemap)
-		return 1;
-
 	/* the scrolling tilemap is slightly misplaced in Rally X */
 	if (video_type == TYPE_RALLYX)
 		tilemap_set_scrolldx(bg_tilemap,3,3);

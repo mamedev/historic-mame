@@ -113,9 +113,6 @@ VIDEO_START(funworld)
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 4, 8, 96, 29);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	return 0;
 }
 
@@ -123,9 +120,6 @@ VIDEO_START(magiccrd)
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 4, 8, 112, 34);
-
-	if ( !bg_tilemap )
-		return 1;
 
 	return 0;
 }

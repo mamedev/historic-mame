@@ -332,10 +332,6 @@ int K037122_vh_start(int chip)
 		K037122_layer[chip][1] = tilemap_create(K037122_1_tile_info_layer1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 128, 64);
 	}
 
-	if( !K037122_layer[chip][0] || !K037122_layer[chip][1] ) {
-		return 1;
-	}
-
 	tilemap_set_transparent_pen(K037122_layer[chip][0], 0);
 	tilemap_set_transparent_pen(K037122_layer[chip][1], 0);
 

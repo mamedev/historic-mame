@@ -352,10 +352,6 @@ static void draw_sprites(mame_bitmap *bitmap, int colormask, int prioritymask, i
 int m62_start( void (*tile_get_info)( int memory_offset ), int rows, int cols, int x1, int y1, int x2, int y2 )
 {
 	m62_background = tilemap_create( tile_get_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, x1, y1, x2, y2 );
-	if( !m62_background )
-	{
-		return 1;
-	}
 
 	m62_background_hscroll = 0;
 	m62_background_vscroll = 0;
@@ -377,10 +373,6 @@ int m62_start( void (*tile_get_info)( int memory_offset ), int rows, int cols, i
 int m62_textlayer( void (*tile_get_info)( int memory_offset ), int rows, int cols, int x1, int y1, int x2, int y2 )
 {
 	m62_foreground = tilemap_create( tile_get_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, x1, y1, x2, y2 );
-	if( !m62_foreground )
-	{
-		return 1;
-	}
 
 	if( rows != 0 )
 	{
@@ -697,10 +689,6 @@ VIDEO_UPDATE( kidniki )
 VIDEO_START( kidniki )
 {
 	m62_background = tilemap_create( get_kidniki_bg_tile_info, tilemap_scan_rows, TILEMAP_SPLIT, 8, 8, 64, 32 );
-	if( !m62_background )
-	{
-		return 1;
-	}
 
 	m62_background_hscroll = 0;
 	m62_background_vscroll = 0;

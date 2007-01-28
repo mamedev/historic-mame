@@ -133,8 +133,8 @@ VIDEO_UPDATE( dcheese )
 	/* update the pixels */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		UINT16 *dest = (UINT16 *)bitmap->line[y];
-		UINT16 *src = (UINT16 *)dstbitmap->line[(y + blitter_vidparam[0x28/2]) % DSTBITMAP_HEIGHT];
+		UINT16 *dest = BITMAP_ADDR16(bitmap, y, 0);
+		UINT16 *src = BITMAP_ADDR16(dstbitmap, (y + blitter_vidparam[0x28/2]) % DSTBITMAP_HEIGHT, 0);
 
 		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			dest[x] = src[x];
@@ -156,7 +156,7 @@ static void do_clear(void)
 
 	/* clear the requested scanlines */
 	for (y = blitter_vidparam[0x2c/2]; y < blitter_vidparam[0x2a/2]; y++)
-		memset(dstbitmap->line[y % DSTBITMAP_HEIGHT], 0, DSTBITMAP_WIDTH * 2);
+		memset(BITMAP_ADDR16(dstbitmap, y % DSTBITMAP_HEIGHT, 0), 0, DSTBITMAP_WIDTH * 2);
 
 	/* signal an IRQ when done (timing is just a guess) */
 	timer_set(cpu_getscanlineperiod(), 1, dcheese_signal_irq);
@@ -189,7 +189,7 @@ static void do_blit(void)
 	/* loop over target rows */
 	for (y = ystart; y <= yend; y++)
 	{
-		UINT16 *dst = (UINT16 *)dstbitmap->line[y % DSTBITMAP_HEIGHT];
+		UINT16 *dst = BITMAP_ADDR16(dstbitmap, y % DSTBITMAP_HEIGHT, 0);
 
 		/* loop over target columns */
 		for (x = xstart; x <= xend; x++)

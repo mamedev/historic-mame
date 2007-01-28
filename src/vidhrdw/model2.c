@@ -162,7 +162,7 @@ static void draw_solid_triangle(mame_bitmap *bitmap, const rectangle *rect, TRIA
 		{
 			int x1, x2;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT16 *p = (UINT16*)bitmap->line[y];
+			UINT16 *p = BITMAP_ADDR16(bitmap, y, 0);
 
 			x1 = scan->sx;
 			x2 = scan->ex;
@@ -230,7 +230,7 @@ static void draw_textured_triangle(mame_bitmap *bitmap, const rectangle *rect, T
 			INT64 u, v;
 			int x1, x2;
 			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT16 *p = (UINT16*)bitmap->line[y];
+			UINT16 *p = BITMAP_ADDR16(bitmap, y, 0);
 
 			x1 = scan->sx;
 			x2 = scan->ex;

@@ -865,9 +865,6 @@ VIDEO_START(witch)
 	gfx0_tilemap = tilemap_create(get_gfx0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	gfx1_tilemap = tilemap_create(get_gfx1_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
-	if(!gfx0_tilemap||!gfx1_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(gfx0_tilemap,0);
   tilemap_set_palette_offset(gfx0_tilemap,0x100);
   tilemap_set_palette_offset(gfx1_tilemap,0x200);

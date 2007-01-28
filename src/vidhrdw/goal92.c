@@ -147,9 +147,6 @@ VIDEO_START( goal92 )
 
 	buffered_spriteram16 = auto_malloc(0x400*2);
 
-	if (!background_layer || !foreground_layer || !text_layer)
-		return 1;
-
 	tilemap_set_transparent_pen(background_layer,15);
 	tilemap_set_transparent_pen(foreground_layer,15);
 	tilemap_set_transparent_pen(text_layer,15);

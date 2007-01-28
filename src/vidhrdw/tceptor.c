@@ -469,8 +469,6 @@ VIDEO_START( tceptor )
 	namco_road_set_transparent_color(Machine->remapped_colortable[0xfff]);
 
 	tx_tilemap = tilemap_create(get_tx_tile_info, tilemap_scan_cols, TILEMAP_TRANSPARENT_COLOR, 8, 8, 34, 28);
-	if (!tx_tilemap)
-		return 1;
 
 	tilemap_set_scrollx(tx_tilemap, 0, -2*8);
 	tilemap_set_scrolly(tx_tilemap, 0, 0);
@@ -478,8 +476,6 @@ VIDEO_START( tceptor )
 
 	bg1_tilemap = tilemap_create(get_bg1_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 64, 32);
 	bg2_tilemap = tilemap_create(get_bg2_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 64, 32);
-	if (!bg1_tilemap || !bg2_tilemap)
-		return 1;
 
 	tilemap_set_transparent_pen(bg1_tilemap, 0);
 	tilemap_set_transparent_pen(bg2_tilemap, 0);

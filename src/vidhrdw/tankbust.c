@@ -89,9 +89,6 @@ VIDEO_START( tankbust )
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 64, 32);
 
 
-	if (!bg_tilemap || !txt_tilemap)
-		return 1;
-
 	tilemap_set_transparent_pen(txt_tilemap, 0);
 
 	return 0;

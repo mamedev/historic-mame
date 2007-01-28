@@ -51,8 +51,6 @@ static void dirty_fg_tilemap(void)
 VIDEO_START( darius )
 {
 	fg_tilemap = tilemap_create(darius_fg_get_tile_info[0],tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,128,64);
-	if (!fg_tilemap)
-		return 1;
 
 	spritelist = auto_malloc(0x800 * sizeof(*spritelist));
 

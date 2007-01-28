@@ -133,9 +133,9 @@ static void draw_vdp(mame_bitmap *bitmap, const rectangle *cliprect, int priorit
 
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		UINT16 *src = (UINT16 *)tempbitmap->line[y];
-		UINT16 *dst = (UINT16 *)bitmap->line[y];
-		UINT8 *pri = (UINT8 *)priority_bitmap->line[y];
+		UINT16 *src = BITMAP_ADDR16(tempbitmap, y, 0);
+		UINT16 *dst = BITMAP_ADDR16(bitmap, y, 0);
+		UINT8 *pri = BITMAP_ADDR8(priority_bitmap, y, 0);
 
 		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 		{
@@ -253,7 +253,7 @@ VIDEO_UPDATE( system18 )
 	if (vdp_enable && code_pressed(KEYCODE_B))
 	{
 		FILE *f = fopen("vdp.bin", "w");
-		fwrite(tempbitmap->line[0], 1, ((UINT8 *)tempbitmap->line[1] - (UINT8 *)tempbitmap->line[0]) * tempbitmap->height, f);
+		fwrite(tempbitmap->base, 1, tempbitmap->rowpixels * (tempbitmap->bpp / 8) * tempbitmap->height, f);
 		fclose(f);
 	}
 #endif

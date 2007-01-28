@@ -102,9 +102,6 @@ VIDEO_START( espial )
 {
 	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
-	if (!bg_tilemap)
-		return 1;
-
 	tilemap_set_scroll_cols(bg_tilemap, 32);
 
 	return 0;
@@ -114,9 +111,6 @@ VIDEO_START( netwars )
 {
 	/* Net Wars has a tile map that's twice as big as Espial's */
 	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,64);
-
-	if (!bg_tilemap)
-		return 1;
 
 	tilemap_set_scroll_cols(bg_tilemap, 32);
 	tilemap_set_scrolldy(bg_tilemap, 0, 0x100);

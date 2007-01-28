@@ -644,7 +644,7 @@ static MACHINE_DRIVER_START( asteroid )
 
 	MDRV_SOUND_ADD_TAG("disc", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(asteroid_discrete_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.4)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( asterock )

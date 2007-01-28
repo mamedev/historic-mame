@@ -240,9 +240,6 @@ VIDEO_START( firebatl )
 	/* Text (No scrolling) */
 	tilemap_1  = tilemap_create(get_tile_info_fb1,tilemap_scan_rows_extra,TILEMAP_TRANSPARENT_COLOR,8,8,0x24,0x20);
 
-	if (!tilemap_0a || !tilemap_0b || !tilemap_1)
-		return 1;
-
 	tilemap_set_scroll_rows( tilemap_0a, 1);
 	tilemap_set_scroll_rows( tilemap_0b, 1);
 	tilemap_set_scroll_rows( tilemap_1,  1);
@@ -268,9 +265,6 @@ VIDEO_START( clshroad )
 	tilemap_0b = tilemap_create(get_tile_info_0b,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,0x20,0x10);
 	/* Text (No scrolling) */
 	tilemap_1  = tilemap_create(get_tile_info_1,tilemap_scan_rows_extra,TILEMAP_TRANSPARENT,8,8,0x24,0x20);
-
-	if (!tilemap_0a || !tilemap_0b || !tilemap_1)
-		return 1;
 
 	tilemap_set_scroll_rows( tilemap_0a, 1);
 	tilemap_set_scroll_rows( tilemap_0b, 1);

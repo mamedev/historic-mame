@@ -63,8 +63,6 @@ static void bullsdrt_get_tile_info(int tile_index)
 VIDEO_START( centiped )
 {
 	bg_tilemap = tilemap_create(centiped_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
-	if (!bg_tilemap)
-		return 1;
 
 	centiped_flipscreen = 0;
 
@@ -77,8 +75,6 @@ VIDEO_START( centiped )
 VIDEO_START( warlords )
 {
 	bg_tilemap = tilemap_create(warlords_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
-	if (!bg_tilemap)
-		return 1;
 
 	/* we overload centiped_flipscreen here to track the cocktail/upright state */
 	centiped_flipscreen = readinputport(0) & 0x80;
@@ -90,8 +86,6 @@ VIDEO_START( warlords )
 VIDEO_START( milliped )
 {
 	bg_tilemap = tilemap_create(milliped_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
-	if (!bg_tilemap)
-		return 1;
 
 	centiped_flipscreen = 0;
 	return 0;
@@ -101,8 +95,6 @@ VIDEO_START( milliped )
 VIDEO_START( bullsdrt )
 {
 	bg_tilemap = tilemap_create(bullsdrt_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
-	if (!bg_tilemap)
-		return 1;
 
 	centiped_flipscreen = 0;
 	return 0;

@@ -186,9 +186,6 @@ VIDEO_START( cloak )
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 	tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 

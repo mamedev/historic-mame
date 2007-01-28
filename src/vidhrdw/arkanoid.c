@@ -83,9 +83,6 @@ VIDEO_START( arkanoid )
 	state_save_register_global(gfxbank);
 	state_save_register_global(palettebank);
 
-	if ( !bg_tilemap )
-		return 1;
-
 	return 0;
 }
 

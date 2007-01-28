@@ -45,8 +45,6 @@ VIDEO_START( cabal )
 	background_layer = tilemap_create(get_back_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,16,16);
 	text_layer       = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,8,32,32);
 
-	if (!text_layer || !background_layer ) return 1;
-
 	tilemap_set_transparent_pen(text_layer,3);
 	tilemap_set_transparent_pen(background_layer,15);
 
