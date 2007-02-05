@@ -325,7 +325,7 @@ static MACHINE_DRIVER_START( berzerk )
 
 	MDRV_SOUND_ADD(S14001A, 5000000)	/* CPU clock divided by 16 divided by a programmable TTL setup */
 	MDRV_SOUND_CONFIG(berzerk_s14001a_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
 	MDRV_SOUND_ADD(CUSTOM, 0)
 	MDRV_SOUND_CONFIG(custom_interface)

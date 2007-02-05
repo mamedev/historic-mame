@@ -1494,9 +1494,7 @@ static DRIVER_INIT( drgnbowl )
 	int i;
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	size_t  size = memory_region_length(REGION_CPU1);
-	UINT8 *buffer = malloc(size);
-
-	if(!buffer) return;
+	UINT8 *buffer = malloc_or_die(size);
 
 	memcpy(buffer,ROM,size);
 	for( i = 0; i < size; i++ )
@@ -1513,9 +1511,7 @@ static DRIVER_INIT( drgnbowl )
 
 	ROM = memory_region(REGION_GFX2);
 	size = memory_region_length(REGION_GFX2);
-	buffer = malloc(size);
-
-	if(!buffer) return;
+	buffer = malloc_or_die(size);
 
 	memcpy(buffer,ROM,size);
 	for( i = 0; i < size; i++ )

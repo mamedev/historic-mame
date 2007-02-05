@@ -214,7 +214,7 @@ static DWORD *internal_palette, *alpha_table;
 static BYTE *cpu1_base, *gfx1_base, *blitter_ram, *io_ram;
 static size_t blitter_ramsize, io_ramsize;
 
-static int game_id, init_success, blitter_busy, collision_count, stars_enabled, bgcolor, ffcount, ffhead, fftail;
+static int game_id, blitter_busy, collision_count, stars_enabled, bgcolor, ffcount, ffhead, fftail;
 static int mVectorType, sndnmi_mask, firq_level;
 static void *blitter_reset_timer;
 
@@ -1185,9 +1185,6 @@ static VIDEO_START( halleys )
 
 	int dst, src, c;
 
-	// abort if DRIVER_INIT failed
-	if (!init_success) return(1);
-
 	// create short cuts to scroll registers
 	scrolly0 = io_ram + HALLEYS_Y0;
 	scrollx0 = io_ram + HALLEYS_X0;
@@ -2151,7 +2148,7 @@ ROM_END
 //**************************************************************************
 // Driver Initializations
 
-static int init_common(void)
+static void init_common(void)
 {
 	BYTE *buf, *rom;
 	int addr, i;
@@ -2228,9 +2225,6 @@ static int init_common(void)
 
 		buf += 8;
 	}
-
-
-	return(1);
 }
 
 
@@ -2238,9 +2232,10 @@ static DRIVER_INIT( benberob )
 {
 	game_id = GAME_BENBEROB;
 
-	init_success = init_common();
+	init_common();
 
-	if (!(blitter_reset_timer = timer_alloc(blitter_reset))) init_success = 0;
+	if (!(blitter_reset_timer = timer_alloc(blitter_reset)))
+		fatalerror("timer_alloc failed");
 }
 
 
@@ -2249,7 +2244,7 @@ static DRIVER_INIT( halleys )
 	game_id = GAME_HALLEYS;
 	halleys_collision_detection = 0xb114;
 
-	init_success = init_common();
+	init_common();
 }
 
 static DRIVER_INIT( halley87 )
@@ -2257,7 +2252,7 @@ static DRIVER_INIT( halley87 )
 	game_id = GAME_HALLEYS;
 	halleys_collision_detection = 0xb10d;
 
-	init_success = init_common();
+	init_common();
 }
 
 

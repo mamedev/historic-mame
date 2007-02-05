@@ -109,6 +109,7 @@ void wav_close(wav_file *wav)
 	fwrite(&temp32, 1, 4, wav->file);
 
 	fclose(wav->file);
+	free(wav);
 }
 
 

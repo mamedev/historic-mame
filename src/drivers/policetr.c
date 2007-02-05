@@ -400,19 +400,52 @@ INPUT_PORTS_START( policetr )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ))	/* Will invert the Y axis of guns */
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START				/* fake analog X */
-	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_CROSSHAIR(X, 1.0, 0.0, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(10)
+	PORT_START_TAG("GUNX1")				/* fake analog X */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_CROSSHAIR(X, 1.012, 0.008, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(10)
 
-	PORT_START				/* fake analog Y */
-	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_CROSSHAIR(Y, 1.0, 0.0, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(70) PORT_KEYDELTA(10)
+	PORT_START_TAG("GUNY1")				/* fake analog Y */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_CROSSHAIR(Y, 1.0, 0.002, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(70) PORT_KEYDELTA(10)
 
-	PORT_START				/* fake analog X */
-	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_CROSSHAIR(X, 1.0, 0.0, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_PLAYER(2)
+	PORT_START_TAG("GUNX2")				/* fake analog X */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_CROSSHAIR(X, 1.012, 0.008, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_PLAYER(2)
 
-	PORT_START				/* fake analog Y */
-	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_CROSSHAIR(Y, 1.0, 0.0, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(70) PORT_KEYDELTA(10) PORT_PLAYER(2)
+	PORT_START_TAG("GUNY2")				/* fake analog Y */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_CROSSHAIR(Y, 1.0, 0.002, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(70) PORT_KEYDELTA(10) PORT_PLAYER(2)
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( polict10 )
+	PORT_INCLUDE( policetr )
+
+	PORT_MODIFY("GUNX1")				/* fake analog X */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_CROSSHAIR(X, 1.018, -0.037, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(10)
+
+	PORT_MODIFY("GUNY1")				/* fake analog Y */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_CROSSHAIR(Y, 1.0, -0.033, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(70) PORT_KEYDELTA(10)
+
+	PORT_MODIFY("GUNX2")				/* fake analog X */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_CROSSHAIR(X, 1.018, -0.037, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_PLAYER(2)
+
+	PORT_MODIFY("GUNY2")				/* fake analog Y */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_CROSSHAIR(Y, 1.0, -0.033, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(70) PORT_KEYDELTA(10) PORT_PLAYER(2)
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( sshoot11 )
+	PORT_INCLUDE( policetr )
+
+	PORT_MODIFY("GUNX1")				/* fake analog X */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_CROSSHAIR(X, 1.012, 0.208, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(10)
+
+	PORT_MODIFY("GUNY1")				/* fake analog Y */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_CROSSHAIR(Y, 1.0, 0.093, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(70) PORT_KEYDELTA(10)
+
+	PORT_MODIFY("GUNX2")				/* fake analog X */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_CROSSHAIR(X, 1.012, 0.208, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_PLAYER(2)
+
+	PORT_MODIFY("GUNY2")				/* fake analog Y */
+	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_CROSSHAIR(Y, 1.0, 0.093, 0) PORT_MINMAX(0,255) PORT_SENSITIVITY(70) PORT_KEYDELTA(10) PORT_PLAYER(2)
+INPUT_PORTS_END
 
 
 
@@ -710,9 +743,10 @@ static DRIVER_INIT( sshoot12 )
  *************************************/
 
 GAME( 1996, policetr, 0,        policetr, policetr, policetr, ROT0, "P & P Marketing", "Police Trainer (Rev 1.3)", 0 )
-GAME( 1996, polict11, policetr, policetr, policetr, policetr, ROT0, "P & P Marketing", "Police Trainer (Rev 1.1)", 0 )
-GAME( 1996, polict10, policetr, policetr, policetr, policetr, ROT0, "P & P Marketing", "Police Trainer (Rev 1.0)", 0 )
+GAME( 1996, polict11, policetr, policetr, polict10, policetr, ROT0, "P & P Marketing", "Police Trainer (Rev 1.1)", 0 )
+GAME( 1996, polict10, policetr, policetr, polict10, policetr, ROT0, "P & P Marketing", "Police Trainer (Rev 1.0)", 0 )
+
 GAME( 1996, plctr13b, policetr, sshooter, policetr, plctr13b, ROT0, "P & P Marketing", "Police Trainer (Rev 1.3B)", 0 )
 GAME( 1998, sshooter, 0,        sshooter, policetr, sshooter, ROT0, "P & P Marketing", "Sharpshooter (Rev 1.7)", 0 )
-GAME( 1998, sshoot12, sshooter, sshooter, policetr, sshoot12, ROT0, "P & P Marketing", "Sharpshooter (Rev 1.2)", 0 )
-GAME( 1998, sshoot11, sshooter, sshooter, policetr, sshoot12, ROT0, "P & P Marketing", "Sharpshooter (Rev 1.1)", 0 )
+GAME( 1998, sshoot12, sshooter, sshooter, sshoot11, sshoot12, ROT0, "P & P Marketing", "Sharpshooter (Rev 1.2)", 0 )
+GAME( 1998, sshoot11, sshooter, sshooter, sshoot11, sshoot12, ROT0, "P & P Marketing", "Sharpshooter (Rev 1.1)", 0 )

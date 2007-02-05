@@ -451,9 +451,7 @@ static DRIVER_INIT( exerion )
 	UINT8 *src, *dst, *temp;
 
 	/* allocate some temporary space */
-	temp = malloc(0x10000);
-	if (!temp)
-		return;
+	temp = malloc_or_die(0x10000);
 
 	/* make a temporary copy of the character data */
 	src = temp;

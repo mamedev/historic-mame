@@ -161,6 +161,21 @@ mame_file_error osd_write(osd_file *file, const void *buffer, UINT64 offset, UIN
 
 
 /*-----------------------------------------------------------------------------
+    osd_rmfile: deletes a file
+
+    Parameters:
+
+        filename - path to file to delete
+
+    Return value:
+
+        a mame_file_error describing any error that occurred while deleting
+        the file, or FILERR_NONE if no error occurred
+-----------------------------------------------------------------------------*/
+mame_file_error osd_rmfile(const char *filename);
+
+
+/*-----------------------------------------------------------------------------
     osd_get_physical_drive_geometry: if the given path points to a physical
         drive, return the geometry of that drive
 

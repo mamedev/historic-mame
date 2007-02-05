@@ -212,7 +212,7 @@ static MACHINE_DRIVER_START( battlex )
 	MDRV_CPU_ADD(Z80,10000000/2 )		 /* 10 MHz, divided ? (Z80A CPU) */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
-	MDRV_CPU_VBLANK_INT(irq0_line_pulse,8) /* controls game speed? */
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,8) /* controls game speed? */
 
 	MDRV_SCREEN_REFRESH_RATE(56) /* The video syncs at 15.8k H and 56 V (www.klov.com) */
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)

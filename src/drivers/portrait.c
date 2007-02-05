@@ -252,7 +252,7 @@ static const gfx_decode gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( portrait )
 	MDRV_CPU_ADD(Z80, 4000000)     /* 4 MHz ? */
 	MDRV_CPU_PROGRAM_MAP(portrait_map,0)
-	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(I8039, 3120000)  /* ? */
 	/* audio CPU */

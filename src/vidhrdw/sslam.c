@@ -150,6 +150,7 @@ VIDEO_START(sslam)
 	tilemap_set_transparent_pen(sslam_tx_tilemap,0);
 
 	sprites_x_offset = 0;
+	state_save_register_global(sprites_x_offset);
 
 	return 0;
 }
@@ -159,6 +160,7 @@ VIDEO_START(powerbls)
 	sslam_bg_tilemap = tilemap_create(get_powerbls_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,64);
 
 	sprites_x_offset = -21;
+	state_save_register_global(sprites_x_offset);
 
 	return 0;
 }
@@ -171,7 +173,7 @@ VIDEO_UPDATE(sslam)
 		return 0;
 	}
 
-	tilemap_set_scrollx(sslam_tx_tilemap,0, sslam_regs[0]+2);
+	tilemap_set_scrollx(sslam_tx_tilemap,0, sslam_regs[0]+1);	/* +0 looks better, but the real board has the left most pixel at the left edge shifted off screen */
 	tilemap_set_scrolly(sslam_tx_tilemap,0, (sslam_regs[1] & 0xff)+8);
 	tilemap_set_scrollx(sslam_md_tilemap,0, sslam_regs[2]+2);
 	tilemap_set_scrolly(sslam_md_tilemap,0, sslam_regs[3]+8);

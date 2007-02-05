@@ -425,8 +425,7 @@ void adder2_decode_char_roms(void)
 	{
 		UINT8 *s;
 
-		s = malloc( 0x40000 );
-		if ( s )
+		s = malloc_or_die( 0x40000 );
 		{
 			int x, y;
 

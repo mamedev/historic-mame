@@ -125,12 +125,9 @@ void decrypt156(void)
 {
 	UINT32 *rom = (UINT32 *)memory_region(REGION_CPU1);
 	int length = memory_region_length(REGION_CPU1);
-	UINT32 *buf = malloc(length);
+	UINT32 *buf = malloc_or_die(length);
 
-	if (buf)
-	{
 		memcpy(buf, rom, length);
 		decrypt(buf, rom, length);
 		free(buf);
-	}
 }

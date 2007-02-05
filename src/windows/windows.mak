@@ -247,6 +247,6 @@ TOOLS += ledutil$(EXE)
 # generic rule for the resource compiler
 #-------------------------------------------------
 
-$(OBJ)/$(MAMEOS)/%.res: src/$(MAMEOS)/%.rc
+$(OBJ)/$(MAMEOS)/%.res: src/$(MAMEOS)/%.rc | $(OSPREBUILD)
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<

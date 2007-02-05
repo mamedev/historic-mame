@@ -220,7 +220,7 @@ static MACHINE_DRIVER_START( onetwo )
 	MDRV_CPU_ADD(Z80,8000000)		 /* ? MHz */
 	MDRV_CPU_PROGRAM_MAP(main_cpu,0)
 	MDRV_CPU_IO_MAP(main_cpu_io,0)
-	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000)		 /* ? MHz */
 	/* audio CPU */

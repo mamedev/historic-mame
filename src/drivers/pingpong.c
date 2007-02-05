@@ -382,6 +382,34 @@ ROM_START( merlinmm )
 	ROM_LOAD( "pingpong.5h",  0x0120, 0x0100, CRC(8456046a) SHA1(8226f1325c14eb8aed5cd3c3d6bad9f9fd88c5fa) ) /* characters */
 ROM_END
 
+ROM_START( cashquiz )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "cashqcv5.ic3", 0x0000, 0x4000, CRC(8e9e2bed) SHA1(1894d40f89226a810c703ce5e49fdfd64d70287f) )
+	/* 0x4000 - 0x7fff = extra hardware for question board */
+
+	ROM_REGION( 0x80000, REGION_USER1, ROMREGION_ERASEFF) /* Question roms */
+	ROM_LOAD( "q30_soaps.ic1",		0x00000, 0x8000, CRC(b35a30ac) SHA1(5daf52a6d973f5a1b1ec3395962bcab690c54e43) )
+	ROM_LOAD( "q10.ic2",			0x08000, 0x8000, CRC(54962e11) SHA1(3c89ac26ebc002b2bc723f1424a7ba3db7a98e5f) )
+	ROM_LOAD( "q29_newsoccrick.ic3",0x10000, 0x8000, CRC(03d47262) SHA1(8a849cb4d4440042042cbdc0f34feebe71d6cb37) )
+	ROM_LOAD( "q28_sportstime.ic4", 0x18000, 0x8000, CRC(2bd00476) SHA1(88ed9d26909873c52273290686b4783563edfb61) )
+	ROM_LOAD( "q20_mot.ic5",		0x20000, 0x8000, CRC(17a38baf) SHA1(5560932e4747a242df7c8b7bbaf8679c9a8be6ac) )
+	ROM_LOAD( "q14_popmusic2.ic6",	0x28000, 0x8000, CRC(e486d6ee) SHA1(421723fa7604c0509092891e53723191bd62e294) )
+	ROM_LOAD( "q26_screenent.ic7",	0x30000, 0x8000, CRC(9d130515) SHA1(bfc32219d4d4eaca4efa02c3c46125144c8cd286) )
+	ROM_LOAD( "q19.ic8",			0x38000, 0x8000, CRC(9f3f77e6) SHA1(aa1600215e774b090f379a0aae520027cd1795c1) )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "cashq.7h",  0x0000, 0x2000, CRC(44b72a4f) SHA1(a993f1570cf9d8f86d4229198e9b1a0d6a92e51f) )
+	ROM_CONTINUE(0x0000, 0x2000)	/* rom is a 27128 in a 2764 socket */
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "cashq.12c",  0x0000, 0x2000, NO_DUMP ) // missing :-(
+
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
+	ROM_LOAD( "cashquiz.3j",  0x0000, 0x0020, CRC(dc70e23b) SHA1(90948f76d5c61eb57838e013aa93d733913a2d92) ) /* palette */
+	ROM_LOAD( "pingpong.11j", 0x0020, 0x0100, CRC(09d96b08) SHA1(81405e33eacc47f91ea4c7221d122f7e6f5b1e5d) ) /* sprites */
+	ROM_LOAD( "pingpong.5h",  0x0120, 0x0100, CRC(8456046a) SHA1(8226f1325c14eb8aed5cd3c3d6bad9f9fd88c5fa) ) /* characters */
+ROM_END
+
 DRIVER_INIT( merlinmm )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
@@ -392,5 +420,48 @@ DRIVER_INIT( merlinmm )
 		ROM[i] = BITSWAP8(ROM[i],0,1,2,3,4,5,6,7);
 }
 
+WRITE8_HANDLER( cashquiz_question_bank_w )
+{
+	logerror("%04x cashquiz_question_bank_w address %04x data %02x\n", activecpu_get_pc(), offset+0x4000, data);
+	/* how do we interpret the bank values?  I can't make sense of them */
+}
+
+READ8_HANDLER( cashquiz_unk_extra_r )
+{
+	logerror("%04x cashquiz_unk_extra_r address %04x\n", activecpu_get_pc(), offset+0x4000);
+	return rand();
+}
+
+WRITE8_HANDLER( cashquiz_unk_extra_w )
+{
+	logerror("%04x cashquiz_unk_extra_w address %04x data %02x\n", activecpu_get_pc(), offset+0x4000, data);
+}
+
+DRIVER_INIT( cashquiz )
+{
+	UINT8 *ROM;
+	int i;
+
+	/* decrypt program code */
+	ROM = memory_region(REGION_CPU1);
+	for( i = 0; i < 0x4000; i++ )
+		ROM[i] = BITSWAP8(ROM[i],0,1,2,3,4,5,6,7);
+
+	/* decrypt questions - like wizz quiz? (some of the question roms match..) */
+	ROM = memory_region(REGION_USER1);
+	for( i = 0; i < 0x80000; i++ )
+		ROM[i] = BITSWAP8(ROM[i],0,1,2,3,4,5,6,7);
+
+	/* extra hardware ends up being mapped in the banked area */
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, cashquiz_unk_extra_w ); // catch anything
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x4001, 0, 0, cashquiz_question_bank_w); // seems to be banking..
+
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7fff, 0, 0, cashquiz_unk_extra_r ); // catch anything
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x57ff, 0, 0, MRA8_BANK1); // reads bank data here?
+	memory_set_bankptr( 1, memory_region(REGION_USER1) );
+}
+
+
 GAME( 1985, pingpong, 0, pingpong, pingpong, 0,		   ROT0, "Konami", "Ping Pong", 0 )
 GAME( 1986, merlinmm, 0, merlinmm, merlinmm, merlinmm, ROT90,"Zilec - Zenitone", "Merlins Money Maze", 0 )
+GAME( 1986, cashquiz, 0, merlinmm, merlinmm, cashquiz, ROT0, "Zilec - Zenitone", "Cash Quiz (Type B, Version 5)", GAME_NOT_WORKING )

@@ -1569,9 +1569,7 @@ static void decode_mainrom(int rom_region)
 
 	rom = memory_region(rom_region);
 
-	tmp = malloc(0x10000);
-
-	if ( tmp )
+	tmp = malloc_or_die(0x10000);
 	{
 		int i;
 		long address;

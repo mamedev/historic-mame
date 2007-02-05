@@ -2335,12 +2335,12 @@ static void maxspeed(void) { unimplemented(); }
 	CLR_NVUF();														\
 	if (man < 0x7fffff80)											\
 	{																\
-		SET_MANTISSA(&tms32031.r[dreg], (man + 0x80) & 0xffffff00);	\
+		SET_MANTISSA(&tms32031.r[dreg], ((UINT32)man + 0x80) & 0xffffff00);	\
 		OR_NUF(&tms32031.r[dreg]);									\
 	}																\
 	else if (FREGEXP(dreg) < 127)									\
 	{																\
-		SET_MANTISSA(&tms32031.r[dreg], (man + 0x80) & 0x7fffff00);	\
+		SET_MANTISSA(&tms32031.r[dreg], ((UINT32)man + 0x80) & 0x7fffff00);	\
 		SET_EXPONENT(&tms32031.r[dreg], FREGEXP(dreg) + 1);			\
 		OR_NUF(&tms32031.r[dreg]);									\
 	}																\

@@ -16,6 +16,7 @@
 #include "debugger.h"
 #include "vidhrdw/vector.h"
 #include "render.h"
+#include "rendutil.h"
 #include "ui.h"
 
 #include "snap.lh"
@@ -119,7 +120,6 @@ static void rgb888_draw_primitives(const render_primitive *primlist, void *dstda
     video_init - start up the video system
 -------------------------------------------------*/
 
-#include "rendutil.h"
 int video_init(running_machine *machine)
 {
 	int scrnum;
@@ -247,6 +247,11 @@ void video_vblank_start(void)
 {
 	mame_time curtime = mame_timer_get_time();
 	int scrnum;
+
+	/* kludge: we get called at time 0 to reset, but at that point,
+       the time of last VBLANK is actually -vblank_duration */
+	if (curtime.seconds == 0 && curtime.subseconds == 0)
+		curtime = sub_mame_times(time_zero, double_to_mame_time(Machine->screen[0].vblank));
 
 	/* reset VBLANK timers for each screen -- fix me */
 	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
@@ -1373,7 +1378,7 @@ static void crosshair_render(void)
 		/* compute the values */
 		if (ipt->analog.crossaxis != CROSSHAIR_AXIS_NONE)
 		{
-			float value = (float)(readinputport(portnum) - ipt->analog.min) / (float)(ipt->analog.max - ipt->analog.min);
+			float value = (float)((readinputport(portnum) & ipt->mask) - ipt->analog.min) / (float)(ipt->analog.max - ipt->analog.min);
 			value = (value - 0.5f) * ipt->analog.crossscale + 0.5f;
 			value += ipt->analog.crossoffset;
 

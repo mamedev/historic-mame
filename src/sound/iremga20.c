@@ -21,30 +21,16 @@ Revisions:
   Thanks to Fujix, Yasuhiro Ogawa, the Guru, and Tormod
   for real PCB samples that made this possible.
 
+02-03-2007 R. Belmont
+- Cleaned up faux x86 assembly.
+
 *********************************************************/
 #include <math.h>
 #include "sndintrf.h"
 #include "streams.h"
 #include "iremga20.h"
 
-//AT
 #define MAX_VOL 256
-
-#define MIX_CH(CH) \
-	if (play[CH]) \
-	{ \
-		eax = pos[CH]; \
-		ebx = eax; \
-		eax >>= 8; \
-		eax = *(INT8 *)(esi + eax); \
-		eax *= vol[CH]; \
-		ebx += rate[CH]; \
-		pos[CH] = ebx; \
-		ebx = (ebx < end[CH]); \
-		play[CH] = ebx; \
-		edx += eax; \
-	}
-//ZT
 
 struct IremGA20_channel_def
 {
@@ -74,50 +60,67 @@ void IremGA20_update( void *param, stream_sample_t **inputs, stream_sample_t **b
 {
 	struct IremGA20_chip_def *chip = param;
 	UINT32 rate[4], pos[4], end[4], vol[4], play[4];
-	UINT32 esi;
-	stream_sample_t *edi, *ebp;
-	int eax, ebx, ecx, edx;
+	INT8 *pSamples;
+	stream_sample_t *outL, *outR;
+	int i, sampleout;
 
 	/* precache some values */
-	for (ecx=0; ecx<4; ecx++)
+	for (i=0; i < 4; i++)
 	{
-		rate[ecx] = chip->channel[ecx].rate;
-		pos[ecx] = chip->channel[ecx].pos;
-		end[ecx] = (chip->channel[ecx].end - 0x20) << 8;
-		vol[ecx] = chip->channel[ecx].volume;
-		play[ecx] = chip->channel[ecx].play;
+		rate[i] = chip->channel[i].rate;
+		pos[i] = chip->channel[i].pos;
+		end[i] = (chip->channel[i].end - 0x20) << 8;
+		vol[i] = chip->channel[i].volume;
+		play[i] = chip->channel[i].play;
 	}
 
-	ecx = length;
-	esi = (UINT32)chip->rom;
-	edi = buffer[0];
-	ebp = buffer[1];
-	edi += ecx;
-	ebp += ecx;
-	ecx = -ecx;
+	i = length;
+	pSamples = (INT8 *)chip->rom;
+	outL = buffer[0];
+	outR = buffer[1];
 
-	for (; ecx; ecx++)
+	for (i = 0; i < length; i++)
 	{
-		edx = 0;
+		sampleout = 0;
 
-		MIX_CH(0);
-		MIX_CH(1);
-		MIX_CH(2);
-		MIX_CH(3);
+		// update the 4 channels inline
+		if (play[0])
+		{
+			sampleout += pSamples[pos[0]>>8] * vol[0];
+			pos[0] += rate[0];
+			play[0] = (pos[0] < end[0]);
+		}
+		if (play[1])
+		{
+			sampleout += pSamples[pos[1]>>8] * vol[1];
+			pos[1] += rate[1];
+			play[1] = (pos[1] < end[1]);
+		}
+		if (play[2])
+		{
+			sampleout += pSamples[pos[2]>>8] * vol[2];
+			pos[2] += rate[2];
+			play[2] = (pos[2] < end[2]);
+		}
+		if (play[3])
+		{
+			sampleout += pSamples[pos[3]>>8] * vol[3];
+			pos[3] += rate[3];
+			play[3] = (pos[3] < end[3]);
+		}
 
-		edx >>= 2;
-		edi[ecx] = edx;
-		ebp[ecx] = edx;
+		sampleout >>= 2;
+		outL[i] = sampleout;
+		outR[i] = sampleout;
 	}
 
 	/* update the regs now */
-	for (ecx=0; ecx< 4; ecx++)
+	for (i=0; i < 4; i++)
 	{
-		chip->channel[ecx].pos = pos[ecx];
-		chip->channel[ecx].play = play[ecx];
+		chip->channel[i].pos = pos[i];
+		chip->channel[i].play = play[i];
 	}
 }
-//ZT
 
 WRITE8_HANDLER( IremGA20_w )
 {

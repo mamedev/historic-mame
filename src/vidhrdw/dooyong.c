@@ -2,13 +2,13 @@
 
 
 
-unsigned char *lastday_txvideoram;
-unsigned char *lastday_bgscroll,*lastday_fgscroll,*bluehawk_fg2scroll;
+UINT8 *lastday_txvideoram;
+UINT8 *lastday_bgscroll,*lastday_fgscroll,*bluehawk_fg2scroll;
 UINT16 *rshark_scroll1,*rshark_scroll2,*rshark_scroll3,*rshark_scroll4;
 UINT16 *popbingo_scroll, *popbingo_scroll2;
-static int tx_pri;
-static int flytiger_pri;
-static int sprites_disabled;
+static UINT8 sprites_disabled;		/* Used by lastday/lastdaya */
+static UINT8 flytiger_pri;			/* Used by flytiger */
+static UINT8 tx_pri;				/* Used by sadari/gundl94/primella */
 
 
 WRITE8_HANDLER( lastday_ctrl_w )
@@ -44,12 +44,8 @@ WRITE8_HANDLER( pollux_ctrl_w )
 
 WRITE8_HANDLER( primella_ctrl_w )
 {
- 	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
 	/* bits 0-2 select ROM bank */
-	bankaddress = 0x10000 + (data & 0x07) * 0x4000;
-	memory_set_bankptr(1,&RAM[bankaddress]);
+	memory_set_bank(1, data & 0x07);
 
 	/* bit 3 disables tx layer */
 	tx_pri = data & 0x08;
@@ -641,6 +637,24 @@ VIDEO_UPDATE( popbingo )
 	return 0;
 }
 
+VIDEO_START( lastday )
+{
+	state_save_register_global(sprites_disabled);
+	return 0;
+}
+
+VIDEO_START( flytiger )
+{
+	state_save_register_global(flytiger_pri);
+	return 0;
+}
+
+VIDEO_START( primella )
+{
+	memory_configure_bank(1, 0, 8, memory_region(REGION_CPU1) + 0x10000, 0x4000);
+	state_save_register_global(tx_pri);
+	return 0;
+}
 
 VIDEO_EOF( dooyong )
 {

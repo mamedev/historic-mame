@@ -3,14 +3,11 @@
     Atari Tempest hardware
 
     Games supported:
-        * Tempest
+        * Tempest [4 sets]
         * Tempest Tubes
 
     Known bugs:
         * none at this time
-
-    To do:
-        * correctly hook up player 2 controls in cocktail mode
 
 ****************************************************************************
 
@@ -290,6 +287,13 @@ Version 1 for Tempest Analog Vector-Generator PCB Assembly A037383-01 or A037383
 #define MASTER_CLOCK (12096000)
 #define CLOCK_3KHZ  (MASTER_CLOCK / 4096)
 
+#define TEMPEST_KNOB_P1_TAG	("KNOBP1")
+#define TEMPEST_KNOB_P2_TAG	("KNOBP2")
+#define TEMPEST_BUTTONS_P1_TAG	("BUTTONSP1")
+#define TEMPEST_BUTTONS_P2_TAG	("BUTTONSP2")
+
+
+UINT8 tempest_player_select;
 
 /*************************************
  *
@@ -308,6 +312,39 @@ static WRITE8_HANDLER( wdclr_w )
  *  Input ports
  *
  *************************************/
+
+static UINT32 tempest_knob_r(void *param)
+{
+	UINT32 ret;
+
+	if (tempest_player_select)
+	{
+		ret = readinputportbytag(TEMPEST_KNOB_P2_TAG);
+	}
+	else
+	{
+		ret = readinputportbytag(TEMPEST_KNOB_P1_TAG);
+	}
+
+	return ret;
+}
+
+static UINT32 tempest_buttons_r(void *param)
+{
+	UINT32 ret;
+
+	if (tempest_player_select)
+	{
+		ret = readinputportbytag(TEMPEST_BUTTONS_P2_TAG);
+	}
+	else
+	{
+		ret = readinputportbytag(TEMPEST_BUTTONS_P1_TAG);
+	}
+
+	return ret;
+}
+
 
 static READ8_HANDLER( tempest_IN0_r )
 {
@@ -348,6 +385,7 @@ static WRITE8_HANDLER( tempest_led_w )
 	set_led_status(0, ~data & 0x02);
 	set_led_status(1, ~data & 0x01);
 	/* FLIP is bit 0x04 */
+	tempest_player_select = data & 0x04;
 }
 
 
@@ -401,7 +439,7 @@ ADDRESS_MAP_END
  *************************************/
 
 INPUT_PORTS_START( tempest )
-	PORT_START	/* IN0 */
+	PORT_START_TAG("IN0")	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -416,9 +454,8 @@ INPUT_PORTS_START( tempest )
  	/* handled by tempest_IN0_r() */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* IN1/DSW0 */
-	/* This is the Tempest spinner input. It only uses 4 bits. */
-	PORT_BIT( 0x0f, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(20)
+	PORT_START_TAG("IN1/DSW0")	/* IN1/DSW0 */
+	PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM(tempest_knob_r, 0)
 	/* The next one is reponsible for cocktail mode.
      * According to the documentation, this is not a switch, although
      * it may have been planned to put it on the Math Box PCB, D/E2 )
@@ -430,7 +467,7 @@ INPUT_PORTS_START( tempest )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* IN2 */
+	PORT_START_TAG("IN2")	/* IN2 */
 	PORT_DIPNAME(  0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(     0x02, DEF_STR( Easy ) )
 	PORT_DIPSETTING(     0x03, "Medium1" )
@@ -439,13 +476,12 @@ INPUT_PORTS_START( tempest )
 	PORT_DIPNAME(  0x04, 0x04, "Rating" )
 	PORT_DIPSETTING(     0x04, "1, 3, 5, 7, 9" )
 	PORT_DIPSETTING(     0x00, "tied to high score" )
-	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT(0x18, IP_ACTIVE_HIGH, IPT_SPECIAL ) PORT_CUSTOM(tempest_buttons_r, 0)
 	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* DSW1 - (N13 on analog vector generator PCB */
+	PORT_START_TAG("DSW1")	/* DSW1 - (N13 on analog vector generator PCB */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
@@ -469,7 +505,7 @@ INPUT_PORTS_START( tempest )
 	PORT_DIPSETTING(    0xc0, "Freeze Mode" )
 	PORT_DIPSETTING(    0xe0, "Freeze Mode" )
 
-	PORT_START	/* DSW2 - (L12 on analog vector generator PCB */
+	PORT_START_TAG("DSW2")	/* DSW2 - (L12 on analog vector generator PCB */
 	PORT_DIPNAME( 0x01, 0x00, "Minimum" )
 	PORT_DIPSETTING(    0x00, "1 Credit" )
 	PORT_DIPSETTING(    0x01, "2 Credit" )
@@ -492,6 +528,26 @@ INPUT_PORTS_START( tempest )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x40, "4" )
 	PORT_DIPSETTING(    0x80, "5" )
+
+	PORT_START_TAG(TEMPEST_KNOB_P1_TAG)
+	/* This is the Tempest spinner input. It only uses 4 bits. */
+	PORT_BIT( 0x0f, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) PORT_PLAYER(1)
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG(TEMPEST_KNOB_P2_TAG)
+	/* This is the Tempest spinner input. It only uses 4 bits. */
+	PORT_BIT( 0x0f, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) PORT_PLAYER(2)
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG(TEMPEST_BUTTONS_P1_TAG)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG(TEMPEST_BUTTONS_P2_TAG)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 

@@ -657,7 +657,7 @@ static const gfx_decode gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( pbillrd )
 	MDRV_CPU_ADD_TAG("main",Z80, 18432000/6)	//confirmed
 	MDRV_CPU_PROGRAM_MAP(pbillrd_readmem,pbillrd_writemem)
-	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,TIME_IN_HZ(50*3)) //??
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,TIME_IN_HZ(50*3)) //??
 	MDRV_CPU_VBLANK_INT(freekick_irqgen,1)
 
 	MDRV_SCREEN_REFRESH_RATE(60)

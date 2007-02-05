@@ -81,7 +81,11 @@ static struct sh6840_timer_channel sh6840_timer[3];
 static INT16 sh6840_volume[3];
 static UINT8 sh6840_MSB;
 static UINT8 sh6840_noise_state;
-static UINT8 sh6840_noise_history;
+static UINT8 sh6840_LFSR_oldxor = 0; /* should be saved in savestate */
+static UINT32 sh6840_LFSR_0 = 0xffffffff;/* ditto */
+static UINT32 sh6840_LFSR_1 = 0xffffffff;/* ditto */
+static UINT32 sh6840_LFSR_2 = 0xffffffff;/* ditto */
+static UINT32 sh6840_LFSR_3 = 0xffffffff;/* ditto */
 static UINT32 sh6840_clocks_per_sample;
 static UINT32 sh6840_clock_count;
 static UINT8 exidy_sfxctrl;
@@ -229,26 +233,36 @@ INLINE void sh6840_apply_clock(struct sh6840_timer_channel *t, int clocks)
 
 INLINE int sh6840_update_noise(int clocks)
 {
-	UINT8 history = sh6840_noise_history;
+	UINT32 newxor;
 	int noise_clocks = 0;
 	int i;
 
 	/* loop over clocks */
 	for (i = 0; i < clocks * 2; i++)
 	{
-		/* keep a history of the last few noise samples */
-		history = (history << 1) | (rand() & 1);
-
+		/* shift the LFSR. its a LOOOONG LFSR, so we need
+        * four longs to hold it all!
+        * first we grab new sample, then shift the high bits,
+        * then the low ones; finally or in the result and see if we've
+        * had a 0->1 transition */
+		newxor = (sh6840_LFSR_3 ^ sh6840_LFSR_2) >> 31; /* high bits of 3 and 2 xored is new xor */
+		sh6840_LFSR_3 <<= 1;
+		sh6840_LFSR_3 |= sh6840_LFSR_2 >> 31;
+		sh6840_LFSR_2 <<= 1;
+		sh6840_LFSR_2 |= sh6840_LFSR_1 >> 31;
+		sh6840_LFSR_1 <<= 1;
+		sh6840_LFSR_1 |= sh6840_LFSR_0 >> 31;
+		sh6840_LFSR_0 <<= 1;
+		sh6840_LFSR_0 |= newxor ^ sh6840_LFSR_oldxor;
+		sh6840_LFSR_oldxor = newxor;
+		/*printf("LFSR: %4x, %4x, %4x, %4x\n", sh6840_LFSR_3, sh6840_LFSR_2, sh6840_LFSR_1, sh6840_LFSR_0);*/
 		/* if we clocked 0->1, that will serve as an external clock */
-		if ((history & 0x03) == 0x01)
+		if ((sh6840_LFSR_2 & 0x03) == 0x01) /* tap is at 96th bit */
 		{
 			sh6840_noise_state ^= 1;
 			noise_clocks += sh6840_noise_state;
 		}
 	}
-
-	/* remember the history for next time */
-	sh6840_noise_history = history;
 	return noise_clocks;
 }
 
@@ -399,6 +413,13 @@ static void *common_start(void)
 
 	/* Init PIA */
 	pia_reset();
+
+	/* Init LFSR */
+	sh6840_LFSR_oldxor = 0;
+	sh6840_LFSR_0 = 0xffffffff;
+	sh6840_LFSR_1 = 0xffffffff;
+	sh6840_LFSR_2 = 0xffffffff;
+	sh6840_LFSR_3 = 0xffffffff;
 
 	/* Init 6532 */
     riot_timer = timer_alloc(riot_interrupt);

@@ -91,6 +91,7 @@ struct _gfx_element
 #define GFX_DONT_FREE_GFXDATA	4	/* gfxdata was not malloc()ed, so don't free it on exit */
 
 
+typedef struct _gfx_decode gfx_decode;
 struct _gfx_decode
 {
 	int memory_region;	/* memory region where the data resides (usually 1) */
@@ -100,16 +101,14 @@ struct _gfx_decode
 	UINT16 color_codes_start;	/* offset in the color lookup table where color codes start */
 	UINT16 total_color_codes;	/* total number of color codes */
 };
-typedef struct _gfx_decode gfx_decode;
 
 
+typedef struct _alpha_cache alpha_cache;
 struct _alpha_cache
 {
-	const UINT8 *alphas;
-	const UINT8 *alphad;
-	UINT8 alpha[0x101][0x100];
+	int		alphas;
+	int		alphad;
 };
-typedef struct _alpha_cache alpha_cache;
 
 extern struct _alpha_cache drawgfx_alpha_cache;
 
@@ -266,44 +265,42 @@ INLINE void plot_box(mame_bitmap *bitmap, int x, int y, int width, int height, p
 INLINE void alpha_set_level(int level)
 {
 	assert(level >= 0 && level <= 256);
-	drawgfx_alpha_cache.alphas = drawgfx_alpha_cache.alpha[level];
-	drawgfx_alpha_cache.alphad = drawgfx_alpha_cache.alpha[256-level];
+	drawgfx_alpha_cache.alphas = level;
+	drawgfx_alpha_cache.alphad = 256 - level;
 }
 
 
 INLINE UINT32 alpha_blend16(UINT32 d, UINT32 s)
 {
-	const UINT8 *alphas = drawgfx_alpha_cache.alphas;
-	const UINT8 *alphad = drawgfx_alpha_cache.alphad;
-	return (alphas[s & 0x1f] | (alphas[(s >> 5) & 0x1f] << 5) | (alphas[(s >> 10) & 0x1f] << 10))
-		+ (alphad[d & 0x1f] | (alphad[(d >> 5) & 0x1f] << 5) | (alphad[(d >> 10) & 0x1f] << 10));
+	return ((((s & 0x001f) * drawgfx_alpha_cache.alphas + (d & 0x001f) * drawgfx_alpha_cache.alphad) >> 8)) |
+		   ((((s & 0x03e0) * drawgfx_alpha_cache.alphas + (d & 0x03e0) * drawgfx_alpha_cache.alphad) >> 8) & 0x03e0) |
+		   ((((s & 0x7c00) * drawgfx_alpha_cache.alphas + (d & 0x7c00) * drawgfx_alpha_cache.alphad) >> 8) & 0x7c00);
 }
 
 
 INLINE UINT32 alpha_blend32(UINT32 d, UINT32 s)
 {
-	const UINT8 *alphas = drawgfx_alpha_cache.alphas;
-	const UINT8 *alphad = drawgfx_alpha_cache.alphad;
-	return (alphas[s & 0xff] | (alphas[(s >> 8) & 0xff] << 8) | (alphas[(s >> 16) & 0xff] << 16))
-		+ (alphad[d & 0xff] | (alphad[(d >> 8) & 0xff] << 8) | (alphad[(d >> 16) & 0xff] << 16));
+	return ((((s & 0x0000ff) * drawgfx_alpha_cache.alphas + (d & 0x0000ff) * drawgfx_alpha_cache.alphad) >> 8)) |
+		   ((((s & 0x00ff00) * drawgfx_alpha_cache.alphas + (d & 0x00ff00) * drawgfx_alpha_cache.alphad) >> 8) & 0x00ff00) |
+		   ((((s & 0xff0000) * drawgfx_alpha_cache.alphas + (d & 0xff0000) * drawgfx_alpha_cache.alphad) >> 8) & 0xff0000);
 }
 
 
 INLINE UINT32 alpha_blend_r16(UINT32 d, UINT32 s, UINT8 level)
 {
-	const UINT8 *alphas = drawgfx_alpha_cache.alpha[level];
-	const UINT8 *alphad = drawgfx_alpha_cache.alpha[256 - level];
-	return (alphas[s & 0x1f] | (alphas[(s >> 5) & 0x1f] << 5) | (alphas[(s >> 10) & 0x1f] << 10))
-		+ (alphad[d & 0x1f] | (alphad[(d >> 5) & 0x1f] << 5) | (alphad[(d >> 10) & 0x1f] << 10));
+	int alphad = 256 - level;
+	return ((((s & 0x001f) * level + (d & 0x001f) * alphad) >> 8)) |
+		   ((((s & 0x03e0) * level + (d & 0x03e0) * alphad) >> 8) & 0x03e0) |
+		   ((((s & 0x7c00) * level + (d & 0x7c00) * alphad) >> 8) & 0x7c00);
 }
 
 
 INLINE UINT32 alpha_blend_r32( UINT32 d, UINT32 s, UINT8 level )
 {
-	const UINT8 *alphas = drawgfx_alpha_cache.alpha[level];
-	const UINT8 *alphad = drawgfx_alpha_cache.alpha[256 - level];
-	return (alphas[s & 0xff] | (alphas[(s >> 8) & 0xff] << 8) | (alphas[(s >> 16) & 0xff] << 16))
-		+ (alphad[d & 0xff] | (alphad[(d >> 8) & 0xff] << 8) | (alphad[(d >> 16) & 0xff] << 16));
+	int alphad = 256 - level;
+	return ((((s & 0x0000ff) * level + (d & 0x0000ff) * alphad) >> 8)) |
+		   ((((s & 0x00ff00) * level + (d & 0x00ff00) * alphad) >> 8) & 0x00ff00) |
+		   ((((s & 0xff0000) * level + (d & 0xff0000) * alphad) >> 8) & 0xff0000);
 }
 
 

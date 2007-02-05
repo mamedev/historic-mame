@@ -938,7 +938,6 @@ static void open_wav_file(struct SN76477 *sn)
 static void close_wav_file(struct SN76477 *sn)
 {
 	wav_close(sn->file);
-	free(sn->file);
 }
 
 

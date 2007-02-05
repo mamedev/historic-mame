@@ -282,7 +282,7 @@ int ui_display_startup_screens(int show_disclaimer, int show_warnings, int show_
 
 	/* loop over states */
 	ui_set_handler(handler_ingame, 0);
-	for (state = 0; state < maxstate && !mame_is_scheduled_event_pending(Machine); state++)
+	for (state = -1; state < maxstate && !mame_is_scheduled_event_pending(Machine); state++)
 	{
 		/* default to standard colors */
 		messagebox_backcolor = UI_FILLCOLOR;
@@ -290,6 +290,20 @@ int ui_display_startup_screens(int show_disclaimer, int show_warnings, int show_
 		/* pick the next state */
 		switch (state)
 		{
+			case -1:
+				if (show_disclaimer)
+				{
+					sprintf(messagebox_text,
+						"Happy 10th Anniversary! It has been 10 years since the "
+						"original release of MAME 0.1.\n\nAfter 10 years, hundreds "
+						"of developers, thousands of games, and tens of thousands "
+						"(if not more) of hours of hard work, MAME development is "
+						"still going strong.\n\nThanks to everyone who has supported "
+						"this project over the years!");
+					ui_set_handler(handler_messagebox_anykey, 0);
+				}
+				break;
+
 			case 0:
 				if (show_disclaimer && sprintf_disclaimer(messagebox_text))
 					ui_set_handler(handler_messagebox_ok, 0);

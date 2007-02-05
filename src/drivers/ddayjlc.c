@@ -560,7 +560,7 @@ static DRIVER_INIT( ddayjlc )
 	{
 		UINT32 oldaddr, newadr, length,j;
 		UINT8 *src, *dst, *temp;
-		temp = malloc(0x10000);
+		temp = malloc_or_die(0x10000);
 		src = temp;
 		dst = memory_region(REGION_GFX1);
 		length = memory_region_length(REGION_GFX1);
@@ -574,6 +574,7 @@ static DRIVER_INIT( ddayjlc )
 			newadr+=32;
 			oldaddr+=16;
 		}
+		free(temp);
 	}
 
 	memory_set_bankptr( 1, memory_region(REGION_USER1) );

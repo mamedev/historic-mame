@@ -268,6 +268,7 @@ int scsihd_dispatch(int operation, void *file, INT64 intparm, UINT8 *ptrparm)
 			break;
 
 		case SCSIOP_DELETE_INSTANCE:
+			free(file);
 			break;
 
 		case SCSIOP_GET_DEVICE:

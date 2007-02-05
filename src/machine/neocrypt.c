@@ -517,9 +517,7 @@ static void neogeo_gfx_decrypt(int extra_xor)
 
 	rom_size = memory_region_length(REGION_GFX3);
 
-	buf = malloc(rom_size);
-
-	if (!buf) return;
+	buf = malloc_or_die(rom_size);
 
 	rom = memory_region(REGION_GFX3);
 
@@ -661,7 +659,7 @@ void svcpcb_gfx_decrypt( void )
 	int ofst;
 	int rom_size = memory_region_length( REGION_GFX3 );
 	UINT8 *rom = memory_region( REGION_GFX3 );
-	UINT8 *buf = malloc( rom_size );
+	UINT8 *buf = malloc_or_die( rom_size );
 
 	for( i = 0; i < rom_size; i++ )
 	{
@@ -708,7 +706,7 @@ void kf2k3pcb_gfx_decrypt( void )
 	int ofst;
 	int rom_size = memory_region_length( REGION_GFX3 );
 	UINT8 *rom = memory_region( REGION_GFX3 );
-	UINT8 *buf = malloc( rom_size );
+	UINT8 *buf = malloc_or_die( rom_size );
 
 	for ( i = 0; i < rom_size; i++ )
 	{
@@ -741,7 +739,7 @@ NeoGeo 'P' ROM encryption
 void kof98_decrypt_68k(void)
 {
 	UINT8 *src = memory_region(REGION_CPU1);
-	UINT8 *dst = malloc(0x200000);
+	UINT8 *dst = malloc_or_die(0x200000);
 	int i, j, k;
 	static const unsigned int sec[]={0x000000,0x100000,0x000004,0x100004,0x10000a,0x00000a,0x10000e,0x00000e};
 	static const unsigned int pos[]={0x000,0x004,0x00a,0x00e};
@@ -953,16 +951,13 @@ void kof2002_decrypt_68k(void)
 	int i;
 	static const unsigned int sec[]={0x100000,0x280000,0x300000,0x180000,0x000000,0x380000,0x200000,0x080000};
 	UINT8 *src = memory_region(REGION_CPU1)+0x100000;
-	UINT8 *dst = malloc(0x400000);
-	if (dst)
-	{
+	UINT8 *dst = malloc_or_die(0x400000);
 		memcpy( dst, src, 0x400000 );
 		for( i=0; i<8; ++i )
 		{
 			memcpy( src+i*0x80000, dst+sec[i], 0x80000 );
 		}
 	free(dst);
-	}
 }
 
 void matrim_decrypt_68k(void)
@@ -970,16 +965,13 @@ void matrim_decrypt_68k(void)
 	int i;
 	static const unsigned int sec[]={0x100000,0x280000,0x300000,0x180000,0x000000,0x380000,0x200000,0x080000};
 	UINT8 *src = memory_region(REGION_CPU1)+0x100000;
-	UINT8 *dst = malloc(0x400000);
-	if (dst)
-	{
+	UINT8 *dst = malloc_or_die(0x400000);
 		memcpy( dst, src, 0x400000);
 		for( i=0; i<8; ++i )
 		{
 			memcpy( src+i*0x80000, dst+sec[i], 0x80000 );
 		}
 	free(dst);
-	}
 }
 
 void samsho5_decrypt_68k(void)
@@ -987,17 +979,14 @@ void samsho5_decrypt_68k(void)
 	int i;
 	static const unsigned int sec[]={0x000000,0x080000,0x700000,0x680000,0x500000,0x180000,0x200000,0x480000,0x300000,0x780000,0x600000,0x280000,0x100000,0x580000,0x400000,0x380000};
 	UINT8 *src = memory_region(REGION_CPU1);
-	UINT8 *dst = malloc(0x800000);
+	UINT8 *dst = malloc_or_die(0x800000);
 
-	if (dst) // Descramble P
-	{
 		memcpy( dst, src, 0x800000 );
 		for( i=0; i<16; ++i )
 		{
 			memcpy( src+i*0x80000, dst+sec[i], 0x80000 );
 		}
 	free(dst);
-	}
 }
 
 void samsh5p_decrypt_68k(void)
@@ -1005,17 +994,14 @@ void samsh5p_decrypt_68k(void)
 	int i;
 	static const unsigned int sec[]={0x000000,0x080000,0x500000,0x480000,0x600000,0x580000,0x700000,0x280000,0x100000,0x680000,0x400000,0x780000,0x200000,0x380000,0x300000,0x180000};
 	UINT8 *src = memory_region(REGION_CPU1);
-	UINT8 *dst = malloc(0x800000);
+	UINT8 *dst = malloc_or_die(0x800000);
 
-	if (dst) // Descramble P
-	{
 		memcpy( dst, src, 0x800000 );
 		for( i=0; i<16; ++i )
 		{
 			memcpy( src+i*0x80000, dst+sec[i], 0x80000 );
 		}
 	free(dst);
-	}
 }
 
 /* mslug5, svcchaos, kof2003 have updated P rom scramble */
@@ -1028,7 +1014,7 @@ void mslug5_decrypt_68k(void)
 	int ofst;
 	int rom_size = 0x800000;
 	UINT8 *rom = memory_region( REGION_CPU1 );
-	UINT8 *buf = malloc( rom_size );
+	UINT8 *buf = malloc_or_die( rom_size );
 
 	for( i = 0; i < 0x100000; i++ )
 	{
@@ -1072,7 +1058,7 @@ void svcchaos_px_decrypt(void)
 	int ofst;
 	int rom_size = 0x800000;
 	UINT8 *rom = memory_region( REGION_CPU1 );
-	UINT8 *buf = malloc( rom_size );
+	UINT8 *buf = malloc_or_die( rom_size );
 
 	for( i = 0; i < 0x100000; i++ )
 	{
@@ -1147,7 +1133,7 @@ void kf2k3pcb_decrypt_68k( void )
 	int ofst;
 	int rom_size = 0x900000;
 	UINT8 *rom = memory_region( REGION_CPU1 );
-	UINT8 *buf = malloc( rom_size );
+	UINT8 *buf = malloc_or_die( rom_size );
 
 	for (i = 0; i < 0x100000; i++)
 	{
@@ -1191,7 +1177,7 @@ void kof2003_decrypt_68k( void )
 	int ofst;
 	int rom_size = 0x900000;
 	UINT8 *rom = memory_region( REGION_CPU1 );
-	UINT8 *buf = malloc( rom_size );
+	UINT8 *buf = malloc_or_die( rom_size );
 
 	for (i = 0; i < 0x100000; i++)
 	{
@@ -1250,7 +1236,7 @@ void kof2003biosdecode(void)
 		0xd3,0xd2,0x5c,0x5d,0x57,0x56,0xd8,0xd9,
 	};
 	UINT16*src= (UINT16*)memory_region( REGION_USER1 );
-	UINT16*buf= (UINT16*)malloc(0x80000);
+	UINT16*buf= malloc_or_die(0x80000);
 	int	a,addr;
 
 		for (a=0;a<0x80000/2;a++)
@@ -1296,9 +1282,7 @@ void neo_pcm2_snk_1999(int value)
 
 	if( rom != NULL )
 	{	/* swap address lines on the whole ROMs */
-		UINT16 *buffer = malloc((value / 2) * sizeof(UINT16));
-		if (!buffer)
-			return;
+		UINT16 *buffer = malloc_or_die((value / 2) * sizeof(UINT16));
 
 		for( i = 0; i < size / 2; i += ( value / 2 ) )
 		{
@@ -1332,7 +1316,7 @@ void neo_pcm2_swap(int value)
 		{0x4B,0xA4,0x63,0x46,0xF0,0x91,0xEA,0x62},
 		{0x4B,0xA4,0x63,0x46,0xF0,0x91,0xEA,0x62}};
 	UINT8 *src = memory_region(REGION_SOUND1);
-	UINT8 *buf = malloc(0x1000000);
+	UINT8 *buf = malloc_or_die(0x1000000);
 	int i, j, d;
 
 	memcpy(buf,src,0x1000000);

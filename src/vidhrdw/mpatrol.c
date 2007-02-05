@@ -198,12 +198,19 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( mpatrol )
 {
+	int y;
+
 	bg_tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	tilemap_set_transparent_pen(bg_tilemap, 0);
 
-	tilemap_set_scroll_rows(bg_tilemap, 16);
+	tilemap_set_scroll_rows(bg_tilemap, 4); /* only lines 192-256 scroll */
 
+	/* Set the first 3 quarters of the screen to 255 */
+	for (y=0;y<3;y++)
+	{
+		tilemap_set_scrollx(bg_tilemap, y, 255);
+	}
 	return 0;
 }
 
@@ -211,7 +218,15 @@ VIDEO_START( mpatrol )
 
 WRITE8_HANDLER( mpatrol_scroll_w )
 {
-	tilemap_set_scrollx(bg_tilemap, offset, -data);
+
+/*
+    According to the schematics there is only one video register that holds the X scroll value
+    with a NAND gate on the V64 and V128 lines to control when it's read, and when
+    255 (via 8 pull up resistors) is used.
+
+    So we set the first 3 quarters to 255 (done in VIDEO_START) and the last to the scroll value
+*/
+	tilemap_set_scrollx(bg_tilemap, 3, -data);
 }
 
 

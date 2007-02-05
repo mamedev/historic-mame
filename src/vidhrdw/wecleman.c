@@ -887,7 +887,7 @@ VIDEO_START( wecleman )
 	UINT8 *buffer;
 	int i, j;
 
-	assert(machine->screen[0].format == BITMAP_FORMAT_INDEXED16);
+	assert(machine->screen[0].format == BITMAP_FORMAT_RGB15);
 	buffer = auto_malloc(0x12c00);	// working buffer for sprite operations
 
 	gameid = 0;

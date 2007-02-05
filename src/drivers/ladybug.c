@@ -709,12 +709,12 @@ static MACHINE_DRIVER_START( sraider )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
 	MDRV_CPU_PROGRAM_MAP(sraider_cpu1_map,0)
-	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
 	MDRV_CPU_PROGRAM_MAP(sraider_cpu2_map,0)
 	MDRV_CPU_IO_MAP(sraider_cpu2_io,0)
-	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_SCREEN_REFRESH_RATE(60)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -574,10 +574,8 @@ DRIVER_INIT( anteater )
 
 	RAM = memory_region(REGION_GFX1);
 
-	scratch = malloc(memory_region_length(REGION_GFX1));
+	scratch = malloc_or_die(memory_region_length(REGION_GFX1));
 
-	if (scratch)
-	{
 		memcpy(scratch, RAM, memory_region_length(REGION_GFX1));
 
 		for (i = 0; i < memory_region_length(REGION_GFX1); i++)
@@ -594,7 +592,6 @@ DRIVER_INIT( anteater )
 		}
 
 		free(scratch);
-	}
 }
 
 DRIVER_INIT( rescue )
@@ -613,10 +610,8 @@ DRIVER_INIT( rescue )
 
 	RAM = memory_region(REGION_GFX1);
 
-	scratch = malloc(memory_region_length(REGION_GFX1));
+	scratch = malloc_or_die(memory_region_length(REGION_GFX1));
 
-	if (scratch)
-	{
 		memcpy(scratch, RAM, memory_region_length(REGION_GFX1));
 
 		for (i = 0; i < memory_region_length(REGION_GFX1); i++)
@@ -633,7 +628,6 @@ DRIVER_INIT( rescue )
 		}
 
 		free(scratch);
-	}
 }
 
 DRIVER_INIT( minefld )
@@ -651,10 +645,8 @@ DRIVER_INIT( minefld )
 
 	RAM = memory_region(REGION_GFX1);
 
-	scratch = malloc(memory_region_length(REGION_GFX1));
+	scratch = malloc_or_die(memory_region_length(REGION_GFX1));
 
-	if (scratch)
-	{
 		memcpy(scratch, RAM, memory_region_length(REGION_GFX1));
 
 		for (i = 0; i < memory_region_length(REGION_GFX1); i++)
@@ -672,7 +664,6 @@ DRIVER_INIT( minefld )
 		}
 
 		free(scratch);
-	}
 }
 
 DRIVER_INIT( losttomb )
@@ -691,10 +682,8 @@ DRIVER_INIT( losttomb )
 
 	RAM = memory_region(REGION_GFX1);
 
-	scratch = malloc(memory_region_length(REGION_GFX1));
+	scratch = malloc_or_die(memory_region_length(REGION_GFX1));
 
-	if (scratch)
-	{
 		memcpy(scratch, RAM, memory_region_length(REGION_GFX1));
 
 		for (i = 0; i < memory_region_length(REGION_GFX1); i++)
@@ -711,7 +700,6 @@ DRIVER_INIT( losttomb )
 		}
 
 		free(scratch);
-	}
 }
 
 DRIVER_INIT( superbon )

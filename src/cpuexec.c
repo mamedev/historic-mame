@@ -950,7 +950,7 @@ void cpu_compute_scanline_timing(void)
 
 	/* recompute the vblank period */
 	vblank_period = double_to_mame_time(1.0 / (Machine->screen[0].refresh * (vblank_multiplier ? vblank_multiplier : 1)));
-	if (vblank_timer)
+	if (vblank_timer != NULL && mame_timer_enable(vblank_timer, FALSE))
 	{
 		mame_time remaining = mame_timer_timeleft(vblank_timer);
 		if (remaining.seconds == 0 && remaining.subseconds == 0)
@@ -1646,7 +1646,7 @@ static void cpu_inittimers(void)
 	/* note that since we start the first frame on the refresh, we can't pulse starting
        immediately; instead, we back up one VBLANK period, and inch forward until we hit
        positive time. That time will be the time of the first VBLANK timer callback */
-	first_time = add_mame_times(double_to_mame_time(-Machine->screen[0].vblank), vblank_period);
+	first_time = sub_mame_times(vblank_period, double_to_mame_time(Machine->screen[0].vblank));
 	while (compare_mame_times(first_time, time_zero) < 0)
 	{
 		cpu_vblankcallback(-1);

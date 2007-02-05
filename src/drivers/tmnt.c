@@ -4112,8 +4112,7 @@ static DRIVER_INIT( mia )
 		}
 	}
 
-	temp = malloc(len);
-	if (!temp) return;	/* bad thing! */
+	temp = malloc_or_die(len);
 	memcpy(temp,gfxdata,len);
 	for (A = 0;A < len/4;A++)
 	{
@@ -4208,8 +4207,7 @@ static DRIVER_INIT( tmnt )
 		}
 	}
 
-	temp = malloc(len);
-	if (!temp) return;	/* bad thing! */
+	temp = malloc_or_die(len);
 	memcpy(temp,gfxdata,len);
 	for (A = 0;A < len/4;A++)
 	{

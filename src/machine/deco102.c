@@ -54,10 +54,8 @@ void deco102_decrypt(int region, int address_xor, int data_select_xor, int opcod
 	UINT16 *rom = (UINT16 *)memory_region(region);
 	int size = memory_region_length(region);
 	UINT16 *opcodes = auto_malloc(size);
-	UINT16 *buf = malloc(size);
+	UINT16 *buf = malloc_or_die(size);
 
-	if (buf)
-	{
 		memcpy(buf,rom,size);
 
 		memory_set_decrypted_region(0, 0, size - 1, opcodes);
@@ -92,5 +90,4 @@ void deco102_decrypt(int region, int address_xor, int data_select_xor, int opcod
 		}
 
 		free(buf);
-	}
 }

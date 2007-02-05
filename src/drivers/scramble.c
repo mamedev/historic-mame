@@ -2310,7 +2310,7 @@ static MACHINE_DRIVER_START( monsterz )
 	MDRV_IMPORT_FROM(scramble)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(monsterz_map,0)
-	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,16*4) //?
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,16*4) //?
 
 	MDRV_CPU_MODIFY("audio")
 	MDRV_CPU_IO_MAP(monsterz_sound_io_map,0)

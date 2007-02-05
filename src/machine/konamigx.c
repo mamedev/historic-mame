@@ -173,9 +173,6 @@ WRITE16_HANDLER( tms57002_data_word_w )
 /*                                                                         */
 /***************************************************************************/
 
-// Hardcoded constants and custom z-buffer
-#define GX_BMPPW (512+32)
-
 #if GX_DEBUG
 	#define GX_ZBUFW     512
 	#define GX_ZBUFH     384
@@ -212,51 +209,19 @@ void K053936GP_set_cliprect(int chip, int minx, int maxx, int miny, int maxy)
 	cliprect->max_y = maxy;
 }
 
-#define BLEND32_MACRO {  \
-	eax = pal_base[eax]; \
-	ebx = eax;           \
-	edx = eax;           \
-	eax >>= 8;           \
-	ebx >>= 16;          \
-	eax &= 0xff;         \
-	edx &= 0xff;         \
-	ebx = esi[ebx];      \
-	eax = esi[eax];      \
-	ebx <<= 16;          \
-	eax <<= 8;           \
-	ebx |= esi[edx];     \
-	edx = dst_ptr[ecx];  \
-	ebx |= eax;          \
-	eax = edx;           \
-	ebp = ebx;           \
-	ebx = edx;           \
-	edx >>= 8;           \
-	eax >>= 16;          \
-	edx &= 0xff;         \
-	ebx &= 0xff;         \
-	eax = edi[eax];      \
-	edx = edi[edx];      \
-	eax <<= 16;          \
-	edx <<= 8;           \
-	eax |= edi[ebx];     \
-	edx += ebp;          \
-	edx += eax;          \
-	dst_ptr[ecx] = edx; }
-
 INLINE void K053936GP_copyroz32clip( mame_bitmap *dst_bitmap, mame_bitmap *src_bitmap,
 		const rectangle *dst_cliprect, const rectangle *src_cliprect,
 		UINT32 _startx,UINT32 _starty,int _incxx,int _incxy,int _incyx,int _incyy,
 		int tilebpp, int blend, int clip )
 {
-	static int colormask[8]={1,3,7,0xf,0x1f,0x3f,0x7f,0xff};
+	static const int colormask[8]={1,3,7,0xf,0x1f,0x3f,0x7f,0xff};
 
 	int cy, cx;
-	register int eax, ebx, edx, ecx;
+	int ecx;
 	int src_pitch, incxy, incxx;
-	int src_minx, src_maxx, src_miny, src_maxy, cmask, ebp;
+	int src_minx, src_maxx, src_miny, src_maxy, cmask;
 	UINT16 *src_base;
 	UINT32 *pal_base;
-	const UINT8  *esi, *edi;
 	UINT32 *dst_ptr;
 
 	int tx, dst_pitch;
@@ -299,9 +264,6 @@ INLINE void K053936GP_copyroz32clip( mame_bitmap *dst_bitmap, mame_bitmap *src_b
 	src_pitch = src_bitmap->rowpixels;
 	src_base = src_bitmap->base;
 
-	src_miny *= src_pitch;
-	src_maxy *= src_pitch;
-
 	dst_ptr = dst_base;
 	cy = starty;
 	cx = startx;
@@ -312,23 +274,23 @@ INLINE void K053936GP_copyroz32clip( mame_bitmap *dst_bitmap, mame_bitmap *src_b
 		starty += incyy;
 		startx += incyx;
 
-			esi = drawgfx_alpha_cache.alphas;
-			edi = drawgfx_alpha_cache.alphad;
-
 		do {
 			do {
-				eax = cy;      ebx = cx;
-				eax >>= 16;    ebx >>= 16;
-				eax &= 0x1fff; ebx &= 0x1fff;
-				eax = (eax<<5) + (eax<<13); //eax *= src_pitch;
-				cy += incxy;   cx += incxx;
-				if (ebx < src_minx || ebx > src_maxx || eax < src_miny || eax > src_maxy) continue;
+				int srcx = (cx >> 16) & 0x1fff;
+				int srcy = (cy >> 16) & 0x1fff;
+				int pixel;
 
-				eax = src_base[eax+ebx];
-				if (!(eax & cmask)) continue;
+				cx += incxx;
+				cy += incxy;
+				if (srcx < src_minx || srcx > src_maxx || srcy < src_miny || srcy > src_maxy)
+					continue;
 
-				BLEND32_MACRO
-		}
+				pixel = src_base[srcy * src_pitch + srcx];
+				if (!(pixel & cmask))
+					continue;
+
+				dst_ptr[ecx] = alpha_blend32(pal_base[pixel], dst_ptr[ecx]);
+			}
 			while (++ecx);
 
 			ecx = tx;
@@ -344,53 +306,56 @@ INLINE void K053936GP_copyroz32clip( mame_bitmap *dst_bitmap, mame_bitmap *src_b
 			dst_base += dst_pitch;
 			starty += incyy;
 			startx += incyx;
-	}
-	else
-	{
-		if ((sy & 1) ^ (blend & 1))
+		}
+		else
 		{
-			if (ty <= 1) return;
+			if ((sy & 1) ^ (blend & 1))
+			{
+				if (ty <= 1) return;
 
-			dst_ptr += dst_pitch;
-			cy += incyy;
-			cx += incyx;
+				dst_ptr += dst_pitch;
+				cy += incyy;
+				cx += incyx;
+			}
+
+			if (ty > 1)
+			{
+				ty >>= 1;
+				dst_pitch <<= 1;
+				incyy <<= 1;
+				incyx <<= 1;
+
+				dst_base = dst_ptr + dst_pitch;
+				starty = cy + incyy;
+				startx = cx + incyx;
+			}
 		}
 
-		if (ty > 1)
-		{
-			ty >>= 1;
-			dst_pitch <<= 1;
-			incyy <<= 1;
-			incyx <<= 1;
-
-			dst_base = dst_ptr + dst_pitch;
-			starty = cy + incyy;
-			startx = cx + incyx;
-		}
-	}
-
-	do {
 		do {
-			eax = cy;      ebx = cx;
-			eax >>= 16;    ebx >>= 16;
-			eax &= 0x1fff; ebx &= 0x1fff;
-			eax = (eax<<5) + (eax<<13); //eax *= src_pitch;
-			cy += incxy;   cx += incxx;
-			if (ebx < src_minx || ebx > src_maxx || eax < src_miny || eax > src_maxy) continue;
+			do {
+				int srcx = (cx >> 16) & 0x1fff;
+				int srcy = (cy >> 16) & 0x1fff;
+				int pixel;
 
-			eax = src_base[eax+ebx];
-			if (!(eax & cmask)) continue;
+				cx += incxx;
+				cy += incxy;
+				if (srcx < src_minx || srcx > src_maxx || srcy < src_miny || srcy > src_maxy)
+					continue;
 
-			dst_ptr[ecx] = pal_base[eax];
-		}
-		while (++ecx);
+				pixel = src_base[srcy * src_pitch + srcx];
+				if (!(pixel & cmask))
+					continue;
 
-		ecx = tx;
-		dst_ptr = dst_base; dst_base += dst_pitch;
-		cy = starty; starty += incyy;
-		cx = startx; startx += incyx;
-	} while (--ty);
-		}
+				dst_ptr[ecx] = pal_base[pixel];
+			}
+			while (++ecx);
+
+			ecx = tx;
+			dst_ptr = dst_base; dst_base += dst_pitch;
+			cy = starty; starty += incyy;
+			cx = startx; startx += incyx;
+		} while (--ty);
+	}
 }
 
 // adpoted from generic K053936_zoom_draw()
@@ -505,16 +470,15 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 	// inner loop
 	UINT8  *src_ptr;
 	int src_x;
-	register int eax, ebx, edx, ecx;
+	int eax, ecx;
 	int src_fx, src_fdx;
-	int shdpen, ebp;
+	int shdpen;
 	UINT8  z8, db0, p8, db1;
 	UINT8  *ozbuf_ptr;
 	UINT8  *szbuf_ptr;
 	UINT32 *pal_base;
 	UINT32 *shd_base;
 	UINT32 *dst_ptr;
-	const UINT8  *esi, *edi;
 
 	// outter loop
 	int src_fby, src_fdy, src_fbx;
@@ -550,9 +514,6 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 		if (alpha >= 255) drawmode &= ~2;
 	}
 
-	esi = drawgfx_alpha_cache.alphas;
-	edi = drawgfx_alpha_cache.alphad;
-
 	// fill internal data structure with default values
 	ozbuf_ptr  = gx_objzbuf;
 	szbuf_ptr  = gx_shdzbuf;
@@ -566,7 +527,7 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 	shd_base  = Machine->shadow_table;
 
 	dst_ptr   = bitmap->base;
-	dst_pitch = GX_BMPPW;
+	dst_pitch = bitmap->rowpixels;
 	dst_minx  = cliprect->min_x;
 	dst_maxx  = cliprect->max_x;
 	dst_miny  = cliprect->min_y;
@@ -651,7 +612,7 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 				while (++ecx);
 
 				ecx = src_fby;   src_fby += src_fdy;
-				dst_ptr += GX_BMPPW;
+				dst_ptr += dst_pitch;
 				ecx >>= FP;      src_fx = src_fbx;
 				src_x = src_fbx; src_fx += src_fdx;
 				ecx <<= 4;       src_ptr = src_base;
@@ -680,7 +641,7 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 
 						ecx = src_fby;   src_fby += src_fdy;
 						ozbuf_ptr += GX_ZBUFW;
-						dst_ptr += GX_BMPPW;
+						dst_ptr += dst_pitch;
 						ecx >>= FP;      src_fx = src_fbx;
 						src_x = src_fbx; src_fx += src_fdx;
 						ecx <<= 4;       src_ptr = src_base;
@@ -706,7 +667,7 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 
 						ecx = src_fby;   src_fby += src_fdy;
 						ozbuf_ptr += GX_ZBUFW;
-						dst_ptr += GX_BMPPW;
+						dst_ptr += dst_pitch;
 						ecx >>= FP;      src_fx = src_fbx;
 						src_x = src_fbx; src_fx += src_fdx;
 						ecx <<= 4;       src_ptr = src_base;
@@ -726,13 +687,13 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 							if (!eax || ozbuf_ptr[ecx] < z8) continue;
 							ozbuf_ptr[ecx] = z8;
 
-							BLEND32_MACRO
+							dst_ptr[ecx] = alpha_blend32(pal_base[eax], dst_ptr[ecx]);
 						}
 						while (++ecx);
 
 						ecx = src_fby;   src_fby += src_fdy;
 						ozbuf_ptr += GX_ZBUFW;
-						dst_ptr += GX_BMPPW;
+						dst_ptr += dst_pitch;
 						ecx >>= FP;      src_fx = src_fbx;
 						src_x = src_fbx; src_fx += src_fdx;
 						ecx <<= 4;       src_ptr = src_base;
@@ -752,13 +713,13 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 							if (!eax || eax >= shdpen || ozbuf_ptr[ecx] < z8) continue;
 							ozbuf_ptr[ecx] = z8;
 
-							BLEND32_MACRO
+							dst_ptr[ecx] = alpha_blend32(pal_base[eax], dst_ptr[ecx]);
 						}
 						while (++ecx);
 
 						ecx = src_fby;   src_fby += src_fdy;
 						ozbuf_ptr += GX_ZBUFW;
-						dst_ptr += GX_BMPPW;
+						dst_ptr += dst_pitch;
 						ecx >>= FP;      src_fx = src_fbx;
 						src_x = src_fbx; src_fx += src_fdx;
 						ecx <<= 4;       src_ptr = src_base;
@@ -786,7 +747,7 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 
 						ecx = src_fby;   src_fby += src_fdy;
 						szbuf_ptr += (GX_ZBUFW<<1);
-						dst_ptr += GX_BMPPW;
+						dst_ptr += dst_pitch;
 						ecx >>= FP;      src_fx = src_fbx;
 						src_x = src_fbx; src_fx += src_fdx;
 						ecx <<= 4;       src_ptr = src_base;
@@ -816,7 +777,7 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 				while (++ecx);
 
 				src_ptr += src_fdy;
-				dst_ptr += GX_BMPPW;
+				dst_ptr += dst_pitch;
 				ecx = dst_w;
 			}
 			while (--dst_h);
@@ -839,7 +800,7 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 
 						src_ptr += src_fdy;
 						ozbuf_ptr += GX_ZBUFW;
-						dst_ptr += GX_BMPPW;
+						dst_ptr += dst_pitch;
 						ecx = dst_w;
 					}
 					while (--dst_h);
@@ -859,7 +820,7 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 
 						src_ptr += src_fdy;
 						ozbuf_ptr += GX_ZBUFW;
-						dst_ptr += GX_BMPPW;
+						dst_ptr += dst_pitch;
 						ecx = dst_w;
 					}
 					while (--dst_h);
@@ -873,13 +834,13 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 							if (!eax || ozbuf_ptr[ecx] < z8) continue;
 							ozbuf_ptr[ecx] = z8;
 
-							BLEND32_MACRO
+							dst_ptr[ecx] = alpha_blend32(pal_base[eax], dst_ptr[ecx]);
 						}
 						while (++ecx);
 
 						src_ptr += src_fdy;
 						ozbuf_ptr += GX_ZBUFW;
-						dst_ptr += GX_BMPPW;
+						dst_ptr += dst_pitch;
 						ecx = dst_w;
 					}
 					while (--dst_h);
@@ -893,13 +854,13 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 							if (!eax || eax >= shdpen || ozbuf_ptr[ecx] < z8) continue;
 							ozbuf_ptr[ecx] = z8;
 
-							BLEND32_MACRO
+							dst_ptr[ecx] = alpha_blend32(pal_base[eax], dst_ptr[ecx]);
 						}
 						while (++ecx);
 
 						src_ptr += src_fdy;
 						ozbuf_ptr += GX_ZBUFW;
-						dst_ptr += GX_BMPPW;
+						dst_ptr += dst_pitch;
 						ecx = dst_w;
 					}
 					while (--dst_h);
@@ -921,7 +882,7 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 
 						src_ptr += src_fdy;
 						szbuf_ptr += (GX_ZBUFW<<1);
-						dst_ptr += GX_BMPPW;
+						dst_ptr += dst_pitch;
 						ecx = dst_w;
 					}
 					while (--dst_h);

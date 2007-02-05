@@ -1145,7 +1145,7 @@ ifneq ($(filter TMS32031,$(CPUS)),)
 OBJDIRS += $(OBJ)/cpu/tms32031
 CPUOBJS += $(OBJ)/cpu/tms32031/tms32031.o
 DBGOBJS += $(OBJ)/cpu/tms32031/dis32031.o
-$(OBJ)/cpu/tms32031/tms32031.o: tms32031.c tms32031.h
+$(OBJ)/cpu/tms32031/tms32031.o: tms32031.c tms32031.h 32031ops.c
 endif
 
 

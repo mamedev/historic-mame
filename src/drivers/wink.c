@@ -393,12 +393,10 @@ static DRIVER_INIT( wink )
 {
 	unsigned int i;
 	UINT8 *ROM = memory_region(REGION_CPU1);
-	UINT8 *buffer = malloc(0x8000);
+	UINT8 *buffer = malloc_or_die(0x8000);
 
 	// protection module reverse engineered by HIGHWAYMAN
 
-	if (buffer)
-	{
 		memcpy(buffer,ROM,0x8000);
 
 		for (i = 0x0000; i <= 0x1fff; i++)
@@ -414,7 +412,6 @@ static DRIVER_INIT( wink )
 			ROM[i] = buffer[BITSWAP16(i,15,14,13, 11,12, 7, 9, 8,10, 6, 4, 5, 1, 2, 3, 0)];
 
 		free(buffer);
-	}
 
 	for (i = 0; i < 0x8000; i++)
 		ROM[i] += BITSWAP8(i & 0xff, 7,5,3,1,6,4,2,0);

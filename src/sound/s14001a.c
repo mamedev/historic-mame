@@ -1,11 +1,22 @@
 /*
 
- TSI S14001A emulator v1.1
+ TSI S14001A emulator v1.11
  By Jonathan Gevaryahu ("Lord Nightmare") with help from Kevin Horton ("kevtris")
  MAME conversion and integration by R. Belmont
 
  Copyright (c) 2007 Jonathan Gevaryahu.
 
+ Version history:
+ 0.8 initial version - LN
+ 0.9 MAME conversion, glue code added - R. Belmont
+ 1.0 partly fixed stream update - LN (0.111u4)
+ 1.01 fixed clipping problem - LN (0.111u5)
+ 1.1 add VSU-1000 features, fully fixed stream update by fixing word latching - LN (0.111u6)
+ 1.11 fix signedness of output, pre-multiply, fixes clicking on VSU-1000 volume change - LN (0.111u7)
+
+ TODO:
+ * increase accuracy of internal S14001A 'filter' for both driven and undriven cycles (its not terribly inaccurate for undriven cycles, but the dc sliding of driven cycles is not emulated)
+ * add option for and attach Frank P.'s emulation of the Analog external filter from the vsu-1000 using the discrete core.
 */
 
 /* state map:
@@ -431,7 +442,7 @@ static void s14001a_pcm_update(void *param, stream_sample_t **inputs, stream_sam
 		  s14001a_clock(chip);
 		  chip->VSU1000_counter = chip->VSU1000_freq;
 		  }
-		outputs[0][i] = (chip->audioout<<4)*chip->VSU1000_amp;
+		outputs[0][i] = ((((INT16)chip->audioout)-128)<<6)*chip->VSU1000_amp;
 	}
 }
 
@@ -529,7 +540,7 @@ void s14001a_get_info(void *token, UINT32 state, sndinfo *info)
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case SNDINFO_STR_NAME:						info->s = "S14001A";			break;
 		case SNDINFO_STR_CORE_FAMILY:					info->s = "TSI S14001A";		break;
-		case SNDINFO_STR_CORE_VERSION:					info->s = "1.1";			break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.11";			break;
 		case SNDINFO_STR_CORE_FILE:					info->s = __FILE__;			break;
 		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2007 Jonathan Gevaryahu"; break;
 	}

@@ -1020,6 +1020,41 @@ ROM_START( yamagchi )
 	ROM_LOAD( "mb7114e.2m", 0x200, 0x100, CRC(938d0fce) SHA1(9aa14fdee23b1ed50300fe8f82525bb363914d93) )
 ROM_END
 
+ROM_START( ladymstr )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 code  - main CPU */
+	ROM_LOAD( "a49-01-1.3r",0x0000, 0x4000, CRC(acbd0b64) SHA1(00a95ad28b6923dab808dd94af10cb1d70123d3e) )
+	ROM_LOAD( "a49-02.3t",  0x4000, 0x4000, CRC(b0a9020b) SHA1(78c777ffa6e9063fe4e816d9a58e394f45bd875b) )
+	ROM_LOAD( "a49-03.3v",  0x8000, 0x4000, CRC(641c94ed) SHA1(494502d2478f9d8ad29be6c1815a5e4639d6ba3a) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 code - sample player#1 */
+	ROM_LOAD( "a49-14.4e",  0x0000, 0x2000, CRC(d83a3c02) SHA1(43f49d8f57726a629533d37a11338fd071e2e2d7) )
+	ROM_LOAD( "a49-15.4c",  0x2000, 0x2000, CRC(d24ee5fd) SHA1(f35a602cd24427687580f80d4c045c42557cdf06) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Z80 code - sample player#2 */
+	ROM_LOAD( "a49-13.4j",  0x0000, 0x2000, CRC(7942bd7c) SHA1(71a10db610a4eaf2e30a7ace4473d9eeb3239dc9) )
+
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "a49-04.10a", 0x0000, 0x2000, CRC(1fed96e6) SHA1(47c44def272a94e11d06948841c414568acc832a) ) // tiles
+	ROM_LOAD( "a49-05.10c", 0x2000, 0x2000, CRC(e0fce676) SHA1(f374ab8de8157327fdd48438d74c1bf7a5bf156d) )
+	ROM_LOAD( "a49-06.10d", 0x4000, 0x2000, CRC(f895672e) SHA1(f6ee81663850db025484b39c683ff992a0c84877) )
+
+	ROM_REGION( 0x6000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "a49-10.11n", 0x0000, 0x1000, CRC(a7a361ba) SHA1(f142f78ac2434b22240202a9763c921db2d42fdb) ) // characters
+	ROM_LOAD( "a49-11.11q", 0x2000, 0x1000, CRC(801902e3) SHA1(abbcc2c6d805ab158f94ef60125eeea4d5041f71) )
+	ROM_LOAD( "a49-12.11r", 0x4000, 0x1000, CRC(cef75565) SHA1(9325effa7bd920af4997858bf26ebb01eeb858cd) )
+
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "a49-07.12h", 0x0000, 0x4000, CRC(8c749828) SHA1(118057c1364d996f1445214c6aff749d6aa30a22) ) // sprites
+	ROM_LOAD( "a49-08.12j", 0x4000, 0x4000, CRC(03c10aed) SHA1(65b28bd724d9812d58ee5e0a4d0b5b0f9c2723b4) )
+	ROM_LOAD( "a49-09.12k", 0x8000, 0x4000, CRC(f61316d2) SHA1(b07eec0f4a2fe971ea3f4d56739981aef5ff4d0a) )
+
+	ROM_REGION( 0x300, REGION_PROMS, 0 )
+	ROM_LOAD( "a49-16.2j",  0x000, 0x0100, CRC(a7b077d4) SHA1(48c3e68d67de067c0ead0dbd34769b755fb5952f) )
+	ROM_LOAD( "a49-17.2l",  0x100, 0x0100, CRC(1c04c087) SHA1(7179edf96f59a469353d9652900b99fef25f4054) )
+	ROM_LOAD( "a49-18.2m",  0x200, 0x0100, CRC(f5ce3c45) SHA1(f2dcdaf95b55b8fd713bdbb965731c064b4a0757) )
+ROM_END
+
+
 ROM_START( m660 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* Z80 code  - main CPU */
 	ROM_LOAD( "660l.bin",    0x0000, 0x4000, CRC(57c0d1cc) SHA1(3d71d0554e445f27f5b57a185acddd58f70e95f4) )
@@ -1254,6 +1289,7 @@ GAME( 1984, ringfgt,  vsgongf,  vsgongf,  vsgongf,  0, ROT90, "Taito", "Ring Fig
 GAME( 1984, ringfgt2, vsgongf,  vsgongf,  vsgongf,  0, ROT90, "Taito", "Ring Fighter (set 2)", 0 )
 GAME( 1985, tsamurai, 0,        tsamurai, tsamurai, 0, ROT90, "Taito", "Samurai Nihon-ichi (set 1)", 0 )
 GAME( 1985, tsamura2, tsamurai, tsamurai, tsamurai, 0, ROT90, "Taito", "Samurai Nihon-ichi (set 2)", 0 )
+GAME( 1985, ladymstr, 0,		tsamurai, tsamurai, 0, ROT90, "Taito", "Lady Master of Kungfu", 0 )
 GAME( 1985, nunchaku, 0,        tsamurai, nunchaku, 0, ROT90, "Taito", "Nunchackun", GAME_IMPERFECT_COLORS )
 GAME( 1985, yamagchi, 0,        tsamurai, yamagchi, 0, ROT90, "Taito", "Go Go Mr. Yamaguchi / Yuke Yuke Yamaguchi-kun", GAME_IMPERFECT_COLORS )
 

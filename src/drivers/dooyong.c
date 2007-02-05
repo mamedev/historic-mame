@@ -52,8 +52,8 @@ Flying Tiger
 #include "sound/okim6295.h"
 
 
-extern unsigned char *lastday_txvideoram;
-extern unsigned char *lastday_bgscroll,*lastday_fgscroll,*bluehawk_fg2scroll;
+extern UINT8 *lastday_txvideoram;
+extern UINT8 *lastday_bgscroll,*lastday_fgscroll,*bluehawk_fg2scroll;
 extern UINT16 *rshark_scroll1,*rshark_scroll2,*rshark_scroll3,*rshark_scroll4;
 extern UINT16 *popbingo_scroll, *popbingo_scroll2;
 
@@ -70,6 +70,9 @@ VIDEO_UPDATE( flytiger );
 VIDEO_UPDATE( primella );
 VIDEO_UPDATE( rshark );
 VIDEO_UPDATE( popbingo );
+VIDEO_START( lastday );
+VIDEO_START( flytiger );
+VIDEO_START( primella );
 VIDEO_EOF( dooyong );
 VIDEO_EOF( rshark );
 
@@ -77,13 +80,15 @@ VIDEO_EOF( rshark );
 
 static WRITE8_HANDLER( lastday_bankswitch_w )
 {
- 	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	bankaddress = 0x10000 + (data & 0x07) * 0x4000;
-	memory_set_bankptr(1,&RAM[bankaddress]);
+	memory_set_bank(1, data & 0x07);
 
 if (data & 0xf8) popmessage("bankswitch %02x",data);
+}
+
+static MACHINE_START( lastday )
+{
+	memory_configure_bank(1, 0, 8, memory_region(REGION_CPU1) + 0x10000, 0x4000);
+	return 0;
 }
 
 static WRITE8_HANDLER( flip_screen_w )
@@ -972,6 +977,8 @@ static MACHINE_DRIVER_START( lastday )
 	MDRV_SCREEN_REFRESH_RATE(60)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_START(lastday)
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
 	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
@@ -980,6 +987,7 @@ static MACHINE_DRIVER_START( lastday )
 	MDRV_GFXDECODE(lastday_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
+	MDRV_VIDEO_START(lastday)
 	MDRV_VIDEO_EOF(dooyong)
 	MDRV_VIDEO_UPDATE(lastday)
 
@@ -1000,6 +1008,8 @@ static MACHINE_DRIVER_START( gulfstrm )
 
 	MDRV_SCREEN_REFRESH_RATE(60)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_START(lastday)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
@@ -1030,6 +1040,8 @@ static MACHINE_DRIVER_START( pollux )
 	MDRV_SCREEN_REFRESH_RATE(60)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_START(lastday)
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
 	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
@@ -1058,6 +1070,8 @@ static MACHINE_DRIVER_START( bluehawk )
 
 	MDRV_SCREEN_REFRESH_RATE(60)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_START(lastday)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
@@ -1088,6 +1102,8 @@ static MACHINE_DRIVER_START( flytiger )
 	MDRV_SCREEN_REFRESH_RATE(60)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_START(lastday)
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
 	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
@@ -1096,6 +1112,7 @@ static MACHINE_DRIVER_START( flytiger )
 	MDRV_GFXDECODE(flytiger_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
+	MDRV_VIDEO_START(flytiger)
 	MDRV_VIDEO_EOF(dooyong)
 	MDRV_VIDEO_UPDATE(flytiger)
 
@@ -1125,6 +1142,7 @@ static MACHINE_DRIVER_START( primella )
 	MDRV_GFXDECODE(primella_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
+	MDRV_VIDEO_START(primella)
 	MDRV_VIDEO_EOF(dooyong)
 	MDRV_VIDEO_UPDATE(primella)
 

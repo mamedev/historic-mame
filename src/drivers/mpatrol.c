@@ -108,6 +108,28 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( readmem_alpha1v, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x6fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8800, 0x8800) AM_READ(mpatrol_protection_r)
+	AM_RANGE(0xd000, 0xd000) AM_READ(input_port_0_r)          /* IN0 */
+	AM_RANGE(0xd001, 0xd001) AM_READ(input_port_1_r)          /* IN1 */
+	AM_RANGE(0xd002, 0xd002) AM_READ(input_port_2_r)          /* IN2 */
+	AM_RANGE(0xd003, 0xd003) AM_READ(mpatrol_input_port_3_r)  /* DSW1 */
+	AM_RANGE(0xd004, 0xd004) AM_READ(input_port_4_r)          /* DSW2 */
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( writemem_alpha1v, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x6fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(mpatrol_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(mpatrol_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xc800, 0xc9ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size) AM_SHARE(1) // bigger or mirrored?
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(irem_sound_cmd_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(mpatrol_flipscreen_w)	/* + coin counters */
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM) // bigger or mirrored?
+ADDRESS_MAP_END
+
 
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
@@ -244,6 +266,53 @@ MPATROL_COMMON2
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( alpha1v )
+	PORT_START_TAG("IN0")\
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	/* coin input must be active for ? frames to be consistently recognized */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 ) PORT_IMPULSE(17)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN1")\
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+
+	PORT_START_TAG("DSW0")
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "10000 30000 50000" )
+	PORT_DIPSETTING(    0x08, "20000 40000 60000" )
+	PORT_DIPSETTING(    0x04, "10000" )
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Gets filled in based on the coin mode */
+
+MPATROL_COMMON2
+INPUT_PORTS_END
 
 static const gfx_layout charlayout =
 {
@@ -374,6 +443,38 @@ static MACHINE_DRIVER_START( mpatrol )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( alpha1v )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3072000)        /* 3.072 MHz ? */
+	MDRV_CPU_PROGRAM_MAP(readmem_alpha1v,writemem_alpha1v)
+	MDRV_CPU_IO_MAP(0,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_SCREEN_REFRESH_RATE(57)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(1790)	/* accurate frequency, measured on a real board, is 56.75Hz. */)
+				/* the Lode Runner manual (similar but different hardware) */
+				/* talks about 55Hz and 1790ms vblank duration. */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_SCREEN_VISIBLE_AREA(1*8, 31*8-1, 1*8, 32*8-1)
+//  MDRV_GFXDECODE(gfxdecodeinfo_alpha1v)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512+32+32)
+	MDRV_COLORTABLE_LENGTH(128*4+16*4+3*4)
+
+	MDRV_PALETTE_INIT(mpatrol)
+	MDRV_VIDEO_START(mpatrol)
+	MDRV_VIDEO_UPDATE(mpatrol)
+
+	/* sound hardware */
+	MDRV_IMPORT_FROM(irem_audio)
+MACHINE_DRIVER_END
+
+
 
 /***************************************************************************
 
@@ -450,6 +551,48 @@ ROM_START( mpatrolw )
 ROM_END
 
 
+ROM_START( alpha1v )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "2-m3",      0x0000, 0x1000, CRC(3a679d34) SHA1(1a54a43070c56dc91d4d258f29e29613bb309f1c) )
+	ROM_LOAD( "3-l3",      0x1000, 0x1000, CRC(2f09df64) SHA1(e91602e9e41ad24dd1d7f384ed81b9bdaadd03e1) )
+	ROM_LOAD( "4-k3",      0x2000, 0x1000, CRC(64fb9c8a) SHA1(735fd00cc42193a417e6cde75f12b4cf2e804942) )
+	ROM_LOAD( "5-j3",      0x3000, 0x1000, CRC(d1643d18) SHA1(7c794b82e17e2ba0a6237e3fc20d8314f6c2481c) )
+	ROM_LOAD( "6-h3",      0x4000, 0x1000, CRC(cf34ab51) SHA1(3696da71e2bc7edd1ee7aeaac87be5386608c09e) )
+	ROM_LOAD( "7-f3",      0x5000, 0x1000, CRC(99db9781) SHA1(a56a675cc4cbc9681bfe8052f51f19336eb2a0a6) )
+	ROM_LOAD( "7a e3",     0x6000, 0x1000, CRC(3b0b4b0d) SHA1(0d8eea1e2db269943611289b3490a578ee347f85) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for code */
+	ROM_LOAD( "1-a1",      0xf000, 0x1000, CRC(9e07fdd5) SHA1(ed4f462fcfe91fa8e88bfeaaba0a0c11fa0b4601) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "14-e3",     0x0000, 0x1000, CRC(cf00c737) SHA1(415e90289039cac4d04cb1d559f1378ca6a32132) )       /* chars */
+	ROM_LOAD( "13-f3",     0x1000, 0x1000, CRC(4b799229) SHA1(42cbdcf787b08b041d30504d699a12c378224933) )
+
+	ROM_REGION( 0x3000, REGION_GFX2, ROMREGION_DISPOSE ) // 3bpp? (mpatrol is 2bpp..)
+	ROM_LOAD( "15-n3",     0x0000, 0x1000, CRC(dc26df76) SHA1(dd1cff7935f5559f9d1b440e02d5e5aa521b0054) )
+	ROM_LOAD( "16-l3",     0x1000, 0x1000, CRC(39b9863b) SHA1(da9da9a1066188f050c422dfed1bbbd3ba612ccc) )
+	ROM_LOAD( "17-k3",     0x2000, 0x1000, CRC(cfd90773) SHA1(052e126888b6de636db9c521a090699c282b620b) )
+
+	/* all the background roms just contain stars.. */
+	ROM_REGION( 0x1000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "11-k3",     0x0000, 0x1000, CRC(7659440a) SHA1(2efd27c82913513dd03e799f1ed3c10b0863677d) ) // these two match..
+	ROM_LOAD( "12-jh3",    0x0000, 0x1000, CRC(7659440a) SHA1(2efd27c82913513dd03e799f1ed3c10b0863677d) )
+
+	ROM_REGION( 0x1000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "9-n3",     0x0000, 0x1000, CRC(0fdb7d13) SHA1(e828254a4f94df633d338b5772719276d41c6b7f) )
+
+	ROM_REGION( 0x1000, REGION_GFX5, ROMREGION_DISPOSE )
+	ROM_LOAD( "10-lm3",     0x0000, 0x1000, CRC(9dde3a75) SHA1(293d093485be19bfb20685d76a08ac78e24062bf) )
+
+	ROM_REGION( 0x0340, REGION_PROMS, 0 )
+	ROM_LOAD( "63s481-a2",     0x0000, 0x0200, CRC(58678ea8) SHA1(b13a78a5bca8ad5bdec1293512b53654768a7a7a) )
+	ROM_LOAD( "18s030-m1",     0x0200, 0x0020, CRC(6a57eff2) SHA1(2d1c12dab5915da2ccd466e39436c88be434d634) ) /* background palette */
+	ROM_LOAD( "mb7051-f1",     0x0220, 0x0020, CRC(d8bdd0df) SHA1(ca522428927911808214d319af314f601497ded4) ) /* sprite palette */
+	ROM_LOAD( "mb7052-h2",     0x0240, 0x0100, CRC(ce9f0ef9) SHA1(3afb94ed033f272983bbed22a59856df7824ef8a) ) /* sprite lookup table */
+ROM_END
+
+
 
 GAME( 1982, mpatrol,  0,       mpatrol, mpatrol,  0, ROT0, "Irem", "Moon Patrol", 0 )
 GAME( 1982, mpatrolw, mpatrol, mpatrol, mpatrolw, 0, ROT0, "Irem (Williams license)", "Moon Patrol (Williams)", 0 )
+GAME( 1988, alpha1v,  0,       alpha1v, alpha1v,  0, ROT0, "Vision Electronics", "Alpha One (Vision Electronics / Kyle Hodgetts)", GAME_NOT_WORKING|GAME_NO_SOUND )

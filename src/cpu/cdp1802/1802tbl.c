@@ -269,7 +269,7 @@ INLINE void cdp1802_in_n(int n)
 	UINT8 i = io_read_byte(n);
 
 	D = i;
-	MW(M(R(X)), i);
+	MW(R(X), i);
 }
 
 static void cdp1802_instruction(void)

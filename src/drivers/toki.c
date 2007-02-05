@@ -751,7 +751,7 @@ static DRIVER_INIT( toki )
 
 DRIVER_INIT( tokib )
 {
-	unsigned char *temp = malloc (65536 * 2);
+	unsigned char *temp = malloc_or_die(65536 * 2);
 	int i, offs;
 
 	/* invert the sprite data in the ROMs */
@@ -759,8 +759,6 @@ DRIVER_INIT( tokib )
 		memory_region(REGION_GFX2)[i] ^= 0xff;
 
 	/* merge background tile graphics together */
-	if (temp)
-	{
 		for (offs = 0; offs < memory_region_length(REGION_GFX3); offs += 0x20000)
 		{
 			unsigned char *base = &memory_region(REGION_GFX3)[offs];
@@ -787,7 +785,6 @@ DRIVER_INIT( tokib )
 		}
 
 		free (temp);
-	}
 }
 
 DRIVER_INIT(jujub)

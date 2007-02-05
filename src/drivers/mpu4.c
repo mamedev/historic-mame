@@ -1,7 +1,7 @@
 /***************************************************************************
 MPU4 highly preliminary driver by J.Wallace, and Anonymous.
 
-  24-01-2007: J Wallace: With thanks to Canonman and System 80, I was able to confirm a seemingly
+  24-01-2007: J Wallace: With thanks to Canonman and HIGHWAYMAN, I was able to confirm a seemingly
               ghastly misuse of a PIA is actually on the real hardware. This fixes the meters.
 
   30-12-2006: J Wallace: Fixed init routines, state saving is theoretically supported.

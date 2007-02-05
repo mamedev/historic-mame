@@ -3910,7 +3910,7 @@ static DRIVER_INIT( maya )
 	}
 
 	/* Address lines scrambling on the blitter data roms */
-	rom = malloc(0xc0000);
+	rom = malloc_or_die(0xc0000);
 	memcpy(rom, gfx, 0xc0000);
 	for (i = 0; i < 0xc0000; i++)
 		gfx[i] = rom[BITSWAP24(i,23,22,21,20,19,18,14,15, 16,17,13,12,11,10,9,8, 7,6,5,4,3,2,1,0)];
@@ -4496,14 +4496,12 @@ static DRIVER_INIT( mjelct3 )
 	int i;
 	UINT8	*rom = memory_region(REGION_CPU1);
 	size_t  size = memory_region_length(REGION_CPU1);
-	UINT8	*rom1 = malloc(size);
-	if (rom1)
-	{
+	UINT8	*rom1 = malloc_or_die(size);
+
 		memcpy(rom1,rom,size);
 		for (i = 0; i < size; i++)
 			rom[i] = BITSWAP8(rom1[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8, 1,6,5,4,3,2,7, 0)], 7,6, 1,4,3,2,5,0);
 		free(rom1);
-	}
 }
 
 static DRIVER_INIT( mjelct3a )
@@ -4511,9 +4509,8 @@ static DRIVER_INIT( mjelct3a )
 	int i,j;
 	UINT8	*rom = memory_region(REGION_CPU1);
 	size_t  size = memory_region_length(REGION_CPU1);
-	UINT8	*rom1 = malloc(size);
-	if (rom1)
-	{
+	UINT8	*rom1 = malloc_or_die(size);
+
 		memcpy(rom1,rom,size);
 		for (i = 0; i < size; i++)
 		{
@@ -4543,7 +4540,6 @@ static DRIVER_INIT( mjelct3a )
 			rom[j] = rom1[i];
 		}
 		free(rom1);
-	}
 
 	init_mjelct3(machine);
 }

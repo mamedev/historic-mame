@@ -2,16 +2,14 @@
 Pinball Champ '95 / Witch
 
 witch   : Witch
+      press F1 to initialize NVRAM
+
 pbchmp95: Pinball Champ '95. Seems to be a simple mod with the following differences:
                         -The title screen is changed
                         -The sample saying "witch" is not played (obviously)
                         -Different configuration values (time limit, etc)
                         -Auto-initialization on NVRAM error(?)
                         -Stars keep falling at the title screen
-
-
-rom will be banked
-
 
 This is so far what could be reverse-engineered from the code.
 BEWARE : these are only suppositions, not facts.
@@ -33,6 +31,7 @@ GFX
 
             tileno =    vram | ((cram & 0xe0) << 3)
             color  =    cram & 0x0f
+            priority =  cram & 0x10 (0x10 = under sprites, 0x00 = over sprites)
 
         - Sprites @0xd000-0xd7ff + 0xd800-0xdfff
                 One sprite every 0x20 bytes
@@ -136,63 +135,10 @@ Memory
       like being affected (the SEGA Master System did something similar IIRC). A particular
       bank is selected by changing the two most significant bits of port 0xa002 (swapped?).
 
-    CPU2:
+  CPU2:
+            No banking
         Doesn't seem to be banking going on. However there's a strange piece of code @0x021a:
-
-        -----------------------------------------
-        ROM:021A                 xor     a
-        ROM:021B                 ld      (0FD11h), a
-        ROM:021E                 ld      a, 7
-        ROM:0220                 ld      (byte_700F), a
-        ROM:0223                 halt
-        ROM:0224                 ld      a, 6
-        ROM:0226                 ld      (byte_700F), a
-        ROM:0229                 halt
-        ROM:022A                 ld      a, 0
-        ROM:022C                 ld      (byte_700F), a
-        ROM:022F                 ld      b, 3Ch
-        ROM:0231 _1SEC_WAIT:
-        ROM:0231                 push    bc
-        ROM:0232                 halt
-        ROM:0233                 pop     bc
-        ROM:0234                 djnz    _1SEC_WAIT
-        ROM:0236                 ld      a, 1
-        ROM:0238                 ld      (byte_700D), a
-        ROM:023B loc_23B:
-        ROM:023B                 halt
-        ROM:023C                 ld      a, (byte_700D)
-        ROM:023F                 bit     1, a
-        ROM:0241                 jr      nz, loc_23B
-        ROM:0243                 ld      a, (byte_7000)
-        ROM:0246                 ld      (0FD12h), a
-        ROM:0249                 ld      a, (byte_7001)
-        ROM:024C                 ld      (0FD13h), a
-        ROM:024F                 ld      a, (byte_7002)
-        ROM:0252                 ld      (0FD14h), a
-        ROM:0255                 ld      a, (byte_7003)
-        ROM:0258                 ld      (0FD15h), a
-        ROM:025B                 ld      a, (byte_7004)
-        ROM:025E                 ld      (0FD16h), a
-        ROM:0261                 ld      ix, 0FD12h
-        ROM:0265                 ld      a, (ix+0)
-        ROM:0268                 cp      (ix+1)
-        ROM:026B                 jr      nz, loc_27D
-        ROM:026D                 cp      (ix+2)
-        ROM:0270                 jr      nz, loc_27D
-        ROM:0272                 cp      (ix+3)
-        ROM:0275                 jr      nz, loc_27D
-        ROM:0277                 cp      (ix+4)
-        ROM:027A                 jr      nz, loc_27D
-        ROM:027C                 ret
-        ROM:027D loc_27D:
-        ROM:027D                 ld      a, 1
-        ROM:027F                 ld      (0FD11h), a
-        ROM:0282                 ret
-        -----------------------------------------
-
-        Considering that 0x700x is ROM(?), I'm clueless about what's going on here.
-        It looks like some initialization routine, but the fd12-fd16 values are not
-        used afterward(?). For now, I just put a hack to keep CPU2 happy.
+        Protection(?) check @ $21a
 
 
 Interesting memory locations
@@ -240,11 +186,7 @@ Interesting memory locations
 
 
 TODO :
-
-    -Figure out the input ports
-    -Figure out the ports for the "PayOut" stuff (a006/a00c?)
-    -Find out why the ball freezes ingame
-
+    - Figure out the ports for the "PayOut" stuff (a006/a00c?)
 */
 
 #include "driver.h"
@@ -253,7 +195,8 @@ TODO :
 
 #define UNBANKED_SIZE 0x800
 
-static tilemap *gfx0_tilemap;
+static tilemap *gfx0a_tilemap;
+static tilemap *gfx0b_tilemap;
 static tilemap *gfx1_tilemap;
 
 static UINT8 *gfx0_cram;
@@ -270,15 +213,41 @@ static int scrolly=0;
 static UINT8 reg_a002=0;
 static int bank=-1;
 
-static void get_gfx0_tile_info(int tile_index)
+static void get_gfx0b_tile_info(int tile_index)
 {
 	int code  = gfx0_vram[tile_index];
 	int color = gfx0_cram[tile_index];
 
+	code=code | ((color & 0xe0) << 3);
+
+	if(color&0x10)
+	{
+		code=0;
+	}
+
 	SET_TILE_INFO(
 			1,
-			code | ((color & 0xe0) << 3),//tiles beyond 0x7ff only for sprites?
-			(color>>0) & 0x0f,
+			code,//tiles beyond 0x7ff only for sprites?
+			color & 0x0f,
+			0)
+}
+
+static void get_gfx0a_tile_info(int tile_index)
+{
+	int code  = gfx0_vram[tile_index];
+	int color = gfx0_cram[tile_index];
+
+	code=code | ((color & 0xe0) << 3);
+
+	if((color&0x10)==0)
+	{
+		code=0;
+	}
+
+	SET_TILE_INFO(
+			1,
+			code,//tiles beyond 0x7ff only for sprites?
+			color & 0x0f,
 			0)
 }
 
@@ -299,7 +268,8 @@ static WRITE8_HANDLER( gfx0_vram_w )
 	if(gfx0_vram[offset] != data)
 	{
 		gfx0_vram[offset] = data;
-		tilemap_mark_tile_dirty(gfx0_tilemap,offset);
+		tilemap_mark_tile_dirty(gfx0a_tilemap,offset);
+		tilemap_mark_tile_dirty(gfx0b_tilemap,offset);
 	}
 }
 
@@ -308,7 +278,8 @@ static WRITE8_HANDLER( gfx0_cram_w )
 	if(gfx0_cram[offset] != data)
 	{
 		gfx0_cram[offset] = data;
-		tilemap_mark_tile_dirty(gfx0_tilemap,offset);
+		tilemap_mark_tile_dirty(gfx0a_tilemap,offset);
+		tilemap_mark_tile_dirty(gfx0b_tilemap,offset);
 	}
 }
 static READ8_HANDLER( gfx0_vram_r )
@@ -321,11 +292,7 @@ static READ8_HANDLER( gfx0_cram_r )
 	return gfx0_cram[offset];
 }
 
-#define FIX_OFFSET() do { offset=(offset+scrolly/8*32)&0x3ff; } while(0)
-//#define FIX_OFFSET() do { offset=(offset+((signed char)scrollx+7)/8+(scrolly)/8*32)&0x3ff; } while(0)
-//#define FIX_OFFSET() do { offset=(offset+(scrollx+7)/8+(scrolly+7)/8*32)&0x3ff; }while(0)
-//#define FIX_OFFSET() do {offset=((offset+(scrollx)/8)&0x01f)|(((offset&0x3e0)+(scrolly)/8*32)&0x3e0);} while(0)
-//#define FIX_OFFSET()
+#define FIX_OFFSET() do { offset=(((offset + ((scrolly & 0xf8) << 2) ) & 0x3e0)+((offset + (scrollx >> 3) ) & 0x1f)+32)&0x3ff; } while(0)
 
 static WRITE8_HANDLER( gfx1_vram_w )
 {
@@ -360,28 +327,20 @@ static READ8_HANDLER( gfx1_cram_r )
 
 static READ8_HANDLER(read_a00x)
 {
-	//mame_printf_debug("0xA00%X read at 0x%04X\n",offset,activecpu_get_pc());
-
-	switch(offset)
-	{
-		case 0x02:
-	    return reg_a002;
-		case 0x04:
-			return readinputportbytag("A004");
-	  case 0x05:
-	    return readinputportbytag("A005");
-		case 0x0c:
-			return input_port_0_r(0); // stats / reset
-		case 0x0e:
-			return readinputportbytag("A00E");// coin/reset
-/*      case 0x01:
-            return 0;*/
-	}
+ switch(offset)
+ {
+	case 0x02: return reg_a002;
+	case 0x04: return readinputportbytag("A004");
+  case 0x05: return readinputportbytag("A005");
+  case 0x0c: return input_port_0_r(0); // stats / reset
+	case 0x0e: return readinputportbytag("A00E");// coin/reset
+ }
 
 
   if(offset==0x00) //muxed with A002?
   {
-    switch(reg_a002&0x3f) {
+    switch(reg_a002&0x3f)
+    {
       case 0x3b:
         return input_port_2_r(0);//bet10 / pay out
       case 0x3e:
@@ -392,7 +351,6 @@ static READ8_HANDLER(read_a00x)
         logerror("A000 read with mux=0x%02x\n",reg_a002&0x3f);
     }
   }
-
   return 0xff;
 }
 
@@ -400,76 +358,53 @@ static WRITE8_HANDLER(write_a00x)
 {
   switch(offset)
   {
-		case 0x02: //A002 bit 7&6 = bank ????
-		{
-			int newbank;
+	case 0x02: //A002 bit 7&6 = bank ????
+	{
+		int newbank;
+		reg_a002=data;
+		newbank=(data>>6)&3;
+		if(newbank!=bank)
+	    	{
+	      		UINT8 *ROM = memory_region(REGION_CPU1);
+	      		bank=newbank;
+		    	ROM = &ROM[0x10000+0x8000 * newbank + UNBANKED_SIZE];
+		    	memory_set_bankptr(1,ROM);
+      		}
+	}
+	break;
 
-	    /*if(cpu_getactivecpu()!=0)
-          return;*/
+	case 0x06: // bit 1 = coin lockout/counter ?
+	break;
 
-		  reg_a002=data;
-
-		  newbank=(data>>6)&3;
-		  newbank=((newbank<<1)|(newbank>>1))&0x3;
-
-	    if(newbank!=bank)
-	    {
-	      UINT8 *ROM = memory_region(REGION_CPU1);
-	      bank=newbank;
-		    ROM = &ROM[0x8000 * newbank + UNBANKED_SIZE];
-		    memory_set_bankptr(1,ROM);
-
-		   // mame_printf_debug("Bank switched @ 0x%04X: bank #%d data=0x%02X\n",activecpu_get_pc(),newbank,data);
-	     }
-	     return;
-	     break;
-		}
-		case 0x06:
-/*
-            if(data&0x02) {
-                mame_printf_debug("COIN LOCK\n");
-            } else {
-                mame_printf_debug("COIN RELEASE\n");
-            }
-*/
-			//mame_printf_debug("0xA006 Written@ 0x%04X: value=0x%02X\n",activecpu_get_pc(),data);
-			break;
-
-    case 0x08: //A008
-//      if(cpu_getactivecpu()==0) cpunum_set_input_line(1,0,HOLD_LINE);
-    	cpunum_set_input_line(cpu_getactivecpu(),0,CLEAR_LINE);
-    /*
-      switch(data)
-      {
-        case 0x00:
-          cpunum_set_input_line(cpu_getactivecpu(),0,CLEAR_LINE);
-//          cpunum_set_input_line(0,0,CLEAR_LINE);
-//          cpunum_set_input_line(1,0,CLEAR_LINE);
-          break;
-        case 0x80:
-        //  cpunum_set_input_line(1,0,ASSERT_LINE);
-          break;
-        case 0x40:
-         // cpunum_set_input_line(0,0,ASSERT_LINE);
-          break;
-      }*/
-      break;
-
-    default:
-//      mame_printf_debug("cpu #%d (PC=%08X): Write @ 0xa0%02x = 0x%02x\n",cpu_getactivecpu(), activecpu_get_pc(),offset,data);
-			break;
+	case 0x08: //A008
+    		cpunum_set_input_line(cpu_getactivecpu(),0,CLEAR_LINE);
+    	break;
   }
-  //mame_printf_debug("cpu #%d (PC=%08X): Write @ 0xa0%02x = 0x%02x\n",cpu_getactivecpu(), activecpu_get_pc(),offset,data);
 }
 
-static READ8_HANDLER(read_700x)
+static READ8_HANDLER(prot_read_700x)
 {
-	switch(offset)
-	{
-		case 0xd://0x700d : CPU2 waiting loop on bit1 @ 0x023B
-			return 0xfd;
-	}
-	return offset;//needs differents values
+/*
+    Code @$21a looks like simple protection check.
+
+    - write 7,6,0 to $700f
+    - read 5 bytes from $7000-$7004 ( bit 1 of $700d is data "READY" status)
+
+    Data @ $7000 must differs from data @$7001-04.
+    Otherwise later in game some I/O (controls) reads are skipped.
+*/
+
+  switch(activecpu_get_pc())
+  {
+  	case 0x23f:
+  	case 0x246:
+  	case 0x24c:
+  	case 0x252:
+  	case 0x258:
+  	case 0x25e:
+		return offset;//enough to pass...
+   }
+  return memory_region(REGION_CPU2)[0x7000+offset];
 }
 
 /*
@@ -480,18 +415,10 @@ static READ8_HANDLER(read_8010) {	return 0x00; }
 
 static WRITE8_HANDLER(xscroll_w)
 {
-	if(scrollx!=data)
-	{
-		//mame_printf_debug("set scrollx to 0x%02X\n",data);
-	}
 	scrollx=data;
 }
 static WRITE8_HANDLER(yscroll_w)
 {
-	if(scrolly!=data)
-	{
-		//mame_printf_debug("set scrolly to 0x%02X\n",data);
-	}
 	scrolly=data;
 }
 
@@ -514,211 +441,116 @@ static struct YM2203interface ym2203_interface_1 =
 	yscroll_w
 };
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, UNBANKED_SIZE-1) AM_READ(MRA8_ROM)
+static ADDRESS_MAP_START( map_main, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, UNBANKED_SIZE-1) AM_ROM
 	AM_RANGE(UNBANKED_SIZE, 0x7fff) AM_READ(MRA8_BANK1)
-
-	AM_RANGE(0x8000, 0x8000) AM_READ(YM2203_status_port_0_r)
-	AM_RANGE(0x8001, 0x8001) AM_READ(YM2203_read_port_0_r)
-	AM_RANGE(0x8008, 0x8008) AM_READ(YM2203_status_port_1_r)
-	AM_RANGE(0x8001, 0x8001) AM_READ(YM2203_read_port_1_r)
-
-	AM_RANGE(0xa000, 0xa00f) AM_READ(read_a00x)
-
-	AM_RANGE(0xc000, 0xc3ff) AM_READ(gfx0_vram_r)
-	AM_RANGE(0xc400, 0xc7ff) AM_READ(gfx0_cram_r)
-
-	AM_RANGE(0xc800, 0xcbff) AM_READ(gfx1_vram_r)
-	AM_RANGE(0xcc00, 0xcfff) AM_READ(gfx1_cram_r)
-
-	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM) AM_BASE(&sprite_ram)
-
-	AM_RANGE(0xe000, 0xe2ff) AM_READ(paletteram_r)   AM_BASE(&paletteram)
-
-	AM_RANGE(0xe300, 0xe7ff) AM_READ(MRA8_NOP)
-
-	AM_RANGE(0xe800, 0xeaff) AM_READ(paletteram_2_r) AM_BASE(&paletteram_2)
-
-	AM_RANGE(0xeb00, 0xefff) AM_READ(MRA8_NOP)
-
-	AM_RANGE(0xf000, 0xf0ff) AM_READ(MRA8_RAM) AM_SHARE(1)
-	AM_RANGE(0xf100, 0xf17f) AM_READ(MRA8_RAM) /*AM_SHARE(2)*/ //AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0xf180, 0xffff) AM_READ(MRA8_RAM) AM_SHARE(2)
+	AM_RANGE(0x8000, 0x8000) AM_READWRITE(YM2203_status_port_0_r, YM2203_control_port_0_w)
+	AM_RANGE(0x8001, 0x8001) AM_READWRITE(YM2203_read_port_0_r, YM2203_write_port_0_w)
+	AM_RANGE(0x8008, 0x8008) AM_READWRITE(YM2203_status_port_1_r, YM2203_control_port_1_w)
+	AM_RANGE(0x8009, 0x8009) AM_READWRITE(YM2203_read_port_1_r, YM2203_write_port_1_w)
+	AM_RANGE(0xa000, 0xa00f) AM_READWRITE(read_a00x, write_a00x)
+	AM_RANGE(0xc000, 0xc3ff) AM_READWRITE(gfx0_vram_r, gfx0_vram_w) AM_BASE(&gfx0_vram)
+	AM_RANGE(0xc400, 0xc7ff) AM_READWRITE(gfx0_cram_r, gfx0_cram_w) AM_BASE(&gfx0_cram)
+	AM_RANGE(0xc800, 0xcbff) AM_READWRITE(gfx1_vram_r, gfx1_vram_w) AM_BASE(&gfx1_vram)
+	AM_RANGE(0xcc00, 0xcfff) AM_READWRITE(gfx1_cram_r, gfx1_cram_w) AM_BASE(&gfx1_cram)
+	AM_RANGE(0xd000, 0xdfff) AM_RAM AM_BASE(&sprite_ram)
+	AM_RANGE(0xe000, 0xe7ff) AM_READWRITE(paletteram_r, paletteram_xBBBBBGGGGGRRRRR_split1_w)   AM_BASE(&paletteram)
+	AM_RANGE(0xe800, 0xefff) AM_READWRITE(paletteram_2_r, paletteram_xBBBBBGGGGGRRRRR_split2_w) AM_BASE(&paletteram_2)
+	AM_RANGE(0xf000, 0xf0ff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0xf100, 0xf17f) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xf180, 0xffff) AM_RAM AM_SHARE(2)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 
-	AM_RANGE(0x8000, 0x8000) AM_WRITE(YM2203_control_port_0_w)
-	AM_RANGE(0x8001, 0x8001) AM_WRITE(YM2203_write_port_0_w)
-	AM_RANGE(0x8008, 0x8008) AM_WRITE(YM2203_control_port_1_w)
-	AM_RANGE(0x8009, 0x8009) AM_WRITE(YM2203_write_port_1_w)
-
-	AM_RANGE(0xa000, 0xa00f) AM_WRITE(write_a00x)
-
-	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(gfx0_vram_w) AM_BASE(&gfx0_vram)
-	AM_RANGE(0xc400, 0xc7ff) AM_WRITE(gfx0_cram_w) AM_BASE(&gfx0_cram)
-
-	AM_RANGE(0xc800, 0xcbff) AM_WRITE(gfx1_vram_w) AM_BASE(&gfx1_vram)
-	AM_RANGE(0xcc00, 0xcfff) AM_WRITE(gfx1_cram_w) AM_BASE(&gfx1_cram)
-
-	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&sprite_ram)
-
-	AM_RANGE(0xe000, 0xe2ff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_split1_w) AM_BASE(&paletteram)
-
-	AM_RANGE(0xe300, 0xe7ff) AM_WRITE(MWA8_NOP)
-
-	AM_RANGE(0xe800, 0xeaff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_split2_w) AM_BASE(&paletteram_2)
-
-	AM_RANGE(0xeb00, 0xefff) AM_WRITE(MWA8_NOP)
-
-	AM_RANGE(0xf000, 0xf0ff) AM_WRITE(MWA8_RAM) AM_SHARE(1)
-	AM_RANGE(0xf100, 0xf17f) AM_WRITE(MWA8_RAM) /*AM_SHARE(2)*/ AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0xf180, 0xffff) AM_WRITE(MWA8_RAM) AM_SHARE(2)
+static ADDRESS_MAP_START( map_sub, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x8000) AM_READWRITE(YM2203_status_port_0_r, YM2203_control_port_0_w)
+	AM_RANGE(0x8001, 0x8001) AM_READWRITE(YM2203_read_port_0_r, YM2203_write_port_0_w)
+	AM_RANGE(0x8008, 0x8008) AM_READWRITE(YM2203_status_port_1_r, YM2203_control_port_1_w)
+	AM_RANGE(0x8009, 0x8009) AM_READWRITE(YM2203_read_port_1_r, YM2203_write_port_1_w)
+	AM_RANGE(0x8010, 0x8016) AM_READWRITE(read_8010, ES8712_data_0_w)
+	AM_RANGE(0xa000, 0xa00f) AM_READWRITE(read_a00x, write_a00x)
+  AM_RANGE(0xf000, 0xf0ff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0xf180, 0xffff) AM_RAM AM_SHARE(2)
 ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( cpu2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-//  AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-
-	AM_RANGE(0x0000, 0x6fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x7000, 0x700f) AM_READ(read_700x)
-
-	AM_RANGE(0x8000, 0x8000) AM_READ(YM2203_status_port_0_r)
-	AM_RANGE(0x8008, 0x8008) AM_READ(YM2203_status_port_1_r)
-
-	AM_RANGE(0x8010, 0x8010) AM_READ(read_8010)
-
-	AM_RANGE(0xa000, 0xa00f) AM_READ(read_a00x)
-
-  AM_RANGE(0xf000, 0xf0ff) AM_READ(MRA8_RAM) AM_SHARE(1)
-	//AM_RANGE(0xf100, 0xf17f) AM_READ(MRA8_RAM) AM_SHARE(2) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0xf180, 0xffff) AM_READ(MRA8_RAM) AM_SHARE(2)
-
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( cpu2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-
-	AM_RANGE(0x8000, 0x8000) AM_WRITE(YM2203_control_port_0_w)
-	AM_RANGE(0x8001, 0x8001) AM_WRITE(YM2203_write_port_0_w)
-	AM_RANGE(0x8008, 0x8008) AM_WRITE(YM2203_control_port_1_w)
-	AM_RANGE(0x8009, 0x8009) AM_WRITE(YM2203_write_port_1_w)
-
-	AM_RANGE(0x8010, 0x8016) AM_WRITE(ES8712_data_0_w)
-	AM_RANGE(0xa000, 0xa00f) AM_WRITE(write_a00x)
-
-	AM_RANGE(0xf000, 0xf0ff) AM_WRITE(MWA8_RAM) AM_SHARE(1)
-	//AM_RANGE(0xf100, 0xf17f) AM_WRITE(MWA8_RAM) AM_SHARE(2) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0xf180, 0xffff) AM_WRITE(MWA8_RAM) AM_SHARE(2)
-ADDRESS_MAP_END
-
 
 INPUT_PORTS_START( witch )
 	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x01, 0x01, "A0" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x01, "1" )
-	PORT_DIPNAME( 0x02, 0x02, "A1" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x02, "1" )
-	PORT_DIPNAME( 0x04, 0x04, "A2" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x04, "1" )
-	PORT_DIPNAME( 0x08, 0x08, "RESET NVRAM" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x08, "1" )
-	PORT_DIPNAME( 0x10, 0x10, "A4" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x10, "1" )
-	PORT_DIPNAME( 0x20, 0x20, "STATS" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x20, "1" )
-	PORT_DIPNAME( 0x40, 0x40, "A6" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x40, "1" )
-	PORT_DIPNAME( 0x80, 0x80, "A7" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x80, "1" )
+	 PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	 PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	 PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	 PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_NAME("NVRAM Init") PORT_CODE(KEYCODE_F1)
+	 PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	 PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE2 ) PORT_NAME("Stats")
+	 PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	 PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START_TAG("A00E")	/* DSW */
-	PORT_DIPNAME( 0x01, 0x01, "KEY IN" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x01, "1" )
-	PORT_DIPNAME( 0x02, 0x02, "COIN IN1" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x02, "1" )
-	PORT_DIPNAME( 0x04, 0x04, "RESET (ONLY IN GAME)" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x04, "1" )
-	PORT_DIPNAME( 0x08, 0x08, "COIN IN2" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x08, "1" )
-	PORT_DIPNAME( 0x10, 0x10, "E4" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x10, "1" )
-	PORT_DIPNAME( 0x20, 0x20, "E5" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x20, "1" )
-	PORT_DIPNAME( 0x40, 0x40, "E6" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x40, "1" )
-	PORT_DIPNAME( 0x80, 0x80, "E7" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x80, "1" )
+	 PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 ) PORT_NAME("Key In")
+	 PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	 PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_NAME("Reset ?")
+	 PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	 PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	 PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	 PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	 PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 
-	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "41" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x02, "1" )
-	PORT_DIPNAME( 0x04, 0x04, "42" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x04, "1" )
-	PORT_DIPNAME( 0x08, 0x08, "43" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x08, "1" )
-	PORT_DIPNAME( 0x10, 0x10, "44" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x10, "1" )
-	PORT_DIPNAME( 0x20, 0x20, "45" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x20, "1" )
-	PORT_DIPNAME( 0x40, 0x40, "46" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x40, "1" )
-	PORT_DIPNAME( 0x80, 0x80, "47" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x80, "1" )
+	PORT_START	/* DSW ?*/
+	 PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	 PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	 PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	 PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	 PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	 PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	 PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	 PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	 PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	 PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-
-	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x01, 0x01, "50" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x01, "1" )
-	PORT_DIPNAME( 0x02, 0x02, "51" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x02, "1" )
-	PORT_DIPNAME( 0x04, 0x04, "52" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x04, "1" )
-	PORT_DIPNAME( 0x08, 0x08, "53" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x08, "1" )
-	PORT_DIPNAME( 0x10, 0x10, "54" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x10, "1" )
-	PORT_DIPNAME( 0x20, 0x20, "START" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x20, "1" )
-	PORT_DIPNAME( 0x40, 0x40, "BET10" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x40, "1" )
-	PORT_DIPNAME( 0x80, 0x80, "57" )
-	PORT_DIPSETTING(    0x00, "0" )
-	PORT_DIPSETTING(    0x80, "1" )
+	PORT_START	/* Inputs */
+	 PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("Left Flipper")
+	 PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_NAME("Big")
+	 PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_NAME("Small")
+	 PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_NAME("Take")
+	 PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME("Double Up")
+	 PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	 PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 ) PORT_NAME("Bet")
+	 PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("Right Flipper")
 
 /*
 F180 kkkbbppp ; Read on port 0xA005
@@ -727,56 +559,55 @@ F180 kkkbbppp ; Read on port 0xA005
  kkk  = KEY IN  | 1-10 ; 1-20 ; 1-40 ; 1-50 ; 1-100 ; 1-200 ; 1-250 ; 1-500
 */
 	PORT_START_TAG("A005")	/* DSW */
-		PORT_DIPNAME( 0x07, 0x07, "PAY OUT" )
-			PORT_DIPSETTING(    0x07, "60" )
-			PORT_DIPSETTING(    0x06, "65" )
-			PORT_DIPSETTING(    0x05, "70" )
-			PORT_DIPSETTING(    0x04, "75" )
-			PORT_DIPSETTING(    0x03, "80" )
-			PORT_DIPSETTING(    0x02, "85" )
-			PORT_DIPSETTING(    0x01, "90" )
-			PORT_DIPSETTING(    0x00, "95" )
-		PORT_DIPNAME( 0x18, 0x00, "MAX BET" )
-			PORT_DIPSETTING(    0x18, "20" )
-			PORT_DIPSETTING(    0x10, "30" )
-			PORT_DIPSETTING(    0x08, "40" )
-			PORT_DIPSETTING(    0x00, "60" )
-		PORT_DIPNAME( 0xe0, 0xe0, "KEY IN" )
-			PORT_DIPSETTING(    0xE0, "1-10"  )
-			PORT_DIPSETTING(    0xC0, "1-20"  )
-			PORT_DIPSETTING(    0xA0, "1-40"  )
-			PORT_DIPSETTING(    0x80, "1-50"  )
-			PORT_DIPSETTING(    0x60, "1-100" )
-			PORT_DIPSETTING(    0x40, "1-200" )
-			PORT_DIPSETTING(    0x20, "1-250" )
-			PORT_DIPSETTING(    0x00, "1-500" )
-
+ 	PORT_DIPNAME( 0x07, 0x07, "PAY OUT" )
+	PORT_DIPSETTING(    0x07, "60" )
+	PORT_DIPSETTING(    0x06, "65" )
+	PORT_DIPSETTING(    0x05, "70" )
+	PORT_DIPSETTING(    0x04, "75" )
+	PORT_DIPSETTING(    0x03, "80" )
+	PORT_DIPSETTING(    0x02, "85" )
+	PORT_DIPSETTING(    0x01, "90" )
+	PORT_DIPSETTING(    0x00, "95" )
+	PORT_DIPNAME( 0x18, 0x00, "MAX BET" )
+	PORT_DIPSETTING(    0x18, "20" )
+	PORT_DIPSETTING(    0x10, "30" )
+	PORT_DIPSETTING(    0x08, "40" )
+	PORT_DIPSETTING(    0x00, "60" )
+	PORT_DIPNAME( 0xe0, 0xe0, "KEY IN" )
+	PORT_DIPSETTING(    0xE0, "1-10"  )
+	PORT_DIPSETTING(    0xC0, "1-20"  )
+	PORT_DIPSETTING(    0xA0, "1-40"  )
+	PORT_DIPSETTING(    0x80, "1-50"  )
+	PORT_DIPSETTING(    0x60, "1-100" )
+	PORT_DIPSETTING(    0x40, "1-200" )
+	PORT_DIPSETTING(    0x20, "1-250" )
+	PORT_DIPSETTING(    0x00, "1-500" )
 /*
 *f181   : ccccxxxd ; Read on port 0xA004
  d    = DOUBLE UP | ON ; OFF
  cccc = COIN IN1 | 1-1 ; 1-2 ; 1-3 ; 1-4 ; 1-5 ; 1-6 ; 1-7 ; 1-8 ; 1-9 ; 1-10 ; 1-15 ; 1-20 ; 1-25 ; 1-30 ; 1-40 ; 1-50
 */
 	PORT_START_TAG("A004")	/* DSW */
-		PORT_DIPNAME( 0x01, 0x00, "DOUBLE UP" )
-			PORT_DIPSETTING(    0x01, DEF_STR( Off  ) )
-			PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-		PORT_DIPNAME( 0xf0, 0xf0, "COIN IN1" )
-			PORT_DIPSETTING(    0xf0, "1-1" )
-			PORT_DIPSETTING(    0xe0, "1-2" )
-			PORT_DIPSETTING(    0xd0, "1-3" )
-			PORT_DIPSETTING(    0xc0, "1-4" )
-			PORT_DIPSETTING(    0xb0, "1-5" )
-			PORT_DIPSETTING(    0xa0, "1-6" )
-			PORT_DIPSETTING(    0x90, "1-7" )
-			PORT_DIPSETTING(    0x80, "1-8" )
-			PORT_DIPSETTING(    0x70, "1-9" )
-			PORT_DIPSETTING(    0x60, "1-10" )
-			PORT_DIPSETTING(    0x50, "1-15" )
-			PORT_DIPSETTING(    0x40, "1-20" )
-			PORT_DIPSETTING(    0x30, "1-25" )
-			PORT_DIPSETTING(    0x20, "1-30" )
-			PORT_DIPSETTING(    0x10, "1-40" )
-			PORT_DIPSETTING(    0x00, "1-50" )
+	PORT_DIPNAME( 0x01, 0x00, "DOUBLE UP" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off  ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xf0, 0xf0, "COIN IN1" )
+	PORT_DIPSETTING(    0xf0, "1-1" )
+	PORT_DIPSETTING(    0xe0, "1-2" )
+	PORT_DIPSETTING(    0xd0, "1-3" )
+	PORT_DIPSETTING(    0xc0, "1-4" )
+	PORT_DIPSETTING(    0xb0, "1-5" )
+	PORT_DIPSETTING(    0xa0, "1-6" )
+	PORT_DIPSETTING(    0x90, "1-7" )
+	PORT_DIPSETTING(    0x80, "1-8" )
+	PORT_DIPSETTING(    0x70, "1-9" )
+	PORT_DIPSETTING(    0x60, "1-10" )
+	PORT_DIPSETTING(    0x50, "1-15" )
+	PORT_DIPSETTING(    0x40, "1-20" )
+	PORT_DIPSETTING(    0x30, "1-25" )
+	PORT_DIPSETTING(    0x20, "1-30" )
+	PORT_DIPSETTING(    0x10, "1-40" )
+	PORT_DIPSETTING(    0x00, "1-50" )
 
 /*
 *f182   : sttpcccc ; Read on Port A of YM2203 @ 0x8001
@@ -786,34 +617,34 @@ F180 kkkbbppp ; Read on port 0xA005
  s    = DEMO SOUND | ON ; OFF
 */
 	PORT_START_TAG("YM_PortA")	/* DSW */
-		PORT_DIPNAME( 0x0f, 0x0f, "COIN IN2" )
-			PORT_DIPSETTING(    0x0f, "1-1" )
-			PORT_DIPSETTING(    0x0e, "1-2" )
-			PORT_DIPSETTING(    0x0d, "1-3" )
-			PORT_DIPSETTING(    0x0c, "1-4" )
-			PORT_DIPSETTING(    0x0b, "1-5" )
-			PORT_DIPSETTING(    0x0a, "1-6" )
-			PORT_DIPSETTING(    0x09, "1-7" )
-			PORT_DIPSETTING(    0x08, "1-8" )
-			PORT_DIPSETTING(    0x07, "1-9" )
-			PORT_DIPSETTING(    0x06, "1-10" )
-			PORT_DIPSETTING(    0x05, "2-1" )
-			PORT_DIPSETTING(    0x04, "3-1" )
-			PORT_DIPSETTING(    0x03, "4-1" )
-			PORT_DIPSETTING(    0x02, "5-1" )
-			PORT_DIPSETTING(    0x01, "6-1" )
-			PORT_DIPSETTING(    0x00, "10-1" )
-		PORT_DIPNAME( 0x10, 0x00, "PAYOUT SWITCH" )
-			PORT_DIPSETTING(    0x10, DEF_STR( Off  ) )
-			PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-		PORT_DIPNAME( 0x60, 0x00, "TIME" )
-			PORT_DIPSETTING(    0x60, "40" )
-			PORT_DIPSETTING(    0x40, "45" )
-			PORT_DIPSETTING(    0x20, "50" )
-			PORT_DIPSETTING(    0x00, "55" )
-		PORT_DIPNAME( 0x80, 0x00, "DEMO SOUND" )
-			PORT_DIPSETTING(    0x80, DEF_STR( Off  ) )
-			PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0f, 0x0f, "COIN IN2" )
+	PORT_DIPSETTING(    0x0f, "1-1" )
+	PORT_DIPSETTING(    0x0e, "1-2" )
+	PORT_DIPSETTING(    0x0d, "1-3" )
+	PORT_DIPSETTING(    0x0c, "1-4" )
+	PORT_DIPSETTING(    0x0b, "1-5" )
+	PORT_DIPSETTING(    0x0a, "1-6" )
+	PORT_DIPSETTING(    0x09, "1-7" )
+	PORT_DIPSETTING(    0x08, "1-8" )
+	PORT_DIPSETTING(    0x07, "1-9" )
+	PORT_DIPSETTING(    0x06, "1-10" )
+	PORT_DIPSETTING(    0x05, "2-1" )
+	PORT_DIPSETTING(    0x04, "3-1" )
+	PORT_DIPSETTING(    0x03, "4-1" )
+	PORT_DIPSETTING(    0x02, "5-1" )
+	PORT_DIPSETTING(    0x01, "6-1" )
+	PORT_DIPSETTING(    0x00, "10-1" )
+	PORT_DIPNAME( 0x10, 0x00, "PAYOUT SWITCH" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off  ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x00, "TIME" )
+	PORT_DIPSETTING(    0x60, "40" )
+	PORT_DIPSETTING(    0x40, "45" )
+	PORT_DIPSETTING(    0x20, "50" )
+	PORT_DIPSETTING(    0x00, "55" )
+	PORT_DIPNAME( 0x80, 0x00, "DEMO SOUND" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off  ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 /*
 *f183 : xxxxhllb ; Read on Port B of YM2203 @ 0x8001
@@ -822,17 +653,17 @@ F180 kkkbbppp ; Read on port 0xA005
  h    = HOPPER ACTIVE | LOW ; HIGH
 */
 	PORT_START_TAG("YM_PortB")	/* DSW */
-		PORT_DIPNAME( 0x01, 0x01, "AUTO BET" )
-			PORT_DIPSETTING(    0x01, DEF_STR( Off  ) )
-			PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-		PORT_DIPNAME( 0x06, 0x06, "GAME LIMIT" )
-			PORT_DIPSETTING(    0x06, "500" )
-			PORT_DIPSETTING(    0x04, "1000" )
-			PORT_DIPSETTING(    0x02, "5000" )
-			PORT_DIPSETTING(    0x00, "990000" )
-		PORT_DIPNAME( 0x08, 0x08, "HOPPER" )
-			PORT_DIPSETTING(    0x08, DEF_STR(Low) )
-			PORT_DIPSETTING(    0x00, DEF_STR(High) )
+	PORT_DIPNAME( 0x01, 0x01, "AUTO BET" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off  ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x06, 0x06, "GAME LIMIT" )
+	PORT_DIPSETTING(    0x06, "500" )
+	PORT_DIPSETTING(    0x04, "1000" )
+	PORT_DIPSETTING(    0x02, "5000" )
+	PORT_DIPSETTING(    0x00, "990000" )
+	PORT_DIPNAME( 0x08, 0x08, "HOPPER" )
+	PORT_DIPSETTING(    0x08, DEF_STR(Low) )
+	PORT_DIPSETTING(    0x00, DEF_STR(High) )
 
 INPUT_PORTS_END
 
@@ -862,13 +693,15 @@ static const gfx_decode gfxdecodeinfo[] =
 
 VIDEO_START(witch)
 {
-	gfx0_tilemap = tilemap_create(get_gfx0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	gfx0a_tilemap = tilemap_create(get_gfx0a_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	gfx0b_tilemap = tilemap_create(get_gfx0b_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	gfx1_tilemap = tilemap_create(get_gfx1_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
-	tilemap_set_transparent_pen(gfx0_tilemap,0);
-  tilemap_set_palette_offset(gfx0_tilemap,0x100);
+	tilemap_set_transparent_pen(gfx0a_tilemap,0);
+	tilemap_set_transparent_pen(gfx0b_tilemap,0);
+  tilemap_set_palette_offset(gfx0a_tilemap,0x100);
+  tilemap_set_palette_offset(gfx0b_tilemap,0x100);
   tilemap_set_palette_offset(gfx1_tilemap,0x200);
-//What about 0x00-0xff?
 
 	return 0;
 }
@@ -880,11 +713,11 @@ static void draw_sprites(mame_bitmap *bitmap)
 	int flipy=0;
 
 	for(i=0;i<0x800;i+=0x20) {
-		int gfx=1;
+
 
 		sx     = sprite_ram[i+1];
 		if(sx!=0xF8) {
-			tileno = sprite_ram[i] << 2 | (( sprite_ram[i+0x800] & 0x07 ) << 10 );
+			tileno = (sprite_ram[i]<<2)  | (( sprite_ram[i+0x800] & 0x07 ) << 10 );
 
 			sy     = sprite_ram[i+2];
 			flags  = sprite_ram[i+3];
@@ -894,31 +727,31 @@ static void draw_sprites(mame_bitmap *bitmap)
 
 			color  =  flags & 0x0f;
 
-			drawgfx(bitmap,Machine->gfx[gfx],
+
+			drawgfx(bitmap,Machine->gfx[1],
 				tileno, color,
 				flipx, flipy,
 				sx+8*flipx,sy+8*flipy,
 				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 
-			if(1) {//only 4x4 sprites?
-				drawgfx(bitmap,Machine->gfx[gfx],
+			drawgfx(bitmap,Machine->gfx[1],
 				tileno+1, color,
 				flipx, flipy,
 				sx+8-8*flipx,sy+8*flipy,
 				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 
-				drawgfx(bitmap,Machine->gfx[gfx],
+			drawgfx(bitmap,Machine->gfx[1],
 				tileno+2, color,
 				flipx, flipy,
 				sx+8*flipx,sy+8-8*flipy,
 				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 
-				drawgfx(bitmap,Machine->gfx[gfx],
+			drawgfx(bitmap,Machine->gfx[1],
 				tileno+3, color,
 				flipx, flipy,
 				sx+8-8*flipx,sy+8-8*flipy,
 				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
-			}
+
 		}
 	}
 
@@ -927,31 +760,39 @@ static void draw_sprites(mame_bitmap *bitmap)
 VIDEO_UPDATE(witch)
 {
 	tilemap_set_scrollx( gfx1_tilemap, 0, scrollx-7 ); //offset to have it aligned with the sprites
-	tilemap_set_scrolly( gfx1_tilemap, 0, scrolly );
+	tilemap_set_scrolly( gfx1_tilemap, 0, scrolly+8 );
+
+
 
 	tilemap_draw(bitmap,cliprect,gfx1_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,gfx0a_tilemap,0,0);
 	draw_sprites(bitmap);
-	tilemap_draw(bitmap,cliprect,gfx0_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,gfx0b_tilemap,0,0);
 	return 0;
 }
 
-static INTERRUPT_GEN( witch_interrupt ) {
+static INTERRUPT_GEN( witch_main_interrupt )
+{
 	cpunum_set_input_line(0,0,ASSERT_LINE);
+}
+
+static INTERRUPT_GEN( witch_sub_interrupt )
+{
 	cpunum_set_input_line(1,0,ASSERT_LINE);
 }
 
 static MACHINE_DRIVER_START( witch )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,8000000)		 /* ? MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(witch_interrupt,1)
+	MDRV_CPU_PROGRAM_MAP(map_main, 0)
+	MDRV_CPU_VBLANK_INT(witch_main_interrupt,1)
 
 	/* 2nd z80 */
 	MDRV_CPU_ADD(Z80,8000000)		 /* ? MHz */
-	MDRV_CPU_PROGRAM_MAP(cpu2_readmem,cpu2_writemem)
+	MDRV_CPU_PROGRAM_MAP(map_sub, 0)
+	MDRV_CPU_VBLANK_INT(witch_sub_interrupt,1)
 
 	MDRV_SCREEN_REFRESH_RATE(60)
-//  MDRV_SCREEN_VBLANK_TIME(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_NVRAM_HANDLER(generic_0fill)
@@ -960,10 +801,9 @@ static MACHINE_DRIVER_START( witch )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
 	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
 	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_SCREEN_VISIBLE_AREA(8, 256-1-8, 8*2, 256-8*2)
-//  MDRV_SCREEN_VISIBLE_AREA(0, 256-1, 0, 256-1)
+	MDRV_SCREEN_VISIBLE_AREA(8, 256-1-8, 8*4, 256-8*4-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(0x300)
+	MDRV_PALETTE_LENGTH(0x800)
 
 	MDRV_VIDEO_START(witch)
 	MDRV_VIDEO_UPDATE(witch)
@@ -987,9 +827,12 @@ MACHINE_DRIVER_END
 
 /* this set has (c)1992 Sega / Vic Tokai in the roms? */
 ROM_START( witch )
-	ROM_REGION( 0x28000, REGION_CPU1, 0 )
-	ROM_LOAD( "rom.u5", 0x00000, 0x08000, CRC(348fccb8) SHA1(947defd86c4a597fbfb9327eec4903aa779b3788)  )
-	ROM_CONTINUE ( 0x10000, 0x18000)
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )
+	ROM_LOAD( "rom.u5", 0x10000, 0x20000, CRC(348fccb8) SHA1(947defd86c4a597fbfb9327eec4903aa779b3788)  )
+	ROM_COPY( REGION_CPU1 , 0x10000, 0x0000, 0x8000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "rom.s6", 0x00000, 0x08000, CRC(82460b82) SHA1(d85a9d77edaa67dfab8ff6ac4cb6273f0904b3c0)  )
 
 	ROM_REGION( 0x20000, REGION_GFX1, 0 )
 	ROM_LOAD( "rom.u3", 0x00000, 0x20000,  CRC(7007ced4) SHA1(6a0aac3ff9a4d5360c8ba1142f010add1b430ada)  )
@@ -997,27 +840,24 @@ ROM_START( witch )
 	ROM_REGION( 0x40000, REGION_GFX2, 0 )
 	ROM_LOAD( "rom.a1", 0x00000, 0x40000,  CRC(512300a5) SHA1(1e9ba58d1ddbfb8276c68f6d5c3591e6b77abf21)  )
 
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )
-	ROM_LOAD( "rom.s6", 0x00000, 0x08000, CRC(82460b82) SHA1(d85a9d77edaa67dfab8ff6ac4cb6273f0904b3c0)  )
-
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )
 	ROM_LOAD( "rom.v10", 0x00000, 0x40000, CRC(62e42371) SHA1(5042abc2176d0c35fd6b698eca4145f93b0a3944) )
 ROM_END
 
 /* no sega logo? a bootleg? */
 ROM_START( pbchmp95 )
-	ROM_REGION( 0x28000, REGION_CPU1, 0 )
-	ROM_LOAD( "3.bin", 0x00000, 0x08000, CRC(e881aa05) SHA1(10d259396cac4b9a1b72c262c11ffa5efbdac433)  )
-	ROM_CONTINUE ( 0x10000, 0x18000)
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )
+	ROM_LOAD( "3.bin", 0x10000, 0x20000, CRC(e881aa05) SHA1(10d259396cac4b9a1b72c262c11ffa5efbdac433)  )
+	ROM_COPY( REGION_CPU1 , 0x10000, 0x0000, 0x8000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "4.bin", 0x00000, 0x08000, CRC(82460b82) SHA1(d85a9d77edaa67dfab8ff6ac4cb6273f0904b3c0)  )
 
 	ROM_REGION( 0x20000, REGION_GFX1, 0 )
 	ROM_LOAD( "2.bin", 0x00000, 0x20000,  CRC(7007ced4) SHA1(6a0aac3ff9a4d5360c8ba1142f010add1b430ada)  )
 
 	ROM_REGION( 0x40000, REGION_GFX2, 0 )
 	ROM_LOAD( "1.bin", 0x00000, 0x40000,  CRC(f6cf7ed6) SHA1(327580a17eb2740fad974a01d97dad0a4bef9881)  )
-
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )
-	ROM_LOAD( "4.bin", 0x00000, 0x08000, CRC(82460b82) SHA1(d85a9d77edaa67dfab8ff6ac4cb6273f0904b3c0)  )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )
 	ROM_LOAD( "5.bin", 0x00000, 0x40000, CRC(62e42371) SHA1(5042abc2176d0c35fd6b698eca4145f93b0a3944) )
@@ -1026,9 +866,10 @@ ROM_END
 DRIVER_INIT(witch)
 {
  	UINT8 *ROM = (UINT8 *)memory_region(REGION_CPU1);
+	memory_set_bankptr(1,&ROM[0x10000+UNBANKED_SIZE]);
 
-	memory_set_bankptr(1,&ROM[UNBANKED_SIZE]);
+	memory_install_read8_handler(1, ADDRESS_SPACE_PROGRAM, 0x7000, 0x700f, 0, 0, prot_read_700x);
 }
 
-GAME( 1992, witch,    0,     witch, witch, witch, ROT0, "Sega / Vic Tokai", "Witch", GAME_NOT_WORKING )
-GAME( 1995, pbchmp95, witch, witch, witch, witch, ROT0, "Veltmeijer Automaten", "Pinball Champ '95 (bootleg?)", GAME_NOT_WORKING )
+GAME( 1992, witch,    0,     witch, witch, witch, ROT0, "Sega / Vic Tokai", "Witch", 0 )
+GAME( 1995, pbchmp95, witch, witch, witch, witch, ROT0, "Veltmeijer Automaten", "Pinball Champ '95 (bootleg?)", 0 )

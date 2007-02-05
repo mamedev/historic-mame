@@ -174,6 +174,8 @@ void stvcd_reset(void)
 	cr4 = ('C'<<8) | 'K';
 	cd_stat = 0;
 
+	if (curdir != (direntryT *)NULL)
+		free((void *)curdir);
 	curdir = (direntryT *)NULL;		// no directory yet
 
 	// reset flag vars

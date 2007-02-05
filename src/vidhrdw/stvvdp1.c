@@ -1051,10 +1051,11 @@ static void stv_vdp1_set_drawpixel(void)
 	int sprite_mode = stv2_current_sprite.CMDPMOD&0x0038;
 	int spd = stv2_current_sprite.CMDPMOD & 0x40;
 	int mesh = stv2_current_sprite.CMDPMOD & 0x100;
+	int ecd = stv2_current_sprite.CMDPMOD & 0x80;
 
 	gfxdata = stv_vdp1_gfx_decode;
 
-	if ( mesh )
+	if ( mesh || !ecd || ((stv2_current_sprite.CMDPMOD & 0x7) != 0) )
 	{
 		drawpixel = drawpixel_generic;
 		return;

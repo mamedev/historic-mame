@@ -631,7 +631,7 @@ struct AY8910interface ay8912_interface =
 static MACHINE_DRIVER_START( coinmstr )
 	MDRV_CPU_ADD_TAG("cpu",Z80,8000000) // ?
 	MDRV_CPU_PROGRAM_MAP(coinmstr_map,0)
-	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_SCREEN_REFRESH_RATE(60)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
@@ -809,11 +809,9 @@ DRIVER_INIT( coinmstr )
 {
 	UINT8 *rom = memory_region(REGION_USER1);
 	int length = memory_region_length(REGION_USER1);
-	UINT8 *buf = malloc(length);
+	UINT8 *buf = malloc_or_die(length);
 	int i;
 
-	if (buf)
-	{
 		memcpy(buf,rom,length);
 
 		for(i = 0; i < length; i++)
@@ -823,7 +821,6 @@ DRIVER_INIT( coinmstr )
 		}
 
 		free(buf);
-	}
 }
 
 

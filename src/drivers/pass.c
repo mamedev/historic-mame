@@ -281,7 +281,7 @@ static MACHINE_DRIVER_START( pass )
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(pass_sound_readmem,pass_sound_writemem)
 	MDRV_CPU_IO_MAP(pass_sound_readport,pass_sound_writeport)
-	MDRV_CPU_VBLANK_INT(irq0_line_pulse,1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_SCREEN_REFRESH_RATE(60)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)

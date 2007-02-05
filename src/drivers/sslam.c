@@ -15,6 +15,9 @@ Update 12/03/2005 - Pierpaolo Prazzoli
 - Fixed VSync
 - Fixed middle tilemap removing wraparound in the title screen (24/03/2005)
 
+  Sound command 29h is fired when the game is completed successfully. It requires
+  a melody from bank one to be playing, the real MCU doesn't set the bank though.
+  Consequently, the "Game, Set and Match" vocal is not played.
 */
 
 /*
@@ -38,7 +41,44 @@ About the game:
 This is a Tennis game :) You can play with some boys and girls, an old man,
 a small kid and even with a dog! And remember, Winners don't use Drugs ;)
 
+
+
+PCB Layout
+----------
+
+----------------------------------------------------
+|      6295   3              62256             4   |
+|          87C751            62256                 |
+|      1MHz                                    5   |
+|       6116                                       |
+|       6116                                   6   |
+|     DSW1(8)                                      |
+|J                                             7   |
+|A                                 TPC1020         |
+|M    DSW2(8)                                  8   |
+|M                                                 |
+|A                                             9   |
+|                                                  |
+|                                              10  |
+|                                                  |
+|                                              11  |
+|12MHz                          2018  2018         |
+|       68000P12 62256                             |
+|                 2             2018  2018         |
+|                62256                             |
+|                 1     26MHz                      |
+----------------------------------------------------
+
+Notes:
+      68k clock: 12MHz
+          VSync: 58Hz
+          HSync: 14.62kHz
+   87C751 clock: 12MHz (87C751 is 8051 based DIP24 MCU with)
+                       (2Kx8 OTP EPROM and 64Kx8 SRAM)
+                       (unfortunately, it's protected)
 */
+
+
 
 #include "driver.h"
 #include "cpu/i8051/i8051.h"
@@ -47,9 +87,12 @@ a small kid and even with a dog! And remember, Winners don't use Drugs ;)
 
 #define oki_time_base 0x08
 
+static mame_timer *music_timer;
+
 static int sslam_sound;
 static int sslam_melody;
-static int sslam_melody_loop;
+static int sslam_bar;
+static int sslam_track;
 static int sslam_snd_bank;
 UINT16 *sslam_bg_tileram, *sslam_tx_tileram, *sslam_md_tileram;
 UINT16 *sslam_spriteram, *sslam_regs;
@@ -60,34 +103,53 @@ static UINT8 playmark_oki_control = 0, playmark_oki_command = 0;
 
 /**************************************************************************
    This table converts commands sent from the main CPU, into sample numbers
-   played back by the sound processor.
-   All commentry and most sound effects are correct, however the music
-   tracks may be playing at the wrong times.
-   Accordingly, the commands for playing the below samples is just a guess:
-   1A, 1B, 1C, 1D, 1E, 60, 61, 62, 65, 66, 67, 68, 69, 6B, 6C.
-   Samples 63, 64 and 6A are currently not fitted anywhere :-(
-   Note: that samples 60, 61 and 62 combine to form a music track.
-   Ditto for samples 65, 66, 67 and 68.
-   Command 29 is fired when the game is completed successfully. It requires
-   a melody from bank one to be playing, but we're already using the bank
-   one melody during game play.
-   The sound CPU simulation can only be perfected once it can be compared
-   against a real game board.
+   played back by the sound processor (the 87C751).
+   Values of 0xff indicate unused commands.
+   Note, that some samples such as 60, 61 and 62 are sequenced to form a
+   music track. Ditto for samples 65, 66, 67 and 68, and also 6A and 6B.
+   The sequencing of the music tracks are handled in the second table below.
 */
 
-static const UINT8 sslam_cmd_snd[128] =
+static const UINT8 sslam_snd_cmd[64] =
 {
 /*00*/	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 /*08*/	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x70, 0x71,
 /*10*/	0x72, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14,
 /*18*/	0x15, 0x16, 0x17, 0x18, 0x19, 0x73, 0x74, 0x75,
-/*20*/	0x76, 0x1a, 0x1b, 0x1c, 0x1d, 0x00, 0x1f, 0x6c,
-/*28*/	0x1e, 0x65, 0x00, 0x00, 0x60, 0x20, 0x69, 0x65,
-/*30*/	0x00, 0x00, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
-/*38*/	0x29, 0x2a, 0x2b, 0x00, 0x6b, 0x00, 0x00, 0x00
+/*20*/	0x76, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x63,
+/*28*/	0x64, 0x6b, 0xff, 0xff, 0x60, 0x20, 0x6c, 0x65,
+/*30*/	0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+/*38*/	0x29, 0x2a, 0x2b, 0xff, 0x69, 0xff, 0x20, 0xff
 };
 
-/* Sound numbers in the sample ROM
+
+/**************************************************************************
+   Music Sequencing:
+   The first column indicates the number of bars (plus 1) in the track to sequence
+   The second column onwards indicates which samples to play in the tracks sequence
+   The first row is always zero to indicate that music has/should stop
+   The second row onwards are the various music tracks
+   The last byte shown in each row (track) is a flag to indicate what to do at the end of the sequence:
+     If the last byte is 0x00, the track should not be repeated
+     If the last byte is 0xff, the track should loop by restarting at the first sample in the second column
+*/
+
+static const UINT8 sslam_snd_loop[8][20] =
+{
+/*NA*/	{  0,  0x00, 0x00 },	/* Not a loop - just a park position */
+/*60*/	{  9,  0x60, 0x60, 0x61, 0x61, 0x60, 0x60, 0x61, 0x62, 0xff },
+/*63*/	{  2,  0x63, 0x00 },
+/*64*/	{  2,  0x64, 0x00 },
+/*65*/	{ 20,  0x65, 0x65, 0x66, 0x66, 0x65, 0x65, 0x66, 0x67, 0x67, 0x68, 0x65, 0x65, 0x67, 0x65, 0x66, 0x66, 0x67, 0x68, 0xff },
+/*69*/	{  2,  0x69, 0xff },
+/*6B*/	{  6,  0x6b, 0x6a, 0x6a, 0x6b, 0x6a, 0xff },
+/*6C*/	{  2,  0x6c, 0xff }
+};
+
+
+
+
+/* Sound numbers in the Super Slam sample ROM
 01 "Out"
 02 "Fault"
 03 "Deuce"
@@ -135,8 +197,8 @@ static const UINT8 sslam_cmd_snd[128] =
 60 Melody A1 -------------
 61 Melody A2
 62 Melody A3        Bank 0
-63 Melody B
-64 Melody C  -------------
+63 Pattern B
+64 Pattern C  ------------
 
 65 Melody D1 -------------
 66 Melody D2        Bank 1
@@ -144,9 +206,9 @@ static const UINT8 sslam_cmd_snd[128] =
 68 Melody D4 -------------
 
 69 Melody E --------------
-6a Melody F         Bank 2
-6b Melody G
-6c Melody H --------------
+6a Melody F1        Bank 2
+6b Melody F2
+6c Melody G --------------
 
 70 "Tie Break"          -------------
 71 "Advantage Server"
@@ -155,47 +217,10 @@ static const UINT8 sslam_cmd_snd[128] =
 74 "Game and Second Set"
 75 "Game and Third Set"
 76 "Game Set and Match" -------------
-
-
-Super Slam
-Playmark, 1993
-
-PCB Layout
-----------
-
-----------------------------------------------------
-|      6295   3              62256             4   |
-|          87C751            62256                 |
-|      1MHz                                    5   |
-|       6116                                       |
-|       6116                                   6   |
-|     DSW1(8)                                      |
-|J                                             7   |
-|A                                 TPC1020         |
-|M    DSW2(8)                                  8   |
-|M                                                 |
-|A                                             9   |
-|                                                  |
-|                                              10  |
-|                                                  |
-|                                              11  |
-|12MHz                          2018  2018         |
-|       68000P12 62256                             |
-|                 2             2018  2018         |
-|                62256                             |
-|                 1     26MHz                      |
-----------------------------------------------------
-
-Notes:
-      68k clock: 12MHz
-          VSync: 58Hz
-          HSync: 14.62kHz
-   87c751 clock: 12MHz (87c751 is 8051 based DIP24 MCU with)
-                       (2Kx8 OTP EPROM and 64Kx8 SRAM)
-                       (unfortunately, it's protected)
-
-
 */
+
+
+
 
 
 /* vidhrdw/playmark.c */
@@ -212,36 +237,83 @@ VIDEO_UPDATE(sslam);
 VIDEO_UPDATE(powerbls);
 
 
-static void sslam_play(int melody, int data)
+
+static void music_playback(int param)
 {
-	int status = OKIM6295_status_0_r(0);
+	int pattern = 0;
 
-	logerror("Playing sample %01x:%02x from command %02x\n",sslam_snd_bank,sslam_sound,data);
-	if (sslam_sound == 0) popmessage("Unknown sound command %02x",sslam_sound);
+	if ((OKIM6295_status_0_r(0) & 0x08) == 0)
+	{
+		if (sslam_bar != 0) {
+			sslam_bar += 1;
+			if (sslam_bar >= (sslam_snd_loop[sslam_melody][0] + 1))
+				sslam_bar = 1;
+		}
+		pattern = sslam_snd_loop[sslam_melody][sslam_bar];
 
-	if (melody) {
-		if (sslam_melody != sslam_sound) {
-			sslam_melody      = sslam_sound;
-			sslam_melody_loop = sslam_sound;
-			if (status & 0x08)
-				OKIM6295_data_0_w(0,0x40);
-			OKIM6295_data_0_w(0,(0x80 | sslam_melody));
+		if (pattern == 0xff) {		/* Restart track from first bar */
+			sslam_bar = 1;
+			pattern = sslam_snd_loop[sslam_melody][sslam_bar];
+		}
+		if (pattern == 0x00) {		/* Non-looped track. Stop playing it */
+			sslam_track = 0;
+			sslam_melody = 0;
+			sslam_bar = 0;
+			timer_enable(music_timer,0);
+		}
+		if (pattern) {
+			logerror("Changing bar in music track to pattern %02x\n",pattern);
+			OKIM6295_data_0_w(0,(0x80 | pattern));
 			OKIM6295_data_0_w(0,0x81);
 		}
 	}
-	else {
-		if ((status & 0x01) == 0) {
-		OKIM6295_data_0_w(0,(0x80 | sslam_sound));
-			OKIM6295_data_0_w(0,0x11);
+//  {
+//      pattern = sslam_snd_loop[sslam_melody][sslam_bar];
+//      popmessage("Music track: %02x, Melody: %02x, Pattern: %02x, Bar:%02d",sslam_track,sslam_melody,pattern,sslam_bar);
+//  }
+}
+
+
+static void sslam_play(int track, int data)
+{
+	int status = OKIM6295_status_0_r(0);
+
+	if (data < 0x80) {
+		if (track) {
+			if (sslam_track != data) {
+				sslam_track  = data;
+				sslam_bar = 1;
+				if (status & 0x08)
+					OKIM6295_data_0_w(0,0x40);
+				OKIM6295_data_0_w(0,(0x80 | data));
+				OKIM6295_data_0_w(0,0x81);
+				timer_adjust(music_timer, TIME_IN_MSEC(4), 0, TIME_IN_HZ(250));	/* 250Hz for smooth sequencing */
+			}
 		}
-		else if ((status & 0x02) == 0) {
-		OKIM6295_data_0_w(0,(0x80 | sslam_sound));
-			OKIM6295_data_0_w(0,0x21);
+		else {
+			if ((status & 0x01) == 0) {
+				OKIM6295_data_0_w(0,(0x80 | data));
+				OKIM6295_data_0_w(0,0x11);
+			}
+			else if ((status & 0x02) == 0) {
+				OKIM6295_data_0_w(0,(0x80 | data));
+				OKIM6295_data_0_w(0,0x21);
+			}
+			else if ((status & 0x04) == 0) {
+				OKIM6295_data_0_w(0,(0x80 | data));
+				OKIM6295_data_0_w(0,0x41);
+			}
 		}
-		else if ((status & 0x04) == 0) {
-		OKIM6295_data_0_w(0,(0x80 | sslam_sound));
-			OKIM6295_data_0_w(0,0x41);
+	}
+	else {		/* use above 0x80 to turn off channels */
+		if (track) {
+			timer_enable(music_timer,0);
+			sslam_track = 0;
+			sslam_melody = 0;
+			sslam_bar = 0;
 		}
+		data &= 0x7f;
+		OKIM6295_data_0_w(0,data);
 	}
 }
 
@@ -252,88 +324,73 @@ WRITE16_HANDLER( sslam_snd_w )
 		logerror("PC:%06x Writing %04x to Sound CPU\n",activecpu_get_previouspc(),data);
 		if (data >= 0x40) {
 			if (data == 0xfe) {
-				OKIM6295_data_0_w(0,0x40);	/* Stop playing the melody */
-				sslam_melody      = 0x00;
-				sslam_melody_loop = 0x00;
+				/* This should reset the sound MCU and stop audio playback, but here, it */
+				/* chops the first coin insert. So let's only stop any playing melodies. */
+				sslam_play(1, (0x80 | 0x40));		/* Stop playing the melody */
 			}
 			else {
 				logerror("Unknown command (%02x) sent to the Sound controller\n",data);
+				popmessage("Unknown command (%02x) sent to the Sound controller",data);
 			}
 		}
 		else if (data == 0) {
-			OKIM6295_data_0_w(0,0x38);		/* Stop playing effects */
+			sslam_bar = 0;		/* Complete any current bars then stop sequencing */
+			sslam_melody = 0;
 		}
 		else {
-			sslam_sound = sslam_cmd_snd[data];
+			sslam_sound = sslam_snd_cmd[data];
 
-			if (sslam_sound >= 0x70) {
-				if (sslam_snd_bank != 1)
-					OKIM6295_set_bank_base(0, (1 * 0x40000));
-				sslam_snd_bank = 1;
-				sslam_play(0, data);
+			if (sslam_sound == 0xff) {
+				popmessage("Unmapped sound command %02x on Bank %02x",data,sslam_snd_bank);
+			}
+			else if (sslam_sound >= 0x70) {
+				/* These vocals are in bank 1, but a bug in the actual MCU doesn't set the bank */
+//              if (sslam_snd_bank != 1)
+//                  OKIM6295_set_bank_base(0, (1 * 0x40000));
+//              sslam_snd_bank = 1;
+				sslam_play(0, sslam_sound);
 			}
 			else if (sslam_sound >= 0x69) {
 				if (sslam_snd_bank != 2)
 					OKIM6295_set_bank_base(0, (2 * 0x40000));
 				sslam_snd_bank = 2;
-				sslam_play(4, data);
+				switch (sslam_sound)
+				{
+					case 0x69:	sslam_melody = 5; break;
+					case 0x6b:	sslam_melody = 6; break;
+					case 0x6c:	sslam_melody = 7; break;
+					default:	sslam_melody = 0; sslam_bar = 0; break;	/* Invalid */
+				}
+				sslam_play(sslam_melody, sslam_sound);
 			}
 			else if (sslam_sound >= 0x65) {
 				if (sslam_snd_bank != 1)
 					OKIM6295_set_bank_base(0, (1 * 0x40000));
 				sslam_snd_bank = 1;
-				sslam_play(4, data);
+				sslam_melody = 4;
+				sslam_play(sslam_melody, sslam_sound);
 			}
 			else if (sslam_sound >= 0x60) {
 				sslam_snd_bank = 0;
 					OKIM6295_set_bank_base(0, (0 * 0x40000));
 				sslam_snd_bank = 0;
-				sslam_play(4, data);
+				switch (sslam_sound)
+				{
+					case 0x60:	sslam_melody = 1; break;
+					case 0x63:	sslam_melody = 2; break;
+					case 0x64:	sslam_melody = 3; break;
+					default:	sslam_melody = 0; sslam_bar = 0; break;	/* Invalid */
+				}
+				sslam_play(sslam_melody, sslam_sound);
 			}
 			else {
-				sslam_play(0, data);
+				sslam_play(0, sslam_sound);
 			}
 		}
 	}
 }
 
 
-static INTERRUPT_GEN( sslam_interrupt )
-{
-	if ((OKIM6295_status_0_r(0) & 0x08) == 0)
-	{
-		switch(sslam_melody_loop)
-		{
-			case 0x060:	sslam_melody_loop = 0x061; break;
-			case 0x061:	sslam_melody_loop = 0x062; break;
-			case 0x062:	sslam_melody_loop = 0x060; break;
-
-			case 0x065:	sslam_melody_loop = 0x165; break;
-			case 0x165:	sslam_melody_loop = 0x265; break;
-			case 0x265:	sslam_melody_loop = 0x365; break;
-			case 0x365:	sslam_melody_loop = 0x066; break;
-			case 0x066:	sslam_melody_loop = 0x067; break;
-			case 0x067:	sslam_melody_loop = 0x068; break;
-			case 0x068:	sslam_melody_loop = 0x065; break;
-
-			case 0x063:	sslam_melody_loop = 0x063; break;
-			case 0x064:	sslam_melody_loop = 0x064; break;
-			case 0x069:	sslam_melody_loop = 0x069; break;
-			case 0x06a:	sslam_melody_loop = 0x06a; break;
-			case 0x06b:	sslam_melody_loop = 0x06b; break;
-			case 0x06c:	sslam_melody_loop = 0x06c; break;
-
-			default:	sslam_melody_loop = 0x00; break;
-		}
-
-		if (sslam_melody_loop)
-		{
-//          logerror("Changing to sample %02x\n",sslam_melody_loop);
-			OKIM6295_data_0_w(0,((0x80 | sslam_melody_loop) & 0xff));
-			OKIM6295_data_0_w(0,0x81);
-		}
-	}
-}
 
 static WRITE16_HANDLER( powerbls_sound_w )
 {
@@ -431,7 +488,7 @@ static WRITE8_HANDLER( playmark_snd_control_w )
 	}
 
 //  !(data & 0x80) -> sound enable
-//  data & 0x40 -> always set
+//   (data & 0x40) -> always set
 }
 
 static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -497,31 +554,7 @@ INPUT_PORTS_START( sslam )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
 
 	PORT_START_TAG("DSW1")
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Unknown ) )		// 0x000522 = 0x00400e
-	PORT_DIPSETTING(    0x03, "0" )
-	PORT_DIPSETTING(    0x02, "1" )
-	PORT_DIPSETTING(    0x01, "2" )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPNAME( 0x04, 0x04, "Singles Game Time" )
-	PORT_DIPSETTING(    0x04, "180 Seconds" )
-	PORT_DIPSETTING(    0x00, "120 Seconds" )
-	PORT_DIPNAME( 0x08, 0x08, "Doubles Game Time" )
-	PORT_DIPSETTING(    0x08, "180 Seconds" )
-	PORT_DIPSETTING(    0x00, "120 Seconds" )
-	PORT_DIPNAME( 0x30, 0x30, "Starting Score" )
-	PORT_DIPSETTING(    0x30, "4-4" )
-	PORT_DIPSETTING(    0x20, "3-4" )
-	PORT_DIPSETTING(    0x10, "3-3" )
-	PORT_DIPSETTING(    0x00, "0-0" )
-	PORT_DIPNAME( 0x40, 0x40, "Play Mode" )
-	PORT_DIPSETTING(    0x00, "2 Players" )
-	PORT_DIPSETTING(    0x40, "4 Players" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START_TAG("DSW2")
-	PORT_DIPNAME( 0x07, 0x07, "Coin(s) per Player" )
+	PORT_DIPNAME( 0x07, 0x07, "Coin(s) per Player" )	PORT_DIPLOCATION("SW2:1,2,3")
 	PORT_DIPSETTING(    0x07, "1" )
 	PORT_DIPSETTING(    0x06, "2" )
 	PORT_DIPSETTING(    0x05, "3" )
@@ -530,7 +563,7 @@ INPUT_PORTS_START( sslam )
 	PORT_DIPSETTING(    0x02, "6" )
 	PORT_DIPSETTING(    0x01, "7" )
 	PORT_DIPSETTING(    0x00, "8" )
-	PORT_DIPNAME( 0x38, 0x38, "Coin Multiplicator" )
+	PORT_DIPNAME( 0x38, 0x38, "Coin Multiplicator" )	PORT_DIPLOCATION("SW2:4,5,6")
 	PORT_DIPSETTING(    0x38, "*1" )
 	PORT_DIPSETTING(    0x30, "*2" )
 	PORT_DIPSETTING(    0x28, "*3" )
@@ -539,12 +572,36 @@ INPUT_PORTS_START( sslam )
 	PORT_DIPSETTING(    0x10, "*6" )
 	PORT_DIPSETTING(    0x08, "*7" )
 	PORT_DIPSETTING(    0x00, "*8" )
-	PORT_DIPNAME( 0x40, 0x00, "On Time Up" )
+	PORT_DIPNAME( 0x40, 0x40, "On Time Up" )			PORT_DIPLOCATION("SW2:7")
 	PORT_DIPSETTING(    0x00, "End After Point" )
 	PORT_DIPSETTING(    0x40, "End After Game" )
-	PORT_DIPNAME( 0x80, 0x80, "Coin Slots" )
+	PORT_DIPNAME( 0x80, 0x80, "Coin Slots" )			PORT_DIPLOCATION("SW2:8")
 	PORT_DIPSETTING(    0x80, "Common" )
 	PORT_DIPSETTING(    0x00, "Individual" )
+
+	PORT_START_TAG("DSW2")
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Unknown ) )		PORT_DIPLOCATION("SW1:1,2")	// 0x000522 = 0x00400e
+	PORT_DIPSETTING(    0x03, "0" )
+	PORT_DIPSETTING(    0x02, "1" )
+	PORT_DIPSETTING(    0x01, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPNAME( 0x04, 0x04, "Singles Game Time" )		PORT_DIPLOCATION("SW1:3")
+	PORT_DIPSETTING(    0x04, "180 Seconds" )
+	PORT_DIPSETTING(    0x00, "120 Seconds" )
+	PORT_DIPNAME( 0x08, 0x08, "Doubles Game Time" )		PORT_DIPLOCATION("SW1:4")
+	PORT_DIPSETTING(    0x08, "180 Seconds" )
+	PORT_DIPSETTING(    0x00, "120 Seconds" )
+	PORT_DIPNAME( 0x30, 0x30, "Starting Score" )		PORT_DIPLOCATION("SW1:5,6")
+	PORT_DIPSETTING(    0x30, "4-4" )
+	PORT_DIPSETTING(    0x20, "3-4" )
+	PORT_DIPSETTING(    0x10, "3-3" )
+	PORT_DIPSETTING(    0x00, "0-0" )
+	PORT_DIPNAME( 0x40, 0x40, "Play Mode" 	)			PORT_DIPLOCATION("SW1:7")
+	PORT_DIPSETTING(    0x00, "2 Players" )
+	PORT_DIPSETTING(    0x40, "4 Players" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )	PORT_DIPLOCATION("SW1:8")
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( powerbls )
@@ -579,31 +636,31 @@ INPUT_PORTS_START( powerbls )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START_TAG("DSW1")
-	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )		PORT_DIPLOCATION("SW1:1,2")
 	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
-	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Lives ) )			PORT_DIPLOCATION("SW1:3,4")
 	PORT_DIPSETTING(    0x0c, "1" )
 	PORT_DIPSETTING(    0x04, "2" )
 	PORT_DIPSETTING(    0x08, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Language ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Language ) )			PORT_DIPLOCATION("SW1:5")
 	PORT_DIPSETTING(    0x10, DEF_STR( English ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Italian ) )
-	PORT_DIPNAME( 0x20, 0x00, "Weapon" )
+	PORT_DIPNAME( 0x20, 0x00, "Weapon" )					PORT_DIPLOCATION("SW1:6")
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )			PORT_DIPLOCATION("SW1:7")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )		PORT_DIPLOCATION("SW1:8")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START_TAG("DSW2")
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )			PORT_DIPLOCATION("SW2:1,2,3")
 	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_4C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_3C ) )
@@ -612,7 +669,7 @@ INPUT_PORTS_START( powerbls )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )			PORT_DIPLOCATION("SW2:4,5,6")
 	PORT_DIPSETTING(    0x10, DEF_STR( 6C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 4C_1C ) )
@@ -621,10 +678,10 @@ INPUT_PORTS_START( powerbls )
 	PORT_DIPSETTING(    0x20, DEF_STR( 3C_2C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 4C_3C ) )
 	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )	PORT_DIPLOCATION("SW2:7")
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )		PORT_DIPLOCATION("SW2:8")
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -680,7 +737,11 @@ static MACHINE_DRIVER_START( sslam )
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
 	MDRV_CPU_PROGRAM_MAP(sslam_program_map, 0)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
-	MDRV_CPU_PERIODIC_INT(sslam_interrupt, TIME_IN_HZ(240))
+
+	MDRV_CPU_ADD(I8051, 12000000)
+	MDRV_CPU_FLAGS(CPU_DISABLE)		/* Internal code is not dumped - 2 boards were protected */
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
+	MDRV_CPU_IO_MAP(0,0)
 
 	MDRV_SCREEN_REFRESH_RATE(58)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
@@ -890,7 +951,27 @@ ROM_START( powerbls )
 	ROM_COPY( REGION_SOUND1, 0x00000, 0x80000, 0x20000)
 ROM_END
 
+static DRIVER_INIT( sslam )
+{
+	sslam_track = 0;
+	sslam_melody = 0;
+	sslam_bar = 0;
 
-GAME( 1993, sslam,    0,        sslam,    sslam,    0, ROT0, "Playmark", "Super Slam (set 1)", GAME_IMPERFECT_SOUND )
-GAME( 1993, sslama,   sslam,    sslam,    sslam,    0, ROT0, "Playmark", "Super Slam (set 2)", GAME_IMPERFECT_SOUND )
-GAME( 1994, powerbls, powerbal, powerbls, powerbls, 0, ROT0, "Playmark", "Power Balls (Super Slam conversion)", 0 )
+	state_save_register_global(sslam_track);
+	state_save_register_global(sslam_melody);
+	state_save_register_global(sslam_bar);
+	state_save_register_global(sslam_snd_bank);
+
+	music_timer = timer_alloc(music_playback);
+}
+
+static DRIVER_INIT( powerbls )
+{
+	state_save_register_global(playmark_oki_control);
+	state_save_register_global(playmark_oki_command);
+}
+
+
+GAME( 1993, sslam,    0,        sslam,    sslam,    sslam,    ROT0, "Playmark", "Super Slam (set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1993, sslama,   sslam,    sslam,    sslam,    sslam,    ROT0, "Playmark", "Super Slam (set 2)", GAME_SUPPORTS_SAVE )
+GAME( 1994, powerbls, powerbal, powerbls, powerbls, powerbls, ROT0, "Playmark", "Power Balls (Super Slam conversion)", GAME_SUPPORTS_SAVE )

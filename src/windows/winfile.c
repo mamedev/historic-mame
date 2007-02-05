@@ -207,6 +207,34 @@ mame_file_error osd_close(osd_file *file)
 
 
 //============================================================
+//  osd_rmfile
+//============================================================
+
+mame_file_error osd_rmfile(const char *filename)
+{
+	mame_file_error filerr = FILERR_NONE;
+
+	TCHAR *tempstr = tstring_from_utf8(filename);
+	if (!tempstr)
+	{
+		filerr = FILERR_OUT_OF_MEMORY;
+		goto done;
+	}
+
+	if (!DeleteFile(tempstr))
+	{
+		filerr = win_error_to_mame_file_error(GetLastError());
+		goto done;
+	}
+
+done:
+	if (tempstr)
+		free(tempstr);
+	return filerr;
+}
+
+
+//============================================================
 //  osd_get_physical_drive_geometry
 //============================================================
 

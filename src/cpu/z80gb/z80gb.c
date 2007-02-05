@@ -31,8 +31,10 @@
 #define FLAG_H  0x20
 #define FLAG_C  0x10
 
-/* Nr of cycles to run */
-extern int z80gb_ICount;
+#define CYCLES_PASSED(X)		z80gb_ICount -= ((X) / (Regs.w.gb_speed));	\
+					if ( Regs.w.timer_callback ) {			\
+						Regs.w.timer_callback( X );		\
+					}
 
 typedef struct {
 	UINT16 AF;
@@ -91,7 +93,6 @@ typedef union {
 typedef int (*OpcodeEmulator) (void);
 
 static z80gb_regs Regs;
-static UINT8 ICycles;
 static UINT8 CheckInterrupts;
 
 #define IME     0x01
@@ -123,7 +124,7 @@ int z80gb_ICount;
 static int Cycles[256] =
 {
 	 4,12, 8, 8, 4, 4, 8, 4,20, 8, 8, 8, 4, 4, 8, 4,
-	 4,12, 8, 8, 4, 4, 8, 4, 8, 8, 8, 8, 4, 4, 8, 4,
+	 4,12, 8, 8, 4, 4, 8, 4,12, 8, 8, 8, 4, 4, 8, 4,
 	 8,12, 8, 8, 4, 4, 8, 4, 8, 8, 8, 8, 4, 4, 8, 4,
 	 8,12, 8, 8,12,12,12, 4, 8, 8, 8, 8, 4, 4, 8, 4,
 	 4, 4, 4, 4, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 8, 4,
@@ -134,7 +135,7 @@ static int Cycles[256] =
 	 4, 4, 4, 4, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 8, 4,
 	 4, 4, 4, 4, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 8, 4,
 	 4, 4, 4, 4, 4, 4, 8, 4, 4, 4, 4, 4, 4, 4, 8, 4,
-	 8,12,12,12,12,16, 8,16, 8, 8,12, 0,12,24, 8,16,
+	 8,12,12,16,12,16, 8,16, 8,16,12, 0,12,24, 8,16,
 	 8,12,12, 4,12,16, 8,16, 8,16,12, 4,12, 4, 8,16,
 	12,12, 8, 4, 4,16, 8,16,16, 4,16, 4, 4, 4, 8,16,
 	12,12, 8, 4, 4,16, 8,16,12, 8,16, 4, 4, 4, 8,16
@@ -196,7 +197,6 @@ static void z80gb_reset(void)
 	Regs.w.IE = 0;
 	Regs.w.IF = 0;
 
-//FIXME, use this in gb_machine_init!     state->TimerShift=32;
 	CheckInterrupts = 0;
 	Regs.w.leavingHALT = 0;
 	Regs.w.doHALTbug = 0;
@@ -212,8 +212,7 @@ INLINE void z80gb_ProcessInterrupts (void)
 		Regs.w.ei_delay = 0;
 		return;
 	}
-	if (CheckInterrupts && (Regs.w.enable & IME))
-	{
+	if ( CheckInterrupts ) {
 		UINT8 irq;
 		CheckInterrupts = 0;
 		irq = Regs.w.IE & Regs.w.IF;
@@ -235,21 +234,23 @@ INLINE void z80gb_ProcessInterrupts (void)
 			{
 				if( irq & (1<<irqline) )
 				{
-					if( Regs.w.irq_callback )
-							(*Regs.w.irq_callback)(irqline);
 					if (Regs.w.enable & HALTED)
 					{
 						Regs.w.enable &= ~HALTED;
 						Regs.w.leavingHALT++;
 					}
-					Regs.w.enable &= ~IME;
-					Regs.w.IF &= ~(1 << irqline);
-					ICycles += 12; /* Taking an IRQ seems to take about 12 cycles */
-					Regs.w.SP -= 2;
-					mem_WriteWord (Regs.w.SP, Regs.w.PC);
-					Regs.w.PC = 0x40 + irqline * 8;
-					/*logerror("Z80GB Interrupt PC $%04X\n", Regs.w.PC );*/
-					return;
+					if ( Regs.w.enable & IME ) {
+						if ( Regs.w.irq_callback )
+							(*Regs.w.irq_callback)(irqline);
+						Regs.w.enable &= ~IME;
+						Regs.w.IF &= ~(1 << irqline);
+						CYCLES_PASSED( 12 ); /* Taking an IRQ seems to take about 12 cycles */
+						Regs.w.SP -= 2;
+						mem_WriteWord (Regs.w.SP, Regs.w.PC);
+						Regs.w.PC = 0x40 + irqline * 8;
+						/*logerror("Z80GB Interrupt PC $%04X\n", Regs.w.PC );*/
+						return;
+					}
 				}
 			}
 		}
@@ -269,25 +270,20 @@ static int z80gb_execute (int cycles)
 	do
 	{
 		CALL_MAME_DEBUG;
-		ICycles = 0;
 		z80gb_ProcessInterrupts ();
 		if ( Regs.w.enable & HALTED ) {
-			ICycles += Cycles[0x76];
+			CYCLES_PASSED( Cycles[0x76] );
 		} else {
 			x = mem_ReadByte (Regs.w.PC++);
 			if ( Regs.w.doHALTbug ) {
 				Regs.w.PC--;
 				Regs.w.doHALTbug = 0;
 			}
-			ICycles += Cycles[x];
+			CYCLES_PASSED( Cycles[x] );
 			switch (x)
 			{
 #include "opc_main.h"
 			}
-		}
-		z80gb_ICount -= ICycles / Regs.w.gb_speed;
-		if ( Regs.w.timer_callback) {
-			Regs.w.timer_callback( ICycles );
 		}
 	} while (z80gb_ICount > 0);
 

@@ -13,7 +13,7 @@
     * Jolly Card (Austria),                     TAB-Austria,        1985.
     * Jolly Card (Austria, encrypted),          TAB-Austria,        1985.
     * Jolly Card (Croatia),                     Soft Design,        1993.
-    * Jolly Card (Italia, encrypted GFXs),      bootleg,            199?.
+    * Jolly Card (Italia, encrypted),           bootleg,            199?.
     * Jolly Card (Austria, Fun World, bootleg), Inter Games,        1995.
     * Big Deal (Hungary, set 1),                Fun World,          1990.
     * Big Deal (Hungary, set 2),                Fun World,          1990.
@@ -21,7 +21,8 @@
     * Cuore 1 (Italia),                         C.M.C.,             1996.
     * Elephant Family (Italia, new),            C.M.C.,             1997.
     * Elephant Family (Italia, old),            C.M.C.,             1996.
-    * Pool 10 (Italia),                         C.M.C.,             1996.
+    * Pool 10 (Italia, set 1),                  C.M.C.,             1996.
+    * Pool 10 (Italia, set 2),                  C.M.C.,             1996.
     * Tortuga Family (Italia),                  C.M.C.,             1997.
     * Royal Card (Austria, set 1),              TAB-Austria,        1991.
     * Royal Card (Austria, set 2),              TAB-Austria,        1991.
@@ -145,9 +146,10 @@
     Also because the laws changed very often and old videopokers became illegal was a
     very bad thing for bar owners because they couldn't earn enough money.
 
-    Pool 10 (now found!) became illegal and was converted to Cuore 1, Elephant Family,
-    Tortuga Family and maybe other games. So you can see that engineers always found
-    a simple way to elude the law.
+    Pool 10 (now found!), apparently was the "father" of other italian gambling games.
+    As soon as it became illegal, was converted to Cuore 1, Elephant Family, Tortuga Family
+    and maybe other games. So you can see that engineers always found a simple way to elude
+    the law.
 
     There is another set of Cuore 1. I didn't include it because the only difference with
     the supported set is the program rom that is double sized, having identical halves.
@@ -168,7 +170,7 @@
     hardware with a microcontroller as an extra (protection?) component and a TDA2003 as
     audio amplifier.
 
-    The extra microcontroller is a 8 bit (PLCC-44) TSC87C52-16CB from Intel (not dumped yet)
+    The extra microcontroller is a 8 bit (PLCC-44) TSC87C52-16CB from Intel (now dumped!)
 
     Each set has double sized ROMs. One half contains the proper set and the other half store
     a complete Royal Card set, so... Is possible the existence of a shortcut,'easter egg',
@@ -644,6 +646,16 @@
     - Added new game: Soccer New. Not working due to the lack of MCU emulation.
     - Updated technical notes.
 
+    2007/02/01
+    - All crystals documented via #defines.
+    - All CPU and sound clocks derived from #defined crystal values.
+    - Added DIPLOCATIONS to all games.
+    - Added a pool10 alternate set.
+    - Added proper tsc87c52 MCU dumps to monglfir and soccernew.
+    - Modified the refresh rate to 60 fps according to some video evidences.
+    - Updated technical notes.
+
+
 
     *** TO DO ***
 
@@ -652,6 +664,7 @@
     - Analyze the unknown writes to $2000/$4000 in some games.
     - Check for the reads to the ay8910 output ports in some games.
     - Figure out the MCU in monglfir and soccernw.
+    - Correct the ROM_REGION in some games to allow the use of RGN_FRAC
 
 
 ***********************************************************************************/
@@ -750,16 +763,12 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( royalmcu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0x0800, 0x0803) AM_READWRITE(pia_0_r, pia_0_w)
-	AM_RANGE(0x0a00, 0x0a03) AM_READWRITE(pia_1_r, pia_1_w)
-	AM_RANGE(0x0c00, 0x0c00) AM_READWRITE(AY8910_read_port_0_r, AY8910_control_port_0_w)
-	AM_RANGE(0x0c01, 0x0c01) AM_WRITE(AY8910_write_port_0_w)
-	AM_RANGE(0x0e00, 0x0e00) AM_WRITE(crtc6845_address_w)
-	AM_RANGE(0x0e01, 0x0e01) AM_READWRITE(crtc6845_register_r, crtc6845_register_w)
-	AM_RANGE(0x2800, 0x2803) AM_RAM	// MCU?.
-	AM_RANGE(0x2a00, 0x2a03) AM_RAM	// MCU?.
-	AM_RANGE(0x2c00, 0x2c03) AM_RAM	// MCU?.
-	AM_RANGE(0x2e00, 0x2e03) AM_RAM	// MCU?.
+	AM_RANGE(0x2800, 0x2803) AM_READWRITE(pia_0_r, pia_0_w)
+	AM_RANGE(0x2a00, 0x2a03) AM_READWRITE(pia_1_r, pia_1_w)
+	AM_RANGE(0x2c00, 0x2c00) AM_READWRITE(AY8910_read_port_0_r, AY8910_control_port_0_w)
+	AM_RANGE(0x2c01, 0x2c01) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x2e00, 0x2e00) AM_WRITE(crtc6845_address_w)
+	AM_RANGE(0x2e01, 0x2e01) AM_READWRITE(crtc6845_register_r, crtc6845_register_w)
 	AM_RANGE(0x4000, 0x4fff) AM_RAM AM_WRITE(funworld_videoram_w) AM_BASE(&videoram)
 	AM_RANGE(0x5000, 0x5fff) AM_RAM	AM_WRITE(funworld_colorram_w) AM_BASE(&colorram)
 	AM_RANGE(0x6000, 0xffff) AM_ROM
@@ -823,7 +832,11 @@ INPUT_PORTS_START( funworld )
 	PORT_DIPNAME( 0x40, 0x00, "Hold" )				PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(    0x00, "Auto Hold" )
 	PORT_DIPSETTING(    0x40, "No Auto Hold" )
-	PORT_DIPNAME( 0x80, 0x00, "Payout" )			PORT_DIPLOCATION("SW1:1")	// after nvram init, set this one to manual. this allow the remote credits to work.
+
+	/* after nvram init, set the following one to 'manual'
+    to allow the remote credits mode to work */
+
+	PORT_DIPNAME( 0x80, 0x00, "Payout" )			PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(    0x00, "Hopper" )
 	PORT_DIPSETTING(    0x80, "Manual Payout SW" )
 INPUT_PORTS_END
@@ -860,28 +873,32 @@ INPUT_PORTS_START( jolycdcr )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSW")
-	PORT_DIPNAME( 0x01, 0x01, "State" )
+	PORT_DIPNAME( 0x01, 0x01, "State" )				PORT_DIPLOCATION("SW1:8")
 	PORT_DIPSETTING(    0x00, "Keyboard Test" )
 	PORT_DIPSETTING(    0x01, "Play" )
-	PORT_DIPNAME( 0x02, 0x00, "Remote" )
+	PORT_DIPNAME( 0x02, 0x00, "Remote" )			PORT_DIPLOCATION("SW1:7")
 	PORT_DIPSETTING(    0x00, "10 Points/Pulse" )
 	PORT_DIPSETTING(    0x02, "100 Points/Pulse" )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:6")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:5")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:4")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, "Joker" )
+	PORT_DIPNAME( 0x20, 0x00, "Joker" )				PORT_DIPLOCATION("SW1:3")
 	PORT_DIPSETTING(    0x00, "With Joker" )		// also enable Five of a Kind.
 	PORT_DIPSETTING(    0x20, "Without Joker" )
-	PORT_DIPNAME( 0x40, 0x00, "Hold" )
+	PORT_DIPNAME( 0x40, 0x00, "Hold" )				PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(    0x00, "Auto Hold" )
 	PORT_DIPSETTING(    0x40, "No Auto Hold" )
-	PORT_DIPNAME( 0x80, 0x00, "Payout" )			// after nvram init, set this one to manual. this allow the remote credits to work.
+
+	/* after nvram init, set the following one to 'manual'
+    to allow the remote credits mode to work */
+
+	PORT_DIPNAME( 0x80, 0x00, "Payout" )			PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(    0x00, "Hopper" )
 	PORT_DIPSETTING(    0x80, "Manual Payout SW" )
 INPUT_PORTS_END
@@ -918,27 +935,31 @@ INPUT_PORTS_START( jolycdit )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSW")
-	PORT_DIPNAME( 0x01, 0x01, "State" )
+	PORT_DIPNAME( 0x01, 0x01, "State" )				PORT_DIPLOCATION("SW1:8")
 	PORT_DIPSETTING(    0x00, "Keyboard Test" )
 	PORT_DIPSETTING(    0x01, "Play" )
-	PORT_DIPNAME( 0x02, 0x00, "Remote" )
+	PORT_DIPNAME( 0x02, 0x00, "Remote" )			PORT_DIPLOCATION("SW1:7")
 	PORT_DIPSETTING(    0x00, "10 Points/Pulse" )
 	PORT_DIPSETTING(    0x02, "50 Points/Pulse" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_A ) )	PORT_DIPLOCATION("SW1:5,6")
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_5C ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:4")
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, "Joker" )
+	PORT_DIPNAME( 0x20, 0x00, "Joker" )				PORT_DIPLOCATION("SW1:3")
 	PORT_DIPSETTING(    0x00, "With Joker" )		// also enable Five of a Kind.
 	PORT_DIPSETTING(    0x20, "Without Joker" )
-	PORT_DIPNAME( 0x40, 0x00, "Hold" )
+	PORT_DIPNAME( 0x40, 0x00, "Hold" )				PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(    0x00, "Auto Hold" )
 	PORT_DIPSETTING(    0x40, "No Auto Hold" )
-	PORT_DIPNAME( 0x80, 0x00, "Payout" )			// after nvram init, set this one to manual. this allow the remote credits to work.
+
+	/* after nvram init, set the following one to 'manual'
+    to allow the remote credits mode to work */
+
+	PORT_DIPNAME( 0x80, 0x00, "Payout" )			PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(    0x00, "Hopper" )
 	PORT_DIPSETTING(    0x80, "Manual Payout SW" )
 INPUT_PORTS_END
@@ -975,28 +996,33 @@ INPUT_PORTS_START( bigdeal )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSW")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )	// even when test mode isn't here, this one should be left ON by default to allow initialization.
+	/* the following one should be left ON by default to allow initialization */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:8")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:7")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Remote" )
+	PORT_DIPNAME( 0x04, 0x00, "Remote" )			PORT_DIPLOCATION("SW1:6")
 	PORT_DIPSETTING(    0x00, "10 Points/Pulse" )
 	PORT_DIPSETTING(    0x04, "100 Points/Pulse" )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Coin_A ) )	PORT_DIPLOCATION("SW1:5")
 	PORT_DIPSETTING(    0x00, "5 Points/Coin" )
 	PORT_DIPSETTING(    0x08, "10 Points/Coin" )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:4")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:3")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, "Hold" )
+	PORT_DIPNAME( 0x40, 0x00, "Hold" )				PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(    0x00, "Auto Hold" )
 	PORT_DIPSETTING(    0x40, "No Auto Hold" )
-	PORT_DIPNAME( 0x80, 0x00, "Payout" )			// after nvram init, set this one to manual. this allow the remote credits to work.
+
+	/* after nvram init, set the following one to 'manual'
+    to allow the remote credits mode to work */
+
+	PORT_DIPNAME( 0x80, 0x00, "Payout" )	PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(    0x00, "Hopper" )
 	PORT_DIPSETTING(    0x80, "Manual Payout SW" )
 INPUT_PORTS_END
@@ -1033,28 +1059,32 @@ INPUT_PORTS_START( magiccrd )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSW")
-	PORT_DIPNAME( 0x01, 0x01, "State" )
+	PORT_DIPNAME( 0x01, 0x01, "State" )				PORT_DIPLOCATION("SW1:8")
 	PORT_DIPSETTING(    0x00, "Keyboard Test" )
 	PORT_DIPSETTING(    0x01, "Play" )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )	// remote credits settings are always 10 Points/Pulse.
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:7")	// remote credits settings are always 10 Points/Pulse.
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Coin_A ) )	PORT_DIPLOCATION("SW1:6")
 	PORT_DIPSETTING(    0x00, "5 Points/Coin" )
 	PORT_DIPSETTING(    0x04, "10 Points/Coin" )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Coin_B ) )	PORT_DIPLOCATION("SW1:5")
 	PORT_DIPSETTING(    0x00, "5 Points/Coin" )
 	PORT_DIPSETTING(    0x08, "10 Points/Coin" )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:4")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, "Joker" )
+	PORT_DIPNAME( 0x20, 0x00, "Joker" )				PORT_DIPLOCATION("SW1:3")
 	PORT_DIPSETTING(    0x00, "With Joker" )
 	PORT_DIPSETTING(    0x20, "Without Joker" )
-	PORT_DIPNAME( 0x40, 0x00, "Hold" )
+	PORT_DIPNAME( 0x40, 0x00, "Hold" )				PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(    0x00, "Auto Hold" )
 	PORT_DIPSETTING(    0x40, "No Auto Hold" )
-	PORT_DIPNAME( 0x80, 0x00, "Payout" )			// after nvram init, set this one to manual. this allow the remote credits to work.
+
+	/* after nvram init, set the following one to 'manual'
+    to allow the remote credits mode to work */
+
+	PORT_DIPNAME( 0x80, 0x00, "Payout" )			PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(    0x00, "Hopper" )
 	PORT_DIPSETTING(    0x80, "Manual Payout SW" )
 INPUT_PORTS_END
@@ -1074,7 +1104,7 @@ INPUT_PORTS_START( royalcrd )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("Halten (Hold) 2") PORT_CODE(KEYCODE_X)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_NAME("Halten (Hold) 3 / Tief (Low)") PORT_CODE(KEYCODE_C)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("unknown bit 08") PORT_CODE(KEYCODE_E)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Hoppersch") PORT_CODE(KEYCODE_W)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1091,28 +1121,32 @@ INPUT_PORTS_START( royalcrd )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSW")
-	PORT_DIPNAME( 0x01, 0x01, "State" )
+	PORT_DIPNAME( 0x01, 0x01, "State" )				PORT_DIPLOCATION("SW1:8")
 	PORT_DIPSETTING(    0x00, "Keyboard Test" )
 	PORT_DIPSETTING(    0x01, "Play" )
-	PORT_DIPNAME( 0x02, 0x00, "Remote" )
+	PORT_DIPNAME( 0x02, 0x00, "Remote" )			PORT_DIPLOCATION("SW1:7")	// in some sources is listed as 'Coin-C'
 	PORT_DIPSETTING(    0x00, "10 Points/Pulse" )
 	PORT_DIPSETTING(    0x02, "50 Points/Pulse" )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Coin_B ) )	PORT_DIPLOCATION("SW1:6")
 	PORT_DIPSETTING(    0x00, "5 Points/Coin" )
 	PORT_DIPSETTING(    0x04, "10 Points/Coin" )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Coin_A ) )	PORT_DIPLOCATION("SW1:5")
 	PORT_DIPSETTING(    0x00, "5 Points/Coin" )
 	PORT_DIPSETTING(    0x08, "10 Points/Coin" )
-	PORT_DIPNAME( 0x10, 0x00, "Insert" )
+	PORT_DIPNAME( 0x10, 0x00, "Insert" )			PORT_DIPLOCATION("SW1:4")
 	PORT_DIPSETTING(    0x00, "Dattl Insert" )
 	PORT_DIPSETTING(    0x10, "TAB Insert" )
-	PORT_DIPNAME( 0x20, 0x00, "Joker" )
+	PORT_DIPNAME( 0x20, 0x00, "Joker" )				PORT_DIPLOCATION("SW1:3")
 	PORT_DIPSETTING(    0x00, "With Joker" )		// also enable Five of a Kind.
 	PORT_DIPSETTING(    0x20, "Without Joker" )
-	PORT_DIPNAME( 0x40, 0x00, "Hold" )
+	PORT_DIPNAME( 0x40, 0x00, "Hold" )				PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(    0x00, "Auto Hold" )
 	PORT_DIPSETTING(    0x40, "No Auto Hold" )
-	PORT_DIPNAME( 0x80, 0x00, "Payout" )			// after nvram init, set this one to manual. this allow the remote credits to work.
+
+	/* after nvram init, set the following one to 'manual'
+    to allow the remote credits mode to work */
+
+	PORT_DIPNAME( 0x80, 0x00, "Payout" )			PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(    0x00, "Hopper" )
 	PORT_DIPSETTING(    0x80, "Manual Payout SW" )
 INPUT_PORTS_END
@@ -1149,31 +1183,32 @@ INPUT_PORTS_START( cuoreuno )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSW")
-	PORT_DIPNAME( 0x01, 0x01, "Test Mode" )
+	PORT_DIPNAME( 0x01, 0x01, "Test Mode" )			PORT_DIPLOCATION("SW1:8")
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:7")
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:6")
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:5")
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:4")
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:3")
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	/* the following one (1st DSW) seems to be disconnected
     to avoid the use of remote credits / manual payout */
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )	PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -1192,8 +1227,10 @@ static const gfx_layout charlayout =
 	4,
 	8,
 	0x1000,
+//  RGN_FRAC(1,2),
 	4,
 	{ 0, 4, 0x8000*8, 0x8000*8+4 },
+//  { RGN_FRAC(0,2), RGN_FRAC(0,2) + 4, RGN_FRAC(1,2), RGN_FRAC(1,2) + 4 },
 	{ 3, 2, 1, 0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*4*2
@@ -1263,7 +1300,7 @@ static MACHINE_DRIVER_START( funworld )
 	MDRV_CPU_PROGRAM_MAP(funworld_map, 0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse, 1)
 
-	MDRV_SCREEN_REFRESH_RATE(50)
+	MDRV_SCREEN_REFRESH_RATE(60)
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_NVRAM_HANDLER(generic_0fill)
@@ -1380,12 +1417,11 @@ ROM_START( jolycdcr )
 	ROM_LOAD( "82s147.bin",	0x0000, 0x0200, CRC(5ebc5659) SHA1(8d59011a181399682ab6e8ed14f83101e9bfa0c6) )
 ROM_END
 
-ROM_START( jolycdit )
+ROM_START( jolycdit )	// encrypted graphics.
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "jn.bin", 0x8000, 0x8000, CRC(6ae00ed0) SHA1(5921c2882aeb5eadd0e04a477fa505ad35e9d98c) )
-//  ROM_COPY( REGION_CPU1,  0xc1ff, 0x2000, 0x0100 ) // banking or mirror?. should be another at $2100
 
-	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )	// encrypted graphics.
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "2.bin", 0x0000, 0x8000, CRC(46805150) SHA1(63687ac44f6ace6d8924b2629536bcc7d3979ed2) )
 	ROM_LOAD( "1.bin", 0x8000, 0x8000, CRC(43bcb2df) SHA1(5022bc3a0b852a7cd433e25c3c90a720e6328261) )
 
@@ -1515,6 +1551,25 @@ ROM_START( pool10 )
 	ROM_LOAD( "gal20v8b_p10.u23", 0x0400, 0x0157, NO_DUMP ) /* GAL is read protected */
 ROM_END
 
+ROM_START( pool10b )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
+	ROM_LOAD( "u2.bin", 0x8000, 0x10000, CRC(64fee38e) SHA1(8a624a0b6eb4a3ba09e5b396dc5a01994dfdf294) )
+
+	/* GFX ROMs are the same of pool10, but double sized with identical halves. */
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "u20.bin", 0x00000, 0x10000, CRC(3bdf1106) SHA1(fa21cbd49bb27ea4a784cf4e4b3fbd52650a285b) )
+	ROM_LOAD( "u21.bin", 0x10000, 0x10000, CRC(581c4878) SHA1(5ae61af090feea1745e22f46b33b2c01e6013fbe) )
+	ROM_COPY( REGION_GFX1,	 0x10000, 0x00000, 0x8000 ) // rgn,srcoffset,offset,length.
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "n82s147an_p10.u25",    0x0000, 0x0200, CRC(1de03d14) SHA1(d8eda20865c1d885a428931f4380032e103b252c) )
+
+	ROM_REGION( 0x0600, REGION_PLDS, 0 )
+	ROM_LOAD( "palce16v8h_p10b.u5",  0x0000, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "palce20v8h_p10b.u22", 0x0200, 0x0157, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "palce20v8h_p10b.u23", 0x0400, 0x0157, NO_DUMP ) /* PAL is read protected */
+ROM_END
+
 ROM_START( tortufam )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "tortu.a.u2", 0x8000, 0x8000, CRC(6e112184) SHA1(283ac534fc1cb33d11bbdf3447630333f2fc957f) )
@@ -1619,6 +1674,9 @@ ROM_START( monglfir )
 	ROM_LOAD( "prgteov.2.3m.u16", 0x10000, 0x10000, CRC(996b851a) SHA1(ef4e3d036ca10b33c83749024d04c4d4c09feeb7) )
 	ROM_COPY( REGION_CPU1,	0x18000, 0x8000, 0x8000 )
 
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* TSC87C52-16CB MCU Code */
+	ROM_LOAD( "tsc87c52-mf.u40", 0x00000, 0x02000 , CRC(ae22e778) SHA1(0897e05967d68d7f23489e98717663e3a3176070) )
+
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "mong.rc.b2.u3", 0x00000, 0x10000, CRC(5e019b73) SHA1(63a544dccb9589e5a6b938e604c09d4d8fc060fc) )
 	ROM_LOAD( "mong.rc.c1.u2", 0x10000, 0x10000, CRC(e3fc24c4) SHA1(ea4e67ace63b55a76365f7e11a67c7d420a52dd7) )
@@ -1635,6 +1693,9 @@ ROM_START( soccernw )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	ROM_LOAD( "prgteo2gv2.3.u16", 0x10000, 0x10000, CRC(c61d1937) SHA1(c516f13a108da60b7ccee338b63a025009ef9099) )
 	ROM_COPY( REGION_CPU1,	0x18000, 0x8000, 0x8000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* TSC87C52-16CB MCU Code */
+	ROM_LOAD( "tsc87c52-sn.u40", 0x00000, 0x02000 , CRC(af0bd35b) SHA1(c6613a7bcdec2fd6060d6dcf639654568de87e75) )
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "soccer2.u3", 0x00000, 0x10000, CRC(db09b5bb) SHA1(a12bf2938f5482ea5ebc0db6fd6594e1beb97017) )
@@ -1757,8 +1818,14 @@ static DRIVER_INIT( jolycdae )
 
 static DRIVER_INIT( soccernw )
 {
-/* temporary patch to avoid hardware errors */
-//  UINT8 *ROM = memory_region(REGION_CPU1);
+/* temporary patch to avoid hardware errors for debug purposes */
+	UINT8 *ROM = memory_region(REGION_CPU1);
+
+	ROM[0x80b2] = 0xa9;
+	ROM[0x80b3] = 0x00;
+
+//  DEBUG
+//  run to $810a
 
 //  ROM[0xa33a] = 0xea;
 //  ROM[0xa33b] = 0xea;
@@ -1778,7 +1845,7 @@ static DRIVER_INIT( soccernw )
 GAME( 1985, jollycrd, 0,        funworld, funworld, funworld, ROT0, "TAB-Austria",     "Jolly Card (Austria)", 0 )
 GAME( 1985, jolycdae, jollycrd, funworld, funworld, jolycdae, ROT0, "TAB-Austria",     "Jolly Card (Austria, encrypted)", 0 )
 GAME( 1993, jolycdcr, jollycrd, cuoreuno, jolycdcr, funworld, ROT0, "Soft Design",     "Jolly Card (Croatia)", 0 )
-GAME( 199?, jolycdit, jollycrd, cuoreuno, jolycdit, jolycdit, ROT0, "bootleg",         "Jolly Card (Italia, encrypted GFXs)", 0 )
+GAME( 199?, jolycdit, jollycrd, cuoreuno, jolycdit, jolycdit, ROT0, "bootleg",         "Jolly Card (Italia, encrypted)", 0 )
 GAME( 1990, jolycdab, jollycrd, funworld, funworld, funworld, ROT0, "Inter Games",     "Jolly Card (Austria, Fun World, bootleg)", GAME_NOT_WORKING )
 GAME( 1986, bigdeal,  0,        bigdeal,  bigdeal,  funworld, ROT0, "Fun World",       "Big Deal (Hungary, set 1)", GAME_IMPERFECT_COLORS )
 GAME( 1986, bigdealb, bigdeal,  bigdeal,  bigdeal,  funworld, ROT0, "Fun World",       "Big Deal (Hungary, set 2)", GAME_IMPERFECT_COLORS )
@@ -1786,7 +1853,8 @@ GAME( 1986, jolycdat, bigdeal,  bigdeal,  bigdeal,  funworld, ROT0, "Fun World",
 GAME( 1996, cuoreuno, 0,        cuoreuno, cuoreuno, funworld, ROT0, "C.M.C.",          "Cuore 1 (Italia)", 0 )
 GAME( 1997, elephfam, 0,        cuoreuno, cuoreuno, funworld, ROT0, "C.M.C.",          "Elephant Family (Italia, new)", 0 )
 GAME( 1996, elephfmb, elephfam, cuoreuno, cuoreuno, funworld, ROT0, "C.M.C.",          "Elephant Family (Italia, old)", 0 )
-GAME( 1996, pool10,   0,        cuoreuno, cuoreuno, funworld, ROT0, "C.M.C.",          "Pool 10 (Italia)", 0 )
+GAME( 1996, pool10,   0,        cuoreuno, cuoreuno, funworld, ROT0, "C.M.C.",          "Pool 10 (Italia, set 1)", 0 )
+GAME( 1996, pool10b,  pool10,   cuoreuno, cuoreuno, funworld, ROT0, "C.M.C.",          "Pool 10 (Italia, set 2)", 0 )
 GAME( 1997, tortufam, 0,        cuoreuno, cuoreuno, funworld, ROT0, "C.M.C.",          "Tortuga Family (Italia)", 0 )
 GAME( 1991, royalcrd, 0,        royalcrd, royalcrd, funworld, ROT0, "TAB-Austria",     "Royal Card (Austria, set 1)", 0 )
 GAME( 1991, royalcdb, royalcrd, royalcrd, royalcrd, funworld, ROT0, "TAB-Austria",     "Royal Card (Austria, set 2)", 0 )
@@ -1794,4 +1862,4 @@ GAME( 1991, royalcdc, royalcrd, royalcrd, royalcrd, funworld, ROT0, "Evona Elect
 GAME( 1996, magiccrd, 0,        magiccrd, magiccrd, funworld, ROT0, "Impera",          "Magic Card II (Bulgaria, bootleg)", GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1993, jokercrd, 0,        funworld, funworld, funworld, ROT0, "Vesely Svet",     "Joker Card (Ver.A267BC, encrypted)", GAME_WRONG_COLORS | GAME_NOT_WORKING )
 GAME( 199?, monglfir, 0,        royalmcu, royalcrd, funworld, ROT0, "bootleg",         "Mongolfier New (Italia)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 199?, soccernw, 0,        royalmcu, royalcrd, soccernw, ROT0, "bootleg",         "Soccer New (Italia)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 199?, soccernw, 0,        royalcrd, royalcrd, soccernw, ROT0, "bootleg",         "Soccer New (Italia)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

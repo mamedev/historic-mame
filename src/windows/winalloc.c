@@ -62,6 +62,14 @@ struct _memory_entry
 
 
 //============================================================
+//  GLOBAL VARIABLES
+//============================================================
+
+int winalloc_in_main_code = FALSE;
+
+
+
+//============================================================
 //  LOCAL VARIABLES
 //============================================================
 
@@ -247,8 +255,11 @@ void *realloc_file_line(void *memory, size_t size, const char *file, int line)
 			memory_entry *entry = find_entry(memory);
 			if (entry == NULL)
 			{
-				fprintf(stderr, "Error: realloc a non-existant block\n");
-				osd_break_into_debugger("Error: realloc a non-existant block");
+				if (winalloc_in_main_code)
+				{
+					fprintf(stderr, "Error: realloc a non-existant block\n");
+					osd_break_into_debugger("Error: realloc a non-existant block");
+				}
 			}
 			else
 				memcpy(newmemory, memory, (size < entry->size) ? size : entry->size);
@@ -281,8 +292,11 @@ void CLIB_DECL free(void *memory)
 	entry = find_entry(memory);
 	if (entry == NULL)
 	{
-		fprintf(stderr, "Error: free a non-existant block\n");
-		osd_break_into_debugger("Error: free a non-existant block");
+		if (winalloc_in_main_code)
+		{
+			fprintf(stderr, "Error: free a non-existant block\n");
+			osd_break_into_debugger("Error: free a non-existant block");
+		}
 		return;
 	}
 	free_entry(entry);
@@ -304,8 +318,11 @@ size_t CLIB_DECL _msize(void *memory)
 	memory_entry *entry = find_entry(memory);
 	if (entry == NULL)
 	{
-		fprintf(stderr, "Error: msize a non-existant block\n");
-		osd_break_into_debugger("Error: msize a non-existant block");
+		if (winalloc_in_main_code)
+		{
+			fprintf(stderr, "Error: msize a non-existant block\n");
+			osd_break_into_debugger("Error: msize a non-existant block");
+		}
 		return 0;
 	}
 	return entry->size;

@@ -1472,10 +1472,8 @@ static void gfx_untangle( void )
 	// sprite, tile data
 
 	int i;
-	UINT16 *temp = malloc(0x200000);
+	UINT16 *temp = malloc_or_die(0x200000);
 
-	if ( temp )
-	{
 		twin16_gfx_rom = (UINT16 *)memory_region(REGION_GFX2);
 		memcpy( temp, twin16_gfx_rom, 0x200000 );
 
@@ -1485,7 +1483,6 @@ static void gfx_untangle( void )
 			twin16_gfx_rom[i*2+1] = temp[i];
 		}
 		free( temp );
-	}
 }
 
 static DRIVER_INIT( twin16 )

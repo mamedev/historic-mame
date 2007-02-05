@@ -1278,10 +1278,8 @@ static void decryptcode( int a23, int a22, int a21, int a20, int a19, int a18, i
 	int i;
 	UINT8 *RAM = memory_region( REGION_CPU1 );
 	size_t  size = memory_region_length( REGION_CPU1 );
-	UINT8 *buffer = malloc( size );
+	UINT8 *buffer = malloc_or_die( size );
 
-	if( buffer )
-	{
 		memcpy( buffer, RAM, size );
 		for( i = 0; i < size; i++ )
 		{
@@ -1289,7 +1287,6 @@ static void decryptcode( int a23, int a22, int a21, int a20, int a19, int a18, i
 				a11, a10, a9, a8, a7, a6, a5, a4, a3, a2, a1, a0 ) ];
 		}
 		free( buffer );
-	}
 }
 
 /***************************************************************************

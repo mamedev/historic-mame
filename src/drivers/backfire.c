@@ -653,7 +653,7 @@ static void descramble_sound( void )
 {
 	UINT8 *rom = memory_region(REGION_SOUND1);
 	int length = 0x200000; // only the first rom is swapped on backfire!
-	UINT8 *buf1 = malloc(length);
+	UINT8 *buf1 = malloc_or_die(length);
 	UINT32 x;
 
 	for (x=0;x<length;x++)

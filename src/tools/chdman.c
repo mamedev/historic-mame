@@ -379,7 +379,7 @@ cleanup:
 	if (chd != NULL)
 		chd_close(chd);
 	if (err != CHDERR_NONE)
-		remove(outputfile);
+		osd_rmfile(outputfile);
 	return (err != CHDERR_NONE);
 }
 
@@ -441,7 +441,7 @@ cleanup:
 	if (chd != NULL)
 		chd_close(chd);
 	if (err != CHDERR_NONE)
-		remove(outputfile);
+		osd_rmfile(outputfile);
 	return (err != CHDERR_NONE);
 }
 
@@ -614,7 +614,7 @@ cleanup:
 	if (chd != NULL)
 		chd_close(chd);
 	if (err != CHDERR_NONE)
-		remove(outputfile);
+		osd_rmfile(outputfile);
 	return (err != CHDERR_NONE);
 }
 
@@ -714,7 +714,7 @@ cleanup:
 	if (chd != NULL)
 		chd_close(chd);
 	if (err != CHDERR_NONE)
-		remove(outputfile);
+		osd_rmfile(outputfile);
 	return (err != CHDERR_NONE);
 }
 
@@ -774,7 +774,7 @@ cleanup:
 	if (inputchd != NULL)
 		chd_close(inputchd);
 	if (err != CHDERR_NONE)
-		remove(outputfile);
+		osd_rmfile(outputfile);
 	return (err != CHDERR_NONE);
 }
 
@@ -872,7 +872,7 @@ cleanup:
 	if (infile != NULL)
 		chd_close(infile);
 	if (err != CHDERR_NONE)
-		remove(outputfile);
+		osd_rmfile(outputfile);
 	return (err != CHDERR_NONE);
 }
 
@@ -1046,7 +1046,7 @@ cleanup:
 	if (inputchd != NULL)
 		chd_close(inputchd);
 	if (err != CHDERR_NONE)
-		remove(outputfile);
+		osd_rmfile(outputfile);
 	return (err != CHDERR_NONE);
 }
 
@@ -1525,7 +1525,7 @@ cleanup:
 	if (parentchd != NULL)
 		chd_close(parentchd);
 	if (err != CHDERR_NONE)
-		remove(outputfile);
+		osd_rmfile(outputfile);
 	return (err != CHDERR_NONE);
 }
 
@@ -1603,7 +1603,7 @@ cleanup:
 	if (parentchd != NULL)
 		chd_close(parentchd);
 	if (err != CHDERR_NONE)
-		remove(outputfile);
+		osd_rmfile(outputfile);
 	return (err != CHDERR_NONE);
 }
 
@@ -1864,11 +1864,11 @@ cleanup:
 		for (index = 0; index < numfiles; index++)
 		{
 			if (index == 0)
-				remove(outfilename);
+				osd_rmfile(outfilename);
 			else
 			{
 				chd_multi_filename(outfilename, curfilename, index - 1);
-				remove(curfilename);
+				osd_rmfile(curfilename);
 			}
 		}
 	return (err != CHDERR_NONE);

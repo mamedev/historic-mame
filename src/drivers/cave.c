@@ -4352,7 +4352,7 @@ DRIVER_INIT( mazinger )
 	init_cave(machine);
 
 	/* decrypt sprites */
-	if ((buffer = malloc(len)))
+	buffer = malloc_or_die(len);
 	{
 		int i;
 		for (i = 0;i < len; i++)
@@ -4395,7 +4395,7 @@ DRIVER_INIT( pwrins2j )
 
 	init_cave(machine);
 
-	if ((buffer = malloc(len)))
+	buffer = malloc_or_die(len);
 	{
 		 for(i=0; i<len/2; i++) 		{
 			j = BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7, 2,4,6,1,5,3, 0);
@@ -4441,7 +4441,7 @@ DRIVER_INIT( sailormn )
 	init_cave(machine);
 
 	/* decrypt sprites */
-	if ((buffer = malloc(len)))
+	buffer = malloc_or_die(len);
 	{
 		int i;
 		for (i = 0;i < len; i++)

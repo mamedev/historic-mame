@@ -1002,18 +1002,16 @@ INPUT_PORTS_START( timekill )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SPECIAL )
-	PORT_DIPNAME( 0x0010, 0x0000, "Video Sync" )
+	PORT_DIPNAME( 0x0010, 0x0000, "Video Sync" )		PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(      0x0000, "-" )
 	PORT_DIPSETTING(      0x0010, "+" )
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ))
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ))	PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0020, DEF_STR( On ))
-	PORT_DIPNAME( 0x0040, 0x0000, "Violence" )
+	PORT_DIPNAME( 0x0040, 0x0000, "Violence" )		PORT_DIPLOCATION("SW1:3")
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
+	PORT_SERVICE_DIPLOC( 0x0080, IP_ACTIVE_HIGH, "SW1:4" )
 INPUT_PORTS_END
 
 
@@ -1049,18 +1047,16 @@ INPUT_PORTS_START( itech32_base )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SPECIAL )
-	PORT_DIPNAME( 0x0010, 0x0000, "Video Sync" )
+	PORT_DIPNAME( 0x0010, 0x0000, "Video Sync" )		PORT_DIPLOCATION("SW1:4")
 	PORT_DIPSETTING(      0x0000, "-" )
 	PORT_DIPSETTING(      0x0010, "+" )
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ))
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ))	PORT_DIPLOCATION("SW1:3")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0020, DEF_STR( On ))
-	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))	PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0080, 0x0000, DEF_STR( Service_Mode ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0080, DEF_STR( On ))
+	PORT_SERVICE_DIPLOC( 0x0080, IP_ACTIVE_HIGH, "SW1:1" )
 
 	PORT_START_TAG("EXTRA")	/* 78000 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1077,7 +1073,7 @@ INPUT_PORTS_START( bloodstm )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 
 	PORT_MODIFY("DIPS")
-	PORT_DIPNAME( 0x0040, 0x0000, "Violence" )
+	PORT_DIPNAME( 0x0040, 0x0000, "Violence" )	PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 
@@ -1116,9 +1112,9 @@ INPUT_PORTS_START( hardyard )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(4)
 
 	PORT_MODIFY("DIPS")	/* 280000 */
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ))
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ))	PORT_DIPLOCATION("SW1:3")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ))
-	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Players ) )
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Players ))	PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(      0x0000, "4" )
 	PORT_DIPSETTING(      0x0040, "2" )
 INPUT_PORTS_END
@@ -1134,7 +1130,7 @@ INPUT_PORTS_START( pairs )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_MODIFY("DIPS")
-	PORT_DIPNAME( 0x0040, 0x0000, "Modesty" )
+	PORT_DIPNAME( 0x0040, 0x0000, "Modesty" )	PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ))
 INPUT_PORTS_END
@@ -1166,7 +1162,7 @@ INPUT_PORTS_START( drivedge )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_VBLANK )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_SPECIAL )
-	PORT_DIPNAME( 0x7000, 0x0000, "Network Number" )
+	PORT_DIPNAME( 0x7000, 0x0000, "Network Number" )	PORT_DIPLOCATION("SW1:4,3,2")
 	PORT_DIPSETTING(      0x0000, "1" )
 	PORT_DIPSETTING(      0x1000, "2" )
 	PORT_DIPSETTING(      0x2000, "3" )
@@ -1175,9 +1171,7 @@ INPUT_PORTS_START( drivedge )
 	PORT_DIPSETTING(      0x5000, "6" )
 	PORT_DIPSETTING(      0x6000, "7" )
 	PORT_DIPSETTING(      0x7000, "8" )
-	PORT_DIPNAME( 0x8000, 0x0000, DEF_STR( Service_Mode ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( On ) )
+	PORT_SERVICE_DIPLOC( 0x8000, IP_ACTIVE_HIGH, "SW1:1" )
 
 	PORT_START	/* 80000 */
 	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0x06) PORT_SENSITIVITY(2) PORT_KEYDELTA(100) PORT_PLAYER(3)
@@ -1218,13 +1212,13 @@ INPUT_PORTS_START( wcbowln ) /* WCB version 1.66 supports cocktail mode */
 	PORT_BIT( 0x00fb, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_MODIFY("DIPS")
-	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:4")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ) )	// v1.66 Rom sets support Cocktail mode (verified)
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ) )	PORT_DIPLOCATION("SW1:3") /* v1.66 Rom sets support Cocktail mode (verified) */
 	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x0040, 0x0000, "Freeze Screen" )
+	PORT_DIPNAME( 0x0040, 0x0000, "Freeze Screen" )		PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
 
@@ -1239,11 +1233,11 @@ INPUT_PORTS_END
 INPUT_PORTS_START( wcbowldx )
 	PORT_INCLUDE(wcbowln)
 
-	PORT_START	/* 280000 */
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ) )	/* Verified */
+	PORT_MODIFY("DIPS")	/* 280000 */
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Flip_Screen ) )	PORT_DIPLOCATION("SW1:3")	/* Verified */
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ) )	PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -1263,7 +1257,7 @@ INPUT_PORTS_START( sftm )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(2)
 
 	PORT_MODIFY("DIPS")
-	PORT_DIPNAME( 0x0040, 0x0000, "Freeze Screen" )
+	PORT_DIPNAME( 0x0040, 0x0000, "Freeze Screen" )	PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -1283,7 +1277,7 @@ INPUT_PORTS_START( shufshot ) /* ShuffleShot v1.39 & v1.40 support cocktail mode
 	PORT_BIT( 0x00fb, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_MODIFY("DIPS")
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ) )	/* Verified */
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ) )	PORT_DIPLOCATION("SW1:3")	/* Verified */
 	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Cocktail ) )
 
@@ -1319,7 +1313,7 @@ INPUT_PORTS_START( shufbowl )
 	PORT_BIT( 0x00fb, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_MODIFY("DIPS")
-	PORT_DIPNAME( 0x0040, 0x0000, "Freeze Screen" )
+	PORT_DIPNAME( 0x0040, 0x0000, "Freeze Screen" )		PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
 
@@ -1353,13 +1347,13 @@ INPUT_PORTS_START( gt3d )
 	PORT_BIT( 0x00f8, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_MODIFY("DIPS")
-	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Unknown ))	PORT_DIPLOCATION("SW1:4")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0010, DEF_STR( On ))
-	PORT_DIPNAME( 0x0020, 0x0000, "Trackball Orientation" )
+	PORT_DIPNAME( 0x0020, 0x0000, "Trackball Orientation" )	PORT_DIPLOCATION("SW1:3")
 	PORT_DIPSETTING(      0x0000, "Normal Mount" )
 	PORT_DIPSETTING(      0x0020, "45 Degree Angle" )
-	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Controls ))
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Controls ))	PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(      0x0000, "One Trackball" )
 	PORT_DIPSETTING(      0x0040, "Two Trackballs" )
 
@@ -1381,13 +1375,13 @@ INPUT_PORTS_START( gt97 ) /* v1.30 is the first known version of GT97 to support
 	PORT_INCLUDE(gt3d)
 
 	PORT_MODIFY("DIPS")
-	PORT_DIPNAME( 0x0010, 0x0000, "Freeze Screen" )
+	PORT_DIPNAME( 0x0010, 0x0000, "Freeze Screen" )		PORT_DIPLOCATION("SW1:4")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0010, DEF_STR( On ))
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Unknown ))	/* Seem to have no effect on the game */
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Unknown ))	PORT_DIPLOCATION("SW1:3")	/* Seem to have no effect on the game */
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0020, DEF_STR( On ))
-	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Cabinet ))
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Cabinet ))	PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ))
 	PORT_DIPSETTING(      0x0040, DEF_STR( Cocktail ))
 INPUT_PORTS_END
@@ -1397,7 +1391,7 @@ INPUT_PORTS_START( gt97o ) /* Older versions of GT97 do NOT support a cocktail m
 	PORT_INCLUDE(gt3d)
 
 	PORT_MODIFY("DIPS")
-	PORT_DIPNAME( 0x0010, 0x0000, "Freeze Screen" )
+	PORT_DIPNAME( 0x0010, 0x0000, "Freeze Screen" )	PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0010, DEF_STR( On ))
 INPUT_PORTS_END
@@ -1407,10 +1401,10 @@ INPUT_PORTS_START( gt97s )
 	PORT_INCLUDE(gt3d)
 
 	PORT_MODIFY("DIPS")
-	PORT_DIPNAME( 0x0010, 0x0000, "Freeze Screen" )
+	PORT_DIPNAME( 0x0010, 0x0000, "Freeze Screen" )		PORT_DIPLOCATION("SW1:4")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0010, DEF_STR( On ))
-	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))		/* Single controller version -  has no effect */
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))	PORT_DIPLOCATION("SW1:2")	/* Single controller version -  has no effect */
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ))
 INPUT_PORTS_END
@@ -1420,10 +1414,10 @@ INPUT_PORTS_START( gt98 )
 	PORT_INCLUDE(gt3d)
 
 	PORT_MODIFY("DIPS")
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Unknown ))	/* Seem to have no effect on the game */
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Unknown ))	PORT_DIPLOCATION("SW1:3")	/* Seem to have no effect on the game */
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0020, DEF_STR( On ))
-	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Cabinet ))
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Cabinet ))	PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ))
 	PORT_DIPSETTING(      0x0040, DEF_STR( Cocktail ))
 INPUT_PORTS_END
@@ -1433,10 +1427,10 @@ INPUT_PORTS_START( gt98s )
 	PORT_INCLUDE(gt3d)
 
 	PORT_MODIFY("DIPS")
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Unknown ))	/* Seem to have no effect on the game */
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Unknown ))	PORT_DIPLOCATION("SW1:3")	/* Seem to have no effect on the game */
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0020, DEF_STR( On ))
-	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))	/* Single controller version -  has no effect */
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))	PORT_DIPLOCATION("SW1:2")	/* Single controller version -  has no effect */
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ))
 INPUT_PORTS_END
@@ -1446,13 +1440,13 @@ INPUT_PORTS_START( s_ver )
 	PORT_INCLUDE(gt3d)
 
 	PORT_MODIFY("DIPS")
-	PORT_DIPNAME( 0x0010, 0x0000, "Trackball Orientation" )	/* Determined by actual use / trial & error */
-	PORT_DIPSETTING(      0x0000, "Normal Mount" )			/* The manual says "Always on (defualt)" and "Off -- UNUSED --" */
+	PORT_DIPNAME( 0x0010, 0x0000, "Trackball Orientation" )	PORT_DIPLOCATION("SW1:4")	/* Determined by actual use / trial & error */
+	PORT_DIPSETTING(      0x0000, "Normal Mount" )						/* The manual says "Always on (defualt)" and "Off -- UNUSED --" */
 	PORT_DIPSETTING(      0x0010, "45 Degree Angle" )
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Unknown ))		/* Single controller version -  has no effect */
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Unknown ))	PORT_DIPLOCATION("SW1:3")	/* Single controller version -  has no effect */
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0020, DEF_STR( On ))
-	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))		/* Single controller version -  has no effect */
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))	PORT_DIPLOCATION("SW1:2")	/* Single controller version -  has no effect */
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ))
 INPUT_PORTS_END
@@ -1462,15 +1456,15 @@ INPUT_PORTS_START( aama )
 	PORT_INCLUDE(gt3d)
 
 	PORT_MODIFY("DIPS")
-	PORT_DIPNAME( 0x0010, 0x0000, "Trackball Orientation" )	/* Determined by actual use / trial & error */
-	PORT_DIPSETTING(      0x0000, "Normal Mount" )			/* The manual says "Always on (defualt)" and "Off -- UNUSED --" */
+	PORT_DIPNAME( 0x0010, 0x0000, "Trackball Orientation" )	PORT_DIPLOCATION("SW1:4")	/* Determined by actual use / trial & error */
+	PORT_DIPSETTING(      0x0000, "Normal Mount" )						/* The manual says "Always on (defualt)" and "Off -- UNUSED --" */
 	PORT_DIPSETTING(      0x0010, "45 Degree Angle" )
-	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ))
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ))	PORT_DIPLOCATION("SW1:3")
 	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ))
-	PORT_DIPSETTING(      0x0020, DEF_STR( Cocktail ))		/* Cocktail mode REQUIRES "Controls" to be set to "Two Trackballs" */
-	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Controls ))
+	PORT_DIPSETTING(      0x0020, DEF_STR( Cocktail ))					/* Cocktail mode REQUIRES "Controls" to be set to "Two Trackballs" */
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Controls ))	PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(      0x0000, "One Trackball" )
-	PORT_DIPSETTING(      0x0040, "Two Trackballs" )		/* Two Trackballs will work for Upright for "side by side" controls */
+	PORT_DIPSETTING(      0x0040, "Two Trackballs" )					/* Two Trackballs will work for Upright for "side by side" controls */
 INPUT_PORTS_END
 
 

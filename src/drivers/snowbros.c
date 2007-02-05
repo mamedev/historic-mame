@@ -2604,7 +2604,7 @@ static DRIVER_INIT(4in1boot)
 	int len = memory_region_length(REGION_CPU1);
 
 	/* strange order */
-	if ((buffer = malloc(len)))
+	buffer = malloc_or_die(len);
 	{
 		int i;
 		for (i = 0;i < len; i++)
@@ -2619,7 +2619,7 @@ static DRIVER_INIT(4in1boot)
 	len = memory_region_length(REGION_CPU2);
 
 	/* strange order */
-	if ((buffer = malloc(len)))
+	buffer = malloc_or_die(len);
 	{
 		int i;
 		for (i = 0;i < len; i++)
@@ -2637,7 +2637,7 @@ static DRIVER_INIT(snowbro3)
 	int len = memory_region_length(REGION_CPU1);
 
 	/* strange order */
-	if ((buffer = malloc(len)))
+	buffer = malloc_or_die(len);
 	{
 		int i;
 		for (i = 0;i < len; i++)

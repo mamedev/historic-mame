@@ -913,6 +913,7 @@ static const struct game_keys keys_table[] =
 //  { "gwinga",   {  /* search failed */  }, 0x100000 },    // 0C81 1972 1027  cmpi.l  #$19721027,D1
 	{ "mmatrix",  { 0x1e3bf539,0xb17b4865 }, 0x180000 },	// B6C0 B447 BACF  cmpa.w  D0,A3   cmp.w   D7,D2   cmpa.w  A7,A5
 	{ "mmatrixj", { 0x05e5d8d1,0x1eb5c5ba }, 0x180000 },	// B6C0 B447 BACF  cmpa.w  D0,A3   cmp.w   D7,D2   cmpa.w  A7,A5
+	{ "mpang",    { 0x2dc8626f,0xdda27163 }, 0x100000 },	// 0C84 347D 89A3  cmpi.l  #$347D89A3,D4
 	{ "mpangj",   { 0x2dc8626f,0xdda27163 }, 0x100000 },	// 0C84 347D 89A3  cmpi.l  #$347D89A3,D4
 	{ "pzloop2",  { 0x3332206a,0x0077f829 }, 0x400000 },	// 0C82 9A73 15F1  cmpi.l  #$9A7315F1,D2
 	{ "pzloop2j", { 0x3332206a,0x0077f829 }, 0x400000 },	// 0C82 9A73 15F1  cmpi.l  #$9A7315F1,D2

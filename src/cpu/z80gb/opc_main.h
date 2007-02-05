@@ -330,7 +330,7 @@ case 0x20: /*      JR NZ,n8 */
 
     offset = mem_ReadByte (Regs.w.PC++);
     Regs.w.PC += offset;
-    ICycles += 4;
+    CYCLES_PASSED( 4 );
   }
   break;
 case 0x21: /*      LD HL,n16 */
@@ -386,7 +386,7 @@ case 0x28: /*      JR Z,n8 */
     offset = mem_ReadByte (Regs.w.PC++);
     Regs.w.PC += offset;
 
-    ICycles += 4;
+    CYCLES_PASSED( 4 );
   }
   else
   {
@@ -435,7 +435,6 @@ case 0x2F: /*      CPL */
 
   Regs.b.A = ~Regs.b.A;
   Regs.b.F |= FLAG_N | FLAG_H;
-  return 4;
   break;
 case 0x30: /*      JR NC,n8 */
 
@@ -449,7 +448,7 @@ case 0x30: /*      JR NC,n8 */
 
     offset = mem_ReadByte (Regs.w.PC++);
     Regs.w.PC += offset;
-    ICycles += 4;
+    CYCLES_PASSED( 4 );
   }
   break;
 case 0x31: /*      LD SP,n16 */
@@ -526,7 +525,7 @@ case 0x38: /*      JR C,n8 */
     offset = mem_ReadByte (Regs.w.PC++);
     Regs.w.PC += offset;
 
-    ICycles += 4;
+    CYCLES_PASSED( 4 );
   }
   else
   {
@@ -774,12 +773,10 @@ case 0x76: /*      HALT */
   if ( Regs.w.leavingHALT ) {
 	Regs.w.leavingHALT--;
   } else {
-	if ( Regs.w.enable & IME ) {
-/*      UINT32 skip_cycles; */
-		CheckInterrupts = 1;
-		Regs.w.enable |= HALTED;
-		Regs.w.PC--;
-	} else {
+	CheckInterrupts = 1;
+	Regs.w.enable |= HALTED;
+	Regs.w.PC--;
+	if ( ! Regs.w.enable & IME ) {
 		/* check for pending interrupts to perform the HALT bug */
 		if ( Regs.w.IE & Regs.w.IF ) {
 			Regs.w.doHALTbug = 1;
@@ -1100,7 +1097,7 @@ case 0xC0: /*      RET NZ */
   {
     Regs.w.PC = mem_ReadWord (Regs.w.SP);
     Regs.w.SP += 2;
-    ICycles += 12;
+    CYCLES_PASSED( 12 );
   }
   break;
 case 0xC1: /*      POP BC */
@@ -1117,7 +1114,7 @@ case 0xC2: /*      JP NZ,n16 */
   else
   {
     Regs.w.PC = mem_ReadWord (Regs.w.PC);
-    ICycles += 4;
+    CYCLES_PASSED( 4 );
   }
   break;
 case 0xC3: /*      JP n16 */
@@ -1139,7 +1136,7 @@ case 0xC4: /*      CALL NZ,n16 */
     Regs.w.SP -= 2;
     mem_WriteWord (Regs.w.SP, Regs.w.PC);
     Regs.w.PC = PC;
-    ICycles += 12;
+    CYCLES_PASSED( 12 );
   }
   break;
 case 0xC5: /*      PUSH BC */
@@ -1169,7 +1166,7 @@ case 0xC8: /*      RET Z */
   {
     Regs.w.PC = mem_ReadWord (Regs.w.SP);
     Regs.w.SP += 2;
-    ICycles += 12;
+    CYCLES_PASSED( 12 );
   }
   break;
 case 0xC9: /*      RET */
@@ -1182,7 +1179,7 @@ case 0xCA: /*      JP Z,n16 */
   if (Regs.b.F & FLAG_Z)
   {
     Regs.w.PC = mem_ReadWord (Regs.w.PC);
-    ICycles += 4;
+    CYCLES_PASSED( 4 );
   }
   else
   {
@@ -1191,7 +1188,7 @@ case 0xCA: /*      JP Z,n16 */
   break;
 case 0xCB: /*      PREFIX! */
   x = mem_ReadByte (Regs.w.PC++);
-  ICycles += CyclesCB[x];
+  CYCLES_PASSED( CyclesCB[x] );
   switch (x)
   {
     #include "opc_cb.h"
@@ -1208,7 +1205,7 @@ case 0xCC: /*      CALL Z,n16 */
     Regs.w.SP -= 2;
     mem_WriteWord (Regs.w.SP, Regs.w.PC);
     Regs.w.PC = PC;
-    ICycles += 12;
+    CYCLES_PASSED( 12 );
   }
   else
   {
@@ -1243,7 +1240,7 @@ case 0xD0: /*      RET NC */
   {
     Regs.w.PC = mem_ReadWord (Regs.w.SP);
     Regs.w.SP += 2;
-    ICycles += 12;
+    CYCLES_PASSED( 12 );
   }
   break;
 case 0xD1: /*      POP DE */
@@ -1260,7 +1257,7 @@ case 0xD2: /*      JP NC,n16 */
   else
   {
     Regs.w.PC = mem_ReadWord (Regs.w.PC);
-    ICycles += 4;
+    CYCLES_PASSED( 4 );
   }
   break;
 case 0xD3: /*      EH? */
@@ -1280,7 +1277,7 @@ case 0xD4: /*      CALL NC,n16 */
     Regs.w.SP -= 2;
     mem_WriteWord (Regs.w.SP, Regs.w.PC);
     Regs.w.PC = PC;
-    ICycles += 12;
+    CYCLES_PASSED( 12 );
   }
   break;
 case 0xD5: /*      PUSH DE */
@@ -1305,7 +1302,7 @@ case 0xD8: /*      RET C */
   {
     Regs.w.PC = mem_ReadWord (Regs.w.SP);
     Regs.w.SP += 2;
-    ICycles += 12;
+    CYCLES_PASSED( 12 );
   }
   break;
 case 0xD9: /*      RETI */
@@ -1320,7 +1317,7 @@ case 0xDA: /*      JP C,n16 */
   if (Regs.b.F & FLAG_C)
   {
     Regs.w.PC = mem_ReadWord (Regs.w.PC);
-    ICycles += 4;
+    CYCLES_PASSED( 4 );
   }
   else
   {
@@ -1340,7 +1337,7 @@ case 0xDC: /*      CALL C,n16 */
     Regs.w.SP -= 2;
     mem_WriteWord (Regs.w.SP, Regs.w.PC);
     Regs.w.PC = PC;
-    ICycles += 12;
+    CYCLES_PASSED( 12 );
   }
   else
   {

@@ -6,9 +6,11 @@
 #include "sound/cdp1869.h"
 #include "sound/ay8910.h"
 
+extern int cdp1869_pcb;
+
 /* Read/Write Handlers */
 
-WRITE8_HANDLER ( destryer_out0_w )
+WRITE8_HANDLER ( destryer_out1_w )
 {
 	/*
           bit   description
@@ -24,18 +26,18 @@ WRITE8_HANDLER ( destryer_out0_w )
     */
 }
 
-WRITE8_HANDLER ( altair_out0_w )
+WRITE8_HANDLER ( altair_out1_w )
 {
 	/*
           bit   description
 
-            0   S1
-            1   S2
-            2   S3
+            0   S1 (CARTUCHO)
+            1   S2 (CARTUCHO)
+            2   S3 (CARTUCHO)
             3   LG1
             4   LG2
             5   LGF
-            6   CONT. M4
+            6   CONT. M2
             7   CONT. M1
     */
 
@@ -46,8 +48,9 @@ WRITE8_HANDLER ( altair_out0_w )
 
 static int draco_sound;
 static int draco_g;
+static int cdp1869_predisplay;
 
-WRITE8_HANDLER ( draco_out0_w )
+WRITE8_HANDLER ( draco_out1_w )
 {
 	/*
           bit   description
@@ -105,6 +108,11 @@ WRITE8_HANDLER ( draco_sound_ay8910_w )
 	}
 }
 
+READ8_HANDLER ( cidelsa_input_port_0_r )
+{
+	return (readinputportbytag("IN0") & 0x7f) + (cdp1869_pcb ? 0x80 : 0x00);
+}
+
 /* Memory Maps */
 
 // Destroyer
@@ -116,9 +124,16 @@ static ADDRESS_MAP_START( destryer_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf800, 0xffff) AM_READWRITE(cdp1869_pageram_r, cdp1869_pageram_w)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( destryea_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x3000, 0x30ff) AM_RAM
+	AM_RANGE(0xf400, 0xf7ff) AM_READWRITE(cdp1869_charram_r, cdp1869_charram_w)
+	AM_RANGE(0xf800, 0xffff) AM_READWRITE(cdp1869_pageram_r, cdp1869_pageram_w)
+ADDRESS_MAP_END
+
+
 static ADDRESS_MAP_START( destryer_io_map, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(destryer_out0_w)
-	AM_RANGE(0x01, 0x01) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READWRITE(cidelsa_input_port_0_r, destryer_out1_w)
 	AM_RANGE(0x02, 0x02) AM_READ(input_port_1_r)
 	AM_RANGE(0x03, 0x03) AM_WRITE(cdp1870_out3_w)
 	AM_RANGE(0x04, 0x07) AM_WRITE(cdp1869_out_w)
@@ -128,14 +143,13 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( altair_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x2fff) AM_ROM
-	AM_RANGE(0x3000, 0x30ff) AM_RAM
+	AM_RANGE(0x3000, 0x37ff) AM_RAM
 	AM_RANGE(0xf400, 0xf7ff) AM_READWRITE(cdp1869_charram_r, cdp1869_charram_w)
 	AM_RANGE(0xf800, 0xffff) AM_READWRITE(cdp1869_pageram_r, cdp1869_pageram_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( altair_io_map, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(altair_out0_w)
-	AM_RANGE(0x01, 0x01) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READWRITE(cidelsa_input_port_0_r, altair_out1_w)
 	AM_RANGE(0x02, 0x02) AM_READ(input_port_1_r)
 	AM_RANGE(0x03, 0x03) AM_WRITE(cdp1870_out3_w)
 	AM_RANGE(0x04, 0x04) AM_READ(input_port_2_r)
@@ -146,14 +160,14 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( draco_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_ROM
-	AM_RANGE(0x4000, 0x43ff) AM_RAM
+	AM_RANGE(0x4000, 0x47ff) AM_RAM
+	AM_RANGE(0x8000, 0x83ff) AM_RAM
 	AM_RANGE(0xf400, 0xf7ff) AM_READWRITE(cdp1869_charram_r, cdp1869_charram_w)
 	AM_RANGE(0xf800, 0xffff) AM_READWRITE(cdp1869_pageram_r, cdp1869_pageram_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( draco_io_map, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(draco_out0_w)
-	AM_RANGE(0x01, 0x01) AM_READ(input_port_0_r)
+	AM_RANGE(0x01, 0x01) AM_READWRITE(cidelsa_input_port_0_r, draco_out1_w)
 	AM_RANGE(0x02, 0x02) AM_READ(input_port_1_r)
 	AM_RANGE(0x03, 0x03) AM_WRITE(cdp1870_out3_w)
 	AM_RANGE(0x04, 0x04) AM_READ(input_port_2_r)
@@ -175,30 +189,43 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START( destryer )
 	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) // CARTUCHO
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 ) // 1P
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 ) // 2P
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) // RG
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) // LF
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) // FR
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL ) // PCB from CDP1869
 
 	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Very Conserv" )
+	PORT_DIPSETTING(    0x01, "Conserv" )
+	PORT_DIPSETTING(    0x02, "Liberal" )
+	PORT_DIPSETTING(    0x03, "Very Liberal" )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "5000" )
+	PORT_DIPSETTING(    0x08, "7000" )
+	PORT_DIPSETTING(    0x04, "10000" )
+	PORT_DIPSETTING(    0x00, "14000" )
+	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR(Coinage) )
+	PORT_DIPSETTING(    0xc0, "Slot A: 1  Slot B: 2" )
+	PORT_DIPSETTING(    0x80, "Slot A: 1.5  Slot B: 3" )
+	PORT_DIPSETTING(    0x40, "Slot A: 2  Slot B: 4" )
+	PORT_DIPSETTING(    0x00, "Slot A: 2.5  Slot B: 5" )
+
 
 	PORT_START_TAG("EF")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL ) // _PREDISPLAY from CDP1869
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE ) // ST
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 ) // M2
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 ) // M1
+	PORT_SERVICE( 0x02, IP_ACTIVE_HIGH ) // ST
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 ) // M2
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 ) // M1
 INPUT_PORTS_END
 
 INPUT_PORTS_START( altair )
@@ -213,52 +240,81 @@ INPUT_PORTS_START( altair )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL ) // PCB from CDP1869
 
 	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) // DF0
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) // DF1
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) // EX0
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) // EX1
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) // RV0
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) // RV1
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) // MN0
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) // MN1
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Very Conserv" )
+	PORT_DIPSETTING(    0x01, "Conserv" )
+	PORT_DIPSETTING(    0x02, "Liberal" )
+	PORT_DIPSETTING(    0x03, "Very Liberal" )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "5000" )
+	PORT_DIPSETTING(    0x08, "7000" )
+	PORT_DIPSETTING(    0x04, "10000" )
+	PORT_DIPSETTING(    0x00, "14000" )
+	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR(Coinage) )
+	PORT_DIPSETTING(    0xc0, "Slot A: 1  Slot B: 2" )
+	PORT_DIPSETTING(    0x80, "Slot A: 1.5  Slot B: 3" )
+	PORT_DIPSETTING(    0x40, "Slot A: 2  Slot B: 4" )
+	PORT_DIPSETTING(    0x00, "Slot A: 2.5  Slot B: 5" )
 
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) // UP
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) // DN
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) // IN
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START_TAG("EF")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL ) // _PREDISPLAY from CDP1869
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE ) // ST
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 ) // M2
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 ) // M1
-INPUT_PORTS_END
-
-INPUT_PORTS_START( draco )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("EF")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL ) // _PREDISPLAY from CDP1869
+	PORT_SERVICE( 0x02, IP_ACTIVE_HIGH ) // ST - should be a button, not a dip imo.
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 ) // M2
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 ) // M1
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( draco )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) // CARTUCHO
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 ) // 1P
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 ) // 2P
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) // RG
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) // LF
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) // FR
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL ) // PCB from CDP1869
 
 	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) // SW1
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) // SW2
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) // SW3
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN ) // SW4
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) // SW5
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) // SW6
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) // SW7
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) // SW8
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Very Conserv" )
+	PORT_DIPSETTING(    0x01, "Conserv" )
+	PORT_DIPSETTING(    0x02, "Liberal" )
+	PORT_DIPSETTING(    0x03, "Very Liberal" )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "5000" )
+	PORT_DIPSETTING(    0x08, "7000" )
+	PORT_DIPSETTING(    0x04, "10000" )
+	PORT_DIPSETTING(    0x00, "14000" )
+	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR(Coinage) )
+	PORT_DIPSETTING(    0xc0, "Slot A: 1  Slot B: 2" )
+	PORT_DIPSETTING(    0x80, "Slot A: 1.5  Slot B: 3" )
+	PORT_DIPSETTING(    0x40, "Slot A: 2  Slot B: 4" )
+	PORT_DIPSETTING(    0x00, "Slot A: 2.5  Slot B: 5" )
+
 
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -272,9 +328,9 @@ INPUT_PORTS_START( draco )
 
 	PORT_START_TAG("EF")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL ) // _PREDISPLAY from CDP1869
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE ) // ST
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 ) // M2
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 ) // M1
+	PORT_SERVICE( 0x02, IP_ACTIVE_HIGH ) // ST
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 ) // M2
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 ) // M1
 INPUT_PORTS_END
 
 /* CDP1802 Interface */
@@ -283,7 +339,7 @@ INPUT_PORTS_END
 
 static void destryer_out_q(int level)
 {
-	// write to 1024x1bit PagememoryColorBit RAM
+	cdp1869_pcb = level;
 }
 
 static int destryer_in_ef(void)
@@ -295,7 +351,7 @@ static int destryer_in_ef(void)
         EF4     ?
     */
 
-	return readinputportbytag("EF") & 0x0f;
+	return (cdp1869_predisplay&0x01) + (readinputportbytag("EF") & 0xfe);
 }
 
 static CDP1802_CONFIG destryer_cdp1802_config =
@@ -309,27 +365,7 @@ static CDP1802_CONFIG destryer_cdp1802_config =
 
 static void altair_out_q(int level)
 {
-	// write to 1024x1bit PagememoryColorBit RAM
-
-	/*
-
-        Character RAM mapping
-
-        bit     description
-
-        0       CCB0
-        1       CCB1
-        2       CDB0
-        3       CDB1
-        4       CDB2
-        5       CDB3
-        6       CDB4
-        7       CDB5
-        8       PCB
-
-    */
-
-//  UINT16 address = activecpu_get_reg(activecpu_get_reg(CDP1802_X) + CDP1802_R0) - 1; // TODO: why -1?
+	cdp1869_pcb = level;
 }
 
 static int altair_in_ef(void)
@@ -341,7 +377,7 @@ static int altair_in_ef(void)
         EF4     Coin 1
     */
 
-	return readinputportbytag("EF") & 0x0f;
+	return (cdp1869_predisplay&0x01) + (readinputportbytag("EF") & 0xfe);
 }
 
 static CDP1802_CONFIG altair_cdp1802_config =
@@ -355,7 +391,7 @@ static CDP1802_CONFIG altair_cdp1802_config =
 
 static void draco_out_q(int level)
 {
-	// write to 1024x1bit PagememoryColorBit RAM
+	cdp1869_pcb = level;
 }
 
 static int draco_in_ef(void)
@@ -367,7 +403,7 @@ static int draco_in_ef(void)
         EF4     Coin 1
     */
 
-	return readinputportbytag("EF") & 0x0f;
+	return cdp1869_predisplay + (readinputportbytag("EF") & 0x0e);
 }
 
 static CDP1802_CONFIG draco_cdp1802_config =
@@ -419,8 +455,38 @@ static struct AY8910interface ay8910_interface =
 
 /* Interrupt Generators */
 
-static INTERRUPT_GEN( cidelsa_frame_int )
+static INTERRUPT_GEN( draco_interrupt )
 {
+	int scanline = (CPD1870_TOTAL_SCANLINES_PAL - 1) - cpu_getiloops();
+
+	switch (scanline)
+	{
+	case CPD1870_SCANLINE_PREDISPLAY_START_PAL:
+		cdp1869_predisplay = 0;
+		break;
+
+	case CPD1870_SCANLINE_PREDISPLAY_END_PAL:
+		cdp1869_predisplay = 1;
+		break;
+	}
+}
+
+static INTERRUPT_GEN( altair_interrupt )
+{
+	int scanline = (CPD1870_TOTAL_SCANLINES_PAL - 1) - cpu_getiloops();
+
+	switch (scanline)
+	{
+	case CPD1870_SCANLINE_PREDISPLAY_START_PAL:
+		cpunum_set_input_line(0, 0, CLEAR_LINE);
+		cdp1869_predisplay = 1;
+		break;
+
+	case CPD1870_SCANLINE_PREDISPLAY_END_PAL:
+		cpunum_set_input_line(0, 0, ASSERT_LINE);
+		cdp1869_predisplay = 0;
+		break;
+	}
 }
 
 /* Machine Drivers */
@@ -432,8 +498,8 @@ static MACHINE_DRIVER_START( destryer )
 	MDRV_CPU_ADD(CDP1802, 3579000) // ???
 	MDRV_CPU_PROGRAM_MAP(destryer_map, 0)
 	MDRV_CPU_IO_MAP(destryer_io_map, 0)
-	MDRV_CPU_VBLANK_INT(cidelsa_frame_int, 1)
 	MDRV_CPU_CONFIG(destryer_cdp1802_config)
+	MDRV_CPU_VBLANK_INT(altair_interrupt, CPD1870_TOTAL_SCANLINES_PAL)
 
 	MDRV_SCREEN_REFRESH_RATE(CDP1870_FPS_PAL)	// 50.09 Hz
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
@@ -459,6 +525,40 @@ static MACHINE_DRIVER_START( destryer )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( destryea )
+
+	// basic system hardware
+
+	MDRV_CPU_ADD(CDP1802, 3579000) // ???
+	MDRV_CPU_PROGRAM_MAP(destryea_map, 0)
+	MDRV_CPU_IO_MAP(destryer_io_map, 0)
+	MDRV_CPU_CONFIG(destryer_cdp1802_config)
+	MDRV_CPU_VBLANK_INT(altair_interrupt, CPD1870_TOTAL_SCANLINES_PAL)
+
+	MDRV_SCREEN_REFRESH_RATE(CDP1870_FPS_PAL)	// 50.09 Hz
+	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
+
+	// video hardware
+
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_FORMAT(BITMAP_FORMAT_INDEXED16)
+	MDRV_SCREEN_SIZE(240, 200)
+	MDRV_SCREEN_VISIBLE_AREA(0, 240-1, 0, 200-1)
+	MDRV_PALETTE_LENGTH(16)
+	MDRV_COLORTABLE_LENGTH(16)
+
+	MDRV_PALETTE_INIT(cdp1869)
+	MDRV_VIDEO_START(cdp1869)
+	MDRV_VIDEO_UPDATE(cdp1869)
+
+	// sound hardware
+
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(CDP1869, 3579000) // ???
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( altair )
 
 	// basic system hardware
@@ -466,8 +566,8 @@ static MACHINE_DRIVER_START( altair )
 	MDRV_CPU_ADD(CDP1802, 3579000)
 	MDRV_CPU_PROGRAM_MAP(altair_map, 0)
 	MDRV_CPU_IO_MAP(altair_io_map, 0)
-	MDRV_CPU_VBLANK_INT(cidelsa_frame_int, 1)
 	MDRV_CPU_CONFIG(altair_cdp1802_config)
+	MDRV_CPU_VBLANK_INT(altair_interrupt, CPD1870_TOTAL_SCANLINES_PAL)
 
 	MDRV_SCREEN_REFRESH_RATE(CDP1870_FPS_PAL)	// 50.09 Hz
 	MDRV_SCREEN_VBLANK_TIME(DEFAULT_60HZ_VBLANK_DURATION)
@@ -500,8 +600,8 @@ static MACHINE_DRIVER_START( draco )
 	MDRV_CPU_ADD(CDP1802, 3579000)
 	MDRV_CPU_PROGRAM_MAP(draco_map, 0)
 	MDRV_CPU_IO_MAP(draco_io_map, 0)
-	MDRV_CPU_VBLANK_INT(cidelsa_frame_int, 1)
 	MDRV_CPU_CONFIG(draco_cdp1802_config)
+	MDRV_CPU_VBLANK_INT(draco_interrupt, CPD1870_TOTAL_SCANLINES_PAL)
 
 	MDRV_CPU_ADD(COP420, 2012160) // COP402N
 	MDRV_CPU_PROGRAM_MAP(draco_sound_map, 0)
@@ -553,6 +653,15 @@ ROM_START( destryer )
 	ROM_LOAD( "des d 2.ic7", 0x1800, 0x0800, CRC(dbec0aea) SHA1(1d9d49009a45612ee79763781a004499313b823b) )
 ROM_END
 
+// this was destroyer2.rom in standalone emu..
+ROM_START( destryea )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "destryea_1", 0x0000, 0x0800, CRC(421428e9) SHA1(0ac3a1e7f61125a1cd82145fa28cbc4b93505dc9) )
+	ROM_LOAD( "destryea_2", 0x0800, 0x0800, CRC(55dc8145) SHA1(a0066d3f3ac0ae56273485b74af90eeffea5e64e) )
+	ROM_LOAD( "destryea_3", 0x1000, 0x0800, CRC(5557bdf8) SHA1(37a9cbc5d25051d3bed7535c58aac937cd7c64e1) )
+	ROM_LOAD( "destryea_4", 0x1800, 0x0800, CRC(608b779c) SHA1(8fd6cc376c507680777553090329cc66be42a934) )
+ROM_END
+
 ROM_START( altair )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "alt a 1.ic7",  0x0000, 0x0800, CRC(37c26c4e) SHA1(30df7efcf5bd12dafc1cb6e894fc18e7b76d3e61) )
@@ -580,6 +689,7 @@ ROM_END
 
 /* Game Drivers */
 
-GAME( 1980, destryer, 0, destryer, destryer, 0,     ROT90, "Cidelsa", "Destroyer (Cidelsa)", GAME_NOT_WORKING )
-GAME( 1981, altair,   0, altair,   altair,   0,     ROT90, "Cidelsa", "Altair", GAME_NOT_WORKING )
-GAME( 1981, draco,    0, draco,    draco,    draco, ROT90, "Cidelsa", "Draco", GAME_NOT_WORKING )
+GAME( 1980, destryer, 0,        destryer, destryer, 0,     ROT90, "Cidelsa", "Destroyer (Cidelsa) (set 1)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND ) // ok, but bad colours, some bad gfx (large enemies etc.)
+GAME( 1980, destryea, destryer, destryea, destryer, 0,     ROT90, "Cidelsa", "Destroyer (Cidelsa) (set 2)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND ) // ok, but bad colours, some bad gfx (large enemies etc.)
+GAME( 1981, altair,   0,        altair,   altair,   0,     ROT90, "Cidelsa", "Altair", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND ) // some bullets are invisible
+GAME( 1981, draco,    0,        draco,    draco,    draco, ROT90, "Cidelsa", "Draco", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND ) // crashes on game start

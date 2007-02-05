@@ -613,7 +613,11 @@ void Stepper_init(int id, int type)
 		switch ( steppers[id].type )
 		{
 			case STEPPER_48STEP_REEL :	  // STARPOINT RMxxx
+			break;
 			case BARCREST_48STEP_REEL :	  // Barcrest reel units have different coil windings
+			steppers[id].index_pos   = 2;
+			steppers[id].index_len   = 8;
+			steppers[id].index_patt  = 0x09;
 			break;
 			case STEPPER_144STEPS_DICE :  // STARPOINT 1DCU DICE mechanism
 			steppers[id].max_steps = 144*2;

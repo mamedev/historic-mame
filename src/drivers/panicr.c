@@ -402,13 +402,10 @@ ROM_END
 
 static DRIVER_INIT( panicr )
 {
-	UINT8 *buf = malloc(0x80000);
+	UINT8 *buf = malloc_or_die(0x80000);
 	UINT8 *rom;
 	int size;
 	int i;
-
-	if (!buf)
-		return;
 
 	rom = memory_region(REGION_GFX1);
 	size = memory_region_length(REGION_GFX1);

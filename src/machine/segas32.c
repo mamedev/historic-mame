@@ -38,7 +38,7 @@ void nec_v25_cpu_decrypt(void)
 	int i;
 	unsigned char *rom = memory_region(REGION_CPU3);
 	UINT8* decrypted = auto_malloc(0x100000);
-	UINT8* temp = malloc(0x100000);
+	UINT8* temp = malloc_or_die(0x100000);
 
 	// set CPU3 opcode base
 	memory_set_decrypted_region(2, 0x00000, 0xfffff, decrypted);

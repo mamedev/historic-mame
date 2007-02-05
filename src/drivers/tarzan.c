@@ -31,11 +31,11 @@ static int decrypt_tarzan()
   file1_size = lseek(fd, 0, SEEK_END);
   lseek(fd, 0, SEEK_SET);
 
-  file1_data = malloc(file1_size);
+  file1_data = malloc_or_die(file1_size);
   read(fd, file1_data, file1_size);
   close(fd);
 
-  result_data = malloc(file1_size);
+  result_data = malloc_or_die(file1_size);
   for(i=0; i<file1_size/2; i++) {
     unsigned short x = file1_data[i];
 

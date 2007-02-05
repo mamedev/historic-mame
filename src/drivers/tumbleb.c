@@ -3188,11 +3188,10 @@ static DRIVER_INIT( htchctch )
 static void suprtrio_decrypt_code(void)
 {
 	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
-	UINT16 *buf = malloc(0x80000);
+	UINT16 *buf = malloc_or_die(0x80000);
 	int i;
 
 	/* decrypt main ROMs */
-	if (buf)
 	{
 		memcpy(buf,rom,0x80000);
 		for (i = 0;i < 0x40000;i++)
@@ -3209,12 +3208,10 @@ static void suprtrio_decrypt_code(void)
 static void suprtrio_decrypt_gfx(void)
 {
 	UINT16 *rom = (UINT16 *)memory_region(REGION_GFX1);
-	UINT16 *buf = malloc(0x100000);
+	UINT16 *buf = malloc_or_die(0x100000);
 	int i;
 
 	/* decrypt tiles */
-	if (buf)
-	{
 		memcpy(buf,rom,0x100000);
 		for (i = 0;i < 0x80000;i++)
 		{
@@ -3223,7 +3220,6 @@ static void suprtrio_decrypt_gfx(void)
 			rom[i] = buf[j];
 		}
 		free(buf);
-	}
 }
 
 DRIVER_INIT( suprtrio )

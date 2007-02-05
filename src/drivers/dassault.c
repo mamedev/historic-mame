@@ -861,7 +861,7 @@ static DRIVER_INIT( dassault )
 {
 	const UINT8 *src = memory_region(REGION_GFX1);
 	UINT8 *dst = memory_region(REGION_GFX2);
-	UINT8 *tmp = (UINT8 *)malloc(0x80000);
+	UINT8 *tmp = malloc_or_die(0x80000);
 
 	/* Playfield 4 also has access to the char graphics, make things easier
     by just copying the chars to both banks (if I just used a different gfx
@@ -881,7 +881,7 @@ static DRIVER_INIT( thndzone )
 {
 	const UINT8 *src = memory_region(REGION_GFX1);
 	UINT8 *dst = memory_region(REGION_GFX2);
-	UINT8 *tmp = (UINT8 *)malloc(0x80000);
+	UINT8 *tmp = malloc_or_die(0x80000);
 
 	/* Playfield 4 also has access to the char graphics, make things easier
     by just copying the chars to both banks (if I just used a different gfx

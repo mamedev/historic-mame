@@ -8957,9 +8957,7 @@ DRIVER_INIT ( blandia )
 	int rpos;
 
 	rom_size = 0x80000;
-	buf = malloc(rom_size);
-
-	if (!buf) return;
+	buf = malloc_or_die(rom_size);
 
 	rom = memory_region(REGION_GFX2) + 0x40000;
 

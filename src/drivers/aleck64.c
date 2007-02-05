@@ -530,7 +530,7 @@ ROM_START( twrshaft )
 ROM_END
 
 GAME( 1998, 11beat,   0,  aleck64, aleck64,  aleck64, ROT0, "Hudson", "Eleven Beat", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 1998, mtetrisc, 0,  aleck64, mtetrisc, aleck64, ROT0, "Capcom", "Magical Tetris Challenge (981009 Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1998, mtetrisc, 0,  aleck64, mtetrisc, aleck64, ROT0, "Capcom", "Magical Tetris Challenge (981009 Japan)", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 GAME( 1998, starsldr, 0,  aleck64, starsldr, aleck64, ROT0, "Hudson/Seta", "Star Soldier: Vanishing Earth", GAME_IMPERFECT_GRAPHICS )
 GAME( 1998, vivdolls, 0,  aleck64, aleck64,  aleck64, ROT0, "Visco", "Vivid Dolls", GAME_IMPERFECT_GRAPHICS )
 GAME( 1999, srmvs,    0,  aleck64, aleck64,  aleck64, ROT0, "Seta", "Super Real Mahjong VS", GAME_NOT_WORKING|GAME_NO_SOUND )

@@ -95,8 +95,6 @@ INLINE int readbit(const UINT8 *src, int bitnum)
 
 void drawgfx_init(running_machine *machine)
 {
-	int lev, byte;
-
 	/* fill in the raw drawing mode table */
 	is_raw[TRANSPARENCY_NONE_RAW]      = 1;
 	is_raw[TRANSPARENCY_PEN_RAW]       = 1;
@@ -105,9 +103,6 @@ void drawgfx_init(running_machine *machine)
 	is_raw[TRANSPARENCY_BLEND_RAW]     = 1;
 
 	/* initialize the alpha drawing table */
-	for (lev = 0; lev < 257; lev++)
-		for (byte = 0; byte < 256; byte++)
-			drawgfx_alpha_cache.alpha[lev][byte] = (byte * lev) >> 8;
 	alpha_set_level(255);
 }
 

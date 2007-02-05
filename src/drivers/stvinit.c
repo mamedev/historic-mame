@@ -30,7 +30,7 @@ static void ic13_shifter(void)
 {
 	UINT32 *rom = (UINT32 *)memory_region(REGION_USER1);
 	UINT32 i;
-	UINT32 *tmp = (UINT32*)malloc(0x80000*2);
+	UINT32 *tmp = malloc_or_die(0x80000*2);
 
 	for(i=(0);i<(0x100000-1);i+=8)
 	{

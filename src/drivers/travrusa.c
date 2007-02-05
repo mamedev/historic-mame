@@ -495,10 +495,8 @@ DRIVER_INIT( motorace )
 {
 	int A,j;
 	unsigned char *rom = memory_region(REGION_CPU1);
-	UINT8 *buffer = malloc(0x2000);
+	UINT8 *buffer = malloc_or_die(0x2000);
 
-	if (buffer)
-	{
 		memcpy(buffer,rom,0x2000);
 
 		/* The first CPU ROM has the address and data lines scrambled */
@@ -509,7 +507,6 @@ DRIVER_INIT( motorace )
 		}
 
 		free(buffer);
-	}
 }
 
 static DRIVER_INIT( shtridra )

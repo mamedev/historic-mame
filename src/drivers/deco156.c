@@ -664,7 +664,7 @@ static void descramble_sound( int region )
 {
 	UINT8 *rom = memory_region(region);
 	int length = memory_region_length(region);
-	UINT8 *buf1 = malloc(length);
+	UINT8 *buf1 = malloc_or_die(length);
 	UINT32 x;
 
 	for (x=0;x<length;x++)

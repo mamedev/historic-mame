@@ -259,8 +259,8 @@ double compute_resistor_net_outputs(
 
 	/* parse input parameters */
 
-	o  = (double *) malloc( sizeof(double) * (1<<MAX_RES_PER_NET) *  MAX_NETS);
-	os = (double *) malloc( sizeof(double) * (1<<MAX_RES_PER_NET) *  MAX_NETS);
+	o  = malloc_or_die( sizeof(double) * (1<<MAX_RES_PER_NET) *  MAX_NETS);
+	os = malloc_or_die( sizeof(double) * (1<<MAX_RES_PER_NET) *  MAX_NETS);
 
 	networks_no = 0;
 	for (n = 0; n < MAX_NETS; n++)

@@ -168,13 +168,13 @@ static void InitDasm8039(void)
 				bit --;
 				break;
 			default:
-				mame_printf_debug("Invalid instruction encoding '%s %s'\n", ops[0],ops[1]);
-				exit(1);
+				fatalerror("Invalid instruction encoding '%s %s'\n", ops[0],ops[1]);
+				break;
 		}
 	}
 	if (bit != -1 ) {
-		mame_printf_debug("not enough bits in encoding '%s %s' %d\n", ops[0],ops[1],bit);
-		exit(1);
+		fatalerror("not enough bits in encoding '%s %s' %d\n", ops[0],ops[1],bit);
+		break;
 	}
 	while (isspace(*p)) p++;
 	if (*p) Op[i].extcode = *p;
@@ -262,7 +262,7 @@ offs_t i8039_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 			case 'p': p <<=1; p |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
 			case ' ': break;
 			case '1': case '0': bit--; break;
-			case '\0': mame_printf_debug("premature end of parse string, opcode %x, bit = %d\n",code,bit); exit(1);
+			case '\0': fatalerror("premature end of parse string, opcode %x, bit = %d\n",code,bit); break;
 		}
 		cp++;
 	}
@@ -285,8 +285,8 @@ offs_t i8039_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 				case 'R': sprintf(num,"r%d",r); break;
 				case 'P': sprintf(num,"p%d",p); break;
 				default:
-					mame_printf_debug("illegal escape character in format '%s'\n",Op[op].fmt);
-					exit(1);
+					fatalerror("illegal escape character in format '%s'\n",Op[op].fmt);
+					break;
 			}
 			q = num; while (*q) *buffer++ = *q++;
 			*buffer = '\0';

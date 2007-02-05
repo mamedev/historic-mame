@@ -541,7 +541,7 @@ DRIVER_INIT(simpl156)
 {
 	UINT8 *rom = memory_region(REGION_SOUND2);
 	int length = memory_region_length(REGION_SOUND2);
-	UINT8 *buf1 = malloc(length);
+	UINT8 *buf1 = malloc_or_die(length);
 
 	UINT32 x;
 

@@ -43,8 +43,14 @@ int _tmain(int argc, TCHAR **argv)
 	__wgetmainargs(&argc, &argv, &wenviron, 0, &startupinfo);
 #else // !UNICODE
 	argv = a_argv;
-#endif // UNICDE
+#endif // UNICODE
 #endif // __GNUC__
+
+#ifdef MALLOC_DEBUG
+{
+	extern int winalloc_in_main_code;
+	winalloc_in_main_code = TRUE;
+#endif
 
 	/* convert arguments to UTF-8 */
 	utf8_argv = (char **) malloc(argc * sizeof(*argv));
@@ -70,6 +76,8 @@ int _tmain(int argc, TCHAR **argv)
 		void check_unfreed_mem(void);
 		check_unfreed_mem();
 	}
+	winalloc_in_main_code = FALSE;
+}
 #endif
 
 	return rc;

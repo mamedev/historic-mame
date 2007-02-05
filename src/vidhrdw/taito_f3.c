@@ -818,30 +818,30 @@ WRITE32_HANDLER( f3_palette_24bit_w )
 
 static UINT8 add_sat[256][256];
 
-static const UINT8 *alpha_s_1_1;
-static const UINT8 *alpha_s_1_2;
-static const UINT8 *alpha_s_1_4;
-static const UINT8 *alpha_s_1_5;
-static const UINT8 *alpha_s_1_6;
-static const UINT8 *alpha_s_1_8;
-static const UINT8 *alpha_s_1_9;
-static const UINT8 *alpha_s_1_a;
+static int alpha_s_1_1;
+static int alpha_s_1_2;
+static int alpha_s_1_4;
+static int alpha_s_1_5;
+static int alpha_s_1_6;
+static int alpha_s_1_8;
+static int alpha_s_1_9;
+static int alpha_s_1_a;
 
-static const UINT8 *alpha_s_2a_0;
-static const UINT8 *alpha_s_2a_4;
-static const UINT8 *alpha_s_2a_8;
+static int alpha_s_2a_0;
+static int alpha_s_2a_4;
+static int alpha_s_2a_8;
 
-static const UINT8 *alpha_s_2b_0;
-static const UINT8 *alpha_s_2b_4;
-static const UINT8 *alpha_s_2b_8;
+static int alpha_s_2b_0;
+static int alpha_s_2b_4;
+static int alpha_s_2b_8;
 
-static const UINT8 *alpha_s_3a_0;
-static const UINT8 *alpha_s_3a_1;
-static const UINT8 *alpha_s_3a_2;
+static int alpha_s_3a_0;
+static int alpha_s_3a_1;
+static int alpha_s_3a_2;
 
-static const UINT8 *alpha_s_3b_0;
-static const UINT8 *alpha_s_3b_1;
-static const UINT8 *alpha_s_3b_2;
+static int alpha_s_3b_0;
+static int alpha_s_3b_1;
+static int alpha_s_3b_2;
 
 static UINT32 dval;
 static UINT8 pval;
@@ -865,7 +865,7 @@ static int (**dpix_sp[9])(UINT32 s_pix);
 {										\
 	int level = s;						\
 	if(level == 0) level = -1;			\
-	d = drawgfx_alpha_cache.alpha[level+1];		\
+	d = level+1;						\
 }
 
 INLINE void f3_alpha_set_level(void)
@@ -917,22 +917,22 @@ INLINE void f3_alpha_set_level(void)
 
 
 
-INLINE void f3_alpha_blend32_s( const UINT8 *alphas, UINT32 s )
+INLINE void f3_alpha_blend32_s( int alphas, UINT32 s )
 {
 	UINT8 *sc = (UINT8 *)&s;
 	UINT8 *dc = (UINT8 *)&dval;
-	dc[COLOR1] = alphas[sc[COLOR1]];
-	dc[COLOR2] = alphas[sc[COLOR2]];
-	dc[COLOR3] = alphas[sc[COLOR3]];
+	dc[COLOR1] = (alphas * sc[COLOR1]) >> 8;
+	dc[COLOR2] = (alphas * sc[COLOR2]) >> 8;
+	dc[COLOR3] = (alphas * sc[COLOR3]) >> 8;
 }
 
-INLINE void f3_alpha_blend32_d( const UINT8 *alphas, UINT32 s )
+INLINE void f3_alpha_blend32_d( int alphas, UINT32 s )
 {
 	UINT8 *sc = (UINT8 *)&s;
 	UINT8 *dc = (UINT8 *)&dval;
-	dc[COLOR1] = add_sat[dc[COLOR1]][alphas[sc[COLOR1]]];
-	dc[COLOR2] = add_sat[dc[COLOR2]][alphas[sc[COLOR2]]];
-	dc[COLOR3] = add_sat[dc[COLOR3]][alphas[sc[COLOR3]]];
+	dc[COLOR1] = add_sat[dc[COLOR1]][(alphas * sc[COLOR1]) >> 8];
+	dc[COLOR2] = add_sat[dc[COLOR2]][(alphas * sc[COLOR2]) >> 8];
+	dc[COLOR3] = add_sat[dc[COLOR3]][(alphas * sc[COLOR3]) >> 8];
 }
 
 /*============================================================================*/

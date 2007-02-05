@@ -1563,7 +1563,7 @@ static MACHINE_DRIVER_START( hustler )
 	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */
 	MDRV_COLORTABLE_LENGTH(8*4)
 
-	MDRV_PALETTE_INIT(scramble)
+	MDRV_PALETTE_INIT(galaxian)
 	MDRV_VIDEO_START(scramble)
 	MDRV_VIDEO_UPDATE(galaxian)
 

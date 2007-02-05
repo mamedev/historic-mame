@@ -20,6 +20,10 @@
 
 ***********************************************************************************************/
 
+/* NOTE: the original chip did not support interpolation, but it sounds */
+/* nicer if you enable it. For accuracy's sake, we leave it off by default. */
+#define ENABLE_INTERPOLATION	0
+
 #define LOG_COMMANDS			0
 #define MAKE_WAVS				0
 
@@ -142,13 +146,17 @@ static void generate_samples(bsmt2000_chip *chip, INT32 *left, INT32 *right, int
 			/* loop while we still have samples to generate */
 			while (remaining--)
 			{
+#if ENABLE_INTERPOLATION
 				/* fetch two samples */
 				INT32 val1 = base[pos >> 16];
 				INT32 val2 = base[(pos >> 16) + 1];
-				pos += rate;
 
 				/* interpolate */
 				val1 = interpolate(val1, val2, pos);
+#else
+				INT32 val1 = base[pos >> 16];
+#endif
+				pos += rate;
 
 				/* apply volumes and add */
 				*lbuffer++ += val1 * lvol;
@@ -179,13 +187,17 @@ static void generate_samples(bsmt2000_chip *chip, INT32 *left, INT32 *right, int
 		/* loop while we still have samples to generate */
 		while (remaining-- && pos < voice->loop_stop_position)
 		{
+#if ENABLE_INTERPOLATION
 			/* fetch two samples -- note: this is wrong, just a guess!!!*/
 			INT32 val1 = (INT8)((base[pos >> 16] << ((pos >> 13) & 4)) & 0xf0);
 			INT32 val2 = (INT8)((base[(pos + 0x8000) >> 16] << (((pos + 0x8000) >> 13) & 4)) & 0xf0);
-			pos += rate;
 
 			/* interpolate */
 			val1 = interpolate2(val1, val2, pos);
+#else
+			INT32 val1 = (INT8)((base[pos >> 16] << ((pos >> 13) & 4)) & 0xf0);
+#endif
+			pos += rate;
 
 			/* apply volumes and add */
 			*lbuffer++ += val1 * lvol;

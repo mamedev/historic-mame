@@ -2219,6 +2219,7 @@ void render_texture_set_bitmap(render_texture *texture, mame_bitmap *bitmap, con
 static int render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UINT32 dheight, render_texinfo *texinfo, render_ref **reflist)
 {
 	UINT8 bpp = (texture->format == TEXFORMAT_PALETTE16 || texture->format == TEXFORMAT_PALETTEA16 || texture->format == TEXFORMAT_RGB15 || texture->format == TEXFORMAT_YUY16) ? 16 : 32;
+	const rgb_t *palbase = (texture->format == TEXFORMAT_PALETTE16 || texture->format == TEXFORMAT_PALETTEA16) ? palette_get_adjusted_colors(Machine) + texture->palettebase : NULL;
 	scaled_texture *scaled = NULL;
 	int swidth, sheight;
 	int scalenum;
@@ -2239,7 +2240,7 @@ static int render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UIN
 		texinfo->rowpixels = texture->bitmap->rowpixels;
 		texinfo->width = swidth;
 		texinfo->height = sheight;
-		texinfo->palette = palette_get_adjusted_colors(Machine) + texture->palettebase;
+		texinfo->palette = palbase;
 		texinfo->seqid = ++texture->curseq;
 		return TRUE;
 	}
@@ -2291,7 +2292,7 @@ static int render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UIN
 	texinfo->rowpixels = scaled->bitmap->rowpixels;
 	texinfo->width = dwidth;
 	texinfo->height = dheight;
-	texinfo->palette = palette_get_adjusted_colors(Machine) + texture->palettebase;
+	texinfo->palette = palbase;
 	texinfo->seqid = scaled->seqid;
 	return TRUE;
 }

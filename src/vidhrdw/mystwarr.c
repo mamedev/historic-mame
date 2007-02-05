@@ -23,7 +23,7 @@ static void mystwarr_save_orig_tiles(void)
 	unsigned char *s = memory_region(REGION_GFX1);
 	unsigned char *pFinish = s+memory_region_length(REGION_GFX1)-3;
 
-	orig_roms = malloc(memory_region_length(REGION_GFX1));
+	orig_roms = malloc_or_die(memory_region_length(REGION_GFX1));
 	memcpy(orig_roms, s, memory_region_length(REGION_GFX1));
 
 	// now convert the data into a drawable format so we can decode it

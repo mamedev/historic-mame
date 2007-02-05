@@ -1852,12 +1852,6 @@ static void texture_set_data(d3d_info *d3d, texture_info *texture, const render_
 		// switch off of the format and
 		switch (PRIMFLAG_GET_TEXFORMAT(flags))
 		{
-			case TEXFORMAT_ARGB32:
-				src32 = (UINT32 *)texsource->base + y * texsource->rowpixels;
-				for (x = 0; x < texsource->width; x++)
-					*dst32++ = *src32++;
-				break;
-
 			case TEXFORMAT_PALETTE16:
 				src16 = (UINT16 *)texsource->base + y * texsource->rowpixels;
 				for (x = 0; x < texsource->width; x++)
@@ -1905,6 +1899,23 @@ static void texture_set_data(d3d_info *d3d, texture_info *texture, const render_
 				{
 					for (x = 0; x < texsource->width; x++)
 						*dst32++ = 0xff000000 | *src32++;
+				}
+				break;
+
+			case TEXFORMAT_ARGB32:
+				src32 = (UINT32 *)texsource->base + y * texsource->rowpixels;
+				if (texsource->palette != NULL)
+				{
+					for (x = 0; x < texsource->width; x++)
+					{
+						UINT32 srcpix = *src32++;
+						*dst32++ = (srcpix & 0xff000000) | texsource->palette[0x200 + RGB_RED(srcpix)] | texsource->palette[0x100 + RGB_GREEN(srcpix)] | texsource->palette[RGB_BLUE(srcpix)];
+					}
+				}
+				else
+				{
+					for (x = 0; x < texsource->width; x++)
+						*dst32++ = *src32++;
 				}
 				break;
 

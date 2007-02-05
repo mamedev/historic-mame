@@ -1299,6 +1299,7 @@ const game_driver * const drivers[] =
 	DRIVER( olibochu )	/* M47 (c) 1981 + "GDI presents" */
 	DRIVER( mpatrol )	/* M52 (c) 1982 */
 	DRIVER( mpatrolw )	/* M52 (c) 1982 + Williams license */
+	DRIVER( alpha1v )	/* Vision Electronics */
 	DRIVER( troangel )	/* (c) 1983 */
 	DRIVER( newtangl )	/* (c) 1983 */
 	DRIVER( 10yard )	/* (c) 1983 */
@@ -1531,6 +1532,7 @@ const game_driver * const drivers[] =
 	DRIVER( 40love )	/* A30 (c) 1984 Taito */
 	DRIVER( tsamurai )	/* A35 (c) 1985 Taito */
 	DRIVER( tsamura2 )	/* A35 (c) 1985 Taito */
+	DRIVER( ladymstr )	/* A35 (c) 1985 Taito */
 	DRIVER( nunchaku )	/* ??? (c) 1985 Taito */
 	DRIVER( yamagchi )	/* A38 (c) 1985 Taito */
 	DRIVER( m660 )		/* ??? (c) 1986 Taito America Corporation */
@@ -2591,6 +2593,7 @@ V-V                           TP-027
 	DRIVER( mmatrixj )	/* 12/04/2000 (c) 2000 Takumi (Japan) */
 	DRIVER( 1944 )		/* 20/06/2000 (c) 2000 Eighting/Raizing (US) */
 	DRIVER( 1944j )		/* 20/06/2000 (c) 2000 Eighting/Raizing (Japan) */
+	DRIVER( mpang )		/* 10/10/2000 (c) 2000 Mitchell */
 	DRIVER( mpangj )	/* 11/10/2000 (c) 2000 Mitchell */
 	DRIVER( progear )	/* 17/01/2001 (c) 2001 Cave (US) */
 	DRIVER( progearj )	/* 17/01/2001 (c) 2001 Cave (Japan) */
@@ -2601,6 +2604,8 @@ V-V                           TP-027
 						/* 22/12/2003 Hyper Street Fighter 2 (Capcom, Japan) */
 						/* 02/02/2004 Hyper Street Fighter 2 (Capcom, Asia) */
 	DRIVER( jyangoku )	/* (c) 1999 Capcom */
+	DRIVER( hsf2 )		/* (c) 2004 Capcom */
+	DRIVER( hsf2j )		/* (c) 2004 Capcom */
 
 	/* Capcom CPS3 games */
 	DRIVER( warzard )	/* 10/1996 Warzard */
@@ -4195,6 +4200,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( shaolins )	/* GX477 (c) 1985 */
 	DRIVER( pingpong )	/* GX555 (c) 1985 */
 	DRIVER( merlinmm )	/* (c) 1986 Zilec-Zenitone */
+	DRIVER( cashquiz )	/* (c) 1986 Zilec-Zenitone */
 	DRIVER( gberet )	/* GX577 (c) 1985 */
 	DRIVER( rushatck )	/* GX577 (c) 1985 */
 	DRIVER( gberetb )	/* bootleg on different hardware */
@@ -4553,6 +4559,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( venture )	/* (c) 1981 */
 	DRIVER( venture2 )	/* (c) 1981 */
 	DRIVER( venture4 )	/* (c) 1981 */
+	DRIVER( teetert )	/* (c) 1981 */
 	DRIVER( mtrap )		/* (c) 1981 */
 	DRIVER( mtrap3 )	/* (c) 1981 */
 	DRIVER( mtrap4 )	/* (c) 1981 */
@@ -5457,6 +5464,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( battlan3 )	/* -0215, -0216 (Data East part number) (c) 1986 + Taito license */
 	DRIVER( ddragon )	/* TA-0021 (c) 1987 */
 	DRIVER( ddragonu )	/* TA-0021 (c) 1987 Taito America */
+	DRIVER( ddragoua )	/* TA-0021 (c) 1987 Taito America */
 	DRIVER( ddragonw )	/* TA-0021 (c) 1987 Taito */
 	DRIVER( ddragnw1 )	/* TA-0021 (c) 1987 Taito */
 	DRIVER( ddragonb )	/* bootleg */
@@ -7299,6 +7307,7 @@ Other Sun games
 	DRIVER( elephfam )	/* (c) 1996 C.M.C. */
 	DRIVER( elephfmb )	/* (c) 1996 C.M.C. */
 	DRIVER( pool10 )	/* (c) 1996 C.M.C. */
+	DRIVER( pool10b )	/* (c) 1996 C.M.C. */
 	DRIVER( tortufam )	/* (c) 1997 C.M.C. */
 	DRIVER( royalcrd )	/* (c) 1991 TAB-Austria */
 	DRIVER( royalcdb )	/* (c) 1991 TAB-Austria */
@@ -7338,6 +7347,7 @@ Other Sun games
 	DRIVER( littlerb )	/* (c) 1993 TCH */
 	DRIVER( tattack )	/* (c) 198? Shonan */
 	DRIVER( mosaicf2 )	/* (c) 1999 F2 System */
+	DRIVER( wyvernwg )	/* (c) 2001 Semicom */
 	DRIVER( rbmk )		/* (c) 1995 GMS */
 	DRIVER( go2000 )	/* (c) 2000 SA */
 	DRIVER( mirax )		/* (c) 1985 Current Technologies */
@@ -7359,10 +7369,12 @@ Other Sun games
 	DRIVER( carrera )	/* (c) 19?? BS Electronics */
 	DRIVER( pmpoker )	/* (c) 198? PlayMan? */
 	DRIVER( goldnpkr )	/* (c) 198? Bonanza? */
+ 	DRIVER( goldnpkb )	/* (c) 1981 Bonanza */
 	DRIVER( jokerpkr )	/* (c) 198? Coinmaster-Gaming */
 	DRIVER( pottnpkr )	/* (c) 198? ???? */
 	DRIVER( altair )	/* (c) 1981 Cidelsa */
 	DRIVER( destryer )	/* (c) 1981 Cidelsa */
+	DRIVER( destryea )	/* (c) 1981 Cidelsa */
 	DRIVER( draco )		/* (c) 1981 Cidelsa */
 	DRIVER( rockduck )	/* (c) 1983 Datel SAS */
 	DRIVER( tetriunk )

@@ -459,6 +459,7 @@ static void SCSP_Init(struct _SCSP *SCSP, const struct SCSPinterface *intf)
 		if (intf->region)
 		{
 			SCSP->SCSPRAM = memory_region(intf->region);
+			SCSP->DSP.SCSPRAM = (UINT16 *)SCSP->SCSPRAM;
 			SCSP->SCSPRAM += intf->roffset;
 		}
 	}
@@ -1305,7 +1306,10 @@ void SCSP_set_ram_base(int which, void *base)
 {
 	struct _SCSP *SCSP = sndti_token(SOUND_SCSP, which);
 	if (SCSP)
+	{
 		SCSP->SCSPRAM = base;
+		SCSP->DSP.SCSPRAM = base;
+	}
 }
 
 

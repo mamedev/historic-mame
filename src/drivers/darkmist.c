@@ -341,7 +341,7 @@ ROM_END
 
 static void decrypt_gfx(void)
 {
-	UINT8 *buf = malloc(0x40000);
+	UINT8 *buf = malloc_or_die(0x40000);
 	UINT8 *rom;
 	int size;
 	int i;
@@ -422,7 +422,7 @@ static DRIVER_INIT(darkmist)
 {
 	int i;
 	unsigned char *ROM = memory_region(REGION_CPU1);
-	UINT8 *buffer = malloc(0x10000);
+	UINT8 *buffer = malloc_or_die(0x10000);
 	UINT8 *decrypt = auto_malloc(0x8000);
 
 	decrypt_gfx();

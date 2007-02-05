@@ -916,8 +916,6 @@ static int render_font_load_cached(render_font *font, const char *filename, UINT
 	font->format = FONT_FORMAT_CACHED;
 	font->rawdata = data;
 
-	mame_printf_warning("Loaded cached BDF font\n");
-
 	mame_fclose(file);
 	return 0;
 
@@ -1086,7 +1084,7 @@ static int render_font_save_cached(render_font *font, const char *filename, UINT
 
 error:
 	mame_fclose(file);
-	remove(filename);
+	osd_rmfile(filename);
 	free(tempbuffer);
 	free(chartable);
 	return 1;

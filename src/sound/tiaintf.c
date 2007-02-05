@@ -33,6 +33,11 @@ static void *tia_start(int sndindex, int clock, const void *config)
     return info;
 }
 
+static void tia_stop(void *token)
+{
+	struct tia_info *info = (struct tia_info*)token;
+	tia_sound_free(info->chip);
+}
 
 WRITE8_HANDLER( tia_sound_w )
 {
@@ -66,7 +71,7 @@ void tia_get_info(void *token, UINT32 state, sndinfo *info)
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case SNDINFO_PTR_SET_INFO:						info->set_info = tia_set_info;			break;
 		case SNDINFO_PTR_START:							info->start = tia_start;				break;
-		case SNDINFO_PTR_STOP:							/* Nothing */							break;
+		case SNDINFO_PTR_STOP:							info->stop = tia_stop;					break;
 		case SNDINFO_PTR_RESET:							/* Nothing */							break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
