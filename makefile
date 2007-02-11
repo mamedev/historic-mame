@@ -4,7 +4,7 @@
 #
 #   Core makefile for building MAME and derivatives
 #
-#   Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+#   Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
 #   Visit http://mamedev.org for licensing and usage restrictions.
 #
 ###########################################################################
@@ -17,12 +17,18 @@
 
 
 #-------------------------------------------------
-# specify core target: mame, mess, tiny, etc.
-# build rules will be included from $(TARGET).mak
+# specify core target: mame, mess, etc.
+# specify subtarget: mame, mess, tiny, etc.
+# build rules will be included from 
+# $(TARGET)/$(SUBTARGET).mak
 #-------------------------------------------------
 
 ifndef TARGET
 TARGET = mame
+endif
+
+ifndef SUBTARGET
+SUBTARGET = $(TARGET)
 endif
 
 
@@ -140,45 +146,53 @@ PREFIX = d
 endif
 
 # by default, compile for Pentium target
-NAME = $(PREFIX)$(TARGET)
+ifeq ($(TARGET),$(SUBTARGET))
+NAME = $(TARGET)
+else
+NAME = $(TARGET)$(SUBTARGET)
+endif
 ARCH = -march=pentium
 
 # architecture-specific builds get extra options
 ifdef ATHLON
-NAME = $(PREFIX)$(TARGET)at
+SUFFIX = at
 ARCH = -march=athlon
 endif
 
 ifdef I686
-NAME = $(PREFIX)$(TARGET)pp
+SUFFIX = pp
 ARCH = -march=pentiumpro
 endif
 
 ifdef P4
-NAME = $(PREFIX)$(TARGET)p4
+SUFFIX = p4
 ARCH = -march=pentium4
 endif
 
 ifdef AMD64
-NAME = $(PREFIX)$(TARGET)64
+SUFFIX = 64
 ARCH = -march=athlon64
 endif
 
 ifdef PM
-NAME = $(PREFIX)$(TARGET)pm
+SUFFIX = pm
 ARCH = -march=pentium3 -msse2
 endif
 
 # debug builds just get the 'd' suffix and nothing more
 ifdef DEBUG
-NAME = $(PREFIX)$(TARGET)d
+SUFFIX = d
 endif
 
-EMULATOR = $(NAME)$(EXE)
+FULLNAME = $(PREFIX)$(NAME)$(SUFFIX)
+
+EMULATOR = $(FULLNAME)$(EXE)
 
 # build the targets in different object dirs, since mess changes
 # some structures and thus they can't be linked against each other.
-OBJ = obj/$(NAME)
+OBJ = obj/$(FULLNAME)
+
+SRC = src
 
 
 
@@ -206,14 +220,22 @@ endif
 # compile and linking flags
 #-------------------------------------------------
 
-CFLAGS = -std=gnu89 -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/layout
+CFLAGS = \
+	-std=gnu89 \
+	-I$(SRC)/$(TARGET) \
+	-I$(SRC)/$(TARGET)/includes \
+	-I$(OBJ)/$(TARGET)/layout \
+	-I$(SRC)/emu \
+	-I$(OBJ)/emu/layout \
+	-I$(SRC)/lib/util \
+	-I$(SRC)/osd \
+	-I$(SRC)/osd/$(MAMEOS) \
 
 ifdef SYMBOLS
 CFLAGS += -g
 endif
 
 CFLAGS += -Wall \
-	-Wno-unused-functions \
 	-Wpointer-arith \
 	-Wbad-function-cast \
 	-Wcast-align \
@@ -221,7 +243,8 @@ CFLAGS += -Wall \
 	-Wundef \
 	-Wformat-security \
 	-Wwrite-strings \
-	-Wdeclaration-after-statement
+	-Wdeclaration-after-statement \
+	-Wno-unused-functions \
 
 ifneq ($(OPTIMIZE),0)
 CFLAGS += -Werror -DNDEBUG $(ARCH) -fno-strict-aliasing
@@ -241,7 +264,7 @@ LDFLAGS += -s
 endif
 
 ifdef MAP
-MAPFLAGS = -Wl,-Map,$(NAME).map
+MAPFLAGS = -Wl,-Map,$(FULLNAME).map
 else
 MAPFLAGS =
 endif
@@ -249,28 +272,10 @@ endif
 
 
 #-------------------------------------------------
-# define the dependency search paths
-#-------------------------------------------------
-
-VPATH = src $(wildcard src/cpu/*)
-
-
-
-#-------------------------------------------------
 # define the standard object directories
 #-------------------------------------------------
 
-OBJDIRS = \
-	$(OBJ)/cpu \
-	$(OBJ)/sound \
-	$(OBJ)/debug \
-	$(OBJ)/tools \
-	$(OBJ)/drivers \
-	$(OBJ)/layout \
-	$(OBJ)/machine \
-	$(OBJ)/sndhrdw \
-	$(OBJ)/vidhrdw \
-	$(OBJ)/$(MAMEOS) \
+OBJDIRS = $(OBJ)
 
 ifdef MESS
 OBJDIRS +=
@@ -288,11 +293,14 @@ endif
 # define standard libarires for CPU and sounds
 #-------------------------------------------------
 
-CPULIB = $(OBJ)/libcpu.a
+LIBEMU = $(OBJ)/libemu.a
+LIBCPU = $(OBJ)/libcpu.a
+LIBSOUND = $(OBJ)/libsound.a
+LIBUTIL = $(OBJ)/libutil.a
+LIBOCORE = $(OBJ)/libocore.a
+LIBOSD = $(OBJ)/libosd.a
 
-SOUNDLIB = $(OBJ)/libsound.a
-
-OSDCORELIB = $(OBJ)/$(MAMEOS)/libocore.a
+VERSIONOBJ = $(OBJ)/version.o
 
 
 
@@ -306,8 +314,7 @@ LIBS =
 
 # add expat XML library
 ifdef BUILD_EXPAT
-CFLAGS += -Isrc/expat
-OBJDIRS += $(OBJ)/expat
+CFLAGS += -I$(SRC)/lib/expat
 EXPAT = $(OBJ)/libexpat.a
 else
 LIBS += -lexpat
@@ -316,8 +323,7 @@ endif
 
 # add ZLIB compression library
 ifdef BUILD_ZLIB
-CFLAGS += -Isrc/zlib
-OBJDIRS += $(OBJ)/zlib
+CFLAGS += -I$(SRC)/lib/zlib
 ZLIB = $(OBJ)/libz.a
 else
 LIBS += -lz
@@ -331,7 +337,7 @@ endif
 # include files which define additional targets
 #-------------------------------------------------
 
-all: maketree emulator extra
+all: maketree emulator tools
 
 
 
@@ -340,13 +346,13 @@ all: maketree emulator extra
 #-------------------------------------------------
 
 # include OS-specific rules first
-include src/$(MAMEOS)/$(MAMEOS).mak
+include $(SRC)/osd/$(MAMEOS)/$(MAMEOS).mak
 
 # then the various core pieces
-include src/core.mak
-include src/$(TARGET).mak
-include src/cpu/cpu.mak
-include src/sound/sound.mak
+include $(SRC)/$(TARGET)/$(SUBTARGET).mak
+include $(SRC)/emu/emu.mak
+include $(SRC)/lib/lib.mak
+include $(SRC)/tools/tools.mak
 
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS)
@@ -359,7 +365,7 @@ CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS)
 
 emulator: maketree $(EMULATOR)
 
-extra: $(TOOLS)
+tools: maketree $(TOOLS)
 
 maketree: $(sort $(OBJDIRS))
 
@@ -386,49 +392,11 @@ $(sort $(OBJDIRS)):
 # executable targets and dependencies
 #-------------------------------------------------
 
-$(EMULATOR): $(COREOBJS) $(OSOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(EXPAT) $(ZLIB) $(OSDCORELIB)
+$(EMULATOR): $(VERSIONOBJ) $(DRVLIBS) $(LIBOSD) $(LIBEMU)  $(LIBCPU) $(LIBSOUND) $(LIBUTIL) $(EXPAT) $(ZLIB) $(LIBOCORE)
 # always recompile the version string
-	$(CC) $(CDEFS) $(CFLAGS) -c src/version.c -o $(OBJ)/version.o
+	$(CC) $(CDEFS) $(CFLAGS) -c $(SRC)/version.c -o $(VERSIONOBJ)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@ $(MAPFLAGS)
-
-file2str$(EXE): $(OBJ)/tools/file2str.o $(OSDCORELIB)
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
-
-romcmp$(EXE): $(OBJ)/tools/romcmp.o $(OBJ)/unzip.o $(OBJ)/mamecore.o $(ZLIB) $(OSDCORELIB)
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
-
-chdman$(EXE): $(OBJ)/tools/chdman.o $(OBJ)/chd.o $(OBJ)/tools/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSDCORELIB)
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
-
-jedutil$(EXE): $(OBJ)/tools/jedutil.o $(OBJ)/jedparse.o $(OSDCORELIB)
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) -o $@
-
-
-
-#-------------------------------------------------
-# library targets and dependencies
-#-------------------------------------------------
-
-$(CPULIB): $(CPUOBJS)
-
-ifdef DEBUG
-$(CPULIB): $(DBGOBJS)
-endif
-
-$(SOUNDLIB): $(SOUNDOBJS)
-
-$(OSDCORELIB): $(OSDCOREOBJS)
-
-$(OBJ)/libexpat.a: $(OBJ)/expat/xmlparse.o $(OBJ)/expat/xmlrole.o $(OBJ)/expat/xmltok.o
-
-$(OBJ)/libz.a: $(OBJ)/zlib/adler32.o $(OBJ)/zlib/compress.o $(OBJ)/zlib/crc32.o $(OBJ)/zlib/deflate.o \
-				$(OBJ)/zlib/gzio.o $(OBJ)/zlib/inffast.o $(OBJ)/zlib/inflate.o $(OBJ)/zlib/infback.o \
-				$(OBJ)/zlib/inftrees.o $(OBJ)/zlib/trees.o $(OBJ)/zlib/uncompr.o $(OBJ)/zlib/zutil.o
 
 
 
@@ -436,23 +404,23 @@ $(OBJ)/libz.a: $(OBJ)/zlib/adler32.o $(OBJ)/zlib/compress.o $(OBJ)/zlib/crc32.o 
 # generic rules
 #-------------------------------------------------
 
-$(OBJ)/$(MAMEOS)/%.o: src/$(MAMEOS)/%.c | $(OSPREBUILD)
+$(OBJ)/osd/$(MAMEOS)/%.o: $(SRC)/osd/$(MAMEOS)/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGSOSDEPEND) -c $< -o $@
 
-$(OBJ)/%.o: src/%.c | $(OSPREBUILD)
+$(OBJ)/%.o: $(SRC)/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 
-$(OBJ)/%.pp: src/%.c | $(OSPREBUILD)
+$(OBJ)/%.pp: $(SRC)/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -E $< -o $@
 
-$(OBJ)/%.s: src/%.c | $(OSPREBUILD)
+$(OBJ)/%.s: $(SRC)/%.c | $(OSPREBUILD)
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -S $< -o $@
 
-$(OBJ)/%.lh: src/%.lay file2str$(EXE)
+$(OBJ)/%.lh: $(SRC)/%.lay file2str$(EXE)
 	@echo Converting $<...
 	@file2str$(EXE) $< $@ layout_$(basename $(notdir $<))
 

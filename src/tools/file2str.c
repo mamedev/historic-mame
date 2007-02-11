@@ -10,7 +10,7 @@
 ***************************************************************************/
 
 #include <stdio.h>
-#include "mamecore.h"
+#include "osdcore.h"
 
 
 /*-------------------------------------------------
@@ -19,17 +19,20 @@
 
 int main(int argc, char *argv[])
 {
-	const char *srcfile, *dstfile, *varname;
+	const char *srcfile, *dstfile, *varname, *type;
 	FILE *src, *dst;
-	char input[1024];
-	char output[1024];
+	UINT8 *buffer;
+	int bytes, offs;
+	int terminate = 1;
 
 	/* needs at least three arguments */
 	if (argc < 4)
 	{
 		fprintf(stderr,
 			"Usage:\n"
-			"  laytostr <source.lay> <output.h> <varname>\n"
+			"  laytostr <source.lay> <output.h> <varname> [<type>]\n"
+			"\n"
+			"The default <type> is char, with an assumed NULL terminator\n"
 		);
 		return 0;
 	}
@@ -38,14 +41,35 @@ int main(int argc, char *argv[])
 	srcfile = argv[1];
 	dstfile = argv[2];
 	varname = argv[3];
+	type = (argc >= 5) ? argv[4] : "char";
+	if (argc >= 5)
+		terminate = 0;
 
 	/* open source file */
-	src = fopen(srcfile, "r");
+	src = fopen(srcfile, "rb");
 	if (src == NULL)
 	{
 		fprintf(stderr, "Unable to open source file '%s'\n", srcfile);
 		return 1;
 	}
+
+	/* determine file size */
+	fseek(src, 0, SEEK_END);
+	bytes = ftell(src);
+	fseek(src, 0, SEEK_SET);
+
+	/* allocate memory */
+	buffer = malloc(bytes + 1);
+	if (buffer == NULL)
+	{
+		fprintf(stderr, "Out of memory allocating %d byte buffer\n", bytes);
+		return 1;
+	}
+
+	/* read the source file */
+	fread(buffer, 1, bytes, src);
+	buffer[bytes] = 0;
+	fclose(src);
 
 	/* open dest file */
 	dst = fopen(dstfile, "w");
@@ -56,43 +80,18 @@ int main(int argc, char *argv[])
 	}
 
 	/* write the initial header */
-	fprintf(dst, "const char %s[] = ""\n", varname);
+	fprintf(dst, "const %s %s[] =\n{\n\t", type, varname);
 
-	/* translate line-by-line */
-	while (fgets(input, sizeof(input), src) != NULL)
+	/* write out the data */
+	for (offs = 0; offs < bytes + terminate; offs++)
 	{
-		static const char *hex = "0123456789abcdef";
-		char *d = output;
-		char *s;
-
-		/* translate each character */
-		for (s = input; *s != 0; s++)
-			switch (*s)
-			{
-				case '\t':	*d++ = '\\'; *d++ = 't';	break;
-				case '\n':	*d++ = '\\'; *d++ = 'n';	break;
-				case '"':	*d++ = '\\'; *d++ = '"';	break;
-				default:
-					if (*s < 32)
-					{
-						*d++ = '\\';
-						*d++ = 'x';
-						*d++ = hex[(UINT8)*s >> 4];
-						*d++ = hex[*s & 0xf];
-					}
-					else
-						*d++ = *s;
-					break;
-			}
-
-		/* output the string */
-		*d = 0;
-		fprintf(dst, "\"%s\"\n", output);
+		fprintf(dst, "0x%02x%s", buffer[offs], (offs != bytes + terminate - 1) ? "," : "");
+		if (offs % 16 == 15)
+			fprintf(dst, "\n\t");
 	}
-	fprintf(dst, ";\n");
+	fprintf(dst, "\n};\n");
 
 	/* close the files */
 	fclose(dst);
-	fclose(src);
 	return 0;
 }

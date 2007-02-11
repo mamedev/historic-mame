@@ -12,7 +12,7 @@
 #include "unzip.h"
 #include "osdepend.h"	/* for CLIB_DECL */
 #include "osdcore.h"
-#include "fileio.h"
+
 #include <stdarg.h>
 #ifdef macintosh
 #	include "macromcmp.h"

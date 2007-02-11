@@ -218,23 +218,6 @@ static int usage(void)
 
 
 /*-------------------------------------------------
-    fatalerror - error hook for assertions
--------------------------------------------------*/
-
-void CLIB_DECL fatalerror(const char *text,...)
-{
-	va_list arg;
-
-	/* standard vfprintf stuff here */
-	va_start(arg, text);
-	vfprintf(stderr, text, arg);
-	va_end(arg);
-
-	exit(1);
-}
-
-
-/*-------------------------------------------------
     get_file_size - get the size of a file
 -------------------------------------------------*/
 
@@ -256,24 +239,30 @@ static UINT64 get_file_size(const char *filename)
     compute a best guess CHS value set
 -------------------------------------------------*/
 
-static void guess_chs(const char *filename, int offset, int sectorsize, UINT32 *cylinders, UINT32 *heads, UINT32 *sectors, UINT32 *bps)
+static chd_error guess_chs(const char *filename, int offset, int sectorsize, UINT32 *cylinders, UINT32 *heads, UINT32 *sectors, UINT32 *bps)
 {
 	UINT32 totalsecs, hds, secs;
 	UINT64 filesize;
 
 	/* if this is a direct physical drive read, handle it specially */
 	if (osd_get_physical_drive_geometry(filename, cylinders, heads, sectors, bps))
-		return;
+		return CHDERR_NONE;
 
 	/* compute the filesize */
 	filesize = get_file_size(filename);
 	if (filesize <= offset)
-		fatalerror("Invalid file '%s'\n", filename);
+	{
+		fprintf(stderr, "Invalid file '%s'\n", filename);
+		return CHDERR_INVALID_FILE;
+	}
 	filesize -= offset;
 
 	/* validate the size */
 	if (filesize % sectorsize != 0)
-		fatalerror("Can't guess CHS values because data size is not divisible by the sector size\n");
+	{
+		fprintf(stderr, "Can't guess CHS values because data size is not divisible by the sector size\n");
+		return CHDERR_INVALID_FILE;
+	}
 	totalsecs = filesize / sectorsize;
 
 	/* now find a valid value */
@@ -288,12 +277,13 @@ static void guess_chs(const char *filename, int offset, int sectorsize, UINT32 *
 					*heads = hds;
 					*sectors = secs;
 					*bps = sectorsize;
-					return;
+					return CHDERR_NONE;
 				}
 		}
 
 	/* ack, it didn't work! */
-	fatalerror("Can't guess CHS values because no logical combination works!\n");
+	fprintf(stderr, "Can't guess CHS values because no logical combination works!\n");
+	return CHDERR_INVALID_FILE;
 }
 
 
@@ -322,7 +312,11 @@ static int do_createhd(int argc, char *argv[], int param)
 
 	/* if less than 8 parameters, we need to guess the CHS values */
 	if (argc < 8)
-		guess_chs(inputfile, offset, IDE_SECTOR_SIZE, &guess_cylinders, &guess_heads, &guess_sectors, &guess_sectorsize);
+	{
+		err = guess_chs(inputfile, offset, IDE_SECTOR_SIZE, &guess_cylinders, &guess_heads, &guess_sectors, &guess_sectorsize);
+		if (err != CHDERR_NONE)
+			goto cleanup;
+	}
 
 	/* parse the remaining parameters */
 	cylinders = (argc >= 6) ? atoi(argv[5]) : guess_cylinders;
@@ -2138,7 +2132,6 @@ static chd_interface_file *chdman_open(const char *filename, const char *mode)
 			break;
 
 		default:
-			assert(0);
 			return NULL;
 	}
 

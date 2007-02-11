@@ -1143,6 +1143,7 @@ Automatic device selection options
 -dial_device <keyboard|mouse|joystick|lightgun> / -dial
 -trackball_device <keyboard|mouse|joystick|lightgun> / -trackball
 -lightgun_device <keyboard|mouse|joystick|lightgun>
+-positional_device <keyboard|mouse|joystick|lightgun>
 
 	Each of these options controls autoenabling the mouse, joystick, or
 	lightgun depending on the presence of a particular class of analog
