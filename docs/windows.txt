@@ -1096,14 +1096,31 @@ Input device options
 	but has the disadvantage of making controls less responsive. The
 	default is OFF (-nosteadykey)
 
--a2d_deadzone / -a2d
+-joy_deadzone / -jdz
 
-	If you play with an analog joystick, but the game requires digital
-	input, MAME needs to convert the signals. Here you can give the ratio
-	of movement along an axis that accounts for a digital signal. This
-	option expects a float in the range of 0.0 to 1.0. Note that the 
-	current handling is not accurate enough to handle diagonal movement
-	properly. The default is 0.3.
+	If you play with an analog joystick, the center can drift a little.
+	joy_deadzone tells how far along an axis you must move before the
+	axis starts to change. This option expects a float in the range of
+	0.0 to 1.0. Where 0 is the center of the joystick and 1 is the outer
+	limit. The default is 0.3.
+
+	This is handled through DirectX and will override your driver settings.
+	So if your joystick driver has it's own deadzone settings you may
+	want to use -joy_deadzone 0 to disable the feature.
+
+-joy_saturation / -jsat
+
+	If you play with an analog joystick, the ends can drift a little,
+	and may not match in the +/- directions. joy_saturation tells how far
+	along an axis movement change will be accepted before it reaches the
+	maximum range. This option expects a float in the range of 0.0 to 1.0.
+	Where 0 is the center of the joystick and 1 is the outer limit.
+	joy_saturation will be ignored if less then joy_deadzone.
+	The default is 0.85.
+
+	This is handled through DirectX and will override your driver settings.
+	So if your joystick driver has it's own saturation settings you may
+	want to use -joy_saturation 1 to disable the feature.
 
 -digital <all|none|j<N>[a<M>[a<K>...]][,j<X>[a<Y>...]][,...]>
 

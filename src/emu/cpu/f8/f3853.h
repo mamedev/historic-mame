@@ -6,7 +6,6 @@
 */
 
 #include "cpuintrf.h"
-#include "mess.h"
 
 typedef struct {
     int frequency;
