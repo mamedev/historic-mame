@@ -83,11 +83,11 @@ memory_pool *pool_create(void (*fail)(const char *message))
 
 
 /*-------------------------------------------------
-    pool_free - frees a memory pool and all
-    contained memory blocks
+    pool_clear - frees all contained memory blocks
+    in a pool
 -------------------------------------------------*/
 
-void pool_free(memory_pool *pool)
+void pool_clear(memory_pool *pool)
 {
 	pool_entry *next_entry;
 	pool_entry *entry;
@@ -98,6 +98,21 @@ void pool_free(memory_pool *pool)
 		next_entry = entry->next;
 		free(entry);
 	}
+
+	/* reinitialize the data structures */
+	pool->first = NULL;
+	pool->lastptr = &pool->first;
+}
+
+
+/*-------------------------------------------------
+    pool_free - frees a memory pool and all
+    contained memory blocks
+-------------------------------------------------*/
+
+void pool_free(memory_pool *pool)
+{
+	pool_clear(pool);
 	free(pool);
 }
 
@@ -121,6 +136,8 @@ void *pool_malloc_file_line(memory_pool *pool, size_t size, const char *file, in
 void *pool_realloc_file_line(memory_pool *pool, void *ptr, size_t size, const char *file, int line)
 {
 	pool_entry *new_entry;
+	void *new_ptr;
+	void *free_block;
 
 	/* if we're resizing or freeing a pointer, find the existing entry */
 	if (ptr != NULL)
@@ -137,13 +154,6 @@ void *pool_realloc_file_line(memory_pool *pool, void *ptr, size_t size, const ch
 		}
 		pool = orig_entry->pool;
 
-		/* note that we do not support freeing in this manner */
-		if (size == 0)
-		{
-			report_failure(pool, "pool_realloc: Not allowed to realloc to size 0", ptr);
-			return NULL;
-		}
-
 		/* find the entry that this block is referring to */
 		for (entry = &pool->first; *entry != NULL; entry = &(*entry)->next)
 			if ((*entry)->buffer == ptr)
@@ -156,16 +166,39 @@ void *pool_realloc_file_line(memory_pool *pool, void *ptr, size_t size, const ch
 			return NULL;
 		}
 
-		/* reallocate the entry */
-		new_entry = realloc(*entry, offsetof(pool_entry, buffer) + size);
-		if (new_entry == NULL)
+		if (size != 0)
 		{
-			report_failure(pool, "pool_realloc: Failure to realloc %u bytes", size);
-			return NULL;
-		}
+			/* reallocate the entry */
+			new_entry = realloc(*entry, offsetof(pool_entry, buffer) + size);
+			if (new_entry == NULL)
+			{
+				report_failure(pool, "pool_realloc: Failure to realloc %u bytes", size);
+				return NULL;
+			}
 
-		/* replace the entry with the new entry */
-		*entry = new_entry;
+			/* replace the entry with the new entry */
+			*entry = new_entry;
+
+			/* is this a final entry?  if so, update pool->lastptr */
+			if ((*entry)->next == NULL)
+				pool->lastptr = &(*entry)->next;
+
+			/* return a pointer to the new entry's buffer */
+			new_ptr = new_entry->buffer;
+		}
+		else
+		{
+			free_block = *entry;
+
+			/* unlink this entry */
+			*entry = (*entry)->next;
+			if (*entry == NULL)
+				pool->lastptr = entry;
+
+			/* free the block */
+			free(free_block);
+			new_ptr = NULL;
+		}
 	}
 
 	/* if we don't have a pointer, just allocate a new entry */
@@ -174,10 +207,12 @@ void *pool_realloc_file_line(memory_pool *pool, void *ptr, size_t size, const ch
 		new_entry = alloc_entry(pool, size, file, line);
 		if (new_entry == NULL)
 			return NULL;
+
+		/* return a pointer to the new entry's buffer */
+		new_ptr = new_entry->buffer;
 	}
 
-	/* return a pointer to the new entry's buffer */
-	return new_entry->buffer;
+	return new_ptr;
 }
 
 
@@ -337,4 +372,71 @@ static void report_failure(memory_pool *pool, const char *format, ...)
 		/* call the callback with the message */
 		(*pool->fail)(message);
 	}
+}
+
+
+
+/***************************************************************************
+    TESTING FUNCTIONS
+***************************************************************************/
+
+static int has_memory_error;
+
+
+/*-------------------------------------------------
+    memory_error - report a memory error
+-------------------------------------------------*/
+
+static void memory_error(const char *message)
+{
+	printf("memory test failure: %s\n", message);
+	has_memory_error = TRUE;
+}
+
+
+/*-------------------------------------------------
+    test_memory_pools - unit tests for memory
+    pool behavior
+-------------------------------------------------*/
+
+int test_memory_pools(void)
+{
+	memory_pool *pool;
+	void *ptrs[16];
+	int i;
+
+	has_memory_error = FALSE;
+	pool = pool_create(memory_error);
+	memset(ptrs, 0, sizeof(ptrs));
+
+	ptrs[0] = pool_malloc(pool, 50);
+	ptrs[1] = pool_malloc(pool, 100);
+
+	ptrs[0] = pool_realloc(pool, ptrs[0], 150);
+	ptrs[1] = pool_realloc(pool, ptrs[1], 200);
+
+	ptrs[2] = pool_malloc(pool, 250);
+	ptrs[3] = pool_malloc(pool, 300);
+
+	ptrs[0] = pool_realloc(pool, ptrs[0], 350);
+	ptrs[1] = pool_realloc(pool, ptrs[1], 400);
+
+	ptrs[2] = pool_realloc(pool, ptrs[2], 450);
+	ptrs[3] = pool_realloc(pool, ptrs[3], 500);
+
+	ptrs[0] = pool_realloc(pool, ptrs[0], 0);
+	ptrs[1] = pool_realloc(pool, ptrs[1], 0);
+
+	ptrs[2] = pool_realloc(pool, ptrs[2], 550);
+	ptrs[3] = pool_realloc(pool, ptrs[3], 600);
+
+	/* some heavier stress tests */
+	for (i = 0; i < 512; i++)
+	{
+		ptrs[i % ARRAY_LENGTH(ptrs)] = pool_realloc(pool,
+			ptrs[i % ARRAY_LENGTH(ptrs)], rand() % 1000);
+	}
+
+	pool_free(pool);
+	return has_memory_error;
 }

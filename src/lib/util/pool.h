@@ -35,6 +35,7 @@ enum _memory_block_overlap
 ***************************************************************************/
 
 memory_pool *pool_create(void (*fail)(const char *message));
+void pool_clear(memory_pool *pool);
 void pool_free(memory_pool *pool);
 
 void *pool_malloc_file_line(memory_pool *pool, size_t size, const char *file, int line) ATTR_MALLOC;
@@ -47,5 +48,7 @@ char *pool_strdup_file_line(memory_pool *pool, const char *str, const char *file
 
 memory_block_overlap pool_contains_block(memory_pool *pool, void *ptr, size_t size,
 	void **found_block, size_t *found_block_size);
+
+int test_memory_pools(void);
 
 #endif /* __POOL_H__ */
