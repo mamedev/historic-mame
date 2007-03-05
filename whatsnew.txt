@@ -1,3 +1,134 @@
+0.113
+-----
+
+
+MAMETesters Bugs Fixed
+----------------------
+fastlane0112u4gra [Canim]
+diamond0112u4gra [Canim]
+calorie0112u4gra [Canim]
+qcrayon237b9gra [stephh]
+leftover0112u4ora [Aaron Giles]
+asserts0112u4ora [Aaron Giles, Derrick Renaud]
+nes0112u4red [Aaron Giles]
+
+
+
+Source Changes
+--------------
+Removed unnecessary idle skipping code from the m92 and deco32 
+drivers. This allows removal of a couple of now-unused functions
+from cpuexec. [Zsolt Vasvari]
+
+Minor cleanup of Berzerk driver. [Lord Nightmare]
+
+Removed cpu_gethorzbeampos() and replaced it with calls to 
+video_screen_get_hpos(). Also changed TMS34010 configuration to take 
+a screen number, and changed atarigen_get_hblank() to take a screen
+number as well. [Zsolt Vasvari]
+
+Fixed the model2.c ROM definitions for some games that weren't even 
+loading and made the infamous unknown z-sort mode not a fatal error.
+[R. Belmont]
+
+Fixed a number of BIOS-only drivers to not crash when run.
+[R. Belmont, Aaron Giles]
+
+Fixed bug where the window thread would stop processing events when 
+mame was paused. [BUT]
+
+Changed the 'Tournament' Street Fighter games to not have a network
+adapter present by default. [David Haywood]
+
+Fixed incorrect Eolith speedup patch from u3. [David Haywood]
+
+Fixed regressions in 3 of the discrete games from 0.112u4.
+[Derrick Renaud]
+
+Fixed all analog controls for the newly enabled validity checks 
+including the following: [Derrick Renaud]
+
+ * demndrgn - changed to proper IPT_AD_STICK controls.
+ * konamigt, hcrash, rf2 - set to proper PADDLE control and fixed mask.
+ * overdriv - changed to proper PADDLE control.
+ * sspeedr - changed to IPT_POSITIONAL with PORT_REMAP_TABLE controls 
+    for gas and steering fixing both.
+ * midvunit.c - changed games so the brake pedal shows on player1
+ * simpbowl - fixed port mask, now trackball works proper without 
+    glitching
+ * ssrj - fixed gas pedal
+ * namcos2 - fixed inputs on all games (may need to delete nv files)
+
+Added diplocations to the driver segas16a, segas16b, segas18, megaplay,
+news, ninjadks2 and nemesis drivers. In segas16b, added in SDI 
+allow_continue. In megaplay (Mazin Wars) updated the name of dip with 
+the real name from game setting. [Ruben]
+
+Actually included the RF5C400 changes mentioned for u4.
+[hoot development team]
+
+Split the sprint4 and ultratnk drivers again. Brought the Sprint 4
+driver up to date. [Stefan Jokisch]
+
+Added save state support to Combatribes and Jail Break. [Kevin Eshbach]
+
+Added preliminary sound to Destroyer and Altair. White noise is 
+missing, and Draco is still silent. [Curt Coder]
+
+Added tools to generate regression tests and mamedev.org-compatible
+reports. The report generator is cross-platform, but the test running
+code is Windows-only at the moment. [Aaron Giles]
+
+Fixed regression in Nintendo games that did not specify a clock for
+the NES APU. [Aaron Giles]
+
+Rewrote the BSMT2000 to be more accurate. Various modes are now
+software selected at startup based on the register value at reset
+time. Changed all existing drivers so they properly hooked up the
+reset line on the chip in order to make this control work. Also added 
+correct BSMT2000 ADPCM output. [Aaron Giles]
+
+Defined several new exit codes for "unknown game" and "invalid config"
+and changed the Windows OSD layer to output them. [Aaron Giles]
+
+Removed obsolete joystick calibration junk from the osdepend layer.
+If anyone needs this functionality, I will look into providing a way
+for the OSD code to add menus in the UI. [Aaron Giles]
+
+Changed file2str to be built into the obj directory. [Aaron Giles]
+
+
+
+New games added or promoted from NOT_WORKING status
+---------------------------------------------------
+beatmania 3rd MIX [Yasuhiro Ogawa]
+A Question of Sport [Philip Bennett]
+
+
+
+New clones added
+----------------
+Jail Break (Bootleg) [Kevin Eshbach]
+The Combatribes (US) - Set 1? [Kevin Eshbach]
+Plotting (World set 3, Earliest) [Stefan Lindberg]
+Flipull (Japan) [Stefan Lindberg]
+
+
+
+New games marked as GAME_NOT_WORKING
+------------------------------------
+DrumMania [smf]
+Percussion Freaks 3rd Mix [smf]
+Guitar Freaks 4th Mix [smf]
+Guitar Freaks 5th Mix [smf]
+Snooker 10 [Roberto Fresca]
+ParaParaDancing [Ian Patterson]
+Keyboardmania [Ian Patterson]
+Keyboardmania 2nd Mix [Ian Patterson]
+Pop n' Music 7 [Ian Patterson]
+
+
+
 0.112u4
 -------
 
