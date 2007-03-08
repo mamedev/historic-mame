@@ -37,9 +37,7 @@
 
 /* core search path options */
 #define OPTION_ROMPATH				"rompath"
-#ifdef MESS
-#define OPTION_HASHPATH				"hashpath"
-#endif
+#define OPTION_HASHPATH				"hashpath"		/* MESS only */
 #define OPTION_SAMPLEPATH			"samplepath"
 #define OPTION_ARTPATH				"artpath"
 #define OPTION_CTRLRPATH			"ctrlrpath"
@@ -58,6 +56,13 @@
 
 /* core filename options */
 #define OPTION_CHEAT_FILE			"cheat_file"
+
+/* core performance options */
+#define OPTION_AUTOFRAMESKIP		"autoframeskip"
+#define OPTION_FRAMESKIP			"frameskip"
+#define OPTION_SECONDS_TO_RUN		"seconds_to_run"
+#define OPTION_THROTTLE				"throttle"
+#define OPTION_SLEEP				"sleep"
 
 
 
