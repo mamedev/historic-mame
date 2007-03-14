@@ -528,14 +528,14 @@ Perormance options
 	horsepower than your computer has. The default value is -frameskip 0,
 	which skips no frames.
 
--frames_to_run / -ftr
+-seconds_to_run / -str
 
 	This option can be used for benchmarking and automated testing. It tells 
-	MAME to stop execution after a fixed number of frames. By combining 
+	MAME to stop execution after a fixed number of seconds. By combining 
 	this with a fixed set of other command line options, you can set up a 
 	consistent environment for benchmarking MAME performance. In addition, 
-	upon exit, the -ftr option will write a screenshot called 
-	_<gamename>.png to the snapshot directory.
+	upon exit, the -str option will write a screenshot called final.png
+	to the game's snapshot directory.
 
 -[no]throttle
 
@@ -552,14 +552,6 @@ Perormance options
 	game isn't taxing 100% of your CPU resources. This option can 
 	potentially cause hiccups in performance if other demanding programs
 	are running. The default is ON (-sleep).
-
--[no]rdtsc
-
-	Specifies that MAME should use RDTSC for timing. RDTSC is very fast but
-	unfortunately rather inaccurate on many modern CPUs that dynamically
-	change clock speeds to conserve power. By default, MAME uses the
-	Windows function QueryPerformanceCounter for timing. The default is
-	OFF (-nordtsc).
 
 -priority <priority>
 
