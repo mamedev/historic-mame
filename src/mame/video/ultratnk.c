@@ -6,7 +6,7 @@ Atari Ultra Tank video emulation
 
 #include "driver.h"
 #include "ultratnk.h"
-#include "audio\sprint4.h"
+#include "audio/sprint4.h"
 
 static tilemap* playfield;
 

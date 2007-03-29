@@ -5,7 +5,7 @@ Atari Sprint 4 driver
 ***************************************************************************/
 
 #include "driver.h"
-#include "audio\sprint4.h"
+#include "audio/sprint4.h"
 
 #define MASTER_CLOCK    12096000
 

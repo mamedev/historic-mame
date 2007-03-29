@@ -444,6 +444,7 @@ INLINE void g65816i_check_maskable_interrupt(void)
 	if(!(CPU_STOPPED & STOP_LEVEL_STOP) && LINE_IRQ && !FLAG_I)
 	{
 		g65816i_interrupt_hardware(VECTOR_IRQ);
+		CPU_STOPPED &= ~STOP_LEVEL_WAI;
 		LINE_IRQ=0;
 	}
 }
@@ -1135,6 +1136,69 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REGISTER_S + OPER_8_
 
 /* G65816  Move Block Negative */
 #undef OP_MVN
+#if FLAG_SET_M
+#if FLAG_SET_X
+#define OP_MVN()															\
+			DST = OPER_8_IMM()<<16;											\
+			SRC = OPER_8_IMM()<<16;											\
+			REGISTER_DB = DST;								\
+			CLK(7);												\
+			if ((REGISTER_A|REGISTER_B) >= 0)								\
+			{																\
+				write_8_NORM(DST | REGISTER_Y, read_8_NORM(SRC | REGISTER_X));		\
+				REGISTER_X = MAKE_UINT_8(REGISTER_X+1);								\
+				REGISTER_Y = MAKE_UINT_8(REGISTER_Y+1);								\
+				REGISTER_A--;								\
+				if ((REGISTER_A&0xff) != 0xff) \
+				{\
+				  	REGISTER_PC -= 3; \
+				}\
+				else \
+				{ \
+					REGISTER_B -= 0x100;\
+					if ((REGISTER_B & 0xff00) != 0xff00)\
+					{			  \
+						REGISTER_PC -= 3;\
+					}	  \
+					else	 \
+					{	\
+						REGISTER_A = 0xff; \
+						REGISTER_B = 0xff00; \
+					}	\
+				} \
+			}
+#else
+#define OP_MVN()															\
+			DST = OPER_8_IMM()<<16;											\
+			SRC = OPER_8_IMM()<<16;											\
+			REGISTER_DB = DST;								\
+			CLK(7);												\
+			if ((REGISTER_A|REGISTER_B) >= 0)								\
+			{																\
+				write_8_NORM(DST | REGISTER_Y, read_8_NORM(SRC | REGISTER_X));		\
+				REGISTER_X = MAKE_UINT_16(REGISTER_X+1);								\
+				REGISTER_Y = MAKE_UINT_16(REGISTER_Y+1);								\
+				REGISTER_A--;								\
+				if ((REGISTER_A&0xff) != 0xff) \
+				{\
+				  	REGISTER_PC -= 3; \
+				}\
+				else \
+				{ \
+					REGISTER_B -= 0x100;\
+					if ((REGISTER_B & 0xff00) != 0xff00)\
+					{			  \
+						REGISTER_PC -= 3;\
+					}	  \
+					else	 \
+					{	\
+						REGISTER_A = 0xff; \
+						REGISTER_B = 0xff00; \
+					}	\
+				} \
+			}
+#endif
+#else
 #if FLAG_SET_X
 #define OP_MVN()															\
 			DST = OPER_8_IMM()<<16;											\
@@ -1154,15 +1218,7 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REGISTER_S + OPER_8_
 				}\
 				else \
 				{ \
-					if (FLAG_M) \
-					{ \
-						REGISTER_A = 0xff; \
-						REGISTER_B = 0xff00; \
-			}																\
-					else \
-			{																\
-				REGISTER_A = 0xffff;												\
-			}																\
+					REGISTER_A = 0xffff;												\
 				} \
 			}
 #else
@@ -1184,21 +1240,77 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REGISTER_S + OPER_8_
 				}\
 				else \
 				{ \
-					if (FLAG_M) \
-					{ \
-						REGISTER_A = 0xff; \
-						REGISTER_B = 0xff00; \
-			}																\
-					else \
-			{																\
-				REGISTER_A = 0xffff;												\
-			}																\
+					REGISTER_A = 0xffff;												\
 				} \
 			}
+#endif
 #endif
 
 /* G65816  Move Block Positive */
 #undef OP_MVP
+#if FLAG_SET_M
+#if FLAG_SET_X
+#define OP_MVP()															\
+			DST = OPER_8_IMM()<<16;											\
+			SRC = OPER_8_IMM()<<16;											\
+			REGISTER_DB = DST;								\
+			CLK(7);												\
+			if ((REGISTER_A|REGISTER_B) >= 0)								\
+			{																\
+				write_8_NORM(DST | REGISTER_Y, read_8_NORM(SRC | REGISTER_X));		\
+				REGISTER_X = MAKE_UINT_8(REGISTER_X-1);								\
+				REGISTER_Y = MAKE_UINT_8(REGISTER_Y-1);								\
+				REGISTER_A--;								\
+				if ((REGISTER_A&0xff) != 0xff) \
+				{\
+				  	REGISTER_PC -= 3; \
+				}\
+				else \
+				{ \
+					REGISTER_B -= 0x100;\
+					if ((REGISTER_B & 0xff00) != 0xff00)\
+					{			  \
+						REGISTER_PC -= 3;\
+					}	  \
+					else	 \
+					{	\
+						REGISTER_A = 0xff; \
+						REGISTER_B = 0xff00; \
+					}	\
+				} \
+			}
+#else
+#define OP_MVP()															\
+			DST = OPER_8_IMM()<<16;											\
+			SRC = OPER_8_IMM()<<16;											\
+			REGISTER_DB = DST;								\
+			CLK(7);												\
+			if ((REGISTER_A|REGISTER_B) >= 0)								\
+			{																\
+				write_8_NORM(DST | REGISTER_Y, read_8_NORM(SRC | REGISTER_X));		\
+				REGISTER_X = MAKE_UINT_16(REGISTER_X-1);								\
+				REGISTER_Y = MAKE_UINT_16(REGISTER_Y-1);								\
+				REGISTER_A--;								\
+				if ((REGISTER_A&0xff) != 0xff) \
+				{\
+				  	REGISTER_PC -= 3; \
+				}\
+				else \
+				{ \
+					REGISTER_B -= 0x100;\
+					if ((REGISTER_B & 0xff00) != 0xff00)\
+					{			  \
+						REGISTER_PC -= 3;\
+					}	  \
+					else	 \
+					{	\
+						REGISTER_A = 0xff; \
+						REGISTER_B = 0xff00; \
+					}	\
+				} \
+			}
+#endif
+#else
 #if FLAG_SET_X
 #define OP_MVP()															\
 			DST = OPER_8_IMM()<<16;											\
@@ -1218,15 +1330,7 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REGISTER_S + OPER_8_
 				}\
 				else \
 				{ \
-					if (FLAG_M) \
-					{ \
-						REGISTER_A = 0xff; \
-						REGISTER_B = 0xff00; \
-			}																\
-					else \
-			{																\
-				REGISTER_A = 0xffff;												\
-			}																\
+					REGISTER_A = 0xffff;												\
 				} \
 			}
 #else
@@ -1248,17 +1352,10 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REGISTER_S + OPER_8_
 				}\
 				else \
 				{ \
-					if (FLAG_M) \
-					{ \
-						REGISTER_A = 0xff; \
-						REGISTER_B = 0xff00; \
-			}																\
-					else \
-			{																\
-				REGISTER_A = 0xffff;												\
-			}																\
+					REGISTER_A = 0xffff;												\
 				}		\
 			}
+#endif
 #endif
 
 /* M6502   No Operation */
@@ -2271,10 +2368,11 @@ TABLE_FUNCTION(void, set_line, (int line, int state))
 			if(FLAG_I)
 			{
 				if(CPU_STOPPED & STOP_LEVEL_WAI)
+				{
 					CPU_STOPPED &= ~STOP_LEVEL_WAI;
+				}
 				return;
 			}
-//          g65816i_interrupt_hardware(VECTOR_IRQ);
 			return;
 		case G65816_LINE_NMI:
 			if(state == CLEAR_LINE)
@@ -2382,7 +2480,10 @@ INLINE int g65816i_correct_mode(void)
 
 TABLE_FUNCTION(int, execute, (int clocks))
 {
-	if(!CPU_STOPPED)
+	// do a check here also in case we're in STOP_WAI mode - this'll clear it when the IRQ happens
+	g65816i_check_maskable_interrupt();
+
+	if (!CPU_STOPPED)
 	{
 		CLOCKS = clocks;
 		do

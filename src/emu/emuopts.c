@@ -181,6 +181,10 @@ void mame_options_init(const options_entry *entries)
 		options_add_entries(opts, entries);
 
 	mame_opts = opts;
+
+#ifdef MESS
+	mess_options_init();
+#endif /* MESS */
 }
 
 

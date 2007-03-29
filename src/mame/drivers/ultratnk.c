@@ -6,7 +6,7 @@ Atari Ultra Tank driver
 
 #include "driver.h"
 #include "ultratnk.h"
-#include "audio\sprint4.h"
+#include "audio/sprint4.h"
 
 #define MASTER_CLOCK    12096000
 

@@ -27,6 +27,7 @@
 // MAMEOS headers
 #include "winmain.h"
 #include "video.h"
+#include "config.h"
 
 
 //============================================================
@@ -61,8 +62,6 @@ static void parse_ini_file(const char *name);
 static void execute_simple_commands(void);
 static void execute_commands(const char *argv0);
 static void display_help(void);
-static void setup_playback(const char *filename, const game_driver *driver);
-static void setup_record(const char *filename, const game_driver *driver);
 static char *extract_base_name(const char *name, char *dest, int destsize);
 static char *extract_path(const char *name, char *dest, int destsize);
 
@@ -247,9 +246,6 @@ int cli_frontend_init(int argc, char **argv)
 
 	// initialize the options manager
 	win_options_init();
-#ifdef MESS
-	win_mess_options_init();
-#endif // MESS
 
 	// parse the command line first; if we fail here, we're screwed
 	if (options_parse_command_line(mame_options(), argc, argv))
@@ -348,7 +344,7 @@ int cli_frontend_init(int argc, char **argv)
 
 	// thread priority
 	if (!options_get_bool(mame_options(), OPTION_DEBUG))
-		SetThreadPriority(GetCurrentThread(), options_get_int_range(mame_options(), "priority", -15, 1));
+		SetThreadPriority(GetCurrentThread(), options_get_int_range(mame_options(), WINOPTION_PRIORITY, -15, 1));
 
 	return drvnum;
 }
