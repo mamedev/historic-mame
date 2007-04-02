@@ -1,3 +1,81 @@
+0.114
+-----
+
+
+MAMETesters Bugs Fixed
+----------------------
+fghthist0113u2red [Aaron Giles]
+dsound0113u4ora [Aaron Giles]
+hardreset0113u3yel [Aaron Giles]
+hardreset0113u3red [Aaron Giles]
+
+
+
+Source Changes
+--------------
+Fixed autoframeskip so it doesn't immediately spike on startup or
+after a pause. [Dave Dribin]
+
+Made behavior of ES5503 IRQ status register more accurate.
+[R. Belmont]
+
+Fixed bug introduced in the memory pool code when hashing was added.
+[Nathan Woods]
+
+Added complete discrete sound to Double Play/Extra Inning. Emulated
+foul sound in Bowling Alley. Emulated all sounds except the screech 
+and wind sounds in Space Encounters. [Derrick Renaud]
+
+Updated Virtua Racing to use the TGP core, based on guessing from the
+Daytona TGP code. [Ernesto Corvi]
+
+Added save state to several Atari games: batman, eprom, eprom2, klaxp1,
+klaxp2. Also added general save state support to the atarijsa and
+atarigen modules. [couriersud]
+
+Added save state support to the konamigv driver, specifically enabled
+for nagano98 and simpbowl. [couriersud]
+
+Added DIP locations to the commando driver. [Justin Szczap]
+
+Avoided a memset in the hyperstone core to give ~4% speedup in hidden 
+catch. [David Haywood]
+
+Added small optimization to rand_memory(). [Nathan Woods]
+
+Konami NWK-TR update: [Ville Linde]
+ - Improved the LANC board emulation
+ - Improved the graphics board emulation so that it passes all the 
+    self-tests.
+
+Adds save state support to the Cidelsa games and fixed reset behavior.
+[Curt Coder]
+
+Added validity checks to ensure that LSB_FIRST and PTR64 are set
+correctly for the current platform. [Aaron Giles]
+
+Removed obsolete assembly code and compiler definitions. [Aaron Giles]
+
+
+
+New games added or promoted from NOT_WORKING status
+---------------------------------------------------
+Virtua Racing [Ernesto Corvi, ElSemi]
+
+
+
+New clones added
+----------------
+Air Attack (set 2) [Guru]
+
+
+
+New games marked as GAME_NOT_WORKING
+------------------------------------
+Wonder League '96 (Korea) [David Haywood]
+
+
+
 0.113u4
 -------
 
@@ -200,6 +278,9 @@ Fixed glitches in neogeo driver introduced in last update.
 
 Added extensive (but still WIP) FD1094 debugging tools for help in
 brute force searching for keys. [Aaron Giles]
+
+Fixed bug in voodoo emulation that caused improper framerates to be
+computed. [Aaron Giles]
 
 
 

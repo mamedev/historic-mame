@@ -308,7 +308,7 @@ static int rescale_notifier(running_machine *machine, int width, int height)
     various startup screens
 -------------------------------------------------*/
 
-int ui_display_startup_screens(int show_disclaimer)
+int ui_display_startup_screens(int first_time, int show_disclaimer)
 {
 #ifdef MESS
 	const int maxstate = 4;
@@ -321,7 +321,7 @@ int ui_display_startup_screens(int show_disclaimer)
 	int state;
 
 	/* disable everything if we are using -str */
-	if (str > 0 && str < 60*5)
+	if (!first_time || (str > 0 && str < 60*5))
 		show_gameinfo = show_warnings = show_disclaimer = FALSE;
 
 	/* initialize the on-screen display system */

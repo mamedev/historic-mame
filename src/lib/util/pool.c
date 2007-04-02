@@ -58,7 +58,6 @@ struct _memory_pool
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-static pool_entry *alloc_entry(memory_pool *pool, size_t buffer_size, const char *file, int line);
 static void report_failure(memory_pool *pool, const char *format, ...);
 static int hash_value(memory_pool *pool, void *ptr);
 
@@ -151,16 +150,15 @@ void *pool_malloc_file_line(memory_pool *pool, size_t size, const char *file, in
 
 void *pool_realloc_file_line(memory_pool *pool, void *ptr, size_t size, const char *file, int line)
 {
-	pool_entry *new_entry;
-	void *new_ptr;
-	void *free_block;
+	pool_entry *new_entry = NULL;
+	pool_entry **entry = NULL;
+	pool_hash_entry *hash_entry = NULL;
+	pool_entry *old_entry;
 
 	/* if we're resizing or freeing a pointer, find the existing entry */
 	if (ptr != NULL)
 	{
-		pool_hash_entry *hash_entry = NULL;
 		pool_entry *orig_entry;
-		pool_entry **entry;
 
 		/* recover the pool from the pointer (ignoring the specified pool) */
 		orig_entry = (pool_entry *)((UINT8 *)ptr - offsetof(pool_entry, buffer));
@@ -194,43 +192,77 @@ void *pool_realloc_file_line(memory_pool *pool, void *ptr, size_t size, const ch
 				return NULL;
 			}
 
-			/* replace the entry with the new entry */
+			/* keep the newly reallocated entry in the linked list */
 			*entry = new_entry;
-
-			/* is this a final entry?  if so, update pool->lastptr */
-			if ((*entry)->next == NULL)
-				hash_entry->lastptr = &(*entry)->next;
-
-			/* return a pointer to the new entry's buffer */
-			new_ptr = new_entry->buffer;
-		}
-		else
-		{
-			free_block = *entry;
-
-			/* unlink this entry */
-			*entry = (*entry)->next;
-			if (*entry == NULL)
-				hash_entry->lastptr = entry;
-
-			/* free the block */
-			free(free_block);
-			new_ptr = NULL;
+			if (new_entry->next == NULL)
+				hash_entry->lastptr = &new_entry->next;
 		}
 	}
-
-	/* if we don't have a pointer, just allocate a new entry */
-	else
+	else if (size != 0)
 	{
-		new_entry = alloc_entry(pool, size, file, line);
+		/* allocate new entry */
+		new_entry = malloc(offsetof(pool_entry, buffer) + size);
 		if (new_entry == NULL)
+		{
+			report_failure(pool, "pool_realloc: Failure to malloc %u bytes", size);
 			return NULL;
+		}
 
-		/* return a pointer to the new entry's buffer */
-		new_ptr = new_entry->buffer;
+		/* a new entry, set up magic values */
+		new_entry->pool = pool;
+		new_entry->cookie = MAGIC_COOKIE;
 	}
 
-	return new_ptr;
+	/* track the old entry, if any, because we're about to mess with the chain */
+	old_entry = (entry && *entry) ? *entry : NULL;
+
+	/* if we have a new entry, perform activities done when allocating and reallocating */
+	if (new_entry != NULL)
+	{
+		size_t old_size;
+
+		/* specify the new entry's size */
+		new_entry->size = size;
+
+		/* did the memory block grow? */
+		old_size = (old_entry != NULL) ? old_entry->size : 0;
+		if (size > old_size)
+		{
+#ifdef MAME_DEBUG
+			/* randomize memory for debugging */
+			rand_memory(new_entry->buffer + old_size, size - old_size);
+#endif
+		}
+	}
+
+	/* the memory allocation (if any) has succeeded, now we need to relink
+     * under the (presumably) new hash value */
+	if (entry != NULL)
+	{
+		/* unlink this entry from the link list with the old hash value */
+		*entry = (*entry)->next;
+		if (*entry == NULL)
+			hash_entry->lastptr = entry;
+	}
+
+	/* if we allocated memory, we now have to add this entry to the new chain */
+	if (new_entry != NULL)
+	{
+		/* identify the new hash entry */
+		hash_entry = &pool->hashtable[hash_value(pool, new_entry->buffer)];
+
+		/* add this entry to the new hash entry's linked list */
+		*hash_entry->lastptr = new_entry;
+		hash_entry->lastptr = &new_entry->next;
+		new_entry->next = NULL;
+	}
+	else if (old_entry != NULL)
+	{
+		/* looks like we're freeing the entry */
+		free(old_entry);
+	}
+
+	return (new_entry != NULL) ? new_entry->buffer : NULL;
 }
 
 
@@ -340,46 +372,6 @@ memory_block_overlap pool_contains_block(memory_pool *pool, void *ptr, size_t si
 /***************************************************************************
     INTERNAL FUNCTIONS
 ***************************************************************************/
-
-/*-------------------------------------------------
-    alloc_entry - allocate an entry for a pool
--------------------------------------------------*/
-
-static pool_entry *alloc_entry(memory_pool *pool, size_t buffer_size, const char *file, int line)
-{
-	pool_hash_entry *hash_entry;
-	pool_entry *entry;
-
-	/* allocate the new entry */
-	entry = malloc(offsetof(pool_entry, buffer) + buffer_size);
-	if (entry == NULL)
-	{
-		/* failure */
-		report_failure(pool, "alloc_entry: Failed to allocate %u bytes (%s:%d)", buffer_size, file, line);
-		return NULL;
-	}
-
-	/* set up the new entry */
-	memset(entry, 0, offsetof(pool_entry, buffer));
-	entry->pool = pool;
-	entry->size = buffer_size;
-	entry->cookie = MAGIC_COOKIE;
-
-	/* identify the hash entry */
-	hash_entry = &pool->hashtable[hash_value(pool, entry->buffer)];
-
-	/* add this entry to the linked list */
-	*hash_entry->lastptr = entry;
-	hash_entry->lastptr = &entry->next;
-
-#ifdef MAME_DEBUG
-	/* randomize memory for debugging */
-	rand_memory(entry->buffer, buffer_size);
-#endif
-
-	return entry;
-}
-
 
 /*-------------------------------------------------
     report_failure - report a failure to the
