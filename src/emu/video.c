@@ -888,7 +888,9 @@ mame_time video_screen_get_time_until_pos(int scrnum, int vpos, int hpos)
 	targetdelta = (subseconds_t)vpos * info->scantime + (subseconds_t)hpos * info->pixeltime;
 
 	/* if we're past that time (within 1/2 of a pixel), head to the next frame */
-	while (targetdelta <= curdelta + info->pixeltime / 2)
+	if (targetdelta <= curdelta + info->pixeltime / 2)
+		targetdelta += info->state->refresh;
+	while (targetdelta <= curdelta)
 		targetdelta += info->state->refresh;
 
 	/* return the difference */
@@ -1953,6 +1955,18 @@ void video_crosshair_toggle(void)
 
 
 /*-------------------------------------------------
+    get_crosshair_screen_mask - returns a bitmask
+    indicating on which screens the crosshair for
+    a player's should be displayed
+-------------------------------------------------*/
+
+static UINT32 get_crosshair_screen_mask(video_private *viddata, int player)
+{
+	return (viddata->crosshair_visible & (1 << player)) ? 1 : 0;
+}
+
+
+/*-------------------------------------------------
     crosshair_render - render the crosshairs
 -------------------------------------------------*/
 
@@ -2014,15 +2028,26 @@ static void crosshair_render(video_private *viddata)
 
 	/* draw all crosshairs */
 	for (player = 0; player < MAX_PLAYERS; player++)
-		if (viddata->crosshair_visible & (1 << player))
+	{
+		UINT32 scrmask = get_crosshair_screen_mask(viddata, player);
+		if (scrmask != 0)
 		{
-			/* add a quad assuming a 4:3 screen (this is not perfect) */
-			render_screen_add_quad(0,
-						x[player] - 0.03f, y[player] - 0.04f,
-						x[player] + 0.03f, y[player] + 0.04f,
-						MAKE_ARGB(0xc0, tscale, tscale, tscale),
-						viddata->crosshair_texture[player], PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+			int scrnum;
+
+			for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
+			{
+				if (scrmask & (1 << scrnum))
+				{
+					/* add a quad assuming a 4:3 screen (this is not perfect) */
+					render_screen_add_quad(scrnum,
+								x[player] - 0.03f, y[player] - 0.04f,
+								x[player] + 0.03f, y[player] + 0.04f,
+								MAKE_ARGB(0xc0, tscale, tscale, tscale),
+								viddata->crosshair_texture[player], PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+				}
+			}
 		}
+	}
 }
 
 

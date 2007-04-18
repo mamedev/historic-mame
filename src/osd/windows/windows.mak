@@ -197,14 +197,12 @@ $(LIBOCORE): $(OSDCOREOBJS)
 #-------------------------------------------------
 
 OSDOBJS = \
-	$(WINOBJ)/config.o \
 	$(WINOBJ)/d3d8intf.o \
 	$(WINOBJ)/d3d9intf.o \
 	$(WINOBJ)/drawd3d.o \
 	$(WINOBJ)/drawdd.o \
 	$(WINOBJ)/drawgdi.o \
 	$(WINOBJ)/drawnone.o \
-	$(WINOBJ)/fronthlp.o \
 	$(WINOBJ)/input.o \
 	$(WINOBJ)/output.o \
 	$(WINOBJ)/sound.o \
