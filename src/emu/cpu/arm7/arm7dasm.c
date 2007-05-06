@@ -235,7 +235,8 @@ UINT32 arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 	{
 		/* multiply or swap or half word data transfer */
 
-		if(opcode&0x60) {	//bits = 6-5 != 00
+		if(opcode&0x60)
+		{	//bits = 6-5 != 00
 		/* half word data transfer */
 			pBuf += sprintf(pBuf, "%s%s",(opcode&0x00100000)?"LDR":"STR",pConditionCode);	//Bit 20 = 1 for Load, 0 for Store
 
@@ -1180,10 +1181,10 @@ UINT32 thumb_disasm( char *pBuf, UINT32 pc, UINT16 opcode )
 						pBuf += sprintf( pBuf, "BLE %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
 						break;
 					case COND_AL:
-						pBuf += sprintf( pBuf, "BAL %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						pBuf += sprintf( pBuf, "INVALID");
 						break;
 					case COND_NV:
-						pBuf += sprintf( pBuf, "BNV %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						pBuf += sprintf( pBuf, "SWI %02x\n", opcode & 0xff);
 						break;
 				}
 				break;
