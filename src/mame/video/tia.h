@@ -1,3 +1,14 @@
+#ifndef _VIDEO_TIA_H_
+#define _VIDEO_TIA_H_
+
+#define TIA_INPUT_PORT_ALWAYS_ON		0
+#define TIA_INPUT_PORT_ALWAYS_OFF		0xffff
+
+struct tia_interface {
+	read16_handler	read_input_port;
+	read8_handler	databus_contents;
+};
+
 PALETTE_INIT( tia_NTSC );
 PALETTE_INIT( tia_PAL );
 
@@ -7,4 +18,7 @@ VIDEO_UPDATE( tia );
 READ8_HANDLER( tia_r );
 WRITE8_HANDLER( tia_w );
 
-void tia_init(void);
+void tia_init(const struct tia_interface* ti);
+void tia_init_pal(const struct tia_interface* ti);
+
+#endif /* _VIDEO_TIA_H_ */
