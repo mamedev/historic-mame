@@ -221,10 +221,9 @@ INLINE void jmp_di( void )
 /* $0F CLR direct -0100 */
 INLINE void clr_di( void )
 {
+	UINT32 dummy;
 	DIRECT;
-#ifdef MESS
-	RM(EAD);
-#endif
+	dummy = RM(EAD);
 	WM(EAD,0);
 	CLR_NZVC;
 	SEZ;
@@ -2283,10 +2282,9 @@ INLINE void jmp_ix( void )
 /* $6F CLR indexed -0100 */
 INLINE void clr_ix( void )
 {
+	UINT32 dummy;
 	fetch_effective_address();
-#ifdef MESS
-	RM(EAD);
-#endif
+	dummy = RM(EAD);
 	WM(EAD,0);
 	CLR_NZVC; SEZ;
 }
@@ -2439,10 +2437,9 @@ INLINE void jmp_ex( void )
 /* $7F CLR extended -0100 */
 INLINE void clr_ex( void )
 {
+	UINT32 dummy;
 	EXTENDED;
-#ifdef MESS
-	RM(EAD);
-#endif
+	dummy = RM(EAD);
 	WM(EAD,0);
 	CLR_NZVC; SEZ;
 }
