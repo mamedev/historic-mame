@@ -26,7 +26,7 @@ WRITE8_HANDLER( djboy_scrolly_w )
 
 static TILE_GET_INFO( get_bg_tile_info )
 {
-	UINT8 attr = videoram[tile_index + 0x400];
+	UINT8 attr = videoram[tile_index + 0x800];
 	int code = videoram[tile_index] + (attr&0xf)*256;
 	int color = attr>>4;
 	if( color&8 )
