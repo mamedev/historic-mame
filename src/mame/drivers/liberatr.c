@@ -138,6 +138,8 @@
 #include "sound/pokey.h"
 #include "liberatr.h"
 
+#define MASTER_CLOCK 20000000 /* 20Mhz Main Clock Xtal */
+
 static UINT8 trackball_offset;
 static UINT8 ctrld;
 
@@ -379,7 +381,7 @@ static struct POKEYinterface pokey_interface_2 =
 static MACHINE_DRIVER_START( liberatr )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", M6502, 1250000)
+	MDRV_CPU_ADD_TAG("main", M6502, MASTER_CLOCK/16) /* 1.25Mhz divided from 20Mhz master clock */
 	MDRV_CPU_PROGRAM_MAP(liberatr_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
@@ -400,11 +402,11 @@ static MACHINE_DRIVER_START( liberatr )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(POKEY, 1250000)
+	MDRV_SOUND_ADD(POKEY, MASTER_CLOCK/16) /* 1.25Mhz from Phi2 signal from 6502 */
 	MDRV_SOUND_CONFIG(pokey_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
-	MDRV_SOUND_ADD(POKEY, 1250000)
+	MDRV_SOUND_ADD(POKEY, MASTER_CLOCK/16) /* 1.25Mhz from Phi2 signal from 6502 */
 	MDRV_SOUND_CONFIG(pokey_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END

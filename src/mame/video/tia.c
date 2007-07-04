@@ -9,7 +9,7 @@
 #include "sound/tiaintf.h"
 #include <math.h>
 
-#define HMOVE_INACTIVE	-200
+#define HMOVE_INACTIVE		-200
 #define PLAYER_GFX_SLOTS	4
 
 // Per player graphic
@@ -20,10 +20,11 @@ struct player_gfx {
 	int	start_pixel[PLAYER_GFX_SLOTS];
 	int start_drawing[PLAYER_GFX_SLOTS];
 	int size[PLAYER_GFX_SLOTS];
+	int skipclip[PLAYER_GFX_SLOTS];
 };
 
-static struct player_gfx p0gfx;
-static struct player_gfx p1gfx;
+struct player_gfx p0gfx;
+struct player_gfx p1gfx;
 
 static UINT32 frame_cycles;
 static UINT32 paddle_cycles;
@@ -42,6 +43,8 @@ static int startP0;
 static int startP1;
 static int startM0;
 static int startM1;
+static int skipclipP0;
+static int skipclipP1;
 
 static int current_bitmap;
 
@@ -93,12 +96,16 @@ static UINT8 prevGRP1;
 static UINT8 prevENABL;
 
 static int HMOVE_started;
+static int HMOVE_started_previous;
+static UINT8 HMP0_latch;
+static UINT8 HMP1_latch;
 static UINT8 HMM0_latch;
 static UINT8 HMM1_latch;
+static UINT8 HMBL_latch;
 static UINT8 REFLECT;		/* Should playfield be reflected or not */
 static UINT8 NUSIZx_changed;
 
-static mame_bitmap *helper[2];
+static mame_bitmap *helper[3];
 
 
 static const int nusiz[8][3] =
@@ -115,6 +122,31 @@ static const int nusiz[8][3] =
 
 static read16_handler	tia_read_input_port;
 static read8_handler	tia_get_databus;
+
+static void extend_palette(running_machine *machine) {
+	int	i,j;
+
+	for( i = 0; i < 128; i ++ )
+	{
+		rgb_t	new_rgb = palette_get_color( machine, i );
+		UINT8	new_r = RGB_RED( new_rgb );
+		UINT8	new_g = RGB_GREEN( new_rgb );
+		UINT8	new_b = RGB_BLUE( new_rgb );
+
+		for ( j = 0; j < 128; j++ )
+		{
+			rgb_t	old_rgb = palette_get_color( machine, j );
+			UINT8	old_r = RGB_RED( old_rgb );
+			UINT8	old_g = RGB_GREEN( old_rgb );
+			UINT8	old_b = RGB_BLUE( old_rgb );
+
+			palette_set_color_rgb(machine, ( ( i + 1 ) << 7 ) | j,
+				( new_r + old_r ) / 2,
+				( new_g + old_g ) / 2,
+				( new_b + old_b ) / 2 );
+		}
+	}
+}
 
 PALETTE_INIT( tia_NTSC )
 {
@@ -171,6 +203,7 @@ PALETTE_INIT( tia_NTSC )
 				(UINT8) (255 * B + 0.5));
 		}
 	}
+	extend_palette( machine );
 }
 
 
@@ -229,6 +262,7 @@ PALETTE_INIT( tia_PAL )
 				(UINT8) (255 * B + 0.5));
 		}
 	}
+	extend_palette( machine );
 }
 
 
@@ -239,12 +273,13 @@ VIDEO_START( tia )
 
 	helper[0] = auto_bitmap_alloc(cx, cy, machine->screen[0].format);
 	helper[1] = auto_bitmap_alloc(cx, cy, machine->screen[0].format);
+	helper[2] = auto_bitmap_alloc(cx, cy, machine->screen[0].format);
 }
 
 
 VIDEO_UPDATE( tia )
 {
-	copybitmap(bitmap, helper[1 - current_bitmap], 0, 0, 0, 0,
+	copybitmap(bitmap, helper[2], 0, 0, 0, 0,
 		cliprect, TRANSPARENCY_NONE, 0);
 	return 0;
 }
@@ -271,8 +306,10 @@ static void draw_sprite_helper(UINT8* p, UINT8 *col, struct player_gfx *gfx,
 			{
 				if (GRP & (0x80 >> j))
 				{
-					p[start_pos % 160] = COLUP >> 1;
-					col[start_pos % 160] = COLUP >> 1;
+					if ( start_pos < 160 || ! gfx->skipclip[i] ) {
+						p[start_pos % 160] = COLUP >> 1;
+						col[start_pos % 160] = COLUP >> 1;
+					}
 				}
 				start_pos++;
 			}
@@ -453,13 +490,13 @@ static int collision_check(UINT8* p1, UINT8* p2, int x1, int x2)
 }
 
 
-static int current_x(void)
+INLINE int current_x(void)
 {
 	return 3 * ((activecpu_gettotalcycles() - frame_cycles) % 76) - 68;
 }
 
 
-static int current_y(void)
+INLINE int current_y(void)
 {
 	return (activecpu_gettotalcycles() - frame_cycles) / 76;
 }
@@ -473,8 +510,17 @@ static void setup_pXgfx(void)
 		if ( i < nusiz[NUSIZ0 & 7][0] && i >= ( startP0 ? 0 : 1 ) )
 		{
 			p0gfx.size[i] = nusiz[NUSIZ0 & 7][1];
-			p0gfx.start_drawing[i] = ( horzP0 + (p0gfx.size[i] > 1 ? 1 : 0)
-									 + i * 8 * ( nusiz[NUSIZ0 & 7][2] + p0gfx.size[i] ) ) % 160;
+			if ( i )
+			{
+				p0gfx.start_drawing[i] = ( horzP0 + (p0gfx.size[i] > 1 ? 1 : 0)
+										 + i * 8 * ( nusiz[NUSIZ0 & 7][2] + p0gfx.size[i] ) ) % 160;
+				p0gfx.skipclip[i] = 0;
+			}
+			else
+			{
+				p0gfx.start_drawing[i] = horzP0 + (p0gfx.size[i] > 1 ? 1 : 0 );
+				p0gfx.skipclip[i] = skipclipP0;
+			}
 			p0gfx.start_pixel[i] = 0;
 		}
 		else
@@ -484,8 +530,17 @@ static void setup_pXgfx(void)
 		if ( i < nusiz[NUSIZ1 & 7][0] && i >= ( startP1 ? 0 : 1 ) )
 		{
 			p1gfx.size[i] = nusiz[NUSIZ1 & 7][1];
-			p1gfx.start_drawing[i] = ( horzP1 + (p1gfx.size[i] > 1 ? 1 : 0)
-									 + i * 8 * ( nusiz[NUSIZ1 & 7][2] + p1gfx.size[i] ) ) % 160;
+			if ( i )
+			{
+				p1gfx.start_drawing[i] = ( horzP1 + (p1gfx.size[i] > 1 ? 1 : 0)
+										 + i * 8 * ( nusiz[NUSIZ1 & 7][2] + p1gfx.size[i] ) ) % 160;
+				p1gfx.skipclip[i] = 0;
+			}
+			else
+			{
+				p1gfx.start_drawing[i] = horzP1 + (p1gfx.size[i] > 1 ? 1 : 0);
+				p1gfx.skipclip[i] = skipclipP1;
+			}
 			p1gfx.start_pixel[i] = 0;
 		}
 		else
@@ -561,9 +616,7 @@ static void update_bitmap(int next_x, int next_y)
 		if ( y !=  prev_y ) {
 			int redraw_line = 0;
 
-			if ( ! HMM0_latch && ! HMM1_latch ) {
-				redraw_line = 1;
-			}
+			HMOVE_started_previous = HMOVE_INACTIVE;
 
 			if ( HMOVE_started != HMOVE_INACTIVE ) {
 				/* Apply pending motion clocks from a HMOVE initiated during the scanline */
@@ -583,6 +636,7 @@ static void update_bitmap(int next_x, int next_y)
 						horzM1 += 160;
 					if (horzBL < 0)
 						horzBL += 160;
+					HMOVE_started_previous = HMOVE_started;
 				}
 				HMOVE_started = HMOVE_INACTIVE;
 				redraw_line = 1;
@@ -594,13 +648,39 @@ static void update_bitmap(int next_x, int next_y)
 				redraw_line = 1;
 			}
 
-			/* Redraw line if a RESPx or NUSIZx occured during the lastline */
+			/* Redraw line if a RESPx or NUSIZx occured during the last line */
 			if ( ! startP0 || ! startP1 || ! startM0 || ! startM1) {
 				startP0 = 1;
 				startP1 = 1;
 				startM0 = 1;
 				startM1 = 1;
 
+				redraw_line = 1;
+			}
+
+			if ( skipclipP0 ) {
+				skipclipP0--;
+				redraw_line = 1;
+			}
+
+			if ( skipclipP1 ) {
+				skipclipP1--;
+				redraw_line = 1;
+			}
+
+			/* Redraw line if HMP0 latch is still set */
+			if ( HMP0_latch ) {
+				horzP0 -= 17;
+				if ( horzP0 < 0 )
+					horzP0 += 160;
+				redraw_line = 1;
+			}
+
+			/* Redraw line if HMP1 latch is still set */
+			if ( HMP1_latch ) {
+				horzP1 -= 17;
+				if ( horzP1 < 0 )
+					horzP1 += 160;
 				redraw_line = 1;
 			}
 
@@ -620,6 +700,14 @@ static void update_bitmap(int next_x, int next_y)
 				redraw_line = 1;
 			}
 
+			/* Redraw line if HMBL latch is still set */
+			if ( HMBL_latch ) {
+				horzBL -= 17;
+				if ( horzBL < 0 )
+					horzBL += 160;
+				redraw_line = 1;
+			}
+
 			/* Redraw line if NUSIZx data was changed */
 			if ( NUSIZx_changed ) {
 				NUSIZx_changed = 0;
@@ -629,12 +717,17 @@ static void update_bitmap(int next_x, int next_y)
 			if ( redraw_line ) {
 				if (VBLANK & 2)
 				{
+					setup_pXgfx();
 					memset(temp, 0, 160);
 				}
 				else
 				{
+					memset(linePF, 0xFF, sizeof linePF);
 					memset(lineP0, 0xFF, sizeof lineP0);
 					memset(lineP1, 0xFF, sizeof lineP1);
+					memset(lineM0, 0xFF, sizeof lineM0);
+					memset(lineM1, 0xFF, sizeof lineM1);
+					memset(lineBL, 0xFF, sizeof lineBL);
 
 					memset(temp, COLUBK >> 1, 160);
 
@@ -712,36 +805,28 @@ static void update_bitmap(int next_x, int next_y)
 		}
 
 		if ( x2 == 160 && y % (helper[current_bitmap]->height) == (helper[current_bitmap]->height - 1) ) {
+			// TODO: create combined screen in helper[2]
+			int	t_y;
+			for ( t_y = 0; t_y < helper[2]->height; t_y++ ) {
+				UINT16*	l0 = BITMAP_ADDR16( helper[current_bitmap], t_y, 0 );
+				UINT16*	l1 = BITMAP_ADDR16( helper[1 - current_bitmap], t_y, 0 );
+				UINT16*	l2 = BITMAP_ADDR16( helper[2], t_y, 0 );
+				int t_x;
+				for( t_x = 0; t_x < helper[2]->width; t_x++ ) {
+					if ( l0[t_x] != l1[t_x] ) {
+						/* Combine both entries */
+						l2[t_x] = ( ( l0[t_x] + 1 ) << 7 ) | l1[t_x];
+					} else {
+						l2[t_x] = l0[t_x];
+					}
+				}
+			}
 			current_bitmap ^= 1;
 		}
 	}
 
 	prev_x = next_x;
 	prev_y = next_y;
-}
-
-
-static void button_callback(int dummy)
-{
-	int button0 = 0x80;
-	int button1 = 0x80;
-
-	if ( tia_read_input_port )
-	{
-		button0 = tia_read_input_port(4,0xFFFF) & 0x80;
-		button1 = tia_read_input_port(5,0xFFFF) & 0x80;
-	}
-
-	if (VBLANK & 0x40)
-	{
-		INPT4 &= button0;
-		INPT5 &= button1;
-	}
-	else
-	{
-		INPT4 = button0;
-		INPT5 = button1;
-	}
 }
 
 
@@ -762,9 +847,10 @@ static WRITE8_HANDLER( VSYNC_w )
 	{
 		if (!(VSYNC & 2))
 		{
-			update_bitmap(
-				Machine->screen[0].width,
-				Machine->screen[0].height);
+			if ( current_y() > 5 )
+				update_bitmap(
+					Machine->screen[0].width,
+					Machine->screen[0].height);
 
 			prev_y = 0;
 			prev_x = 0;
@@ -782,6 +868,10 @@ static WRITE8_HANDLER( VBLANK_w )
 	if (data & 0x80)
 	{
 		paddle_cycles = activecpu_gettotalcycles();
+	}
+	if ( ! ( VBLANK & 0x40 ) ) {
+		INPT4 = 0x80;
+		INPT5 = 0x80;
 	}
 	VBLANK = data;
 }
@@ -806,20 +896,25 @@ static WRITE8_HANDLER( HMP0_w )
 	if ( data == HMP0 )
 		return;
 
-	if ( HMOVE_started != HMOVE_INACTIVE && curr_x < HMOVE_started + 4 + motclkP0 * 4 + 2 ) {
-		int window = curr_x - ( HMOVE_started + 4 + motclkP0 * 4 );
+	/* Check if HMOVE cycles are still being applied */
+	if ( HMOVE_started != HMOVE_INACTIVE && curr_x < MIN( HMOVE_started + 6 + motclkP0 * 4, 7 ) ) {
+		int new_motclkP0 = ( data ^ 0x80 ) >> 4;
 
-		/* HMOVE cycles are still being applied */
-		if ( window < 0 ) {
-			int new_motclkP0 = ( data ^ 0x80 ) >> 4;
-			int new_window = curr_x - ( HMOVE_started + 4 + new_motclkP0 * 4 );
-
-			if ( new_window < 0 ) {
-				horzP0 -= ( new_motclkP0 - motclkP0 );
-				motclkP0 = new_motclkP0;
-				setup_pXgfx();
+		/* Check if new horizontal move can still be applied normally */
+		if ( new_motclkP0 > motclkP0 || curr_x <= MIN( HMOVE_started + 6 + new_motclkP0 * 4, 7 ) ) {
+			horzP0 -= ( new_motclkP0 - motclkP0 );
+			motclkP0 = new_motclkP0;
+		} else {
+			horzP0 -= ( 15 - motclkP0 );
+			motclkP0 = 15;
+			if ( data != 0x70 && data != 0x80 ) {
+				HMP0_latch = 1;
 			}
 		}
+		if ( horzP0 < 0 )
+			horzP0 += 160;
+		horzP0 %= 160;
+		setup_pXgfx();
 	}
 	HMP0 = data;
 }
@@ -833,20 +928,25 @@ static WRITE8_HANDLER( HMP1_w )
 	if ( data == HMP1 )
 		return;
 
-	if ( HMOVE_started != HMOVE_INACTIVE && curr_x < HMOVE_started + 4 + motclkP1 * 4 + 2 ) {
-		int window = curr_x - ( HMOVE_started + 4 + motclkP1 * 4 );
+	/* Check if HMOVE cycles are still being applied */
+	if ( HMOVE_started != HMOVE_INACTIVE && curr_x < MIN( HMOVE_started + 6 + motclkP1 * 4, 7 ) ) {
+		int new_motclkP1 = ( data ^ 0x80 ) >> 4;
 
-		/* HMOVE cycles are still being applied */
-		if ( window < 0 ) {
-			int new_motclkP1 = ( data ^ 0x80 ) >> 4;
-			int new_window = curr_x - ( HMOVE_started + 4 + new_motclkP1 * 4 );
-
-			if ( new_window < 0 ) {
-				horzP1 -= ( new_motclkP1 - motclkP1 );
-				motclkP1 = new_motclkP1;
-				setup_pXgfx();
+		/* Check if new horizontal move can still be applied normally */
+		if ( new_motclkP1 > motclkP1 || curr_x <= MIN( HMOVE_started + 6 + new_motclkP1 * 4, 7 ) ) {
+			horzP1 -= ( new_motclkP1 - motclkP1 );
+			motclkP1 = new_motclkP1;
+		} else {
+			horzP1 -= ( 15 - motclkP1 );
+			motclkP1 = 15;
+			if ( data != 0x70 && data != 0x80 ) {
+				HMP1_latch = 1;
 			}
 		}
+		if ( horzP1 < 0 )
+			horzP1 += 160;
+		horzP1 %= 160;
+		setup_pXgfx();
 	}
 	HMP1 = data;
 }
@@ -860,30 +960,24 @@ static WRITE8_HANDLER( HMM0_w )
 	if ( data == HMM0 )
 		return;
 
-	if ( HMOVE_started != HMOVE_INACTIVE && curr_x < HMOVE_started + 4 + motclkM0 * 4 + 2 ) {
-		int window = curr_x - ( HMOVE_started + 4 + motclkM0 * 4 );
+	/* Check if HMOVE cycles are still being applied */
+	if ( HMOVE_started != HMOVE_INACTIVE && curr_x < MIN( HMOVE_started + 6 + motclkM0 * 4, 7 ) ) {
+		int new_motclkM0 = ( data ^ 0x80 ) >> 4;
 
-		/* HMOVE cycles are still being applied */
-		if ( window < 0 ) {
-			int new_motclkM0 = ( data ^ 0x80 ) >> 4;
-			int new_window = curr_x - ( HMOVE_started + 4 + new_motclkM0 * 4 );
-
-			if ( new_window < 0 ) {
-				horzM0 -= ( new_motclkM0 - motclkM0 );
-				motclkM0 = new_motclkM0;
+		/* Check if new horizontal move can still be applied normally */
+		if ( new_motclkM0 > motclkM0 || curr_x <= MIN( HMOVE_started + 6 + new_motclkM0 * 4, 7 ) ) {
+			horzM0 -= ( new_motclkM0 - motclkM0 );
+			motclkM0 = new_motclkM0;
+		} else {
+			horzM0 -= ( 15 - motclkM0 );
+			motclkM0 = 15;
+			if ( data != 0x70 && data != 0x80 ) {
+				HMM0_latch = 1;
 			}
 		}
-
-		/* All HMOVE cycles have been applied but the compare hasn't occured yet */
-		if ( window >= -1 && window < 2 && ( data != 0x70 && data != 0x80 ) ) {
-			horzM0 += ((signed char) HMM0) >> 4;
-			motclkM0 = 15;
-			horzM0 -= motclkM0;
-			if (horzM0 < 0 )
-				horzM0 += 160;
-			horzM0 %= 160;
-			HMM0_latch = 1;
-		}
+		if ( horzM0 < 0 )
+			horzM0 += 160;
+		horzM0 %= 160;
 	}
 	HMM0 = data;
 }
@@ -897,30 +991,24 @@ static WRITE8_HANDLER( HMM1_w )
 	if ( data == HMM1 )
 		return;
 
-	if ( HMOVE_started != HMOVE_INACTIVE && curr_x < HMOVE_started + 4 + motclkM1 * 4 + 2 ) {
-		int window = curr_x - ( HMOVE_started + 4 + motclkM1 * 4 );
+	/* Check if HMOVE cycles are still being applied */
+	if ( HMOVE_started != HMOVE_INACTIVE && curr_x < MIN( HMOVE_started + 6 + motclkM1 * 4, 7 ) ) {
+		int new_motclkM1 = ( data ^ 0x80 ) >> 4;
 
-		/* HMOVE cycles are still being applied */
-		if ( window < 0 ) {
-			int new_motclkM1 = ( data ^ 0x80 ) >> 4;
-			int new_window = curr_x - ( HMOVE_started + 4 + new_motclkM1 * 4 );
-
-			if ( new_window < 0 ) {
-				horzM1 -= ( new_motclkM1 - motclkM1 );
-				motclkM1 = new_motclkM1;
+		/* Check if new horizontal move can still be applied normally */
+		if ( new_motclkM1 > motclkM1 || curr_x <= MIN( HMOVE_started + 6 + new_motclkM1 * 4, 7 ) ) {
+			horzM1 -= ( new_motclkM1 - motclkM1 );
+			motclkM1 = new_motclkM1;
+		} else {
+			horzM1 -= ( 15 - motclkM1 );
+			motclkM1 = 15;
+			if ( data != 0x70 && data != 0x80 ) {
+				HMM1_latch = 1;
 			}
 		}
-
-		/* All HMOVE cycles have been applied but the compare hasn't occured yet */
-		if ( window >= -1 && window < 2 && ( data != 0x70 && data != 0x80 ) ) {
-			horzM1 += ((signed char) HMM1) >> 4;
-			motclkM1 = 15;
-			horzM1 -= motclkM1;
-			if ( horzM1 < 0 )
-				horzM1 += 160;
-			horzM1 %= 160;
-			HMM1_latch = 1;
-		}
+		if ( horzM1 < 0 )
+			horzM1 += 160;
+		horzM1 %= 160;
 	}
 	HMM1 = data;
 }
@@ -934,19 +1022,24 @@ static WRITE8_HANDLER( HMBL_w )
 	if ( data == HMBL )
 		return;
 
-	if ( HMOVE_started != HMOVE_INACTIVE && curr_x < HMOVE_started + 4 + motclkBL * 4 + 2 ) {
-		int window = curr_x - ( HMOVE_started + 4 + motclkBL * 4 );
+	/* Check if HMOVE cycles are still being applied */
+	if ( HMOVE_started != HMOVE_INACTIVE && curr_x < MIN( HMOVE_started + 6 + motclkBL * 4, 7 ) ) {
+		int new_motclkBL = ( data ^ 0x80 ) >> 4;
 
-		/* HMOVE cycles are still being applied */
-		if ( window < 0 ) {
-			int new_motclkBL = ( data ^ 0x80 ) >> 4;
-			int new_window = curr_x - ( HMOVE_started + 4 + new_motclkBL * 4 );
-
-			if ( new_window < 0 ) {
-				horzBL -= ( new_motclkBL - motclkBL );
-				motclkBL = new_motclkBL;
+		/* Check if new horizontal move can still be applied normally */
+		if ( new_motclkBL > motclkBL || curr_x <= MIN( HMOVE_started + 6 + new_motclkBL * 4, 7 ) ) {
+			horzBL -= ( new_motclkBL - motclkBL );
+			motclkBL = new_motclkBL;
+		} else {
+			horzBL -= ( 15 - motclkBL );
+			motclkBL = 15;
+			if ( data != 0x70 && data != 0x80 ) {
+				HMBL_latch = 1;
 			}
 		}
+		if ( horzBL < 0 )
+			horzBL += 160;
+		horzBL %= 160;
 	}
 	HMBL = data;
 }
@@ -956,11 +1049,28 @@ static WRITE8_HANDLER( HMOVE_w )
 	int curr_x = current_x();
 	int curr_y = current_y();
 
-	//logerror("%04X: HMOVE write, curr_x = %d, curr_y = %d\n", activecpu_get_pc(), curr_x, curr_y );
 	HMOVE_started = curr_x;
 
+	/* Check if we have to undo some of the already applied cycles from an active graphics latch */
+	if ( curr_x + 68 < 17 * 4 ) {
+		int cycle_fix = 17 - ( ( curr_x + 68 + 7 ) / 4 );
+		if ( HMP0_latch )
+			horzP0 = ( horzP0 + cycle_fix ) % 160;
+		if ( HMP1_latch )
+			horzP1 = ( horzP1 + cycle_fix ) % 160;
+		if ( HMM0_latch )
+			horzM0 = ( horzM0 + cycle_fix ) % 160;
+		if ( HMM1_latch )
+			horzM1 = ( horzM1 + cycle_fix ) % 160;
+		if ( HMBL_latch )
+			horzBL = ( horzBL + cycle_fix ) % 160;
+	}
+
+	HMP0_latch = 0;
+	HMP1_latch = 0;
 	HMM0_latch = 0;
 	HMM1_latch = 0;
+	HMBL_latch = 0;
 
 	/* Check if HMOVE activities can be ignored */
 	if ( curr_x >= -5 && curr_x < 97 ) {
@@ -1000,7 +1110,7 @@ static WRITE8_HANDLER( HMOVE_w )
 	}
 
 	if ( curr_x >= -56 && curr_x < -5 ) {
-		int max_motclks = ( 3 - ( HMOVE_started + 1 ) ) / 4;
+		int max_motclks = ( 7 - ( HMOVE_started + 5 ) ) / 4;
 		if ( motclkP0 > max_motclks )
 			motclkP0 = max_motclks;
 		if ( motclkP1 > max_motclks )
@@ -1235,7 +1345,7 @@ static WRITE8_HANDLER( CXCLR_w )
 
 
 #define RESXX_APPLY_ACTIVE_HMOVE(HORZ,MOTION,MOTCLK)									\
-	if ( curr_x < MIN( HMOVE_started + 4 + 16 * 4 + 2, 7 ) ) {							\
+	if ( curr_x < MIN( HMOVE_started + 6 + 16 * 4, 7 ) ) {								\
 		int decrements_passed = ( curr_x - ( HMOVE_started + 4 ) ) / 4;					\
 		HORZ += 8;																		\
 		if ( ( MOTCLK - decrements_passed ) > 0 ) {										\
@@ -1245,23 +1355,37 @@ static WRITE8_HANDLER( CXCLR_w )
 		}																				\
 	}
 
+#define RESXX_APPLY_PREVIOUS_HMOVE(HORZ,MOTION)												\
+	if ( HMOVE_started_previous != HMOVE_INACTIVE )											\
+	{																						\
+		UINT8	motclk = ( MOTION ^ 0x80 ) >> 4;											\
+		if ( curr_x <= HMOVE_started_previous - 228 + 5 + motclk * 4 )						\
+		{																					\
+			UINT8	motclk_passed = ( curr_x - ( HMOVE_started_previous - 228 + 6 ) ) / 4;	\
+			HORZ -= ( motclk - motclk_passed );												\
+		}																					\
+	}
+
 static WRITE8_HANDLER( RESP0_w )
 {
 	int curr_x = current_x();
 	int new_horzP0;
 
+	/* Check if HMOVE is activated during this line */
 	if ( HMOVE_started != HMOVE_INACTIVE ) {
-		new_horzP0 = ( curr_x < 7 ) ? 3 : ( ( curr_x + 5 ) % 160 );
+		new_horzP0 = ( curr_x < 7 ) ? 3 : ( curr_x + 5 );
 		/* If HMOVE is active, adjust for remaining horizontal move clocks if any */
 		RESXX_APPLY_ACTIVE_HMOVE( new_horzP0, HMP0, motclkP0 );
 	} else {
-		new_horzP0 = ( curr_x < -3 ) ? 3 : ( ( curr_x + 5 ) % 160 );
+		new_horzP0 = ( curr_x < -2 ) ? 3 : ( curr_x + 5 );
+		RESXX_APPLY_PREVIOUS_HMOVE( new_horzP0, HMP0 );
 	}
 
 	if ( new_horzP0 != horzP0 ) {
 		int i;
 		horzP0 = new_horzP0;
 		startP0 = 0;
+		skipclipP0 = 2;
 		/* Check if we are (about to start) drawing a copy of the player 0 graphics */
 		for ( i = 0; i < PLAYER_GFX_SLOTS; i++ ) {
 			if ( p0gfx.start_pixel[i] < 8 ) {
@@ -1307,18 +1431,21 @@ static WRITE8_HANDLER( RESP1_w )
 	int curr_x = current_x();
 	int new_horzP1;
 
+	/* Check if HMOVE is activated during this line */
 	if ( HMOVE_started != HMOVE_INACTIVE ) {
-		new_horzP1 = ( curr_x < 7 ) ? 3 : ( ( curr_x + 5 ) % 160 );
+		new_horzP1 = ( curr_x < 7 ) ? 3 : ( curr_x + 5 );
 		/* If HMOVE is active, adjust for remaining horizontal move clocks if any */
 		RESXX_APPLY_ACTIVE_HMOVE( new_horzP1, HMP1, motclkP1 );
 	} else {
-		new_horzP1 = ( curr_x < -3 ) ? 3 : ( ( curr_x + 5 ) % 160 );
+		new_horzP1 = ( curr_x < -2 ) ? 3 : ( curr_x + 5 );
+		RESXX_APPLY_PREVIOUS_HMOVE( new_horzP1, HMP1 );
 	}
 
 	if ( new_horzP1 != horzP1 ) {
 		int i;
 		horzP1 = new_horzP1;
 		startP1 = 0;
+		skipclipP1 = 2;
 		/* Check if we are (about to start) drawing a copy of the player 1 graphics */
 		for ( i = 0; i < PLAYER_GFX_SLOTS; i++ ) {
 			if ( p1gfx.start_pixel[i] < 8 ) {
@@ -1364,12 +1491,14 @@ static WRITE8_HANDLER( RESM0_w )
 	int curr_x = current_x();
 	int new_horzM0;
 
+	/* Check if HMOVE is activated during this line */
 	if ( HMOVE_started != HMOVE_INACTIVE ) {
 		new_horzM0 = ( curr_x < 7 ) ? 2 : ( ( curr_x + 4 ) % 160 );
 		/* If HMOVE is active, adjust for remaining horizontal move clocks if any */
 		RESXX_APPLY_ACTIVE_HMOVE( new_horzM0, HMM0, motclkM0 );
 	} else {
 		new_horzM0 = ( curr_x < 0 ) ? 2 : ( ( curr_x + 4 ) % 160 );
+		RESXX_APPLY_PREVIOUS_HMOVE( new_horzM0, HMM0 );
 	}
 	if ( new_horzM0 != horzM0 ) {
 		horzM0 = new_horzM0;
@@ -1383,12 +1512,14 @@ static WRITE8_HANDLER( RESM1_w )
 	int curr_x = current_x();
 	int new_horzM1;
 
+	/* Check if HMOVE is activated during this line */
 	if ( HMOVE_started != HMOVE_INACTIVE ) {
 		new_horzM1 = ( curr_x < 7 ) ? 2 : ( ( curr_x + 4 ) % 160 );
 		/* If HMOVE is active, adjust for remaining horizontal move clocks if any */
 		RESXX_APPLY_ACTIVE_HMOVE( new_horzM1, HMM1, motclkM1 );
 	} else {
 		new_horzM1 = ( curr_x < 0 ) ? 2 : ( ( curr_x + 4 ) % 160 );
+		RESXX_APPLY_PREVIOUS_HMOVE( new_horzM1, HMM1 );
 	}
 	if ( new_horzM1 != horzM1 ){
 		horzM1 = new_horzM1;
@@ -1401,12 +1532,14 @@ static WRITE8_HANDLER( RESBL_w )
 {
 	int curr_x = current_x();
 
+	/* Check if HMOVE is activated during this line */
 	if ( HMOVE_started != HMOVE_INACTIVE ) {
 		horzBL = ( curr_x < 7 ) ? 2 : ( ( curr_x + 4 ) % 160 );
 		/* If HMOVE is active, adjust for remaining horizontal move clocks if any */
 		RESXX_APPLY_ACTIVE_HMOVE( horzBL, HMBL, motclkBL );
 	} else {
 		horzBL = ( curr_x < 0 ) ? 2 : ( ( curr_x + 4 ) % 160 );
+		RESXX_APPLY_PREVIOUS_HMOVE( horzBL, HMBL );
 	}
 }
 
@@ -1516,8 +1649,16 @@ READ8_HANDLER( tia_r )
 	case 0xB:
 		return data | INPT_r(3);
 	case 0xC:
+		{
+			int	button = tia_read_input_port ? ( tia_read_input_port(4,0xFFFF) & 0x80 ) : 0x80;
+			INPT4 = ( VBLANK & 0x40) ? ( INPT4 & button ) : button;
+		}
 		return data | INPT4;
 	case 0xD:
+		{
+			int button = tia_read_input_port ? ( tia_read_input_port(5,0xFFFF) & 0x80 ) : 0x80;
+			INPT5 = ( VBLANK & 0x40) ? ( INPT5 & button ) : button;
+		}
 		return data | INPT5;
 	}
 
@@ -1624,7 +1765,6 @@ WRITE8_HANDLER( tia_w )
 		COLUBK = data;
 		break;
 	case 0x0A:
-		//logerror("%04X: CTRLPF write %02X, x = %d, y = %d\n", activecpu_get_pc(), data, curr_x, curr_y );
 		CTRLPF_w(offset, data);
 		break;
 	case 0x0B:
@@ -1634,15 +1774,12 @@ WRITE8_HANDLER( tia_w )
 		REFP1 = data;
 		break;
 	case 0x0D:
-		//logerror("%04X: PF0 write %02X, x = %d, y = %d, real x = %d\n", activecpu_get_pc(), data, curr_x, curr_y, current_x());
 		PF0 = data;
 		break;
 	case 0x0E:
-		//logerror("%04X: PF1 write %02X, x = %d, y = %d, real x = %d\n", activecpu_get_pc(), data, curr_x, curr_y, current_x());
 		PF1 = data;
 		break;
 	case 0x0F:
-		//logerror("%04X: PF2 write %02X, x = %d, y = %d, real x = %d\n", activecpu_get_pc(), data, curr_x, curr_y, current_x());
 		PF2 = data;
 		break;
 	case 0x10:
@@ -1735,13 +1872,11 @@ static void tia_reset(running_machine *machine)
 
 
 
-void tia_init_internal(int freq, const struct tia_interface* ti)
+void tia_init(const struct tia_interface* ti)
 {
 	int	i;
 
 	assert_always(mame_get_phase(Machine) == MAME_PHASE_INIT, "Can only call tia_init at init time!");
-
-	timer_pulse(TIME_IN_HZ(freq), 0, button_callback);
 
 	INPT4 = 0x80;
 	INPT5 = 0x80;
@@ -1755,8 +1890,11 @@ void tia_init_internal(int freq, const struct tia_interface* ti)
 	startP0 = 1;
 	startP1 = 1;
 
+	HMP0_latch = 0;
+	HMP1_latch = 0;
 	HMM0_latch = 0;
 	HMM1_latch = 0;
+	HMBL_latch = 0;
 
 	startM0 = 1;
 	startM1 = 1;
@@ -1796,12 +1934,3 @@ void tia_init_internal(int freq, const struct tia_interface* ti)
 	add_reset_callback(Machine, tia_reset);
 }
 
-void tia_init(const struct tia_interface* ti)
-{
-	tia_init_internal(60, ti);
-}
-
-void tia_init_pal(const struct tia_interface* ti)
-{
-	tia_init_internal(50, ti);
-}
