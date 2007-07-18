@@ -256,7 +256,7 @@ static void at_8042_set_outport(UINT8 data, int initial)
 
 
 
-static void kbdc8042_time(int dummy)
+static TIMER_CALLBACK( kbdc8042_time )
 {
 	at_keyboard_polling();
 	at_8042_check_keyboard();

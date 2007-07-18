@@ -61,7 +61,7 @@ static void f3853_timer_start(UINT8 value)
 	mame_timer_adjust(f3853.timer, period, 0, time_never);
 }
 
-static void f3853_timer_callback(int param)
+static TIMER_CALLBACK( f3853_timer_callback )
 {
     if (f3853.timer_enable)
 	{
