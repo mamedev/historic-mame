@@ -256,10 +256,10 @@ of your command:
 	is returned as one of the following:
 	
 		0: means all files were identified
-		1: means all files were identified except for 1 or more "non-ROM"
+		7: means all files were identified except for 1 or more "non-ROM"
 			files
-		2: means some files were identified
-		3: means no files were identified
+		8: means some files were identified
+		9: means no files were identified
 
 
 
@@ -823,13 +823,13 @@ Core input options
 Core input automatic enable options
 -----------------------------------
 
--paddle_device <keyboard|mouse|joystick|lightgun> / -paddle
--adstick_device <keyboard|mouse|joystick|lightgun> / -adstick
--pedal_device <keyboard|mouse|joystick|lightgun> / -pedal
--dial_device <keyboard|mouse|joystick|lightgun> / -dial
--trackball_device <keyboard|mouse|joystick|lightgun> / -trackball
--lightgun_device <keyboard|mouse|joystick|lightgun>
--positional_device <keyboard|mouse|joystick|lightgun>
+-paddle_device <keyboard|mouse|joystick|lightgun|none> / -paddle
+-adstick_device <keyboard|mouse|joystick|lightgun|none> / -adstick
+-pedal_device <keyboard|mouse|joystick|lightgun|none> / -pedal
+-dial_device <keyboard|mouse|joystick|lightgun|none> / -dial
+-trackball_device <keyboard|mouse|joystick|lightgun|none> / -trackball
+-lightgun_device <keyboard|mouse|joystick|lightgun|none>
+-positional_device <keyboard|mouse|joystick|lightgun|none>
 
 	Each of these options controls autoenabling the mouse, joystick, or
 	lightgun depending on the presence of a particular class of analog
