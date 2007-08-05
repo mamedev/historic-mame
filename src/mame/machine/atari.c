@@ -905,7 +905,7 @@ DEVICE_LOAD( a800xl_cart )
 		size = mame_fread(basic_fp, &mem[0x14000], 0x2000);
 		if( size < 0x2000 )
 		{
-			logerror("%s image '%s' load failed (less than 8K)\n", Machine->gamedrv->name, fname);
+			logerror("%s image '%s' load failed (less than 8K)\n", Machine->gamedrv->name, astring_c(fname));
 			mame_fclose(basic_fp);
 			return 2;
 		}

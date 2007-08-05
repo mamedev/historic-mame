@@ -1,3 +1,54 @@
+0.118
+-----
+
+
+Source Changes
+--------------
+Changed INI parsing so that mame.ini is parsed twice, picking up
+changes to the inipath. [Aaron Giles]
+
+Fixed bug in options handling introduced with recent changes.
+[Nathan Woods]
+
+Fixed macros in stvcd.c to work with C89 compilers. [Mike Haaland]
+
+Fixed some more 64-bit warnings and unused functions. 
+[Oliver Stoneberg]
+
+Fixed DIP switch "Difficulty" in fstarfrc. Also added DIP locations
+to the tecmo16 driver. [BisonSAS]
+
+Simplified the nemesis video driver code. [Atari Ace]
+
+Modularized the TMS5220 code. [Lord Nightmare]
+
+Fixed issues with recent R-Type ROMset. [Brian Troha]
+
+Fixed a number of issues in the HD6309 core. [Darren Atkinson]
+
+Sync with AGEMAME: [James Wallace]
+ * removed the 'lamps.c' module from the source tree
+ * cleaned up names in the BFM BD1 driver
+ * moved VFD drawing functions out of the video update
+ * overhauled the sound system in the MPU4 driver
+
+Changed windows builds so that all tools use the utf8_main entry
+point consistently. [Aaron Giles]
+
+
+
+New games added or promoted from NOT_WORKING status
+---------------------------------------------------
+Dancing Stage Euro Mix 2 [smf]
+
+
+
+New clones added
+----------------
+Maximum Force (No Gore version) [Brian Troha]
+
+
+
 0.117u3
 -------
 
@@ -432,4 +483,4 @@ Battle Garegga - Type 2 (Europe / USA / Japan / Asia) [Alex Jackson]
 New games marked as GAME_NOT_WORKING
 ------------------------------------
 Gals Panic (US, EXPRO-02 PCB) [David Haywood]
-Balloon & Balloon [Tomasz Slanina]
+Balloon & Balloon [Pierpaolo Prazzoli]
