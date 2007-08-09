@@ -2525,8 +2525,8 @@ static ADDRESS_MAP_START( mpu4_68k_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc00000, 0xc1ffff) AM_READWRITE(mpu4_vid_vidram_r, mpu4_vid_vidram_w)
 
 	/* comms with the MPU4 */
-    AM_RANGE(0xff8000, 0xff8001) AM_READWRITE(acia6850_1_stat_16_r, acia6850_1_ctrl_lsb_w)
-    AM_RANGE(0xff8002, 0xff8003) AM_READWRITE(acia6850_1_data_16_r, acia6850_1_data_lsb_w)
+    AM_RANGE(0xff8000, 0xff8001) AM_READWRITE(acia6850_1_stat_lsb_r, acia6850_1_ctrl_lsb_w)
+    AM_RANGE(0xff8002, 0xff8003) AM_READWRITE(acia6850_1_data_lsb_r, acia6850_1_data_lsb_w)
 
 	AM_RANGE(0xff9000, 0xff900f) AM_READ(  ptm6840_1_lsb_r)
 	AM_RANGE(0xff9000, 0xff900f) AM_WRITE( ptm6840_1_lsb_w)
@@ -2691,12 +2691,12 @@ static TILE_GET_INFO( get_bg_tile_info )
 	tileno = dealem_videoram[tile_index];
 	colour = dealem_videoram[tile_index];
 
-	SET_TILE_INFO(0,tileno,colour,0)
+	SET_TILE_INFO(0,tileno,colour,0);
 }
 
 VIDEO_START(dealem)
 {
-	dealem_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_TYPE_OPAQUE, 8, 8,32,32);
+	dealem_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_TYPE_PEN, 8, 8,32,32);
 }
 
 WRITE8_HANDLER( dealem_videoram_w )
