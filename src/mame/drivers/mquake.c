@@ -350,7 +350,7 @@ static MACHINE_RESET(mquake)
 static MACHINE_DRIVER_START( mquake )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 7159090)        /* 7.15909 Mhz (NTSC) */
+	MDRV_CPU_ADD(M68000, AMIGA_68000_NTSC_CLOCK)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(amiga_scanline_callback, 262)
 
@@ -437,7 +437,14 @@ DRIVER_INIT(mquake)
 	{
 		ANGUS_CHIP_RAM_MASK,
 		mquake_cia_0_porta_r, mquake_cia_0_portb_r,
-		mquake_cia_0_porta_w, mquake_cia_0_portb_w
+		mquake_cia_0_porta_w, mquake_cia_0_portb_w,
+		NULL, NULL,
+		NULL, NULL,
+		NULL, NULL, NULL,
+		NULL, NULL, NULL,
+		NULL, NULL,
+		NULL,
+		0
 	};
 	amiga_machine_config(&mquake_intf);
 
