@@ -294,6 +294,6 @@ $(WINOBJ)/%.res: $(WINSRC)/%.rc | $(OSPREBUILD)
 
 $(RESFILE): $(WINSRC)/mame.rc $(WINOBJ)/mamevers.rc
 
-$(WINOBJ)/mamevers.rc: $(VERINFO) $(SRC)\version.c
+$(WINOBJ)/mamevers.rc: $(VERINFO) $(SRC)/version.c
 	@echo Emitting $@...
-	@$(VERINFO) $(SRC)\version.c > $@
+	@$(VERINFO) $(SRC)/version.c > $@

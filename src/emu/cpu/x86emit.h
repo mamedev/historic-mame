@@ -200,10 +200,10 @@
 
 
 /* floating point rounding modes */
-#define FPRND_NEAR	0
-#define FPRND_DOWN	1
-#define FPRND_UP	2
-#define FPRND_CHOP	3
+#define FPRND_NEAR				0
+#define FPRND_DOWN				1
+#define FPRND_UP				2
+#define FPRND_CHOP				3
 
 
 /* opcode flags (in upper 8 bits of opcode) */
@@ -925,6 +925,80 @@
 #define OP_PADDD_Vdq_Wdq		0x660ffe
 
 
+/* floating point opcodes */
+#define OP_FADD_ST0_STn			0xd8c0
+#define OP_FMUL_ST0_STn			0xd8c8
+#define OP_FCOM_ST0_STn			0xd8d0
+#define OP_FCOMP_ST0_STn		0xd8d8
+#define OP_FSUB_ST0_STn			0xd8e0
+#define OP_FSUBR_ST0_STn		0xd8e8
+#define OP_FDIV_ST0_STn			0xd8f0
+#define OP_FDIVR_ST0_STn		0xd8f8
+#define OP_FLD_ST0_STn			0xd9c0
+#define OP_FXCH_ST0_STn			0xd9c8
+#define OP_FNOP					0xd9d0
+#define OP_FCHS					0xd9e0
+#define OP_FABS					0xd9e1
+#define OP_FTST					0xd9e4
+#define OP_FXAM					0xd9e5
+#define OP_FLD1					0xd9e8
+#define OP_FLDL2T				0xd9e9
+#define OP_FLDL2E				0xd9ea
+#define OP_FLDPI				0xd9eb
+#define OP_FLDLG2				0xd9ec
+#define OP_FLDLN2				0xd9ed
+#define OP_FLDZ					0xd9ee
+#define OP_F2XM1				0xd9f0
+#define OP_FYL2X				0xd9f1
+#define OP_FPTAN				0xd9f2
+#define OP_FPATAN				0xd9f3
+#define OP_FXTRACT				0xd9f4
+#define OP_FPREM1				0xd9f5
+#define OP_FDECSTP				0xd9f6
+#define OP_FINCSTP				0xd9f7
+#define OP_FPREM				0xd9f8
+#define OP_FYL2XP1				0xd9f9
+#define OP_FSQRT				0xd9fa
+#define OP_FSINCOS				0xd9fb
+#define OP_FRNDINT				0xd9fc
+#define OP_FSCALE				0xd9fd
+#define OP_FSIN					0xd9fe
+#define OP_FCOS					0xd9ff
+#define OP_FCMOVB_ST0_STn		0xdac0
+#define OP_FCMOVE_ST0_STn		0xdac8
+#define OP_FCMOVBE_ST0_STn		0xdad0
+#define OP_FCMOVU_ST0_STn		0xdad8
+#define OP_FUCOMPP				0xdae9
+#define OP_FCMOVNB_ST0_STn		0xdbc0
+#define OP_FCMOVNE_ST0_STn		0xdbc8
+#define OP_FCMOVNBE_ST0_STn		0xdbd0
+#define OP_FCMOVNU_ST0_STn		0xdbd8
+#define OP_FCLEX				0xdbe2
+#define OP_FINIT				0xdbe3
+#define OP_FUCOMI_ST0_STn		0xdbe8
+#define OP_FCOMI_ST0_STn		0xdbf0
+#define OP_FADD_STn_ST0			0xdcc0
+#define OP_FMUL_STn_ST0			0xdcc8
+#define OP_FSUBR_STn_ST0		0xdce0
+#define OP_FSUB_STn_ST0			0xdce8
+#define OP_FDIVR_STn_ST0		0xdcf0
+#define OP_FDIV_STn_ST0			0xdcf8
+#define OP_FFREE_STn			0xddc0
+#define OP_FST_STn				0xddd0
+#define OP_FSTP_STn				0xddd8
+#define OP_FUCOM_STn_ST0		0xdde0
+#define OP_FUCOMP_STn			0xdde8
+#define OP_FADDP_STn_ST0		0xdec0
+#define OP_FMULP_STn_ST0		0xdec8
+#define OP_FCOMPP				0xded9
+#define OP_FSUBRP_STn_ST0		0xdee0
+#define OP_FSUBP_STn_ST0		0xdee8
+#define OP_FDIVRP_STn_ST0		0xdef0
+#define OP_FDIVP_STn_ST0		0xdef8
+#define OP_FSTSW_AX				0xdfe0
+#define OP_FCOMIP_ST0_STn		0xdff0
+
+
 
 /***************************************************************************
     TYPE DEFINITIONS
@@ -1094,7 +1168,7 @@ INLINE void emit_op_modrm_mem(x86code **emitptr, UINT32 op, UINT8 op64, UINT8 re
 	if (base == REG_NONE && index == REG_NONE)
 	{
 #ifndef PTR64
-		emit_op(emitptr, op, op64, reg, 0, rm);
+		emit_op(emitptr, op, op64, reg, 0, 5);
 		emit_byte(emitptr, make_modrm(0, reg, 5));
 		emit_dword(emitptr, disp);
 #else
@@ -4248,6 +4322,430 @@ INLINE void emit_setcc_m8bisd(x86code **emitptr, UINT8 condition, UINT8 base, UI
 
 
 /***************************************************************************
+    FPU EMITTERS
+***************************************************************************/
+
+#ifndef PTR64
+INLINE void emit_fp_simple(x86code **emitptr, UINT8 op)
+{
+	emit_op_simple(emitptr, op, OP_32BIT);
+}
+
+INLINE void emit_fp_reg(x86code **emitptr, UINT8 op, UINT8 reg)
+{
+	emit_op_simple(emitptr, op + reg, OP_32BIT);
+}
+
+INLINE void emit_fp_modrm(x86code **emitptr, UINT32 op, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
+{
+	emit_op_modrm_mem(emitptr, op, OP_32BIT, dreg, base, index, scale, disp);
+}
+
+
+
+/***************************************************************************
+    SIMPLE FPU EMITTERS
+***************************************************************************/
+
+#define emit_fnop(e)									emit_fp_simple(e, OP_FNOP)
+#define emit_fchs(e)									emit_fp_simple(e, OP_FCHS)
+#define emit_fabs(e)									emit_fp_simple(e, OP_FABS)
+#define emit_ftst(e)									emit_fp_simple(e, OP_FTST)
+#define emit_fxam(e)									emit_fp_simple(e, OP_FXAM)
+#define emit_fld1(e)									emit_fp_simple(e, OP_FLD1)
+#define emit_fldl2t(e)									emit_fp_simple(e, OP_FLDL2T)
+#define emit_fldl2e(e)									emit_fp_simple(e, OP_FLDL2E)
+#define emit_fldpi(e)									emit_fp_simple(e, OP_FLDPI)
+#define emit_fldlg2(e)									emit_fp_simple(e, OP_FLDLG2)
+#define emit_fldln2(e)									emit_fp_simple(e, OP_FLDLN2)
+#define emit_fldz(e)									emit_fp_simple(e, OP_FLDZ)
+#define emit_f2xm1(e)									emit_fp_simple(e, OP_F2XM1)
+#define emit_fyl2x(e)									emit_fp_simple(e, OP_FYL2X)
+#define emit_fptan(e)									emit_fp_simple(e, OP_FPTAN)
+#define emit_fpatan(e)									emit_fp_simple(e, OP_FPATAN)
+#define emit_fxtract(e)									emit_fp_simple(e, OP_FXTRACT)
+#define emit_fprem1(e)									emit_fp_simple(e, OP_FPREM1)
+#define emit_fdecstp(e)									emit_fp_simple(e, OP_FDECSTP)
+#define emit_fincstp(e)									emit_fp_simple(e, OP_FINCSTP)
+#define emit_fprem(e)									emit_fp_simple(e, OP_FPREM)
+#define emit_fyl2xp1(e)									emit_fp_simple(e, OP_FYl2XP1)
+#define emit_fsqrt(e)									emit_fp_simple(e, OP_FSQRT)
+#define emit_fsincos(e)									emit_fp_simple(e, OP_FSINCOS)
+#define emit_frndint(e)									emit_fp_simple(e, OP_FRNDINT)
+#define emit_fscale(e)									emit_fp_simple(e, OP_FSCALE)
+#define emit_fsin(e)									emit_fp_simple(e, OP_FSIN)
+#define emit_fcos(e)									emit_fp_simple(e, OP_FCOS)
+#define emit_fucompp(e)									emit_fp_simple(e, OP_FUCOMPP)
+#define emit_fclex(e)									emit_fp_simple(e, OP_FCLEX)
+#define emit_finit(e)									emit_fp_simple(e, OP_FINIT)
+#define emit_fcompp(e)									emit_fp_simple(e, OP_FCOMPP)
+#define emit_fstsw_ax(e)								emit_fp_simple(e, OP_FSTSW_AX)
+
+
+
+/***************************************************************************
+    REGISTER-BASED FPU EMITTERS
+***************************************************************************/
+
+#define emit_ffree_stn(e, reg)							emit_fp_reg(e, OP_FFREE_STn, reg)
+#define emit_fst_stn(e, reg)							emit_fp_reg(e, OP_FST_STn, reg)
+#define emit_fstp_stn(e, reg)							emit_fp_reg(e, OP_FSTP_STn, reg)
+#define emit_fucomp_stn(e, reg)							emit_fp_reg(e, OP_FUCOMP_STn, reg)
+
+#define emit_fadd_st0_stn(e, reg)						emit_fp_reg(e, OP_FADD_ST0_STn, reg)
+#define emit_fmul_st0_stn(e, reg)						emit_fp_reg(e, OP_FMUL_ST0_STn, reg)
+#define emit_fcom_st0_stn(e, reg)						emit_fp_reg(e, OP_FCOM_ST0_STn, reg)
+#define emit_fcomp_st0_stn(e, reg)						emit_fp_reg(e, OP_FCOMP_ST0_STn, reg)
+#define emit_fsub_st0_stn(e, reg)						emit_fp_reg(e, OP_FSUB_ST0_STn, reg)
+#define emit_fsubr_st0_stn(e, reg)						emit_fp_reg(e, OP_FSUBR_ST0_STn, reg)
+#define emit_fdiv_st0_stn(e, reg)						emit_fp_reg(e, OP_FDIV_ST0_STn, reg)
+#define emit_fdivr_st0_stn(e, reg)						emit_fp_reg(e, OP_FDIVR_ST0_STn, reg)
+#define emit_fld_st0_stn(e, reg)						emit_fp_reg(e, OP_FLD_ST0_STn, reg)
+#define emit_fxch_st0_stn(e, reg)						emit_fp_reg(e, OP_FXCH_ST0_STn, reg)
+#define emit_fcmovb_st0_stn(e, reg)						emit_fp_reg(e, OP_FCMOVB_ST0_STn, reg)
+#define emit_fcmove_st0_stn(e, reg)						emit_fp_reg(e, OP_FCMOVE_ST0_STn, reg)
+#define emit_fcmovbe_st0_stn(e, reg)					emit_fp_reg(e, OP_FCMOVBE_ST0_STn, reg)
+#define emit_fcmovu_st0_stn(e, reg)						emit_fp_reg(e, OP_FCMOVU_ST0_STn, reg)
+#define emit_fcmovnb_st0_stn(e, reg)					emit_fp_reg(e, OP_FCMOVNB_ST0_STn, reg)
+#define emit_fcmovne_st0_stn(e, reg)					emit_fp_reg(e, OP_FCMOVNE_ST0_STn, reg)
+#define emit_fcmovnbe_st0_stn(e, reg)					emit_fp_reg(e, OP_FCMOVNBE_ST0_STn, reg)
+#define emit_fcmovnu_st0_stn(e, reg)					emit_fp_reg(e, OP_FCMOVNU_ST0_STn, reg)
+#define emit_fucomi_st0_stn(e, reg)						emit_fp_reg(e, OP_FUCOMI_ST0_STn, reg)
+#define emit_fcomi_st0_stn(e, reg)						emit_fp_reg(e, OP_FCOMI_ST0_STn, reg)
+#define emit_fcomip_st0_stn(e, reg)						emit_fp_reg(e, OP_FCOMIP_ST0_STn, reg)
+
+#define emit_fadd_stn_st0(e, reg)						emit_fp_reg(e, OP_FADD_STn_ST0, reg)
+#define emit_fmul_stn_st0(e, reg)						emit_fp_reg(e, OP_FMUL_STn_ST0, reg)
+#define emit_fsubr_stn_st0(e, reg)						emit_fp_reg(e, OP_FSUBR_STn_ST0, reg)
+#define emit_fsub_stn_st0(e, reg)						emit_fp_reg(e, OP_FSUB_STn_ST0, reg)
+#define emit_fdivr_stn_st0(e, reg)						emit_fp_reg(e, OP_FDIVR_STn_ST0, reg)
+#define emit_fdiv_stn_st0(e, reg)						emit_fp_reg(e, OP_FDIV_STn_ST0, reg)
+#define emit_fucom_stn_st0(e, reg)						emit_fp_reg(e, OP_FUCOM_STn_ST0, reg)
+#define emit_faddp_stn_st0(e, reg)						emit_fp_reg(e, OP_FADDP_STn_ST0, reg)
+#define emit_fmulp_stn_st0(e, reg)						emit_fp_reg(e, OP_FMULP_STn_ST0, reg)
+#define emit_fsubrp_stn_st0(e, reg)						emit_fp_reg(e, OP_FSUBRP_STn_ST0, reg)
+#define emit_fsubp_stn_st0(e, reg)						emit_fp_reg(e, OP_FSUBP_STn_ST0, reg)
+#define emit_fdivrp_stn_st0(e, reg)						emit_fp_reg(e, OP_FDIVRP_STn_ST0, reg)
+#define emit_fdivp_stn_st0(e, reg)						emit_fp_reg(e, OP_FDIVP_STn_ST0, reg)
+
+
+
+/***************************************************************************
+    MEMORY FPU EMITTERS
+***************************************************************************/
+
+#define emit_fadd_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fadd_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 0, (base),   REG_NONE, 1,       (disp))
+#define emit_fadd_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D8, 0, REG_NONE, (index),  (scale), (disp))
+#define emit_fadd_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 0, (base),   (index),  (scale), (disp))
+
+#define emit_fmul_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 1, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fmul_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 1, (base),   REG_NONE, 1,       (disp))
+#define emit_fmul_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D8, 1, REG_NONE, (index),  (scale), (disp))
+#define emit_fmul_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 1, (base),   (index),  (scale), (disp))
+
+#define emit_fcom_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fcom_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 2, (base),   REG_NONE, 1,       (disp))
+#define emit_fcom_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D8, 2, REG_NONE, (index),  (scale), (disp))
+#define emit_fcom_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 2, (base),   (index),  (scale), (disp))
+
+#define emit_fcomp_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fcomp_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 3, (base),   REG_NONE, 1,       (disp))
+#define emit_fcomp_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_D8, 3, REG_NONE, (index),  (scale), (disp))
+#define emit_fcomp_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 3, (base),   (index),  (scale), (disp))
+
+#define emit_fsub_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 4, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fsub_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 4, (base),   REG_NONE, 1,       (disp))
+#define emit_fsub_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D8, 4, REG_NONE, (index),  (scale), (disp))
+#define emit_fsub_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 4, (base),   (index),  (scale), (disp))
+
+#define emit_fsubr_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 5, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fsubr_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 5, (base),   REG_NONE, 1,       (disp))
+#define emit_fsubr_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_D8, 5, REG_NONE, (index),  (scale), (disp))
+#define emit_fsubr_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 5, (base),   (index),  (scale), (disp))
+
+#define emit_fdiv_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 6, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fdiv_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 6, (base),   REG_NONE, 1,       (disp))
+#define emit_fdiv_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D8, 6, REG_NONE, (index),  (scale), (disp))
+#define emit_fdiv_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 6, (base),   (index),  (scale), (disp))
+
+#define emit_fdivr_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fdivr_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 7, (base),   REG_NONE, 1,       (disp))
+#define emit_fdivr_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_D8, 7, REG_NONE, (index),  (scale), (disp))
+#define emit_fdivr_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 7, (base),   (index),  (scale), (disp))
+
+
+#define emit_fld_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D9, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fld_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D9, 0, (base),   REG_NONE, 1,       (disp))
+#define emit_fld_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D9, 0, REG_NONE, (index),  (scale), (disp))
+#define emit_fld_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D9, 0, (base),   (index),  (scale), (disp))
+
+#define emit_fst_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D9, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fst_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D9, 2, (base),   REG_NONE, 1,       (disp))
+#define emit_fst_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D9, 2, REG_NONE, (index),  (scale), (disp))
+#define emit_fst_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D9, 2, (base),   (index),  (scale), (disp))
+
+#define emit_fstp_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D9, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fstp_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D9, 3, (base),   REG_NONE, 1,       (disp))
+#define emit_fstp_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D9, 3, REG_NONE, (index),  (scale), (disp))
+#define emit_fstp_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D9, 3, (base),   (index),  (scale), (disp))
+
+#define emit_fldenv_mabs(e, addr)							emit_fp_modrm(e, OP_ESC_D9, 4, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fldenv_mbd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D9, 4, (base),   REG_NONE, 1,       (disp))
+#define emit_fldenv_misd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D9, 4, REG_NONE, (index),  (scale), (disp))
+#define emit_fldenv_mbisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D9, 4, (base),   (index),  (scale), (disp))
+
+#define emit_fldcw_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_D9, 5, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fldcw_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D9, 5, (base),   REG_NONE, 1,       (disp))
+#define emit_fldcw_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_D9, 5, REG_NONE, (index),  (scale), (disp))
+#define emit_fldcw_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D9, 5, (base),   (index),  (scale), (disp))
+
+#define emit_fstenv_mabs(e, addr)							emit_fp_modrm(e, OP_ESC_D9, 6, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fstenv_mbd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D9, 6, (base),   REG_NONE, 1,       (disp))
+#define emit_fstenv_misd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D9, 6, REG_NONE, (index),  (scale), (disp))
+#define emit_fstenv_mbisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D9, 6, (base),   (index),  (scale), (disp))
+
+#define emit_fstcw_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_D9, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fstcw_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D9, 7, (base),   REG_NONE, 1,       (disp))
+#define emit_fstcw_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_D9, 7, REG_NONE, (index),  (scale), (disp))
+#define emit_fstcw_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D9, 7, (base),   (index),  (scale), (disp))
+
+
+#define emit_fiadd_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fiadd_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DA, 0, (base),   REG_NONE, 1,       (disp))
+#define emit_fiadd_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 0, REG_NONE, (index),  (scale), (disp))
+#define emit_fiadd_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DA, 0, (base),   (index),  (scale), (disp))
+
+#define emit_fimul_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 1, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fimul_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DA, 1, (base),   REG_NONE, 1,       (disp))
+#define emit_fimul_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 1, REG_NONE, (index),  (scale), (disp))
+#define emit_fimul_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DA, 1, (base),   (index),  (scale), (disp))
+
+#define emit_ficom_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_ficom_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DA, 2, (base),   REG_NONE, 1,       (disp))
+#define emit_ficom_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 2, REG_NONE, (index),  (scale), (disp))
+#define emit_ficom_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DA, 2, (base),   (index),  (scale), (disp))
+
+#define emit_ficomp_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_ficomp_m32bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DA, 3, (base),   REG_NONE, 1,       (disp))
+#define emit_ficomp_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 3, REG_NONE, (index),  (scale), (disp))
+#define emit_ficomp_m32bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DA, 3, (base),   (index),  (scale), (disp))
+
+#define emit_fisub_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 4, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fisub_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DA, 4, (base),   REG_NONE, 1,       (disp))
+#define emit_fisub_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 4, REG_NONE, (index),  (scale), (disp))
+#define emit_fisub_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DA, 4, (base),   (index),  (scale), (disp))
+
+#define emit_fisubr_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 5, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fisubr_m32bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DA, 5, (base),   REG_NONE, 1,       (disp))
+#define emit_fisubr_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 5, REG_NONE, (index),  (scale), (disp))
+#define emit_fisubr_m32bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DA, 5, (base),   (index),  (scale), (disp))
+
+#define emit_fidiv_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 6, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fidiv_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DA, 6, (base),   REG_NONE, 1,       (disp))
+#define emit_fidiv_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 6, REG_NONE, (index),  (scale), (disp))
+#define emit_fidiv_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DA, 6, (base),   (index),  (scale), (disp))
+
+#define emit_fidivr_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fidivr_m32bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DA, 7, (base),   REG_NONE, 1,       (disp))
+#define emit_fidivr_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 7, REG_NONE, (index),  (scale), (disp))
+#define emit_fidivr_m32bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DA, 7, (base),   (index),  (scale), (disp))
+
+
+#define emit_fild_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DB, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fild_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DB, 0, (base),   REG_NONE, 1,       (disp))
+#define emit_fild_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DB, 0, REG_NONE, (index),  (scale), (disp))
+#define emit_fild_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DB, 0, (base),   (index),  (scale), (disp))
+
+#define emit_fisttp_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DB, 1, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fisttp_m32bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DB, 1, (base),   REG_NONE, 1,       (disp))
+#define emit_fisttp_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DB, 1, REG_NONE, (index),  (scale), (disp))
+#define emit_fisttp_m32bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DB, 1, (base),   (index),  (scale), (disp))
+
+#define emit_fist_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DB, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fist_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DB, 2, (base),   REG_NONE, 1,       (disp))
+#define emit_fist_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DB, 2, REG_NONE, (index),  (scale), (disp))
+#define emit_fist_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DB, 2, (base),   (index),  (scale), (disp))
+
+#define emit_fistp_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DB, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fistp_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DB, 3, (base),   REG_NONE, 1,       (disp))
+#define emit_fistp_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DB, 3, REG_NONE, (index),  (scale), (disp))
+#define emit_fistp_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DB, 3, (base),   (index),  (scale), (disp))
+
+#define emit_fld_m80abs(e, addr)							emit_fp_modrm(e, OP_ESC_DB, 5, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fld_m80bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DB, 5, (base),   REG_NONE, 1,       (disp))
+#define emit_fld_m80isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DB, 5, REG_NONE, (index),  (scale), (disp))
+#define emit_fld_m80bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DB, 5, (base),   (index),  (scale), (disp))
+
+#define emit_fstp_m80abs(e, addr)							emit_fp_modrm(e, OP_ESC_DB, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fstp_m80bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DB, 7, (base),   REG_NONE, 1,       (disp))
+#define emit_fstp_m80isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DB, 7, REG_NONE, (index),  (scale), (disp))
+#define emit_fstp_m80bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DB, 7, (base),   (index),  (scale), (disp))
+
+
+#define emit_fadd_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fadd_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 0, (base),   REG_NONE, 1,       (disp))
+#define emit_fadd_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DC, 0, REG_NONE, (index),  (scale), (disp))
+#define emit_fadd_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 0, (base),   (index),  (scale), (disp))
+
+#define emit_fmul_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 1, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fmul_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 1, (base),   REG_NONE, 1,       (disp))
+#define emit_fmul_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DC, 1, REG_NONE, (index),  (scale), (disp))
+#define emit_fmul_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 1, (base),   (index),  (scale), (disp))
+
+#define emit_fcom_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fcom_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 2, (base),   REG_NONE, 1,       (disp))
+#define emit_fcom_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DC, 2, REG_NONE, (index),  (scale), (disp))
+#define emit_fcom_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 2, (base),   (index),  (scale), (disp))
+
+#define emit_fcomp_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fcomp_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 3, (base),   REG_NONE, 1,       (disp))
+#define emit_fcomp_m64isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DC, 3, REG_NONE, (index),  (scale), (disp))
+#define emit_fcomp_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 3, (base),   (index),  (scale), (disp))
+
+#define emit_fsub_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 4, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fsub_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 4, (base),   REG_NONE, 1,       (disp))
+#define emit_fsub_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DC, 4, REG_NONE, (index),  (scale), (disp))
+#define emit_fsub_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 4, (base),   (index),  (scale), (disp))
+
+#define emit_fsubr_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 5, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fsubr_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 5, (base),   REG_NONE, 1,       (disp))
+#define emit_fsubr_m64isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DC, 5, REG_NONE, (index),  (scale), (disp))
+#define emit_fsubr_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 5, (base),   (index),  (scale), (disp))
+
+#define emit_fdiv_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 6, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fdiv_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 6, (base),   REG_NONE, 1,       (disp))
+#define emit_fdiv_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DC, 6, REG_NONE, (index),  (scale), (disp))
+#define emit_fdiv_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 6, (base),   (index),  (scale), (disp))
+
+#define emit_fdivr_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fdivr_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 7, (base),   REG_NONE, 1,       (disp))
+#define emit_fdivr_m64isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DC, 7, REG_NONE, (index),  (scale), (disp))
+#define emit_fdivr_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 7, (base),   (index),  (scale), (disp))
+
+
+#define emit_fld_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DD, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fld_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DD, 0, (base),   REG_NONE, 1,       (disp))
+#define emit_fld_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DD, 0, REG_NONE, (index),  (scale), (disp))
+#define emit_fld_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DD, 0, (base),   (index),  (scale), (disp))
+
+#define emit_fisttp_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DD, 1, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fisttp_m64bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DD, 1, (base),   REG_NONE, 1,       (disp))
+#define emit_fisttp_m64isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DD, 1, REG_NONE, (index),  (scale), (disp))
+#define emit_fisttp_m64bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DD, 1, (base),   (index),  (scale), (disp))
+
+#define emit_fst_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DD, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fst_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DD, 2, (base),   REG_NONE, 1,       (disp))
+#define emit_fst_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DD, 2, REG_NONE, (index),  (scale), (disp))
+#define emit_fst_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DD, 2, (base),   (index),  (scale), (disp))
+
+#define emit_fstp_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DD, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fstp_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DD, 3, (base),   REG_NONE, 1,       (disp))
+#define emit_fstp_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DD, 3, REG_NONE, (index),  (scale), (disp))
+#define emit_fstp_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DD, 3, (base),   (index),  (scale), (disp))
+
+#define emit_frstor_mabs(e, addr)							emit_fp_modrm(e, OP_ESC_DD, 4, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_frstor_mbd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DD, 4, (base),   REG_NONE, 1,       (disp))
+#define emit_frstor_misd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DD, 4, REG_NONE, (index),  (scale), (disp))
+#define emit_frstor_mbisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DD, 4, (base),   (index),  (scale), (disp))
+
+#define emit_fsave_mabs(e, addr)							emit_fp_modrm(e, OP_ESC_DD, 6, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fsave_mbd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DD, 6, (base),   REG_NONE, 1,       (disp))
+#define emit_fsave_misd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DD, 6, REG_NONE, (index),  (scale), (disp))
+#define emit_fsave_mbisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DD, 6, (base),   (index),  (scale), (disp))
+
+#define emit_fstsw_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DD, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fstsw_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DD, 7, (base),   REG_NONE, 1,       (disp))
+#define emit_fstsw_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DD, 7, REG_NONE, (index),  (scale), (disp))
+#define emit_fstsw_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DD, 7, (base),   (index),  (scale), (disp))
+
+
+#define emit_fiadd_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fiadd_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DE, 0, (base),   REG_NONE, 1,       (disp))
+#define emit_fiadd_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 0, REG_NONE, (index),  (scale), (disp))
+#define emit_fiadd_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DE, 0, (base),   (index),  (scale), (disp))
+
+#define emit_fimul_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 1, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fimul_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DE, 1, (base),   REG_NONE, 1,       (disp))
+#define emit_fimul_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 1, REG_NONE, (index),  (scale), (disp))
+#define emit_fimul_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DE, 1, (base),   (index),  (scale), (disp))
+
+#define emit_ficom_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_ficom_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DE, 2, (base),   REG_NONE, 1,       (disp))
+#define emit_ficom_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 2, REG_NONE, (index),  (scale), (disp))
+#define emit_ficom_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DE, 2, (base),   (index),  (scale), (disp))
+
+#define emit_ficomp_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_ficomp_m16bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DE, 3, (base),   REG_NONE, 1,       (disp))
+#define emit_ficomp_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 3, REG_NONE, (index),  (scale), (disp))
+#define emit_ficomp_m16bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DE, 3, (base),   (index),  (scale), (disp))
+
+#define emit_fisub_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 4, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fisub_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DE, 4, (base),   REG_NONE, 1,       (disp))
+#define emit_fisub_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 4, REG_NONE, (index),  (scale), (disp))
+#define emit_fisub_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DE, 4, (base),   (index),  (scale), (disp))
+
+#define emit_fisubr_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 5, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fisubr_m16bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DE, 5, (base),   REG_NONE, 1,       (disp))
+#define emit_fisubr_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 5, REG_NONE, (index),  (scale), (disp))
+#define emit_fisubr_m16bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DE, 5, (base),   (index),  (scale), (disp))
+
+#define emit_fidiv_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 6, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fidiv_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DE, 6, (base),   REG_NONE, 1,       (disp))
+#define emit_fidiv_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 6, REG_NONE, (index),  (scale), (disp))
+#define emit_fidiv_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DE, 6, (base),   (index),  (scale), (disp))
+
+#define emit_fidivr_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fidivr_m16bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DE, 7, (base),   REG_NONE, 1,       (disp))
+#define emit_fidivr_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 7, REG_NONE, (index),  (scale), (disp))
+#define emit_fidivr_m16bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DE, 7, (base),   (index),  (scale), (disp))
+
+
+#define emit_fild_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fild_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DF, 0, (base),   REG_NONE, 1,       (disp))
+#define emit_fild_m16isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DF, 0, REG_NONE, (index),  (scale), (disp))
+#define emit_fild_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DF, 0, (base),   (index),  (scale), (disp))
+
+#define emit_fisttp_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 1, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fisttp_m16bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DF, 1, (base),   REG_NONE, 1,       (disp))
+#define emit_fisttp_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DF, 1, REG_NONE, (index),  (scale), (disp))
+#define emit_fisttp_m16bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DF, 1, (base),   (index),  (scale), (disp))
+
+#define emit_fist_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fist_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DF, 2, (base),   REG_NONE, 1,       (disp))
+#define emit_fist_m16isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DF, 2, REG_NONE, (index),  (scale), (disp))
+#define emit_fist_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DF, 2, (base),   (index),  (scale), (disp))
+
+#define emit_fistp_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fistp_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DF, 3, (base),   REG_NONE, 1,       (disp))
+#define emit_fistp_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DF, 3, REG_NONE, (index),  (scale), (disp))
+#define emit_fistp_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DF, 3, (base),   (index),  (scale), (disp))
+
+#define emit_fbld_m80abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 4, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fbld_m80bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DF, 4, (base),   REG_NONE, 1,       (disp))
+#define emit_fbld_m80isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DF, 4, REG_NONE, (index),  (scale), (disp))
+#define emit_fbld_m80bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DF, 4, (base),   (index),  (scale), (disp))
+
+#define emit_fild_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 5, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fild_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DF, 5, (base),   REG_NONE, 1,       (disp))
+#define emit_fild_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DF, 5, REG_NONE, (index),  (scale), (disp))
+#define emit_fild_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DF, 5, (base),   (index),  (scale), (disp))
+
+#define emit_fbstp_m80abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 6, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fbstp_m80bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DF, 6, (base),   REG_NONE, 1,       (disp))
+#define emit_fbstp_m80isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DF, 6, REG_NONE, (index),  (scale), (disp))
+#define emit_fbstp_m80bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DF, 6, (base),   (index),  (scale), (disp))
+
+#define emit_fistp_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_fistp_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DF, 7, (base),   REG_NONE, 1,       (disp))
+#define emit_fistp_m64isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DF, 7, REG_NONE, (index),  (scale), (disp))
+#define emit_fistp_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DF, 7, (base),   (index),  (scale), (disp))
+
+#endif
+
+
+
+/***************************************************************************
     GROUP16 EMITTERS
 ***************************************************************************/
 
@@ -4310,99 +4808,117 @@ INLINE void emit_sse_r128_mbisd_rex(x86code **emitptr, UINT32 op, UINT8 dreg, UI
     SSE SCALAR SINGLE EMITTERS
 ***************************************************************************/
 
-#define emit_movss_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_MOVSS_Vss_Wss, dreg, sreg)
-#define emit_movss_r128_m32abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_MOVSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movss_r128_m32bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_MOVSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movss_r128_m32isd(e, dreg, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MOVSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movss_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MOVSS_Vss_Wss, dreg, sreg)
+#define emit_movss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MOVSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_movss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MOVSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_movss_r128_m32isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_MOVSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MOVSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_movss_m32abs_r128(e, addr, sreg)					emit_sse_r128_mbisd(e, OP_MOVSS_Wss_Vss, sreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movss_m32bd_r128(e, base, disp, sreg)				emit_sse_r128_mbisd(e, OP_MOVSS_Wss_Vss, sreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movss_m32isd_r128(e, index, scale, disp, sreg)		emit_sse_r128_mbisd(e, OP_MOVSS_Wss_Vss, sreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movss_m32abs_r128(e, addr, sreg)							emit_sse_r128_mbisd(e, OP_MOVSS_Wss_Vss, sreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_movss_m32bd_r128(e, base, disp, sreg)						emit_sse_r128_mbisd(e, OP_MOVSS_Wss_Vss, sreg, (base),   REG_NONE, 1,       (disp))
+#define emit_movss_m32isd_r128(e, index, scale, disp, sreg)				emit_sse_r128_mbisd(e, OP_MOVSS_Wss_Vss, sreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movss_m32bisd_r128(e, base, index, scale, disp, sreg)		emit_sse_r128_mbisd(e, OP_MOVSS_Wss_Vss, sreg, (base),   (index),  (scale), (disp))
 
-#define emit_addss_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_ADDSS_Vss_Wss, dreg, sreg)
-#define emit_addss_r128_m32abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_ADDSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_addss_r128_m32bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_ADDSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_addss_r128_m32isd(e, dreg, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ADDSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_addss_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ADDSS_Vss_Wss, dreg, sreg)
+#define emit_addss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ADDSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_addss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ADDSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_addss_r128_m32isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_ADDSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_addss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ADDSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_subss_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_SUBSS_Vss_Wss, dreg, sreg)
-#define emit_subss_r128_m32abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_SUBSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_subss_r128_m32bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_SUBSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_subss_r128_m32isd(e, dreg, index, scale, disp)		emit_sse_r128_mbisd(e, OP_SUBSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_subss_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_SUBSS_Vss_Wss, dreg, sreg)
+#define emit_subss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SUBSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_subss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_SUBSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_subss_r128_m32isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_SUBSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_subss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_SUBSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_mulss_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_MULSS_Vss_Wss, dreg, sreg)
-#define emit_mulss_r128_m32abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_MULSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mulss_r128_m32bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_MULSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_mulss_r128_m32isd(e, dreg, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MULSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_mulss_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MULSS_Vss_Wss, dreg, sreg)
+#define emit_mulss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MULSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_mulss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MULSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_mulss_r128_m32isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_MULSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_mulss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MULSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_divss_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_DIVSS_Vss_Wss, dreg, sreg)
-#define emit_divss_r128_m32abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_DIVSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_divss_r128_m32bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_DIVSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_divss_r128_m32isd(e, dreg, index, scale, disp)		emit_sse_r128_mbisd(e, OP_DIVSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_divss_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_DIVSS_Vss_Wss, dreg, sreg)
+#define emit_divss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_DIVSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_divss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_DIVSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_divss_r128_m32isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_DIVSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_divss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_DIVSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_rcpss_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_RCPSS_Vss_Wss, dreg, sreg)
-#define emit_rcpss_r128_m32abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_RCPSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rcpss_r128_m32bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_RCPSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_rcpss_r128_m32isd(e, dreg, index, scale, disp)		emit_sse_r128_mbisd(e, OP_RCPSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_rcpss_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_RCPSS_Vss_Wss, dreg, sreg)
+#define emit_rcpss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_RCPSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_rcpss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_RCPSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_rcpss_r128_m32isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_RCPSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_rcpss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_RCPSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_sqrtss_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_SQRTSS_Vss_Wss, dreg, sreg)
-#define emit_sqrtss_r128_m32abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_SQRTSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sqrtss_r128_m32bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_SQRTSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sqrtss_r128_m32isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_SQRTSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_sqrtss_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_SQRTSS_Vss_Wss, dreg, sreg)
+#define emit_sqrtss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SQRTSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_sqrtss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_SQRTSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_sqrtss_r128_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_SQRTSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_sqrtss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_SQRTSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_rsqrtss_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_RSQRTSS_Vss_Wss, dreg, sreg)
-#define emit_rsqrtss_r128_m32abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_RSQRTSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rsqrtss_r128_m32bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_RSQRTSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_rsqrtss_r128_m32isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_RSQRTSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_rsqrtss_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_RSQRTSS_Vss_Wss, dreg, sreg)
+#define emit_rsqrtss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_RSQRTSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_rsqrtss_r128_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_RSQRTSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_rsqrtss_r128_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_RSQRTSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_rsqrtss_r128_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_RSQRTSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_comiss_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_COMISS_Vss_Wss, dreg, sreg)
-#define emit_comiss_r128_m32abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_COMISS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_comiss_r128_m32bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_COMISS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_comiss_r128_m32isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_COMISS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_comiss_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_COMISS_Vss_Wss, dreg, sreg)
+#define emit_comiss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_COMISS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_comiss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_COMISS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_comiss_r128_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_COMISS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_comiss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_COMISS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_ucomiss_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_UCOMISS_Vss_Wss, dreg, sreg)
-#define emit_ucomiss_r128_m32abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_UCOMISS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_ucomiss_r128_m32bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_UCOMISS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_ucomiss_r128_m32isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_UCOMISS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_ucomiss_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_UCOMISS_Vss_Wss, dreg, sreg)
+#define emit_ucomiss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_UCOMISS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_ucomiss_r128_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_UCOMISS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_ucomiss_r128_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_UCOMISS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_ucomiss_r128_m32bisd(e, dreg, base, index, scale, disp) 	emit_sse_r128_mbisd(e, OP_UCOMISS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_cvtsi2ss_r128_r32(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTSI2SS_Vss_Ed, dreg, sreg)
-#define emit_cvtsi2ss_r128_m32abs(e, dreg, addr)				emit_sse_r128_mbisd(e, OP_CVTSI2SS_Vss_Ed, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtsi2ss_r128_m32bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTSI2SS_Vss_Ed, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtsi2ss_r128_m32isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSI2SS_Vss_Ed, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtsi2ss_r128_r32(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTSI2SS_Vss_Ed, dreg, sreg)
+#define emit_cvtsi2ss_r128_m32abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTSI2SS_Vss_Ed, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtsi2ss_r128_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTSI2SS_Vss_Ed, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtsi2ss_r128_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTSI2SS_Vss_Ed, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtsi2ss_r128_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSI2SS_Vss_Ed, dreg, (base),   (index),  (scale), (disp))
 
 #ifdef PTR64
-#define emit_cvtsi2ss_r128_r64(e, dreg, sreg)					emit_sse_r128_r128_rex(e, OP_CVTSI2SS_Vss_Ed, dreg, sreg)
-#define emit_cvtsi2ss_r128_m64abs(e, dreg, addr)				emit_sse_r128_mbisd_rex(e, OP_CVTSI2SS_Vss_Ed, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtsi2ss_r128_m64bd(e, dreg, base, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTSI2SS_Vss_Ed, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtsi2ss_r128_m64isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTSI2SS_Vss_Ed, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtsi2ss_r128_r64(e, dreg, sreg)							emit_sse_r128_r128_rex(e, OP_CVTSI2SS_Vss_Ed, dreg, sreg)
+#define emit_cvtsi2ss_r128_m64abs(e, dreg, addr)						emit_sse_r128_mbisd_rex(e, OP_CVTSI2SS_Vss_Ed, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtsi2ss_r128_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd_rex(e, OP_CVTSI2SS_Vss_Ed, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtsi2ss_r128_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTSI2SS_Vss_Ed, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtsi2ss_r128_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTSI2SS_Vss_Ed, dreg, (base),   (index),  (scale), (disp))
 #endif
 
-#define emit_cvtsd2ss_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTSD2SS_Vss_Wsd, dreg, sreg)
-#define emit_cvtsd2ss_r128_m64abs(e, dreg, addr)				emit_sse_r128_mbisd(e, OP_CVTSD2SS_Vss_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtsd2ss_r128_m64bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTSD2SS_Vss_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtsd2ss_r128_m64isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSD2SS_Vss_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtsd2ss_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTSD2SS_Vss_Wsd, dreg, sreg)
+#define emit_cvtsd2ss_r128_m64abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTSD2SS_Vss_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtsd2ss_r128_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTSD2SS_Vss_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtsd2ss_r128_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTSD2SS_Vss_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtsd2ss_r128_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSD2SS_Vss_Wsd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_cvtss2si_r32_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTSS2SI_Gd_Wss, dreg, sreg)
-#define emit_cvtss2si_r32_m32abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_CVTSS2SI_Gd_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtss2si_r32_m32bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTSS2SI_Gd_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtss2si_r32_m32isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSS2SI_Gd_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtss2si_r32_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTSS2SI_Gd_Wss, dreg, sreg)
+#define emit_cvtss2si_r32_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_CVTSS2SI_Gd_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtss2si_r32_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTSS2SI_Gd_Wss, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtss2si_r32_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTSS2SI_Gd_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtss2si_r32_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSS2SI_Gd_Wss, dreg, (base),   (index),  (scale), (disp))
 
 #ifdef PTR64
-#define emit_cvtss2si_r64_r128(e, dreg, sreg)					emit_sse_r128_r128_rex(e, OP_CVTSS2SI_Gd_Wss, dreg, sreg)
-#define emit_cvtss2si_r64_m32abs(e, dreg, addr)					emit_sse_r128_mbisd_rex(e, OP_CVTSS2SI_Gd_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtss2si_r64_m32bd(e, dreg, base, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTSS2SI_Gd_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtss2si_r64_m32isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTSS2SI_Gd_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtss2si_r64_r128(e, dreg, sreg)							emit_sse_r128_r128_rex(e, OP_CVTSS2SI_Gd_Wss, dreg, sreg)
+#define emit_cvtss2si_r64_m32abs(e, dreg, addr)							emit_sse_r128_mbisd_rex(e, OP_CVTSS2SI_Gd_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtss2si_r64_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd_rex(e, OP_CVTSS2SI_Gd_Wss, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtss2si_r64_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTSS2SI_Gd_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtss2si_r64_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTSS2SI_Gd_Wss, dreg, (base),   (index),  (scale), (disp))
 #endif
 
-#define emit_cvttss2si_r32_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTTSS2SI_Gd_Wss, dreg, sreg)
-#define emit_cvttss2si_r32_m32abs(e, dreg, addr)				emit_sse_r128_mbisd(e, OP_CVTTSS2SI_Gd_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvttss2si_r32_m32bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTTSS2SI_Gd_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvttss2si_r32_m32isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTTSS2SI_Gd_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvttss2si_r32_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTTSS2SI_Gd_Wss, dreg, sreg)
+#define emit_cvttss2si_r32_m32abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTTSS2SI_Gd_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvttss2si_r32_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTTSS2SI_Gd_Wss, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvttss2si_r32_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTTSS2SI_Gd_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvttss2si_r32_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTTSS2SI_Gd_Wss, dreg, (base),   (index),  (scale), (disp))
 
 #ifdef PTR64
-#define emit_cvttss2si_r64_r128(e, dreg, sreg)					emit_sse_r128_r128_rex(e, OP_CVTTSS2SI_Gd_Wss, dreg, sreg)
-#define emit_cvttss2si_r64_m32abs(e, dreg, addr)				emit_sse_r128_mbisd_rex(e, OP_CVTTSS2SI_Gd_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvttss2si_r64_m32bd(e, dreg, base, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTTSS2SI_Gd_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvttss2si_r64_m32isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTTSS2SI_Gd_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvttss2si_r64_r128(e, dreg, sreg)							emit_sse_r128_r128_rex(e, OP_CVTTSS2SI_Gd_Wss, dreg, sreg)
+#define emit_cvttss2si_r64_m32abs(e, dreg, addr)						emit_sse_r128_mbisd_rex(e, OP_CVTTSS2SI_Gd_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvttss2si_r64_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd_rex(e, OP_CVTTSS2SI_Gd_Wss, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvttss2si_r64_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTTSS2SI_Gd_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvttss2si_r64_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTTSS2SI_Gd_Wss, dreg, (base),   (index),  (scale), (disp))
 #endif
 
 
@@ -4411,89 +4927,106 @@ INLINE void emit_sse_r128_mbisd_rex(x86code **emitptr, UINT32 op, UINT8 dreg, UI
     SSE PACKED SINGLE EMITTERS
 ***************************************************************************/
 
-#define emit_movps_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_MOVPS_Vps_Wps, dreg, sreg)
-#define emit_movps_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_MOVPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movps_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_MOVPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movps_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_MOVPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MOVPS_Vps_Wps, dreg, sreg)
+#define emit_movps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MOVPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_movps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MOVPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_movps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_MOVPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MOVPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_movps_m128abs_r128(e, addr, sreg)					emit_sse_r128_mbisd(e, OP_MOVPS_Wps_Vps, sreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movps_m128bd_r128(e, base, disp, sreg)				emit_sse_r128_mbisd(e, OP_MOVPS_Wps_Vps, sreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movps_m128isd_r128(e, index, scale, disp, sreg)	emit_sse_r128_mbisd(e, OP_MOVPS_Wps_Vps, sreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movps_m128abs_r128(e, addr, sreg)							emit_sse_r128_mbisd(e, OP_MOVPS_Wps_Vps, sreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_movps_m128bd_r128(e, base, disp, sreg)						emit_sse_r128_mbisd(e, OP_MOVPS_Wps_Vps, sreg, (base),   REG_NONE, 1,       (disp))
+#define emit_movps_m128isd_r128(e, index, scale, disp, sreg)			emit_sse_r128_mbisd(e, OP_MOVPS_Wps_Vps, sreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movps_m128bisd_r128(e, base, index, scale, disp, sreg)		emit_sse_r128_mbisd(e, OP_MOVPS_Wps_Vps, sreg, (base),   (index),  (scale), (disp))
 
-#define emit_addps_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_ADDPS_Vps_Wps, dreg, sreg)
-#define emit_addps_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_ADDPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_addps_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_ADDPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_addps_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_ADDPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_addps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ADDPS_Vps_Wps, dreg, sreg)
+#define emit_addps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ADDPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_addps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ADDPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_addps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_ADDPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_addps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ADDPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_subps_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_SUBPS_Vps_Wps, dreg, sreg)
-#define emit_subps_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_SUBPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_subps_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_SUBPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_subps_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_SUBPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_subps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_SUBPS_Vps_Wps, dreg, sreg)
+#define emit_subps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SUBPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_subps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_SUBPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_subps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_SUBPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_subps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_SUBPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_mulps_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_MULPS_Vps_Wps, dreg, sreg)
-#define emit_mulps_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_MULPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mulps_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_MULPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_mulps_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_MULPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_mulps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MULPS_Vps_Wps, dreg, sreg)
+#define emit_mulps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MULPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_mulps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MULPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_mulps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_MULPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_mulps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MULPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_divps_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_DIVPS_Vps_Wps, dreg, sreg)
-#define emit_divps_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_DIVPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_divps_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_DIVPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_divps_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_DIVPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_divps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_DIVPS_Vps_Wps, dreg, sreg)
+#define emit_divps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_DIVPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_divps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_DIVPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_divps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_DIVPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_divps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_DIVPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_rcpps_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_RCPPS_Vps_Wps, dreg, sreg)
-#define emit_rcpps_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_RCPPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rcpps_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_RCPPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_rcpps_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_RCPPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_rcpps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_RCPPS_Vps_Wps, dreg, sreg)
+#define emit_rcpps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_RCPPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_rcpps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_RCPPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_rcpps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_RCPPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_rcpps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_RCPPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_sqrtps_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_SQRTPS_Vps_Wps, dreg, sreg)
-#define emit_sqrtps_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_SQRTPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sqrtps_r128_m128bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_SQRTPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sqrtps_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_SQRTPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_sqrtps_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_SQRTPS_Vps_Wps, dreg, sreg)
+#define emit_sqrtps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SQRTPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_sqrtps_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_SQRTPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_sqrtps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_SQRTPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_sqrtps_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_SQRTPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_rsqrtps_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_RSQRTPS_Vps_Wps, dreg, sreg)
-#define emit_rsqrtps_r128_m128abs(e, dreg, addr)				emit_sse_r128_mbisd(e, OP_RSQRTPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rsqrtps_r128_m128bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_RSQRTPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_rsqrtps_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_RSQRTPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_rsqrtps_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_RSQRTPS_Vps_Wps, dreg, sreg)
+#define emit_rsqrtps_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_RSQRTPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_rsqrtps_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_RSQRTPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_rsqrtps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_RSQRTPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_rsqrtps_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_RSQRTPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_andps_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_ANDPS_Vps_Wps, dreg, sreg)
-#define emit_andps_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_ANDPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_andps_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_ANDPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_andps_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_ANDPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_andps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ANDPS_Vps_Wps, dreg, sreg)
+#define emit_andps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ANDPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_andps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ANDPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_andps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_ANDPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_andps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ANDPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_andnps_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_ANDNPS_Vps_Wps, dreg, sreg)
-#define emit_andnps_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_ANDNPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_andnps_r128_m128bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_ANDNPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_andnps_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_ANDNPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_andnps_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_ANDNPS_Vps_Wps, dreg, sreg)
+#define emit_andnps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ANDNPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_andnps_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_ANDNPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_andnps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_ANDNPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_andnps_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_ANDNPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_orps_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_ORPS_Vps_Wps, dreg, sreg)
-#define emit_orps_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_ORPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_orps_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_ORPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_orps_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_ORPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_orps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ORPS_Vps_Wps, dreg, sreg)
+#define emit_orps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ORPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_orps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ORPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_orps_r128_m128isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_ORPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_orps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ORPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_xorps_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_XORPS_Vps_Wps, dreg, sreg)
-#define emit_xorps_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_XORPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_xorps_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_XORPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_xorps_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_XORPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_xorps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_XORPS_Vps_Wps, dreg, sreg)
+#define emit_xorps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_XORPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_xorps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_XORPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_xorps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_XORPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_xorps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_XORPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_cvtdq2ps_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTDQ2PS_Vps_Wdq, dreg, sreg)
-#define emit_cvtdq2ps_r128_m128abs(e, dreg, addr)				emit_sse_r128_mbisd(e, OP_CVTDQ2PS_Vps_Wdq, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtdq2ps_r128_m128bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTDQ2PS_Vps_Wdq, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtdq2ps_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTDQ2PS_Vps_Wdq, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtdq2ps_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTDQ2PS_Vps_Wdq, dreg, sreg)
+#define emit_cvtdq2ps_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTDQ2PS_Vps_Wdq, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtdq2ps_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTDQ2PS_Vps_Wdq, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtdq2ps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTDQ2PS_Vps_Wdq, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtdq2ps_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTDQ2PS_Vps_Wdq, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_cvtpd2ps_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTPD2PS_Vps_Wpd, dreg, sreg)
-#define emit_cvtpd2ps_r128_m128abs(e, dreg, addr)				emit_sse_r128_mbisd(e, OP_CVTPD2PS_Vps_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtpd2ps_r128_m128bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTPD2PS_Vps_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtpd2ps_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTPD2PS_Vps_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtpd2ps_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTPD2PS_Vps_Wpd, dreg, sreg)
+#define emit_cvtpd2ps_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTPD2PS_Vps_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtpd2ps_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTPD2PS_Vps_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtpd2ps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTPD2PS_Vps_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtpd2ps_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTPD2PS_Vps_Wpd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_cvtps2dq_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTPS2DQ_Vdq_Wps, dreg, sreg)
-#define emit_cvtps2dq_r128_m128abs(e, dreg, addr)				emit_sse_r128_mbisd(e, OP_CVTPS2DQ_Vdq_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtps2dq_r128_m128bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTPS2DQ_Vdq_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtps2dq_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTPS2DQ_Vdq_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtps2dq_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTPS2DQ_Vdq_Wps, dreg, sreg)
+#define emit_cvtps2dq_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTPS2DQ_Vdq_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtps2dq_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTPS2DQ_Vdq_Wps, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtps2dq_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTPS2DQ_Vdq_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtps2dq_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTPS2DQ_Vdq_Wps, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_cvttps2dq_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTTPS2DQ_Vdq_Wps, dreg, sreg)
-#define emit_cvttps2dq_r128_m128abs(e, dreg, addr)				emit_sse_r128_mbisd(e, OP_CVTTPS2DQ_Vdq_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvttps2dq_r128_m128bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTTPS2DQ_Vdq_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvttps2dq_r128_m128isd(e, dreg, index, scale, disp) emit_sse_r128_mbisd(e, OP_CVTTPS2DQ_Vdq_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvttps2dq_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTTPS2DQ_Vdq_Wps, dreg, sreg)
+#define emit_cvttps2dq_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTTPS2DQ_Vdq_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvttps2dq_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTTPS2DQ_Vdq_Wps, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvttps2dq_r128_m128isd(e, dreg, index, scale, disp)		emit_sse_r128_mbisd(e, OP_CVTTPS2DQ_Vdq_Wps, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvttps2dq_r128_m128bisd(e, dreg, base, index, scale, disp) emit_sse_r128_mbisd(e, OP_CVTTPS2DQ_Vdq_Wps, dreg, (base),   (index),  (scale), (disp))
 
 
 
@@ -4501,89 +5034,105 @@ INLINE void emit_sse_r128_mbisd_rex(x86code **emitptr, UINT32 op, UINT8 dreg, UI
     SSE SCALAR DOUBLE EMITTERS
 ***************************************************************************/
 
-#define emit_movsd_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_MOVSD_Vsd_Wsd, dreg, sreg)
-#define emit_movsd_r128_m64abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_MOVSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movsd_r128_m64bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_MOVSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movsd_r128_m64isd(e, dreg, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MOVSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movsd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MOVSD_Vsd_Wsd, dreg, sreg)
+#define emit_movsd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MOVSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_movsd_r128_m64bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MOVSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_movsd_r128_m64isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_MOVSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movsd_r128_m64bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MOVSD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_movsd_m64abs_r128(e, addr, sreg)					emit_sse_r128_mbisd(e, OP_MOVSD_Wsd_Vsd, sreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movsd_m64bd_r128(e, base, disp, sreg)				emit_sse_r128_mbisd(e, OP_MOVSD_Wsd_Vsd, sreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movsd_m64isd_r128(e, index, scale, disp, sreg)		emit_sse_r128_mbisd(e, OP_MOVSD_Wsd_Vsd, sreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movsd_m64abs_r128(e, addr, sreg)							emit_sse_r128_mbisd(e, OP_MOVSD_Wsd_Vsd, sreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_movsd_m64bd_r128(e, base, disp, sreg)						emit_sse_r128_mbisd(e, OP_MOVSD_Wsd_Vsd, sreg, (base),   REG_NONE, 1,       (disp))
+#define emit_movsd_m64isd_r128(e, index, scale, disp, sreg)				emit_sse_r128_mbisd(e, OP_MOVSD_Wsd_Vsd, sreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movsd_m64bisd_r128(e, base, index, scale, disp, sreg)		emit_sse_r128_mbisd(e, OP_MOVSD_Wsd_Vsd, sreg, (base),   (index),  (scale), (disp))
 
-#define emit_addsd_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_ADDSD_Vsd_Wsd, dreg, sreg)
-#define emit_addsd_r128_m64abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_ADDSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_addsd_r128_m64bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_ADDSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_addsd_r128_m64isd(e, dreg, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ADDSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_addsd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ADDSD_Vsd_Wsd, dreg, sreg)
+#define emit_addsd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ADDSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_addsd_r128_m64bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ADDSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_addsd_r128_m64isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_ADDSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_addsd_r128_m64bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ADDSD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_subsd_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_SUBSD_Vsd_Wsd, dreg, sreg)
-#define emit_subsd_r128_m64abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_SUBSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_subsd_r128_m64bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_SUBSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_subsd_r128_m64isd(e, dreg, index, scale, disp)		emit_sse_r128_mbisd(e, OP_SUBSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_subsd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_SUBSD_Vsd_Wsd, dreg, sreg)
+#define emit_subsd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SUBSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_subsd_r128_m64bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_SUBSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_subsd_r128_m64isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_SUBSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_subsd_r128_m64bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_SUBSD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_mulsd_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_MULSD_Vsd_Wsd, dreg, sreg)
-#define emit_mulsd_r128_m64abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_MULSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mulsd_r128_m64bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_MULSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_mulsd_r128_m64isd(e, dreg, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MULSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_mulsd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MULSD_Vsd_Wsd, dreg, sreg)
+#define emit_mulsd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MULSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_mulsd_r128_m64bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MULSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_mulsd_r128_m64isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_MULSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_mulsd_r128_m64bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MULSD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_divsd_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_DIVSD_Vsd_Wsd, dreg, sreg)
-#define emit_divsd_r128_m64abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_DIVSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_divsd_r128_m64bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_DIVSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_divsd_r128_m64isd(e, dreg, index, scale, disp)		emit_sse_r128_mbisd(e, OP_DIVSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_divsd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_DIVSD_Vsd_Wsd, dreg, sreg)
+#define emit_divsd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_DIVSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_divsd_r128_m64bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_DIVSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_divsd_r128_m64isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_DIVSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_divsd_r128_m64bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_DIVSD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_sqrtsd_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_SQRTSD_Vsd_Wsd, dreg, sreg)
-#define emit_sqrtsd_r128_m64abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_SQRTSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sqrtsd_r128_m64bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_SQRTSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sqrtsd_r128_m64isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_SQRTSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_sqrtsd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_SQRTSD_Vsd_Wsd, dreg, sreg)
+#define emit_sqrtsd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SQRTSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_sqrtsd_r128_m64bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_SQRTSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_sqrtsd_r128_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_SQRTSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_sqrtsd_r128_m64bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_SQRTSD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_comisd_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_COMISD_Vsd_Wsd, dreg, sreg)
-#define emit_comisd_r128_m64abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_COMISD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_comisd_r128_m64bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_COMISD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_comisd_r128_m64isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_COMISD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_comisd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_COMISD_Vsd_Wsd, dreg, sreg)
+#define emit_comisd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_COMISD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_comisd_r128_m64bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_COMISD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_comisd_r128_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_COMISD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_comisd_r128_m64bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_COMISD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_ucomisd_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_UCOMISD_Vsd_Wsd, dreg, sreg)
-#define emit_ucomisd_r128_m64abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_UCOMISD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_ucomisd_r128_m64bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_UCOMISD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_ucomisd_r128_m64isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_UCOMISD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_ucomisd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_UCOMISD_Vsd_Wsd, dreg, sreg)
+#define emit_ucomisd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_UCOMISD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_ucomisd_r128_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_UCOMISD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_ucomisd_r128_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_UCOMISD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_ucomisd_r128_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_UCOMISD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_cvtsi2sd_r128_r32(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTSI2SD_Vsd_Ed, dreg, sreg)
-#define emit_cvtsi2sd_r128_m32abs(e, dreg, addr)				emit_sse_r128_mbisd(e, OP_CVTSI2SD_Vsd_Ed, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtsi2sd_r128_m32bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTSI2SD_Vsd_Ed, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtsi2sd_r128_m32isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSI2SD_Vsd_Ed, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtsi2sd_r128_r32(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTSI2SD_Vsd_Ed, dreg, sreg)
+#define emit_cvtsi2sd_r128_m32abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTSI2SD_Vsd_Ed, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtsi2sd_r128_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTSI2SD_Vsd_Ed, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtsi2sd_r128_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTSI2SD_Vsd_Ed, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtsi2sd_r128_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSI2SD_Vsd_Ed, dreg, (base),   (index),  (scale), (disp))
 
 #ifdef PTR64
-#define emit_cvtsi2sd_r128_r64(e, dreg, sreg)					emit_sse_r128_r128_rex(e, OP_CVTSI2SD_Vsd_Ed, dreg, sreg)
-#define emit_cvtsi2sd_r128_m64abs(e, dreg, addr)				emit_sse_r128_mbisd_rex(e, OP_CVTSI2SD_Vsd_Ed, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtsi2sd_r128_m64bd(e, dreg, base, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTSI2SD_Vsd_Ed, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtsi2sd_r128_m64isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTSI2SD_Vsd_Ed, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtsi2sd_r128_r64(e, dreg, sreg)							emit_sse_r128_r128_rex(e, OP_CVTSI2SD_Vsd_Ed, dreg, sreg)
+#define emit_cvtsi2sd_r128_m64abs(e, dreg, addr)						emit_sse_r128_mbisd_rex(e, OP_CVTSI2SD_Vsd_Ed, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtsi2sd_r128_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd_rex(e, OP_CVTSI2SD_Vsd_Ed, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtsi2sd_r128_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTSI2SD_Vsd_Ed, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtsi2sd_r128_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTSI2SD_Vsd_Ed, dreg, (base),   (index),  (scale), (disp))
 #endif
 
-#define emit_cvtss2sd_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTSS2SD_Vsd_Wss, dreg, sreg)
-#define emit_cvtss2sd_r128_m32abs(e, dreg, addr)				emit_sse_r128_mbisd(e, OP_CVTSS2SD_Vsd_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtss2sd_r128_m32bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTSS2SD_Vsd_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtss2sd_r128_m32isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSS2SD_Vsd_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtss2sd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTSS2SD_Vsd_Wss, dreg, sreg)
+#define emit_cvtss2sd_r128_m32abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTSS2SD_Vsd_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtss2sd_r128_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTSS2SD_Vsd_Wss, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtss2sd_r128_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTSS2SD_Vsd_Wss, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtss2sd_r128_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSS2SD_Vsd_Wss, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_cvtsd2si_r32_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTSD2SI_Gd_Wsd, dreg, sreg)
-#define emit_cvtsd2si_r32_m64abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_CVTSD2SI_Gd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtsd2si_r32_m64bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTSD2SI_Gd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtsd2si_r32_m64isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSD2SI_Gd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtsd2si_r32_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTSD2SI_Gd_Wsd, dreg, sreg)
+#define emit_cvtsd2si_r32_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_CVTSD2SI_Gd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtsd2si_r32_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTSD2SI_Gd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtsd2si_r32_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTSD2SI_Gd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtsd2si_r32_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSD2SI_Gd_Wsd, dreg, (base),   (index),  (scale), (disp))
 
 #ifdef PTR64
-#define emit_cvtsd2si_r64_r128(e, dreg, sreg)					emit_sse_r128_r128_rex(e, OP_CVTSD2SI_Gd_Wsd, dreg, sreg)
-#define emit_cvtsd2si_r64_m64abs(e, dreg, addr)					emit_sse_r128_mbisd_rex(e, OP_CVTSD2SI_Gd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtsd2si_r64_m64bd(e, dreg, base, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTSD2SI_Gd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtsd2si_r64_m64isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTSD2SI_Gd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtsd2si_r64_r128(e, dreg, sreg)							emit_sse_r128_r128_rex(e, OP_CVTSD2SI_Gd_Wsd, dreg, sreg)
+#define emit_cvtsd2si_r64_m64abs(e, dreg, addr)							emit_sse_r128_mbisd_rex(e, OP_CVTSD2SI_Gd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtsd2si_r64_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd_rex(e, OP_CVTSD2SI_Gd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtsd2si_r64_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTSD2SI_Gd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtsd2si_r64_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTSD2SI_Gd_Wsd, dreg, (base),   (index),  (scale), (disp))
 #endif
 
-#define emit_cvttsd2si_r32_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTTSD2SI_Gd_Wsd, dreg, sreg)
-#define emit_cvttsd2si_r32_m64abs(e, dreg, addr)				emit_sse_r128_mbisd(e, OP_CVTTSD2SI_Gd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvttsd2si_r32_m64bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTTSD2SI_Gd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvttsd2si_r32_m64isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTTSD2SI_Gd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvttsd2si_r32_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTTSD2SI_Gd_Wsd, dreg, sreg)
+#define emit_cvttsd2si_r32_m64abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTTSD2SI_Gd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvttsd2si_r32_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTTSD2SI_Gd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvttsd2si_r32_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTTSD2SI_Gd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvttsd2si_r32_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTTSD2SI_Gd_Wsd, dreg, (base),   (index),  (scale), (disp))
 
 #ifdef PTR64
-#define emit_cvttsd2si_r64_r128(e, dreg, sreg)					emit_sse_r128_r128_rex(e, OP_CVTTSD2SI_Gd_Wsd, dreg, sreg)
-#define emit_cvttsd2si_r64_m64abs(e, dreg, addr)				emit_sse_r128_mbisd_rex(e, OP_CVTTSD2SI_Gd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvttsd2si_r64_m64bd(e, dreg, base, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTTSD2SI_Gd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvttsd2si_r64_m64isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTTSD2SI_Gd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvttsd2si_r64_r128(e, dreg, sreg)							emit_sse_r128_r128_rex(e, OP_CVTTSD2SI_Gd_Wsd, dreg, sreg)
+#define emit_cvttsd2si_r64_m64abs(e, dreg, addr)						emit_sse_r128_mbisd_rex(e, OP_CVTTSD2SI_Gd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvttsd2si_r64_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd_rex(e, OP_CVTTSD2SI_Gd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvttsd2si_r64_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTTSD2SI_Gd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvttsd2si_r64_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTTSD2SI_Gd_Wsd, dreg, (base),   (index),  (scale), (disp))
 #endif
 
 
@@ -4592,76 +5141,91 @@ INLINE void emit_sse_r128_mbisd_rex(x86code **emitptr, UINT32 op, UINT8 dreg, UI
     SSE PACKED DOUBLE EMITTERS
 ***************************************************************************/
 
-#define emit_movpd_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_MOVPD_Vpd_Wpd, dreg, sreg)
-#define emit_movpd_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_MOVPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movpd_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_MOVPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movpd_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_MOVPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MOVPD_Vpd_Wpd, dreg, sreg)
+#define emit_movpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MOVPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_movpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MOVPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_movpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_MOVPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MOVPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_movpd_m128abs_r128(e, addr, sreg)					emit_sse_r128_mbisd(e, OP_MOVPD_Wpd_Vpd, sreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movpd_m128bd_r128(e, base, disp, sreg)				emit_sse_r128_mbisd(e, OP_MOVPD_Wpd_Vpd, sreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movpd_m128isd_r128(e, index, scale, disp, sreg)	emit_sse_r128_mbisd(e, OP_MOVPD_Wpd_Vpd, sreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movpd_m128abs_r128(e, addr, sreg)							emit_sse_r128_mbisd(e, OP_MOVPD_Wpd_Vpd, sreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_movpd_m128bd_r128(e, base, disp, sreg)						emit_sse_r128_mbisd(e, OP_MOVPD_Wpd_Vpd, sreg, (base),   REG_NONE, 1,       (disp))
+#define emit_movpd_m128isd_r128(e, index, scale, disp, sreg)			emit_sse_r128_mbisd(e, OP_MOVPD_Wpd_Vpd, sreg, REG_NONE, (index),  (scale), (disp))
+#define emit_movpd_m128bisd_r128(e, base, index, scale, disp, sreg)		emit_sse_r128_mbisd(e, OP_MOVPD_Wpd_Vpd, sreg, (base),   (index),  (scale), (disp))
 
-#define emit_addpd_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_ADDPD_Vpd_Wpd, dreg, sreg)
-#define emit_addpd_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_ADDPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_addpd_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_ADDPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_addpd_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_ADDPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_addpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ADDPD_Vpd_Wpd, dreg, sreg)
+#define emit_addpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ADDPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_addpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ADDPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_addpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_ADDPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_addpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ADDPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_subpd_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_SUBPD_Vpd_Wpd, dreg, sreg)
-#define emit_subpd_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_SUBPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_subpd_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_SUBPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_subpd_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_SUBPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_subpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_SUBPD_Vpd_Wpd, dreg, sreg)
+#define emit_subpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SUBPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_subpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_SUBPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_subpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_SUBPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_subpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_SUBPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_mulpd_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_MULPD_Vpd_Wpd, dreg, sreg)
-#define emit_mulpd_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_MULPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mulpd_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_MULPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_mulpd_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_MULPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_mulpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MULPD_Vpd_Wpd, dreg, sreg)
+#define emit_mulpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MULPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_mulpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MULPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_mulpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_MULPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_mulpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MULPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_divpd_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_DIVPD_Vpd_Wpd, dreg, sreg)
-#define emit_divpd_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_DIVPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_divpd_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_DIVPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_divpd_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_DIVPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_divpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_DIVPD_Vpd_Wpd, dreg, sreg)
+#define emit_divpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_DIVPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_divpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_DIVPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_divpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_DIVPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_divpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_DIVPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_sqrtpd_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_SQRTPD_Vpd_Wpd, dreg, sreg)
-#define emit_sqrtpd_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_SQRTPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sqrtpd_r128_m128bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_SQRTPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sqrtpd_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_SQRTPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_sqrtpd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_SQRTPD_Vpd_Wpd, dreg, sreg)
+#define emit_sqrtpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SQRTPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_sqrtpd_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_SQRTPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_sqrtpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_SQRTPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_sqrtpd_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_SQRTPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_andpd_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_ANDPD_Vpd_Wpd, dreg, sreg)
-#define emit_andpd_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_ANDPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_andpd_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_ANDPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_andpd_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_ANDPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_andpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ANDPD_Vpd_Wpd, dreg, sreg)
+#define emit_andpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ANDPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_andpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ANDPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_andpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_ANDPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_andpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ANDPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_andnpd_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_ANDNPD_Vpd_Wpd, dreg, sreg)
-#define emit_andnpd_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_ANDNPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_andnpd_r128_m128bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_ANDNPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_andnpd_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_ANDNPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_andnpd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_ANDNPD_Vpd_Wpd, dreg, sreg)
+#define emit_andnpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ANDNPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_andnpd_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_ANDNPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_andnpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_ANDNPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_andnpd_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_ANDNPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_orpd_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_ORPD_Vpd_Wpd, dreg, sreg)
-#define emit_orpd_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_ORPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_orpd_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_ORPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_orpd_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_ORPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_orpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ORPD_Vpd_Wpd, dreg, sreg)
+#define emit_orpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ORPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_orpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ORPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_orpd_r128_m128isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_ORPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_orpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ORPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_xorpd_r128_r128(e, dreg, sreg)						emit_sse_r128_r128(e, OP_XORPD_Vpd_Wpd, dreg, sreg)
-#define emit_xorpd_r128_m128abs(e, dreg, addr)					emit_sse_r128_mbisd(e, OP_XORPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_xorpd_r128_m128bd(e, dreg, base, disp)				emit_sse_r128_mbisd(e, OP_XORPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_xorpd_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_XORPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_xorpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_XORPD_Vpd_Wpd, dreg, sreg)
+#define emit_xorpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_XORPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_xorpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_XORPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_xorpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_XORPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_xorpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_XORPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_cvtdq2pd_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTDQ2PD_Vpd_Wq, dreg, sreg)
-#define emit_cvtdq2pd_r128_m128abs(e, dreg, addr)				emit_sse_r128_mbisd(e, OP_CVTDQ2PD_Vpd_Wq, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtdq2pd_r128_m128bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTDQ2PD_Vpd_Wq, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtdq2pd_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTDQ2PD_Vpd_Wq, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtdq2pd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTDQ2PD_Vpd_Wq, dreg, sreg)
+#define emit_cvtdq2pd_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTDQ2PD_Vpd_Wq, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtdq2pd_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTDQ2PD_Vpd_Wq, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtdq2pd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTDQ2PD_Vpd_Wq, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtdq2pd_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTDQ2PD_Vpd_Wq, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_cvtps2pd_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTPS2PD_Vpd_Wq, dreg, sreg)
-#define emit_cvtps2pd_r128_m128abs(e, dreg, addr)				emit_sse_r128_mbisd(e, OP_CVTPS2PD_Vpd_Wq, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtps2pd_r128_m128bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTPS2PD_Vpd_Wq, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtps2pd_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTPS2PD_Vpd_Wq, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtps2pd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTPS2PD_Vpd_Wq, dreg, sreg)
+#define emit_cvtps2pd_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTPS2PD_Vpd_Wq, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtps2pd_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTPS2PD_Vpd_Wq, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtps2pd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTPS2PD_Vpd_Wq, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtps2pd_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTPS2PD_Vpd_Wq, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_cvtpd2dq_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTPD2DQ_Vdq_Wpd, dreg, sreg)
-#define emit_cvtpd2dq_r128_m128abs(e, dreg, addr)				emit_sse_r128_mbisd(e, OP_CVTPD2DQ_Vdq_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtpd2dq_r128_m128bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTPD2DQ_Vdq_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtpd2dq_r128_m128isd(e, dreg, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTPD2DQ_Vdq_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtpd2dq_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTPD2DQ_Vdq_Wpd, dreg, sreg)
+#define emit_cvtpd2dq_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTPD2DQ_Vdq_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvtpd2dq_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTPD2DQ_Vdq_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvtpd2dq_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTPD2DQ_Vdq_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvtpd2dq_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTPD2DQ_Vdq_Wpd, dreg, (base),   (index),  (scale), (disp))
 
-#define emit_cvttpd2dq_r128_r128(e, dreg, sreg)					emit_sse_r128_r128(e, OP_CVTTPD2DQ_Vdq_Wpd, dreg, sreg)
-#define emit_cvttpd2dq_r128_m128abs(e, dreg, addr)				emit_sse_r128_mbisd(e, OP_CVTTPD2DQ_Vdq_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvttpd2dq_r128_m128bd(e, dreg, base, disp)			emit_sse_r128_mbisd(e, OP_CVTTPD2DQ_Vdq_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvttpd2dq_r128_m128isd(e, dreg, index, scale, disp) emit_sse_r128_mbisd(e, OP_CVTTPD2DQ_Vdq_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvttpd2dq_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTTPD2DQ_Vdq_Wpd, dreg, sreg)
+#define emit_cvttpd2dq_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTTPD2DQ_Vdq_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
+#define emit_cvttpd2dq_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTTPD2DQ_Vdq_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
+#define emit_cvttpd2dq_r128_m128isd(e, dreg, index, scale, disp) 		emit_sse_r128_mbisd(e, OP_CVTTPD2DQ_Vdq_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
+#define emit_cvttpd2dq_r128_m128bisd(e, dreg, base, index, scale, disp) emit_sse_r128_mbisd(e, OP_CVTTPD2DQ_Vdq_Wpd, dreg, (base),   (index),  (scale), (disp))

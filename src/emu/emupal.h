@@ -1,8 +1,8 @@
 /******************************************************************************
 
-    palette.c
+    emupal.h
 
-    Palette handling functions.
+    Emulator palette handling functions.
 
     Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
@@ -91,10 +91,12 @@
 
 #pragma once
 
-#ifndef __PALETTE_H__
-#define __PALETTE_H__
+#ifndef __EMUPAL_H__
+#define __EMUPAL_H__
 
+#include "palette.h"
 #include "memory.h"
+#include "tilemap.h"
 
 
 /***************************************************************************
@@ -107,18 +109,10 @@
 
 
 /***************************************************************************
-    MACROS
+    TYPE DEFINITIONS
 ***************************************************************************/
 
-#define MAKE_RGB(r,g,b) 	((((r) & 0xff) << 16) | (((g) & 0xff) << 8) | ((b) & 0xff))
-#define MAKE_ARGB(a,r,g,b)	(MAKE_RGB(r,g,b) | (((a) & 0xff) << 24))
-#define RGB_ALPHA(rgb)		(((rgb) >> 24) & 0xff)
-#define RGB_RED(rgb)		(((rgb) >> 16) & 0xff)
-#define RGB_GREEN(rgb)		(((rgb) >> 8) & 0xff)
-#define RGB_BLUE(rgb)		((rgb) & 0xff)
-
-#define RGB_BLACK			(MAKE_RGB(0,0,0))
-#define RGB_WHITE			(MAKE_RGB(255,255,255))
+typedef struct _colortable colortable;
 
 
 
@@ -126,40 +120,70 @@
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
+
+/* ----- initialization and configuration ----- */
+
+/* palette initialization that takes place before the display is created */
 void palette_init(running_machine *machine);
+
+/* palette initialization that takes place after the display is created */
 void palette_config(running_machine *machine);
-void palette_add_notifier(running_machine *machine, void (*callback)(void *, int, rgb_t), void *param);
-int palette_get_total_colors_with_ui(running_machine *machine);
 
-rgb_t *palette_get_raw_colors(running_machine *machine);
-rgb_t *palette_get_adjusted_colors(running_machine *machine);
 
-void palette_set_color(running_machine *machine, pen_t pen, rgb_t rgb);
-rgb_t palette_get_color(running_machine *machine, pen_t pen);
 
-void palette_set_brightness(running_machine *machine, pen_t pen, double bright);
+/* ----- shadow/hilight configuration ----- */
+
+/* set the global shadow brightness factor */
 void palette_set_shadow_factor(running_machine *machine, double factor);
+
+/* set the global highlight brightness factor */
 void palette_set_highlight_factor(running_machine *machine, double factor);
 
+
+
+/* ----- shadow table configuration ----- */
+
+/* select 1 of 4 different live shadow tables */
 void palette_set_shadow_mode(running_machine *machine, int mode);
+
+/* configure delta RGB values for 1 of 4 shadow tables */
 void palette_set_shadow_dRGB32(running_machine *machine, int mode, int dr, int dg, int db, int noclip);
 
+
+
+/* ----- colortable management ----- */
+
+/* allocate a new colortable with the given number of entries */
+colortable *colortable_alloc(running_machine *machine, UINT32 palettesize);
+
+/* set the value of a colortable entry */
+void colortable_entry_set_value(colortable *ctable, UINT32 entry, UINT16 value);
+
+/* return the value of a colortable entry */
+UINT16 colortable_entry_get_value(colortable *ctable, UINT32 entry);
+
+/* change the color of a colortable palette entry */
+void colortable_palette_set_color(colortable *ctable, UINT32 entry, rgb_t color);
+
+/* return the color of a colortable palette entry */
+rgb_t colortable_palette_get_color(colortable *ctable, UINT32 entry);
+
+/* return a 32-bit transparency mask for a given gfx element and color */
+UINT32 colortable_get_transpen_mask(colortable *ctable, const gfx_element *gfx, int color, int transcolor);
+
+/* configure groups in a tilemap to represent transparency based on colortable entries (each group maps to a gfx color) */
+void colortable_configure_tilemap_groups(colortable *ctable, tilemap *tmap, const gfx_element *gfx, int transcolor);
+
+
+
+/* ----- utilities ----- */
+
+/* return the pen for a fixed black color */
 pen_t get_black_pen(running_machine *machine);
+
+/* return the pen for a fixed white color */
 pen_t get_white_pen(running_machine *machine);
 
-/* normalize the palette
- *
- * Calling this function will normalize the palette,
- * mapping the minimum brightness/luminance to lum_min
- * and the maximum brightness to lum_max.
- * If lum_min is less than 0, the minimum luminance is
- * preserved, if lum_max is less than 0, the maximum luminance
- * is preserved.
- *
- * start and end denote the range of palette entries to be normalized.
- */
-
-void palette_normalize_range(running_machine *machine, int start, int end, int lum_min, int lum_max);
 
 
 
@@ -168,13 +192,46 @@ void palette_normalize_range(running_machine *machine, int start, int end, int l
 ***************************************************************************/
 
 /*-------------------------------------------------
+    palette_set_color - set a single palette
+    entry
+-------------------------------------------------*/
+
+INLINE void palette_set_color(running_machine *machine, pen_t pen, rgb_t rgb)
+{
+	palette_entry_set_color(machine->palette, pen, rgb);
+}
+
+
+/*-------------------------------------------------
     palette_set_color_rgb - set a single palette
     entry with individual R,G,B components
 -------------------------------------------------*/
 
 INLINE void palette_set_color_rgb(running_machine *machine, pen_t pen, UINT8 r, UINT8 g, UINT8 b)
 {
-	palette_set_color(machine, pen, MAKE_RGB(r, g, b));
+	palette_entry_set_color(machine->palette, pen, MAKE_RGB(r, g, b));
+}
+
+
+/*-------------------------------------------------
+    palette_get_color - return a single palette
+    entry
+-------------------------------------------------*/
+
+INLINE rgb_t palette_get_color(running_machine *machine, pen_t pen)
+{
+	return palette_entry_get_color(machine->palette, pen);
+}
+
+
+/*-------------------------------------------------
+    palette_set_brightness - set the per-pen
+    brightness factor
+-------------------------------------------------*/
+
+INLINE void palette_set_brightness(running_machine *machine, pen_t pen, double bright)
+{
+	palette_entry_set_contrast(machine->palette, pen, bright);
 }
 
 
@@ -186,83 +243,7 @@ INLINE void palette_set_color_rgb(running_machine *machine, pen_t pen, UINT8 r, 
 INLINE void palette_set_colors(running_machine *machine, pen_t color_base, const rgb_t *colors, int color_count)
 {
 	while (color_count--)
-		palette_set_color(machine, color_base++, *colors++);
-}
-
-
-/*-------------------------------------------------
-    pal1bit - convert a 1-bit value to 8 bits
--------------------------------------------------*/
-
-INLINE UINT8 pal1bit(UINT8 bits)
-{
-	return (bits & 1) ? 0xff : 0x00;
-}
-
-
-/*-------------------------------------------------
-    pal2bit - convert a 2-bit value to 8 bits
--------------------------------------------------*/
-
-INLINE UINT8 pal2bit(UINT8 bits)
-{
-	bits &= 3;
-	return (bits << 6) | (bits << 4) | (bits << 2) | bits;
-}
-
-
-/*-------------------------------------------------
-    pal3bit - convert a 3-bit value to 8 bits
--------------------------------------------------*/
-
-INLINE UINT8 pal3bit(UINT8 bits)
-{
-	bits &= 7;
-	return (bits << 5) | (bits << 2) | (bits >> 1);
-}
-
-
-/*-------------------------------------------------
-    pal4bit - convert a 4-bit value to 8 bits
--------------------------------------------------*/
-
-INLINE UINT8 pal4bit(UINT8 bits)
-{
-	bits &= 0xf;
-	return (bits << 4) | bits;
-}
-
-
-/*-------------------------------------------------
-    pal5bit - convert a 5-bit value to 8 bits
--------------------------------------------------*/
-
-INLINE UINT8 pal5bit(UINT8 bits)
-{
-	bits &= 0x1f;
-	return (bits << 3) | (bits >> 2);
-}
-
-
-/*-------------------------------------------------
-    pal6bit - convert a 6-bit value to 8 bits
--------------------------------------------------*/
-
-INLINE UINT8 pal6bit(UINT8 bits)
-{
-	bits &= 0x3f;
-	return (bits << 2) | (bits >> 4);
-}
-
-
-/*-------------------------------------------------
-    pal7bit - convert a 7-bit value to 8 bits
--------------------------------------------------*/
-
-INLINE UINT8 pal7bit(UINT8 bits)
-{
-	bits &= 0x7f;
-	return (bits << 1) | (bits >> 6);
+		palette_entry_set_color(machine->palette, color_base++, *colors++);
 }
 
 

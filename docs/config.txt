@@ -513,6 +513,26 @@ Core performance options
 	potentially cause hiccups in performance if other demanding programs
 	are running. The default is ON (-sleep).
 
+-speed <factor>
+
+	Changes the way MAME throttles gameplay such that the game runs at some
+	multiplier of the original speed. A <factor> of 1.0 means to run the
+	game at its normal speed. A <factor> of 0.5 means run at half speed,
+	and a <factor> of 2.0 means run at 2x speed. Note that changing this
+	value affects sound playback as well, which will scale in pitch
+	accordingly. The internal resolution of the fraction is two decimal
+	places, so a value of 1.002 is the same as 1.0. The default is 1.0.
+
+-[no]refreshspeed / -[no]rs
+
+	Allows MAME to dynamically adjust the gameplay speed such that it does
+	not exceed the slowest refresh rate for any targeted monitors in your
+	system. Thus, if you have a 60Hz monitor and run a game that is 
+	actually designed to run at 60.6Hz, MAME will dynamically change the
+	speed down to 99% in order to prevent sound hiccups or other
+	undesirable side effects of running at a slower refresh rate. The
+	default is OFF (-norefreshspeed).
+
 
 
 Core rotation options
