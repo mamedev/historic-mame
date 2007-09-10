@@ -4,7 +4,8 @@
 
     Generic x86/x64 code emitters.
 
-    Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
+    Copyright (c) 2007, Aaron Giles
+    Released for general use under the MAME license
     Visit http://mamedev.org for licensing and usage restrictions.
 
 ****************************************************************************
@@ -17,15 +18,18 @@
 
 ***************************************************************************/
 
+#ifndef __X86EMIT_H__
+#define __X86EMIT_H__
+
 
 /***************************************************************************
     CONSTANTS
 ***************************************************************************/
 
-/* 32-bit versus 64-bit opcode flag */
-#define OP_32BIT   				0
-#define OP_64BIT				8
-
+/* opcode size flag; low 4 bits must match REX low 4 bits, hence the odd numbers here */
+#define OP_16BIT				0x10
+#define OP_32BIT   				0x00
+#define OP_64BIT				0x08
 
 /* 16 registers on x64, only 8 on x86 */
 #ifdef PTR64
@@ -34,72 +38,10 @@
 #define REG_MAX					8
 #endif
 
-
 /* invalid register index for "none" */
 #define REG_NONE				REG_MAX
 
-
-/* 64-bit registers */
-#ifdef PTR64
-#define REG_RAX					0
-#define REG_RCX					1
-#define REG_RDX					2
-#define REG_RBX					3
-#define REG_RSP					4
-#define REG_RBP					5
-#define REG_RSI					6
-#define REG_RDI					7
-#define REG_R8					8
-#define REG_R9					9
-#define REG_R10					10
-#define REG_R11					11
-#define REG_R12					12
-#define REG_R13					13
-#define REG_R14					14
-#define REG_R15					15
-#endif
-
-/* 32-bit registers */
-#define REG_EAX					0
-#define REG_ECX					1
-#define REG_EDX					2
-#define REG_EBX					3
-#define REG_ESP					4
-#define REG_EBP					5
-#define REG_ESI					6
-#define REG_EDI					7
-#ifdef PTR64
-#define REG_R8D					8
-#define REG_R9D					9
-#define REG_R10D				10
-#define REG_R11D				11
-#define REG_R12D				12
-#define REG_R13D				13
-#define REG_R14D				14
-#define REG_R15D				15
-#endif
-
-/* 16-bit registers */
-#define REG_AX					0
-#define REG_CX					1
-#define REG_DX					2
-#define REG_BX					3
-#define REG_SP					4
-#define REG_BP					5
-#define REG_SI					6
-#define REG_DI					7
-#ifdef PTR64
-#define REG_R8W					8
-#define REG_R9W					9
-#define REG_R10W				10
-#define REG_R11W				11
-#define REG_R12W				12
-#define REG_R13W				13
-#define REG_R14W				14
-#define REG_R15W				15
-#endif
-
-/* 8-bit registers */
+/* 8-bit registers -- note that we assume a flat model for 64-bit */
 #define REG_AL					0
 #define REG_CL					1
 #define REG_DL					2
@@ -122,6 +64,66 @@
 #define REG_R13L				13
 #define REG_R14L				14
 #define REG_R15L				15
+#endif
+
+/* 16-bit registers */
+#define REG_AX					0
+#define REG_CX					1
+#define REG_DX					2
+#define REG_BX					3
+#define REG_SP					4
+#define REG_BP					5
+#define REG_SI					6
+#define REG_DI					7
+#ifdef PTR64
+#define REG_R8W					8
+#define REG_R9W					9
+#define REG_R10W				10
+#define REG_R11W				11
+#define REG_R12W				12
+#define REG_R13W				13
+#define REG_R14W				14
+#define REG_R15W				15
+#endif
+
+/* 32-bit registers */
+#define REG_EAX					0
+#define REG_ECX					1
+#define REG_EDX					2
+#define REG_EBX					3
+#define REG_ESP					4
+#define REG_EBP					5
+#define REG_ESI					6
+#define REG_EDI					7
+#ifdef PTR64
+#define REG_R8D					8
+#define REG_R9D					9
+#define REG_R10D				10
+#define REG_R11D				11
+#define REG_R12D				12
+#define REG_R13D				13
+#define REG_R14D				14
+#define REG_R15D				15
+#endif
+
+/* 64-bit registers */
+#ifdef PTR64
+#define REG_RAX					0
+#define REG_RCX					1
+#define REG_RDX					2
+#define REG_RBX					3
+#define REG_RSP					4
+#define REG_RBP					5
+#define REG_RSI					6
+#define REG_RDI					7
+#define REG_R8					8
+#define REG_R9					9
+#define REG_R10					10
+#define REG_R11					11
+#define REG_R12					12
+#define REG_R13					13
+#define REG_R14					14
+#define REG_R15					15
 #endif
 
 /* 64-bit MMX registers */
@@ -164,7 +166,6 @@
 #define REG_XMM15				15
 #endif
 
-
 /* conditions */
 #define COND_A					7
 #define COND_AE					3
@@ -198,7 +199,6 @@
 #define COND_S					8
 #define COND_Z					4
 
-
 /* floating point rounding modes */
 #define FPRND_NEAR				0
 #define FPRND_DOWN				1
@@ -206,74 +206,78 @@
 #define FPRND_CHOP				3
 
 
+
+/***************************************************************************
+    OPCODE DEFINITIONS
+***************************************************************************/
+
 /* opcode flags (in upper 8 bits of opcode) */
 #define OPFLAG_8BITREG			(1 << 24)
 #define OPFLAG_8BITRM			(1 << 25)
 
-
 /* single byte opcodes */
-#define OP_ADD_Eb_Gb			0x00 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_ADD_Eb_Gb			(0x00 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_ADD_Ev_Gv			0x01
-#define OP_ADD_Gb_Eb			0x02 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_ADD_Gb_Eb			(0x02 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_ADD_Gv_Ev			0x03
 #define OP_ADD_AL_Ib			0x04
 #define OP_ADD_rAX_Iz   		0x05
 #define OP_PUSH_ES	  			0x06
 #define OP_POP_ES	  	 		0x07
-#define OP_OR_Eb_Gb	 			0x08 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_OR_Eb_Gb	 			(0x08 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_OR_Ev_Gv	 			0x09
-#define OP_OR_Gb_Eb	 			0x0a | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_OR_Gb_Eb	 			(0x0a | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_OR_Gv_Ev	 			0x0b
 #define OP_OR_AL_Ib	 			0x0c
 #define OP_OR_eAX_Iv			0x0d
 #define OP_PUSH_CS	  			0x0e
 #define OP_EXTENDED	 			0x0f
 
-#define OP_ADC_Eb_Gb			0x10 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_ADC_Eb_Gb			(0x10 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_ADC_Ev_Gv			0x11
-#define OP_ADC_Gb_Eb			0x12 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_ADC_Gb_Eb			(0x12 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_ADC_Gv_Ev			0x13
 #define OP_ADC_AL_Ib			0x14
 #define OP_ADC_rAX_Iz   		0x15
 #define OP_PUSH_SS	  			0x16
 #define OP_POP_SS	   			0x17
-#define OP_SBB_Eb_Gb			0x18 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_SBB_Eb_Gb			(0x18 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_SBB_Ev_Gv			0x19
-#define OP_SBB_Gb_Eb			0x1a | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_SBB_Gb_Eb			(0x1a | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_SBB_Gv_Ev			0x1b
 #define OP_SBB_AL_Ib			0x1c
 #define OP_SBB_eAX_Iv   		0x1d
 #define OP_PUSH_DS	  			0x1e
 #define OP_POP_DS	   			0x1f
 
-#define OP_AND_Eb_Gb			0x20 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_AND_Eb_Gb			(0x20 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_AND_Ev_Gv			0x21
-#define OP_AND_Gb_Eb			0x22 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_AND_Gb_Eb			(0x22 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_AND_Gv_Ev			0x23
 #define OP_AND_AL_Ib			0x24
 #define OP_AND_rAX_Iz   		0x25
 #define PREFIX_ES	   			0x26
 #define OP_DAA		  			0x27
-#define OP_SUB_Eb_Gb			0x28 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_SUB_Eb_Gb			(0x28 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_SUB_Ev_Gv			0x29
-#define OP_SUB_Gb_Eb			0x2a | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_SUB_Gb_Eb			(0x2a | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_SUB_Gv_Ev			0x2b
 #define OP_SUB_AL_Ib			0x2c
 #define OP_SUB_eAX_Iv   		0x2d
 #define PREFIX_CS	   			0x2e
 #define OP_DAS		  			0x2f
 
-#define OP_XOR_Eb_Gb			0x30 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_XOR_Eb_Gb			(0x30 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_XOR_Ev_Gv			0x31
-#define OP_XOR_Gb_Eb			0x32 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_XOR_Gb_Eb			(0x32 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_XOR_Gv_Ev			0x33
 #define OP_XOR_AL_Ib			0x34
 #define OP_XOR_rAX_Iz   		0x35
 #define PREFIX_SS	   			0x36
 #define OP_AAA		  			0x37
-#define OP_CMP_Eb_Gb			0x38 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_CMP_Eb_Gb			(0x38 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_CMP_Ev_Gv			0x39
-#define OP_CMP_Gb_Eb			0x3a | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_CMP_Gb_Eb			(0x3a | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_CMP_Gv_Ev			0x3b
 #define OP_CMP_AL_Ib			0x3c
 #define OP_CMP_eAX_Iv   		0x3d
@@ -363,17 +367,17 @@
 #define OP_JCC_NLE_Jb			0x7f
 #define OP_JCC_G_Jb				0x7f
 
-#define OP_G1_Eb_Ib				0x80 | OPFLAG_8BITRM
+#define OP_G1_Eb_Ib				(0x80 | OPFLAG_8BITRM)
 #define OP_G1_Ev_Iz				0x81
-#define OP_G1_Eb_Ibx			0x82 | OPFLAG_8BITRM
+#define OP_G1_Eb_Ibx			(0x82 | OPFLAG_8BITRM)
 #define OP_G1_Ev_Ib				0x83
-#define OP_TEST_Eb_Gb			0x84 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_TEST_Eb_Gb			(0x84 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_TEST_Ev_Gv			0x85
-#define OP_XCHG_Eb_Gb			0x86 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_XCHG_Eb_Gb			(0x86 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_XCHG_Ev_Gv			0x87
-#define OP_MOV_Eb_Gb			0x88 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_MOV_Eb_Gb			(0x88 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_MOV_Ev_Gv			0x89
-#define OP_MOV_Gb_Eb			0x8a | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_MOV_Gb_Eb			(0x8a | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_MOV_Gv_Ev			0x8b
 #define OP_MOV_Ev_Sw			0x8c
 #define OP_LEA_Gv_M				0x8d
@@ -436,13 +440,13 @@
 #define OP_MOV_rSI_Iv			0xbe
 #define OP_MOV_rDI_Iv			0xbf
 
-#define OP_G2_Eb_Ib				0xc0 | OPFLAG_8BITRM
+#define OP_G2_Eb_Ib				(0xc0 | OPFLAG_8BITRM)
 #define OP_G2_Ev_Ib				0xc1
 #define OP_RETN_Iw				0xc2
 #define OP_RETN					0xc3
 #define OP_LES_Gz_Mp			0xc4
 #define OP_LDS_Gz_Mp			0xc5
-#define OP_G11_Eb_Ib			0xc6 | OPFLAG_8BITRM
+#define OP_G11_Eb_Ib			(0xc6 | OPFLAG_8BITRM)
 #define OP_G11_Ev_Iz			0xc7
 #define OP_ENTER_Iw_Ib			0xc8
 #define OP_LEAVE				0xc9
@@ -453,9 +457,9 @@
 #define OP_INTO					0xce
 #define OP_IRET					0xcf
 
-#define OP_G2_Eb_1				0xd0 | OPFLAG_8BITRM
+#define OP_G2_Eb_1				(0xd0 | OPFLAG_8BITRM)
 #define OP_G2_Ev_1				0xd1
-#define OP_G2_Eb_CL				0xd2 | OPFLAG_8BITRM
+#define OP_G2_Eb_CL				(0xd2 | OPFLAG_8BITRM)
 #define OP_G2_Ev_CL				0xd3
 #define OP_AAM					0xd4
 #define OP_AAD					0xd5
@@ -491,7 +495,7 @@
 #define PREFIX_REPE				0xf3
 #define OP_HLT					0xf4
 #define OP_CMC					0xf5
-#define OP_G3_Eb				0xf6 | OPFLAG_8BITRM
+#define OP_G3_Eb				(0xf6 | OPFLAG_8BITRM)
 #define OP_G3_Ev				0xf7
 #define OP_CLC					0xf8
 #define OP_STC					0xf9
@@ -741,36 +745,36 @@
 #define OP_JCC_NLE_Jv			0x0f8f
 #define OP_JCC_G_Jv				0x0f8f
 
-#define OP_SETCC_O_Eb			0x0f90 | OPFLAG_8BITRM
-#define OP_SETCC_NO_Eb			0x0f91 | OPFLAG_8BITRM
-#define OP_SETCC_B_Eb			0x0f92 | OPFLAG_8BITRM
-#define OP_SETCC_C_Eb			0x0f92 | OPFLAG_8BITRM
-#define OP_SETCC_NAE_Eb			0x0f92 | OPFLAG_8BITRM
-#define OP_SETCC_AE_Eb			0x0f93 | OPFLAG_8BITRM
-#define OP_SETCC_NB_Eb			0x0f93 | OPFLAG_8BITRM
-#define OP_SETCC_NC_Eb			0x0f93 | OPFLAG_8BITRM
-#define OP_SETCC_E_Eb			0x0f94 | OPFLAG_8BITRM
-#define OP_SETCC_Z_Eb			0x0f94 | OPFLAG_8BITRM
-#define OP_SETCC_NE_Eb			0x0f95 | OPFLAG_8BITRM
-#define OP_SETCC_NZ_Eb			0x0f95 | OPFLAG_8BITRM
-#define OP_SETCC_BE_Eb			0x0f96 | OPFLAG_8BITRM
-#define OP_SETCC_NA_Eb			0x0f96 | OPFLAG_8BITRM
-#define OP_SETCC_A_Eb			0x0f97 | OPFLAG_8BITRM
-#define OP_SETCC_NBE_Eb			0x0f97 | OPFLAG_8BITRM
-#define OP_SETCC_S_Eb			0x0f98 | OPFLAG_8BITRM
-#define OP_SETCC_NS_Eb			0x0f99 | OPFLAG_8BITRM
-#define OP_SETCC_P_Eb			0x0f9a | OPFLAG_8BITRM
-#define OP_SETCC_PE_Eb			0x0f9a | OPFLAG_8BITRM
-#define OP_SETCC_NP_Eb			0x0f9b | OPFLAG_8BITRM
-#define OP_SETCC_PO_Eb			0x0f9b | OPFLAG_8BITRM
-#define OP_SETCC_L_Eb			0x0f9c | OPFLAG_8BITRM
-#define OP_SETCC_NGE_Eb			0x0f9c | OPFLAG_8BITRM
-#define OP_SETCC_NL_Eb			0x0f9d | OPFLAG_8BITRM
-#define OP_SETCC_GE_Eb			0x0f9d | OPFLAG_8BITRM
-#define OP_SETCC_LE_Eb			0x0f9e | OPFLAG_8BITRM
-#define OP_SETCC_NG_Eb			0x0f9e | OPFLAG_8BITRM
-#define OP_SETCC_NLE_Eb			0x0f9f | OPFLAG_8BITRM
-#define OP_SETCC_G_Eb			0x0f9f | OPFLAG_8BITRM
+#define OP_SETCC_O_Eb			(0x0f90 | OPFLAG_8BITRM)
+#define OP_SETCC_NO_Eb			(0x0f91 | OPFLAG_8BITRM)
+#define OP_SETCC_B_Eb			(0x0f92 | OPFLAG_8BITRM)
+#define OP_SETCC_C_Eb			(0x0f92 | OPFLAG_8BITRM)
+#define OP_SETCC_NAE_Eb			(0x0f92 | OPFLAG_8BITRM)
+#define OP_SETCC_AE_Eb			(0x0f93 | OPFLAG_8BITRM)
+#define OP_SETCC_NB_Eb			(0x0f93 | OPFLAG_8BITRM)
+#define OP_SETCC_NC_Eb			(0x0f93 | OPFLAG_8BITRM)
+#define OP_SETCC_E_Eb			(0x0f94 | OPFLAG_8BITRM)
+#define OP_SETCC_Z_Eb			(0x0f94 | OPFLAG_8BITRM)
+#define OP_SETCC_NE_Eb			(0x0f95 | OPFLAG_8BITRM)
+#define OP_SETCC_NZ_Eb			(0x0f95 | OPFLAG_8BITRM)
+#define OP_SETCC_BE_Eb			(0x0f96 | OPFLAG_8BITRM)
+#define OP_SETCC_NA_Eb			(0x0f96 | OPFLAG_8BITRM)
+#define OP_SETCC_A_Eb			(0x0f97 | OPFLAG_8BITRM)
+#define OP_SETCC_NBE_Eb			(0x0f97 | OPFLAG_8BITRM)
+#define OP_SETCC_S_Eb			(0x0f98 | OPFLAG_8BITRM)
+#define OP_SETCC_NS_Eb			(0x0f99 | OPFLAG_8BITRM)
+#define OP_SETCC_P_Eb			(0x0f9a | OPFLAG_8BITRM)
+#define OP_SETCC_PE_Eb			(0x0f9a | OPFLAG_8BITRM)
+#define OP_SETCC_NP_Eb			(0x0f9b | OPFLAG_8BITRM)
+#define OP_SETCC_PO_Eb			(0x0f9b | OPFLAG_8BITRM)
+#define OP_SETCC_L_Eb			(0x0f9c | OPFLAG_8BITRM)
+#define OP_SETCC_NGE_Eb			(0x0f9c | OPFLAG_8BITRM)
+#define OP_SETCC_NL_Eb			(0x0f9d | OPFLAG_8BITRM)
+#define OP_SETCC_GE_Eb			(0x0f9d | OPFLAG_8BITRM)
+#define OP_SETCC_LE_Eb			(0x0f9e | OPFLAG_8BITRM)
+#define OP_SETCC_NG_Eb			(0x0f9e | OPFLAG_8BITRM)
+#define OP_SETCC_NLE_Eb			(0x0f9f | OPFLAG_8BITRM)
+#define OP_SETCC_G_Eb			(0x0f9f | OPFLAG_8BITRM)
 
 #define OP_PUSH_FS				0x0fa0
 #define OP_POP_FS				0x0fa1
@@ -787,23 +791,23 @@
 #define OP_G16					0x0fae
 #define OP_IMUL_Gv_Ev			0x0faf
 
-#define OP_CMPXCHG_Eb_Gb		0x0fb0 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_CMPXCHG_Eb_Gb		(0x0fb0 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_CMPXCHG_Ev_Gv		0x0fb1
 #define OP_LSS_Mp				0x0fb2
 #define OP_BTR_Ev_Gv			0x0fb3
 #define OP_LFS_Mp				0x0fb4
 #define OP_LGS_Mp				0x0fb5
-#define OP_MOVZX_Gv_Eb			0x0fb6 | OPFLAG_8BITRM
+#define OP_MOVZX_Gv_Eb			(0x0fb6 | OPFLAG_8BITRM)
 #define OP_MOVZX_Gv_Ew			0x0fb7
 #define OP_G10_INVALID			0x0fb9
 #define OP_G8_Ev_Ib				0x0fba
 #define OP_BTC_Ev_Gv			0x0fbb
 #define OP_BSF_Gv_Ev			0x0fbc
 #define OP_BSR_Gv_Ev			0x0fbd
-#define OP_MOVSX_Gv_Eb			0x0fbe | OPFLAG_8BITRM
+#define OP_MOVSX_Gv_Eb			(0x0fbe | OPFLAG_8BITRM)
 #define OP_MOVSX_Gv_Ew			0x0fbf
 
-#define OP_XADD_Eb_Gb			0x0fc0 | OPFLAG_8BITRM | OPFLAG_8BITREG
+#define OP_XADD_Eb_Gb			(0x0fc0 | OPFLAG_8BITRM | OPFLAG_8BITREG)
 #define OP_XADD_Ev_Gv			0x0fc1
 #define OP_CMPPS_Vps_Wps_Ib		0x0fc2
 #define OP_CMPSS_Vss_Wss_Ib		0xf30fc2
@@ -1004,15 +1008,37 @@
     TYPE DEFINITIONS
 ***************************************************************************/
 
+/* use x86code * to reference generated code */
 typedef UINT8					x86code;
 
 
+/* this structure tracks information about a link */
 typedef struct _emit_link emit_link;
 struct _emit_link
 {
 	x86code *		target;
 	UINT8			size;
 };
+
+
+
+/***************************************************************************
+    MACROS
+***************************************************************************/
+
+#define DECLARE_MEMPARAMS				UINT8 base, UINT8 index, UINT8 scale, INT32 disp
+#define MEMPARAMS						base, index, scale, disp
+
+#ifndef PTR64
+#define MBISD(base, index, scale, disp)	(base), (index), (scale), (INT32)(disp)
+#define MABS(addr)						MBISD(REG_NONE, REG_NONE, 1, (addr))
+#define MBD(base, disp)					MBISD((base), REG_NONE, 1, (disp))
+#define MISD(index, scale, disp)		MBISD(REG_NONE, (index), (scale), (disp))
+#else
+#define MBISD(base, index, scale, disp)	(base), (index), (scale), (disp)
+#define MBD(base, disp)					MBISD((base), REG_NONE, 1, (disp))
+#define MISD(index, scale, disp)		MBISD(REG_NONE, (index), (scale), (disp))
+#endif
 
 
 
@@ -1103,20 +1129,22 @@ INLINE void emit_qword(x86code **emitptr, UINT64 qword)
     along with any necessary REX prefixes for x64
 -------------------------------------------------*/
 
-INLINE void emit_op(x86code **emitptr, UINT32 op, UINT8 op64, UINT8 reg, UINT8 sib, UINT8 rm)
+INLINE void emit_op(x86code **emitptr, UINT32 op, UINT8 opsize, UINT8 reg, UINT8 sib, UINT8 rm)
 {
 #ifdef PTR64
 	UINT8 rex;
 
-	assert(op64 == OP_32BIT || op64 == OP_64BIT);
+	assert(opsize == OP_16BIT || opsize == OP_32BIT || opsize == OP_64BIT);
 
-	rex = op64 | ((reg & 8) >> 1) | ((sib & 8) >> 2) | ((rm & 8) >> 3);
+	rex = (opsize & 8) | ((reg & 8) >> 1) | ((sib & 8) >> 2) | ((rm & 8) >> 3);
 	if (rex != 0 || ((op & OPFLAG_8BITREG) && reg >= 4) || ((op & OPFLAG_8BITRM) && rm >= 4))
-		emit_byte(emitptr, rex | 0x40);
+		emit_byte(emitptr, OP_REX + rex);
 #else
-	assert(op64 == OP_32BIT);
+	assert(opsize != OP_64BIT);
 #endif
 
+	if (opsize == OP_16BIT)
+		emit_byte(emitptr, PREFIX_OPSIZE);
 	if ((op & 0xff0000) != 0)
 		emit_byte(emitptr, op >> 16);
 	if ((op & 0xff00) != 0)
@@ -1129,9 +1157,20 @@ INLINE void emit_op(x86code **emitptr, UINT32 op, UINT8 op64, UINT8 reg, UINT8 s
     emit_op_simple - emit a simple opcode
 -------------------------------------------------*/
 
-INLINE void emit_op_simple(x86code **emitptr, UINT32 op, UINT8 op64)
+INLINE void emit_op_simple(x86code **emitptr, UINT32 op, UINT8 opsize)
 {
-	emit_op(emitptr, op, op64, 0, 0, 0);
+	emit_op(emitptr, op, opsize, 0, 0, 0);
+}
+
+
+/*-------------------------------------------------
+    emit_op_reg - emit a simple opcode that has
+    a register parameter
+-------------------------------------------------*/
+
+INLINE void emit_op_reg(x86code **emitptr, UINT32 op, UINT8 opsize, UINT8 reg)
+{
+	emit_op(emitptr, op, opsize, 0, 0, reg);
 }
 
 
@@ -1140,12 +1179,12 @@ INLINE void emit_op_simple(x86code **emitptr, UINT32 op, UINT8 op64)
     register modrm byte
 -------------------------------------------------*/
 
-INLINE void emit_op_modrm_reg(x86code **emitptr, UINT32 op, UINT8 op64, UINT8 reg, UINT8 rm)
+INLINE void emit_op_modrm_reg(x86code **emitptr, UINT32 op, UINT8 opsize, UINT8 reg, UINT8 rm)
 {
 	assert(reg < REG_MAX);
 	assert(rm < REG_MAX);
 
-	emit_op(emitptr, op, op64, reg, 0, rm);
+	emit_op(emitptr, op, opsize, reg, 0, rm);
 	emit_byte(emitptr, make_modrm(3, reg, rm));
 }
 
@@ -1155,7 +1194,7 @@ INLINE void emit_op_modrm_reg(x86code **emitptr, UINT32 op, UINT8 op64, UINT8 re
     memory modrm byte
 -------------------------------------------------*/
 
-INLINE void emit_op_modrm_mem(x86code **emitptr, UINT32 op, UINT8 op64, UINT8 reg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
+INLINE void emit_op_modrm_mem(x86code **emitptr, UINT32 op, UINT8 opsize, UINT8 reg, DECLARE_MEMPARAMS)
 {
 	assert(reg < REG_MAX);
 	assert(base < REG_MAX || base == REG_NONE);
@@ -1168,7 +1207,7 @@ INLINE void emit_op_modrm_mem(x86code **emitptr, UINT32 op, UINT8 op64, UINT8 re
 	if (base == REG_NONE && index == REG_NONE)
 	{
 #ifndef PTR64
-		emit_op(emitptr, op, op64, reg, 0, 5);
+		emit_op(emitptr, op, opsize, reg, 0, 5);
 		emit_byte(emitptr, make_modrm(0, reg, 5));
 		emit_dword(emitptr, disp);
 #else
@@ -1179,7 +1218,7 @@ INLINE void emit_op_modrm_mem(x86code **emitptr, UINT32 op, UINT8 op64, UINT8 re
 	/* base only case */
 	else if (index == REG_NONE && base != REG_ESP)
 	{
-		emit_op(emitptr, op, op64, reg, 0, base);
+		emit_op(emitptr, op, opsize, reg, 0, base);
 
 		/* mode 0 for no offset */
 		if (disp == 0 && base != REG_EBP)
@@ -1204,19 +1243,25 @@ INLINE void emit_op_modrm_mem(x86code **emitptr, UINT32 op, UINT8 op64, UINT8 re
 	else
 	{
 		assert(index != REG_ESP);
-		emit_op(emitptr, op, op64, reg, index, base);
+		emit_op(emitptr, op, opsize, reg, index, base);
 
 		/* a "none" index == REG_ESP */
 		if (index == REG_NONE)
 			index = REG_ESP;
 
-		/* mode 0 for no offset */
-		if (disp == 0 && base != REG_EBP)
+		/* no base is a special case */
+		if (base == REG_NONE)
 		{
 			emit_byte(emitptr, make_modrm(0, reg, 4));
-			emit_byte(emitptr, make_sib(scale, index, (base == REG_NONE) ? REG_EBP : base));
-			if (base == REG_NONE)
-				emit_dword(emitptr, disp);
+			emit_byte(emitptr, make_sib(scale, index, REG_EBP));
+			emit_dword(emitptr, disp);
+		}
+
+		/* mode 0 for no offset */
+		else if (disp == 0 && base != REG_EBP)
+		{
+			emit_byte(emitptr, make_modrm(0, reg, 4));
+			emit_byte(emitptr, make_sib(scale, index, base));
 		}
 
 		/* mode 1 for 1-byte offset */
@@ -1240,35 +1285,185 @@ INLINE void emit_op_modrm_mem(x86code **emitptr, UINT32 op, UINT8 op64, UINT8 re
 
 
 /***************************************************************************
+    GENERIC OPCODE + IMMEDIATE EMITTERS
+***************************************************************************/
+
+/*-------------------------------------------------
+    emit_op_modrm_reg_imm8 - emit an opcode with a
+    register modrm byte and an 8-bit immediate
+-------------------------------------------------*/
+
+INLINE void emit_op_modrm_reg_imm8(x86code **emitptr, UINT32 op, UINT8 opsize, UINT8 reg, UINT8 rm, UINT8 imm)
+{
+	emit_op_modrm_reg(emitptr, op, opsize, reg, rm);
+	emit_byte(emitptr, imm);
+}
+
+
+/*-------------------------------------------------
+    emit_op_modrm_mem_imm8 - emit an opcode with a
+    memory modrm byte and an 8-bit immediate
+-------------------------------------------------*/
+
+INLINE void emit_op_modrm_mem_imm8(x86code **emitptr, UINT32 op, UINT8 opsize, UINT8 reg, DECLARE_MEMPARAMS, UINT8 imm)
+{
+	emit_op_modrm_mem(emitptr, op, opsize, reg, MEMPARAMS);
+	emit_byte(emitptr, imm);
+}
+
+
+/*-------------------------------------------------
+    emit_op_modrm_reg_imm16 - emit an opcode with a
+    register modrm byte and a 16-bit immediate
+-------------------------------------------------*/
+
+INLINE void emit_op_modrm_reg_imm16(x86code **emitptr, UINT32 op, UINT8 opsize, UINT8 reg, UINT8 rm, UINT16 imm)
+{
+	emit_op_modrm_reg(emitptr, op, opsize, reg, rm);
+	emit_word(emitptr, imm);
+}
+
+
+/*-------------------------------------------------
+    emit_op_modrm_mem_imm16 - emit an opcode with a
+    memory modrm byte and a 16-bit immediate
+-------------------------------------------------*/
+
+INLINE void emit_op_modrm_mem_imm16(x86code **emitptr, UINT32 op, UINT8 opsize, UINT8 reg, DECLARE_MEMPARAMS, UINT16 imm)
+{
+	emit_op_modrm_mem(emitptr, op, opsize, reg, MEMPARAMS);
+	emit_word(emitptr, imm);
+}
+
+
+/*-------------------------------------------------
+    emit_op_modrm_reg_imm816 - emit an opcode with
+    a register modrm byte and an 8-bit or 16-bit
+    immediate
+-------------------------------------------------*/
+
+INLINE void emit_op_modrm_reg_imm816(x86code **emitptr, UINT32 op8, UINT32 op16, UINT8 opsize, UINT8 reg, UINT8 rm, UINT16 imm)
+{
+	if ((INT8)imm == (INT16)imm)
+	{
+		emit_op_modrm_reg(emitptr, op8, opsize, reg, rm);
+		emit_byte(emitptr, imm);
+	}
+	else
+	{
+		emit_op_modrm_reg(emitptr, op16, opsize, reg, rm);
+		emit_word(emitptr, imm);
+	}
+}
+
+
+/*-------------------------------------------------
+    emit_op_modrm_mem_imm816 - emit an opcode with
+    a memory modrm byte and an 8-bit or 16-bit
+    immediate
+-------------------------------------------------*/
+
+INLINE void emit_op_modrm_mem_imm816(x86code **emitptr, UINT32 op8, UINT32 op16, UINT8 opsize, UINT8 reg, DECLARE_MEMPARAMS, UINT16 imm)
+{
+	if ((INT8)imm == (INT16)imm)
+	{
+		emit_op_modrm_mem(emitptr, op8, opsize, reg, MEMPARAMS);
+		emit_byte(emitptr, imm);
+	}
+	else
+	{
+		emit_op_modrm_mem(emitptr, op16, opsize, reg, MEMPARAMS);
+		emit_word(emitptr, imm);
+	}
+}
+
+
+/*-------------------------------------------------
+    emit_op_modrm_reg_imm32 - emit an opcode with a
+    register modrm byte and a 32-bit immediate
+-------------------------------------------------*/
+
+INLINE void emit_op_modrm_reg_imm32(x86code **emitptr, UINT32 op, UINT8 opsize, UINT8 reg, UINT8 rm, UINT32 imm)
+{
+	emit_op_modrm_reg(emitptr, op, opsize, reg, rm);
+	emit_dword(emitptr, imm);
+}
+
+
+/*-------------------------------------------------
+    emit_op_modrm_mem_imm32 - emit an opcode with a
+    memory modrm byte and a 32-bit immediate
+-------------------------------------------------*/
+
+INLINE void emit_op_modrm_mem_imm32(x86code **emitptr, UINT32 op, UINT8 opsize, UINT8 reg, DECLARE_MEMPARAMS, UINT32 imm)
+{
+	emit_op_modrm_mem(emitptr, op, opsize, reg, MEMPARAMS);
+	emit_dword(emitptr, imm);
+}
+
+
+/*-------------------------------------------------
+    emit_op_modrm_reg_imm832 - emit an opcode with
+    a register modrm byte and an 8-bit or 32-bit
+    immediate
+-------------------------------------------------*/
+
+INLINE void emit_op_modrm_reg_imm832(x86code **emitptr, UINT32 op8, UINT32 op32, UINT8 opsize, UINT8 reg, UINT8 rm, UINT32 imm)
+{
+	if ((INT8)imm == (INT32)imm)
+	{
+		emit_op_modrm_reg(emitptr, op8, opsize, reg, rm);
+		emit_byte(emitptr, imm);
+	}
+	else
+	{
+		emit_op_modrm_reg(emitptr, op32, opsize, reg, rm);
+		emit_dword(emitptr, imm);
+	}
+}
+
+
+/*-------------------------------------------------
+    emit_op_modrm_mem_imm832 - emit an opcode with
+    a memory modrm byte and an 8-bit or 32-bit
+    immediate
+-------------------------------------------------*/
+
+INLINE void emit_op_modrm_mem_imm832(x86code **emitptr, UINT32 op8, UINT32 op32, UINT8 opsize, UINT8 reg, DECLARE_MEMPARAMS, UINT32 imm)
+{
+	if ((INT8)imm == (INT32)imm)
+	{
+		emit_op_modrm_mem(emitptr, op8, opsize, reg, MEMPARAMS);
+		emit_byte(emitptr, imm);
+	}
+	else
+	{
+		emit_op_modrm_mem(emitptr, op32, opsize, reg, MEMPARAMS);
+		emit_dword(emitptr, imm);
+	}
+}
+
+
+
+/***************************************************************************
     SIMPLE OPCODE EMITTERS
 ***************************************************************************/
 
-INLINE void emit_nop(x86code **emitptr)
-{
-	emit_byte(emitptr, OP_NOP);
-}
+INLINE void emit_nop(x86code **emitptr)    { emit_op_simple(emitptr, OP_NOP, OP_32BIT); }
+INLINE void emit_int_3(x86code **emitptr)  { emit_op_simple(emitptr, OP_INT_3, OP_32BIT); }
+INLINE void emit_ret(x86code **emitptr)    { emit_op_simple(emitptr, OP_RETN, OP_32BIT); }
+INLINE void emit_cdq(x86code **emitptr)    { emit_op_simple(emitptr, OP_CDQ, OP_32BIT); }
+INLINE void emit_cmc(x86code **emitptr)    { emit_op_simple(emitptr, OP_CMC, OP_32BIT); }
 
-INLINE void emit_int_3(x86code **emitptr)
-{
-	emit_byte(emitptr, OP_INT_3);
-}
-
-INLINE void emit_ret(x86code **emitptr)
-{
-	emit_byte(emitptr, OP_RETN);
-}
-
-INLINE void emit_cdq(x86code **emitptr)
-{
-	emit_byte(emitptr, OP_CDQ);
-}
+#ifndef PTR64
+INLINE void emit_pushad(x86code **emitptr) { emit_op_simple(emitptr, OP_PUSHA, OP_32BIT); }
+INLINE void emit_popad(x86code **emitptr)  { emit_op_simple(emitptr, OP_POPA, OP_32BIT); }
+INLINE void emit_lahf(x86code **emitptr)   { emit_op_simple(emitptr, OP_LAHF, OP_32BIT); }
+INLINE void emit_sahf(x86code **emitptr)   { emit_op_simple(emitptr, OP_SAHF, OP_32BIT); }
+#endif
 
 #ifdef PTR64
-INLINE void emit_cqo(x86code **emitptr)
-{
-	emit_byte(emitptr, OP_REX_W);
-	emit_byte(emitptr, OP_CQO);
-}
+INLINE void emit_cqo(x86code **emitptr)    { emit_op_simple(emitptr, OP_CQO, OP_64BIT); }
 #endif
 
 
@@ -1303,9 +1498,9 @@ INLINE void resolve_link(x86code **destptr, const emit_link *linkinfo)
 }
 
 
-/*------------------------------------------------------------------
+/*-------------------------------------------------
     emit_call_*
-------------------------------------------------------------------*/
+-------------------------------------------------*/
 
 INLINE void emit_call_link(x86code **emitptr, emit_link *linkinfo)
 {
@@ -1318,61 +1513,14 @@ INLINE void emit_call_link(x86code **emitptr, emit_link *linkinfo)
 INLINE void emit_call(x86code **emitptr, x86code *target)
 {
 	emit_link link;
-
 	emit_call_link(emitptr, &link);
 	resolve_link(&target, &link);
 }
 
 
-/*------------------------------------------------------------------
-    emit_call_r32_*
-------------------------------------------------------------------*/
-
-#ifndef PTR64
-
-INLINE void emit_call_r32(x86code **emitptr, UINT8 dreg)
-{
-	emit_op_modrm_reg(emitptr, OP_G5, OP_32BIT, 2, dreg);
-}
-
-INLINE void emit_call_m32bisd(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_G5, OP_32BIT, 2, base, index, scale, disp);
-}
-
-#define emit_call_m32abs(e, addr)								emit_call_m32bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_call_m32bd(e, base, disp)							emit_call_m32bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_call_m32isd(e, index, scale, disp)					emit_call_m32bisd(e, REG_NONE, (index),  (scale), (disp))
-
-#endif
-
-
-/*------------------------------------------------------------------
-    emit_call_r64_*
-------------------------------------------------------------------*/
-
-#ifdef PTR64
-
-INLINE void emit_call_r64(x86code **emitptr, UINT8 dreg)
-{
-	emit_op_modrm_reg(emitptr, OP_G5, OP_32BIT, 2, dreg);
-}
-
-INLINE void emit_call_m64bisd(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_G5, OP_32BIT, 2, base, index, scale, disp);
-}
-
-#define emit_call_m64abs(e, addr)								emit_call_m64bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_call_m64bd(e, base, disp)							emit_call_m64bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_call_m64isd(e, index, scale, disp)					emit_call_m64bisd(e, REG_NONE, (index),  (scale), (disp))
-
-#endif
-
-
-/*------------------------------------------------------------------
+/*-------------------------------------------------
     emit_jmp_*
-------------------------------------------------------------------*/
+-------------------------------------------------*/
 
 INLINE void emit_jmp_short_link(x86code **emitptr, emit_link *linkinfo)
 {
@@ -1403,81 +1551,88 @@ INLINE void emit_jmp(x86code **emitptr, x86code *target)
 }
 
 
-/*------------------------------------------------------------------
+/*-------------------------------------------------
     emit_jcc_*
-------------------------------------------------------------------*/
+-------------------------------------------------*/
 
-INLINE void emit_jcc_short_link(x86code **emitptr, UINT8 condition, emit_link *linkinfo)
+INLINE void emit_jcc_short_link(x86code **emitptr, UINT8 cond, emit_link *linkinfo)
 {
-	emit_op_simple(emitptr, OP_JCC_O_Jb + condition, OP_32BIT);
+	emit_op_simple(emitptr, OP_JCC_O_Jb + cond, OP_32BIT);
 	emit_byte(emitptr, 0);
 	linkinfo->target = *emitptr;
 	linkinfo->size = 1;
 }
 
-INLINE void emit_jcc_near_link(x86code **emitptr, UINT8 condition, emit_link *linkinfo)
+INLINE void emit_jcc_near_link(x86code **emitptr, UINT8 cond, emit_link *linkinfo)
 {
-	emit_op_simple(emitptr, OP_JCC_O_Jv + condition, OP_32BIT);
+	emit_op_simple(emitptr, OP_JCC_O_Jv + cond, OP_32BIT);
 	emit_dword(emitptr, 0);
 	linkinfo->target = *emitptr;
 	linkinfo->size = 4;
 }
 
-INLINE void emit_jcc(x86code **emitptr, UINT8 condition, x86code *target)
+INLINE void emit_jcc(x86code **emitptr, UINT8 cond, x86code *target)
 {
 	INT32 delta = *emitptr + 2 - target;
 	emit_link link;
 
 	if ((INT8)delta == delta)
-		emit_jcc_short_link(emitptr, condition, &link);
+		emit_jcc_short_link(emitptr, cond, &link);
 	else
-		emit_jcc_near_link(emitptr, condition, &link);
+		emit_jcc_near_link(emitptr, cond, &link);
 	resolve_link(&target, &link);
 }
 
 
-/*------------------------------------------------------------------
-    emit_jmp_r32_*
-------------------------------------------------------------------*/
+/*-------------------------------------------------
+    emit_call/jmp_*
+-------------------------------------------------*/
 
 #ifndef PTR64
-
-INLINE void emit_jmp_r32(x86code **emitptr, UINT8 dreg)
-{
-	emit_op_modrm_reg(emitptr, OP_G5, OP_32BIT, 4, dreg);
-}
-
-INLINE void emit_jmp_m32bisd(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_G5, OP_32BIT, 4, base, index, scale, disp);
-}
-
-#define emit_jmp_m32abs(e, addr)								emit_jmp_m32bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_jmp_m32bd(e, base, disp)							emit_jmp_m32bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_jmp_m32isd(e, index, scale, disp)					emit_jmp_m32bisd(e, REG_NONE, (index),  (scale), (disp))
-
+INLINE void emit_call_r32(x86code **emitptr, UINT8 dreg)		{ emit_op_modrm_reg(emitptr, OP_G5, OP_32BIT, 2, dreg); }
+INLINE void emit_call_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_G5, OP_32BIT, 2, MEMPARAMS); }
+INLINE void emit_jmp_r32(x86code **emitptr, UINT8 dreg)			{ emit_op_modrm_reg(emitptr, OP_G5, OP_32BIT, 4, dreg); }
+INLINE void emit_jmp_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_G5, OP_32BIT, 4, MEMPARAMS); }
+#else
+INLINE void emit_call_r64(x86code **emitptr, UINT8 dreg)		{ emit_op_modrm_reg(emitptr, OP_G5, OP_32BIT, 2, dreg); }
+INLINE void emit_call_m64(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_G5, OP_32BIT, 2, MEMPARAMS); }
+INLINE void emit_jmp_r64(x86code **emitptr, UINT8 dreg)			{ emit_op_modrm_reg(emitptr, OP_G5, OP_32BIT, 4, dreg); }
+INLINE void emit_jmp_m64(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_G5, OP_32BIT, 4, MEMPARAMS); }
 #endif
 
 
-/*------------------------------------------------------------------
-    emit_jmp_r64_*
-------------------------------------------------------------------*/
 
-#ifdef PTR64
+/***************************************************************************
+    PUSH/POP EMITTERS
+***************************************************************************/
 
-INLINE void emit_jmp_r64(x86code **emitptr, UINT8 dreg)
+INLINE void emit_push_imm(x86code **emitptr, INT32 imm)
 {
-	emit_op_modrm_reg(emitptr, OP_G5, OP_32BIT, 4, dreg);
+	if ((INT8)imm == imm)
+	{
+		emit_op_simple(emitptr, OP_PUSH_Ib, OP_32BIT);
+		emit_byte(emitptr, (INT8)imm);
+	}
+	else
+	{
+		emit_op_simple(emitptr, OP_PUSH_Iz, OP_32BIT);
+		emit_dword(emitptr, imm);
+	}
 }
 
-INLINE void emit_jmp_m64bisd(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_G5, OP_32BIT, 4, base, index, scale, disp);
-}
+#ifndef PTR64
 
-#define emit_jmp_m64abs(e, addr)								emit_jmp_m64bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_jmp_m64bd(e, base, disp)							emit_jmp_m64bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_jmp_m64isd(e, index, scale, disp)					emit_jmp_m64bisd(e, REG_NONE, (index),  (scale), (disp))
+INLINE void emit_push_r32(x86code **emitptr, UINT8 reg)							{ emit_op_reg(emitptr, OP_PUSH_rAX + (reg & 7), OP_32BIT, reg); }
+INLINE void emit_push_m32(x86code **emitptr, DECLARE_MEMPARAMS)					{ emit_op_modrm_mem(emitptr, OP_G5, OP_32BIT, 6, MEMPARAMS); }
+INLINE void emit_pop_r32(x86code **emitptr, UINT8 reg) 							{ emit_op_reg(emitptr, OP_POP_rAX + (reg & 7), OP_32BIT, reg); }
+INLINE void emit_pop_m32(x86code **emitptr, DECLARE_MEMPARAMS)					{ emit_op_modrm_mem(emitptr, OP_G1A_Ev, OP_32BIT, 0, MEMPARAMS); }
+
+#else
+
+INLINE void emit_push_r64(x86code **emitptr, UINT8 reg)							{ emit_op_reg(emitptr, OP_PUSH_rAX + (reg & 7), OP_32BIT, reg); }
+INLINE void emit_push_m64(x86code **emitptr, DECLARE_MEMPARAMS)					{ emit_op_modrm_mem(emitptr, OP_G5, OP_32BIT, 6, MEMPARAMS); }
+INLINE void emit_pop_r64(x86code **emitptr, UINT8 reg)							{ emit_op_reg(emitptr, OP_POP_rAX + (reg & 7), OP_32BIT, reg); }
+INLINE void emit_pop_m64(x86code **emitptr, DECLARE_MEMPARAMS)					{ emit_op_modrm_mem(emitptr, OP_G1A_Ev, OP_32BIT, 0, MEMPARAMS); }
 
 #endif
 
@@ -1487,2733 +1642,798 @@ INLINE void emit_jmp_m64bisd(x86code **emitptr, UINT8 base, UINT8 index, UINT8 s
     MOVE EMITTERS
 ***************************************************************************/
 
-/*------------------------------------------------------------------
+/*-------------------------------------------------
     emit_mov_r8_*
-------------------------------------------------------------------*/
+-------------------------------------------------*/
 
 INLINE void emit_mov_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)
 {
-	emit_op(emitptr, OP_MOV_AL_Ib | (dreg & 7), OP_32BIT, 0, 0, dreg);
+	emit_op_reg(emitptr, OP_MOV_AL_Ib | (dreg & 7), OP_32BIT, dreg);
 	emit_byte(emitptr, imm);
 }
 
-INLINE void emit_mov_r8_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_op_modrm_reg(emitptr, OP_MOV_Gb_Eb, OP_32BIT, dreg, sreg);
-}
-
-INLINE void emit_mov_r8_m8bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_MOV_Gb_Eb, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-INLINE void emit_mov_m8bisd_imm(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 imm)
-{
-	emit_op_modrm_mem(emitptr, OP_G11_Eb_Ib, OP_32BIT, 0, base, index, scale, disp);
-	emit_byte(emitptr, imm);
-}
-
-INLINE void emit_mov_m8bisd_r8(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 sreg)
-{
-	emit_op_modrm_mem(emitptr, OP_MOV_Eb_Gb, OP_32BIT, sreg, base, index, scale, disp);
-}
-
-#define emit_mov_r8_m8abs(e, dreg, addr)					emit_mov_r8_m8bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mov_r8_m8bd(e, dreg, base, disp)				emit_mov_r8_m8bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_mov_r8_m8isd(e, dreg, index, scale, disp)		emit_mov_r8_m8bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_mov_m8abs_r8(e, addr, sreg)					emit_mov_m8bisd_r8(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_mov_m8bd_r8(e, base, disp, sreg)				emit_mov_m8bisd_r8(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_mov_m8isd_r8(e, index, scale, disp, sreg)		emit_mov_m8bisd_r8(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-#define emit_mov_m8abs_imm(e, addr, imm)					emit_mov_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_mov_m8bd_imm(e, base, disp, imm)				emit_mov_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_mov_m8isd_imm(e, index, scale, disp, imm)		emit_mov_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
+INLINE void emit_mov_r8_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_MOV_Gb_Eb, OP_32BIT, dreg, sreg); }
+INLINE void emit_mov_r8_m8(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_MOV_Gb_Eb, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_mov_m8_r8(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)	{ emit_op_modrm_mem(emitptr, OP_MOV_Eb_Gb, OP_32BIT, sreg, MEMPARAMS); }
+INLINE void emit_mov_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_op_modrm_mem_imm8(emitptr, OP_G11_Eb_Ib, OP_32BIT, 0, MEMPARAMS, imm); }
 
 
-/*------------------------------------------------------------------
+/*-------------------------------------------------
     emit_mov_r16_*
-------------------------------------------------------------------*/
+-------------------------------------------------*/
 
 INLINE void emit_mov_r16_imm(x86code **emitptr, UINT8 dreg, UINT16 imm)
 {
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op(emitptr, OP_MOV_rAX_Iv | (dreg & 7), OP_32BIT, 0, 0, dreg);
+	emit_op_reg(emitptr, OP_MOV_rAX_Iv | (dreg & 7), OP_16BIT, dreg);
 	emit_word(emitptr, imm);
 }
 
-INLINE void emit_mov_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_MOV_Gv_Ev, OP_32BIT, dreg, sreg);
-}
-
-INLINE void emit_mov_r16_m16bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_MOV_Gv_Ev, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-INLINE void emit_mov_m16bisd_imm(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT16 imm)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_G11_Ev_Iz, OP_32BIT, 0, base, index, scale, disp);
-	emit_word(emitptr, imm);
-}
-
-INLINE void emit_mov_m16bisd_r16(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_MOV_Ev_Gv, OP_32BIT, sreg, base, index, scale, disp);
-}
-
-INLINE void emit_cmovcc_r16_r16(x86code **emitptr, UINT8 condition, UINT8 dreg, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_CMOV_O_Gv_Ev + condition, OP_32BIT, dreg, sreg);
-}
-
-INLINE void emit_cmovcc_r16_m16bisd(x86code **emitptr, UINT8 condition, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_CMOV_O_Gv_Ev + condition, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-#define emit_mov_r16_m16abs(e, dreg, addr)					emit_mov_r16_m16bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mov_r16_m16bd(e, dreg, base, disp)				emit_mov_r16_m16bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_mov_r16_m16isd(e, dreg, index, scale, disp)	emit_mov_r16_m16bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_mov_m16abs_r16(e, addr, sreg)					emit_mov_m16bisd_r16(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_mov_m16bd_r16(e, base, disp, sreg)				emit_mov_m16bisd_r16(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_mov_m16isd_r16(e, index, scale, disp, sreg)	emit_mov_m16bisd_r16(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-#define emit_mov_m16abs_imm(e, addr, imm)					emit_mov_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_mov_m16bd_imm(e, base, disp, imm)				emit_mov_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_mov_m16isd_imm(e, index, scale, disp, imm)		emit_mov_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_cmovcc_r16_m16abs(e, cond, dreg, addr)					emit_cmovcc_r16_m16bisd(e, cond, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cmovcc_r16_m16bd(e, cond, dreg, base, disp)			emit_cmovcc_r16_m16bisd(e, cond, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cmovcc_r16_m16isd(e, cond, dreg, index, scale, disp)	emit_cmovcc_r16_m16bisd(e, cond, dreg, REG_NONE, (index),  (scale), (disp))
+INLINE void emit_mov_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)							{ emit_op_modrm_reg(emitptr, OP_MOV_Gv_Ev, OP_16BIT, dreg, sreg); }
+INLINE void emit_mov_r16_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)					{ emit_op_modrm_mem(emitptr, OP_MOV_Gv_Ev, OP_16BIT, dreg, MEMPARAMS); }
+INLINE void emit_mov_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT16 imm)					{ emit_op_modrm_mem_imm16(emitptr, OP_G11_Ev_Iz, OP_16BIT, 0, MEMPARAMS, imm); }
+INLINE void emit_mov_m16_r16(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)					{ emit_op_modrm_mem(emitptr, OP_MOV_Ev_Gv, OP_16BIT, sreg, MEMPARAMS); }
+INLINE void emit_movsx_r16_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_MOVSX_Gv_Eb, OP_16BIT, dreg, sreg); }
+INLINE void emit_movsx_r16_m8(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)					{ emit_op_modrm_mem(emitptr, OP_MOVSX_Gv_Eb, OP_16BIT, dreg, MEMPARAMS); }
+INLINE void emit_movzx_r16_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg) 						{ emit_op_modrm_reg(emitptr, OP_MOVZX_Gv_Eb, OP_16BIT, dreg, sreg); }
+INLINE void emit_movzx_r16_m8(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)					{ emit_op_modrm_mem(emitptr, OP_MOVZX_Gv_Eb, OP_16BIT, dreg, MEMPARAMS); }
+INLINE void emit_cmovcc_r16_r16(x86code **emitptr, UINT8 cond, UINT8 dreg, UINT8 sreg) 			{ emit_op_modrm_reg(emitptr, OP_CMOV_O_Gv_Ev + cond, OP_16BIT, dreg, sreg); }
+INLINE void emit_cmovcc_r16_m16(x86code **emitptr, UINT8 cond, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_CMOV_O_Gv_Ev + cond, OP_16BIT, dreg, MEMPARAMS); }
 
 
-/*------------------------------------------------------------------
+/*-------------------------------------------------
     emit_mov_r32_*
-------------------------------------------------------------------*/
+-------------------------------------------------*/
 
 INLINE void emit_mov_r32_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)
 {
-	emit_op(emitptr, OP_MOV_rAX_Iv | (dreg & 7), OP_32BIT, 0, 0, dreg);
+	emit_op_reg(emitptr, OP_MOV_rAX_Iv | (dreg & 7), OP_32BIT, dreg);
 	emit_dword(emitptr, imm);
 }
 
-INLINE void emit_mov_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_op_modrm_reg(emitptr, OP_MOV_Gv_Ev, OP_32BIT, dreg, sreg);
-}
-
-INLINE void emit_mov_r32_m32bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_MOV_Gv_Ev, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-INLINE void emit_mov_m32bisd_imm(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT32 imm)
-{
-	emit_op_modrm_mem(emitptr, OP_G11_Ev_Iz, OP_32BIT, 0, base, index, scale, disp);
-	emit_dword(emitptr, imm);
-}
-
-INLINE void emit_mov_m32bisd_r32(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 sreg)
-{
-	emit_op_modrm_mem(emitptr, OP_MOV_Ev_Gv, OP_32BIT, sreg, base, index, scale, disp);
-}
-
-INLINE void emit_cmovcc_r32_r32(x86code **emitptr, UINT8 condition, UINT8 dreg, UINT8 sreg)
-{
-	emit_op_modrm_reg(emitptr, OP_CMOV_O_Gv_Ev + condition, OP_32BIT, dreg, sreg);
-}
-
-INLINE void emit_cmovcc_r32_m32bisd(x86code **emitptr, UINT8 condition, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_CMOV_O_Gv_Ev + condition, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-#define emit_mov_r32_m32abs(e, dreg, addr)					emit_mov_r32_m32bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mov_r32_m32bd(e, dreg, base, disp)				emit_mov_r32_m32bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_mov_r32_m32isd(e, dreg, index, scale, disp)	emit_mov_r32_m32bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_mov_m32abs_r32(e, addr, sreg)					emit_mov_m32bisd_r32(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_mov_m32bd_r32(e, base, disp, sreg)				emit_mov_m32bisd_r32(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_mov_m32isd_r32(e, index, scale, disp, sreg)	emit_mov_m32bisd_r32(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-#define emit_mov_m32abs_imm(e, addr, imm)					emit_mov_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_mov_m32bd_imm(e, base, disp, imm)				emit_mov_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_mov_m32isd_imm(e, index, scale, disp, imm)		emit_mov_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_cmovcc_r32_m32abs(e, cond, dreg, addr)					emit_cmovcc_r32_m32bisd(e, cond, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cmovcc_r32_m32bd(e, cond, dreg, base, disp)			emit_cmovcc_r32_m32bisd(e, cond, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cmovcc_r32_m32isd(e, cond, dreg, index, scale, disp)	emit_cmovcc_r32_m32bisd(e, cond, dreg, REG_NONE, (index),  (scale), (disp))
+INLINE void emit_mov_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg)							{ emit_op_modrm_reg(emitptr, OP_MOV_Gv_Ev, OP_32BIT, dreg, sreg); }
+INLINE void emit_mov_r32_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)					{ emit_op_modrm_mem(emitptr, OP_MOV_Gv_Ev, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_mov_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)					{ emit_op_modrm_mem_imm32(emitptr, OP_G11_Ev_Iz, OP_32BIT, 0, MEMPARAMS, imm); }
+INLINE void emit_mov_m32_r32(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)					{ emit_op_modrm_mem(emitptr, OP_MOV_Ev_Gv, OP_32BIT, sreg, MEMPARAMS); }
+INLINE void emit_movsx_r32_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_MOVSX_Gv_Eb, OP_32BIT, dreg, sreg); }
+INLINE void emit_movsx_r32_m8(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)					{ emit_op_modrm_mem(emitptr, OP_MOVSX_Gv_Eb, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_movsx_r32_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_MOVSX_Gv_Ew, OP_32BIT, dreg, sreg); }
+INLINE void emit_movsx_r32_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)				{ emit_op_modrm_mem(emitptr, OP_MOVSX_Gv_Ew, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_movzx_r32_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_MOVZX_Gv_Eb, OP_32BIT, dreg, sreg); }
+INLINE void emit_movzx_r32_m8(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)					{ emit_op_modrm_mem(emitptr, OP_MOVZX_Gv_Eb, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_movzx_r32_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_MOVZX_Gv_Ew, OP_32BIT, dreg, sreg); }
+INLINE void emit_movzx_r32_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)				{ emit_op_modrm_mem(emitptr, OP_MOVZX_Gv_Ew, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_cmovcc_r32_r32(x86code **emitptr, UINT8 cond, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CMOV_O_Gv_Ev + cond, OP_32BIT, dreg, sreg); }
+INLINE void emit_cmovcc_r32_m32(x86code **emitptr, UINT8 cond, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CMOV_O_Gv_Ev + cond, OP_32BIT, dreg, MEMPARAMS); }
 
 
-/*------------------------------------------------------------------
+/*-------------------------------------------------
     emit_mov_r64_*
-------------------------------------------------------------------*/
+-------------------------------------------------*/
 
 #ifdef PTR64
 
 INLINE void emit_mov_r64_imm(x86code **emitptr, UINT8 dreg, UINT64 imm)
 {
-	emit_op(emitptr, OP_MOV_rAX_Iv | (dreg & 7), OP_64BIT, 0, 0, dreg);
-	emit_qword(emitptr, imm);
+	if ((INT32)imm == (INT64)imm)
+		emit_op_modrm_reg_imm32(emitptr, OP_G11_Ev_Iz, OP_64BIT, 0, dreg, imm);
+	else
+	{
+		emit_op_reg(emitptr, OP_MOV_rAX_Iv | (dreg & 7), OP_64BIT, dreg);
+		emit_qword(emitptr, imm);
+	}
 }
 
-INLINE void emit_mov_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_op_modrm_reg(emitptr, OP_MOV_Gv_Ev, OP_64BIT, dreg, sreg);
-}
-
-INLINE void emit_mov_r64_m64bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_MOV_Gv_Ev, OP_64BIT, dreg, base, index, scale, disp);
-}
-
-INLINE void emit_mov_m64bisd_imm(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT64 imm)
-{
-	assert((INT32)imm == (INT64)imm);
-	emit_op_modrm_mem(emitptr, OP_G11_Ev_Iz, OP_64BIT, 0, base, index, scale, disp);
-	emit_dword(emitptr, (INT32)imm);
-}
-
-INLINE void emit_mov_m64bisd_r64(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 sreg)
-{
-	emit_op_modrm_mem(emitptr, OP_MOV_Ev_Gv, OP_64BIT, sreg, base, index, scale, disp);
-}
-
-INLINE void emit_cmovcc_r64_r64(x86code **emitptr, UINT8 condition, UINT8 dreg, UINT8 sreg)
-{
-	emit_op_modrm_reg(emitptr, OP_CMOV_O_Gv_Ev + condition, OP_64BIT, dreg, sreg);
-}
-
-INLINE void emit_cmovcc_r64_m64bisd(x86code **emitptr, UINT8 condition, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_CMOV_O_Gv_Ev + condition, OP_64BIT, dreg, base, index, scale, disp);
-}
-
-#define emit_mov_r64_m64abs(e, dreg, addr)					emit_mov_r64_m64bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mov_r64_m64bd(e, dreg, base, disp)				emit_mov_r64_m64bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_mov_r64_m64isd(e, dreg, index, scale, disp)	emit_mov_r64_m64bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_mov_m64abs_r64(e, addr, sreg)					emit_mov_m64bisd_r64(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_mov_m64bd_r64(e, base, disp, sreg)				emit_mov_m64bisd_r64(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_mov_m64isd_r64(e, index, scale, disp, sreg)	emit_mov_m64bisd_r64(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-#define emit_mov_m64abs_imm(e, addr, imm)					emit_mov_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_mov_m64bd_imm(e, base, disp, imm)				emit_mov_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_mov_m64isd_imm(e, index, scale, disp, imm)		emit_mov_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_cmovcc_r64_m64abs(e, cond, dreg, addr)					emit_cmovcc_r64_m64bisd(e, cond, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cmovcc_r64_m64bd(e, cond, dreg, base, disp)			emit_cmovcc_r64_m64bisd(e, cond, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cmovcc_r64_m64isd(e, cond, dreg, index, scale, disp)	emit_cmovcc_r64_m64bisd(e, cond, dreg, REG_NONE, (index),  (scale), (disp))
+INLINE void emit_mov_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg)							{ emit_op_modrm_reg(emitptr, OP_MOV_Gv_Ev, OP_64BIT, dreg, sreg); }
+INLINE void emit_mov_r64_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)					{ emit_op_modrm_mem(emitptr, OP_MOV_Gv_Ev, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_mov_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)					{ emit_op_modrm_mem_imm32(emitptr, OP_G11_Ev_Iz, OP_64BIT, 0, MEMPARAMS, imm); }
+INLINE void emit_mov_m64_r64(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)					{ emit_op_modrm_mem(emitptr, OP_MOV_Ev_Gv, OP_64BIT, sreg, MEMPARAMS); }
+INLINE void emit_movsx_r64_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_MOVSX_Gv_Eb, OP_64BIT, dreg, sreg); }
+INLINE void emit_movsx_r64_m8(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)					{ emit_op_modrm_mem(emitptr, OP_MOVSX_Gv_Eb, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_movsx_r64_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_MOVSX_Gv_Ew, OP_64BIT, dreg, sreg); }
+INLINE void emit_movsx_r64_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)				{ emit_op_modrm_mem(emitptr, OP_MOVSX_Gv_Ew, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_movsxd_r64_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_MOVSXD_Gv_Ev, OP_64BIT, dreg, sreg); }
+INLINE void emit_movsxd_r64_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)				{ emit_op_modrm_mem(emitptr, OP_MOVSXD_Gv_Ev, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_movzx_r64_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_MOVZX_Gv_Eb, OP_64BIT, dreg, sreg); }
+INLINE void emit_movzx_r64_m8(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)					{ emit_op_modrm_mem(emitptr, OP_MOVZX_Gv_Eb, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_movzx_r64_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_MOVZX_Gv_Ew, OP_64BIT, dreg, sreg); }
+INLINE void emit_movzx_r64_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)				{ emit_op_modrm_mem(emitptr, OP_MOVZX_Gv_Ew, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_cmovcc_r64_r64(x86code **emitptr, UINT8 cond, UINT8 dreg, UINT8 sreg) 			{ emit_op_modrm_reg(emitptr, OP_CMOV_O_Gv_Ev + cond, OP_64BIT, dreg, sreg); }
+INLINE void emit_cmovcc_r64_m64(x86code **emitptr, UINT8 cond, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CMOV_O_Gv_Ev + cond, OP_64BIT, dreg, MEMPARAMS); }
 
 #endif
 
 
 
 /***************************************************************************
-    MOVE EXTENDED EMITTERS
+    ARITHMETIC EMITTERS
 ***************************************************************************/
 
-/*------------------------------------------------------------------
-    emit_movsx_r16_*
-------------------------------------------------------------------*/
-
-INLINE void emit_movsx_r16_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_MOVSX_Gv_Eb, OP_32BIT, dreg, sreg);
-}
-
-INLINE void emit_movsx_r16_m8bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_MOVSX_Gv_Eb, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-#define emit_movsx_r16_m8abs(e, dreg, addr)					emit_movsx_r16_m8bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movsx_r16_m8bd(e, dreg, base, disp)			emit_movsx_r16_m8bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movsx_r16_m8isd(e, dreg, index, scale, disp)	emit_movsx_r16_m8bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_movzx_r16_*
-------------------------------------------------------------------*/
-
-INLINE void emit_movzx_r16_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_MOVZX_Gv_Eb, OP_32BIT, dreg, sreg);
-}
-
-INLINE void emit_movzx_r16_m8bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_MOVZX_Gv_Eb, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-#define emit_movzx_r16_m8abs(e, dreg, addr)					emit_movzx_r16_m8bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movzx_r16_m8bd(e, dreg, base, disp)			emit_movzx_r16_m8bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movzx_r16_m8isd(e, dreg, index, scale, disp)	emit_movzx_r16_m8bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_movsx_r32_*
-------------------------------------------------------------------*/
-
-INLINE void emit_movsx_r32_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_MOVSX_Gv_Eb, OP_32BIT, dreg, sreg);
-}
-
-INLINE void emit_movsx_r32_m8bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_MOVSX_Gv_Eb, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-INLINE void emit_movsx_r32_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_MOVSX_Gv_Ew, OP_32BIT, dreg, sreg);
-}
-
-INLINE void emit_movsx_r32_m16bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_MOVSX_Gv_Ew, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-#define emit_movsx_r32_m8abs(e, dreg, addr)					emit_movsx_r32_m8bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movsx_r32_m8bd(e, dreg, base, disp)			emit_movsx_r32_m8bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movsx_r32_m8isd(e, dreg, index, scale, disp)	emit_movsx_r32_m8bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_movsx_r32_m16abs(e, dreg, addr)				emit_movsx_r32_m16bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movsx_r32_m16bd(e, dreg, base, disp)			emit_movsx_r32_m16bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movsx_r32_m16isd(e, dreg, index, scale, disp)	emit_movsx_r32_m16bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_movzx_r32_*
-------------------------------------------------------------------*/
-
-INLINE void emit_movzx_r32_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_MOVZX_Gv_Eb, OP_32BIT, dreg, sreg);
-}
-
-INLINE void emit_movzx_r32_m8bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_MOVZX_Gv_Eb, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-INLINE void emit_movzx_r32_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_MOVZX_Gv_Ew, OP_32BIT, dreg, sreg);
-}
-
-INLINE void emit_movzx_r32_m16bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_MOVZX_Gv_Ew, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-#define emit_movzx_r32_m8abs(e, dreg, addr)					emit_movzx_r32_m8bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movzx_r32_m8bd(e, dreg, base, disp)			emit_movzx_r32_m8bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movzx_r32_m8isd(e, dreg, index, scale, disp)	emit_movzx_r32_m8bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_movzx_r32_m16abs(e, dreg, addr)				emit_movzx_r32_m16bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movzx_r32_m16bd(e, dreg, base, disp)			emit_movzx_r32_m16bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movzx_r32_m16isd(e, dreg, index, scale, disp)	emit_movzx_r32_m16bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_movsx_r64_*
-------------------------------------------------------------------*/
-
-#ifdef PTR64
-
-INLINE void emit_movsx_r64_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_MOVSX_Gv_Eb, OP_64BIT, dreg, sreg);
-}
-
-INLINE void emit_movsx_r64_m8bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_MOVSX_Gv_Eb, OP_64BIT, dreg, base, index, scale, disp);
-}
-
-INLINE void emit_movsx_r64_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_MOVSX_Gv_Ew, OP_64BIT, dreg, sreg);
-}
-
-INLINE void emit_movsx_r64_m16bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_MOVSX_Gv_Ew, OP_64BIT, dreg, base, index, scale, disp);
-}
-
-INLINE void emit_movsxd_r64_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_MOVSXD_Gv_Ev, OP_64BIT, dreg, sreg);
-}
-
-INLINE void emit_movsxd_r64_m32bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_MOVSXD_Gv_Ev, OP_64BIT, dreg, base, index, scale, disp);
-}
-
-#define emit_movsx_r64_m8abs(e, dreg, addr)					emit_movsx_r64_m8bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movsx_r64_m8bd(e, dreg, base, disp)			emit_movsx_r64_m8bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movsx_r64_m8isd(e, dreg, index, scale, disp)	emit_movsx_r64_m8bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_movsx_r64_m16abs(e, dreg, addr)				emit_movsx_r64_m16bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movsx_r64_m16bd(e, dreg, base, disp)			emit_movsx_r64_m16bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movsx_r64_m16isd(e, dreg, index, scale, disp)	emit_movsx_r64_m16bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_movsxd_r64_m32abs(e, dreg, addr)				emit_movsxd_r64_m32bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movsxd_r64_m32bd(e, dreg, base, disp)			emit_movsxd_r64_m32bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movsxd_r64_m32isd(e, dreg, index, scale, disp)	emit_movsxd_r64_m32bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#endif
-
-
-/*------------------------------------------------------------------
-    emit_movzx_r64_*
-------------------------------------------------------------------*/
-
-#ifdef PTR64
-
-INLINE void emit_movzx_r64_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_MOVZX_Gv_Eb, OP_64BIT, dreg, sreg);
-}
-
-INLINE void emit_movzx_r64_m8bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_MOVZX_Gv_Eb, OP_64BIT, dreg, base, index, scale, disp);
-}
-
-INLINE void emit_movzx_r64_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_MOVZX_Gv_Ew, OP_64BIT, dreg, sreg);
-}
-
-INLINE void emit_movzx_r64_m16bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_MOVZX_Gv_Ew, OP_64BIT, dreg, base, index, scale, disp);
-}
-
-#define emit_movzx_r64_m8abs(e, dreg, addr)					emit_movzx_r64_m8bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movzx_r64_m8bd(e, dreg, base, disp)			emit_movzx_r64_m8bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movzx_r64_m8isd(e, dreg, index, scale, disp)	emit_movzx_r64_m8bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_movzx_r64_m16abs(e, dreg, addr)				emit_movzx_r64_m16bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movzx_r64_m16bd(e, dreg, base, disp)			emit_movzx_r64_m16bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movzx_r64_m16isd(e, dreg, index, scale, disp)	emit_movzx_r64_m16bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#endif
-
-
-
-/***************************************************************************
-    TEST EMITTERS
-***************************************************************************/
-
-/*------------------------------------------------------------------
-    emit_test_r8_*
-------------------------------------------------------------------*/
-
-INLINE void emit_test_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)
-{
-	emit_op_modrm_reg(emitptr, OP_G3_Eb, OP_32BIT, 0, dreg);
-	emit_byte(emitptr, imm);
-}
-
-INLINE void emit_test_r8_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_op_modrm_reg(emitptr, OP_TEST_Eb_Gb, OP_32BIT, sreg, dreg);
-}
-
-INLINE void emit_test_m8bisd_imm(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 imm)
-{
-	emit_op_modrm_mem(emitptr, OP_G3_Eb, OP_32BIT, 0, base, index, scale, disp);
-	emit_byte(emitptr, imm);
-}
-
-INLINE void emit_test_m8bisd_r8(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 sreg)
-{
-	emit_op_modrm_mem(emitptr, OP_TEST_Eb_Gb, OP_32BIT, sreg, base, index, scale, disp);
-}
-
-#define emit_test_m8abs_imm(e, addr, imm)					emit_test_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_test_m8bd_imm(e, base, disp, imm)				emit_test_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_test_m8isd_imm(e, index, scale, disp, imm)		emit_test_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_test_m8abs_r8(e, addr, sreg)					emit_test_m8bisd_r8(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_test_m8bd_r8(e, base, disp, sreg)				emit_test_m8bisd_r8(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_test_m8isd_r8(e, index, scale, disp, sreg)		emit_test_m8bisd_r8(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_test_r16_*
-------------------------------------------------------------------*/
-
-INLINE void emit_test_r16_imm(x86code **emitptr, UINT8 dreg, UINT16 imm)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, 0, dreg);
-	emit_word(emitptr, imm);
-}
-
-INLINE void emit_test_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_TEST_Ev_Gv, OP_32BIT, sreg, dreg);
-}
-
-INLINE void emit_test_m16bisd_imm(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT16 imm)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, 0, base, index, scale, disp);
-	emit_word(emitptr, imm);
-}
-
-INLINE void emit_test_m16bisd_r16(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_TEST_Ev_Gv, OP_32BIT, sreg, base, index, scale, disp);
-}
-
-#define emit_test_m16abs_imm(e, addr, imm)					emit_test_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_test_m16bd_imm(e, base, disp, imm)				emit_test_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_test_m16isd_imm(e, index, scale, disp, imm)	emit_test_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_test_m16abs_r16(e, addr, sreg)					emit_test_m16bisd_r16(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_test_m16bd_r16(e, base, disp, sreg)			emit_test_m16bisd_r16(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_test_m16isd_r16(e, index, scale, disp, sreg)	emit_test_m16bisd_r16(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_test_r32_*
-------------------------------------------------------------------*/
-
-INLINE void emit_test_r32_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)
-{
-	emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, 0, dreg);
-	emit_dword(emitptr, imm);
-}
-
-INLINE void emit_test_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_op_modrm_reg(emitptr, OP_TEST_Ev_Gv, OP_32BIT, sreg, dreg);
-}
-
-INLINE void emit_test_m32bisd_imm(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT32 imm)
-{
-	emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, 0, base, index, scale, disp);
-	emit_dword(emitptr, imm);
-}
-
-INLINE void emit_test_m32bisd_r32(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 sreg)
-{
-	emit_op_modrm_mem(emitptr, OP_TEST_Ev_Gv, OP_32BIT, sreg, base, index, scale, disp);
-}
-
-#define emit_test_m32abs_imm(e, addr, imm)					emit_test_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_test_m32bd_imm(e, base, disp, imm)				emit_test_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_test_m32isd_imm(e, index, scale, disp, imm)	emit_test_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_test_m32abs_r32(e, addr, sreg)					emit_test_m32bisd_r32(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_test_m32bd_r32(e, base, disp, sreg)			emit_test_m32bisd_r32(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_test_m32isd_r32(e, index, scale, disp, sreg)	emit_test_m32bisd_r32(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_test_r64_*
-------------------------------------------------------------------*/
-
-#ifdef PTR64
-
-INLINE void emit_test_r64_imm(x86code **emitptr, UINT8 dreg, UINT64 imm)
-{
-	assert((INT32)imm == (INT64)imm);
-	emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_64BIT, 0, dreg);
-	emit_dword(emitptr, imm);
-}
-
-INLINE void emit_test_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg)
-{
-	emit_op_modrm_reg(emitptr, OP_TEST_Ev_Gv, OP_64BIT, sreg, dreg);
-}
-
-INLINE void emit_test_m64bisd_imm(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT64 imm)
-{
-	assert((INT32)imm == (INT64)imm);
-	emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_64BIT, 0, base, index, scale, disp);
-	emit_dword(emitptr, (INT32)imm);
-}
-
-INLINE void emit_test_m64bisd_r64(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 sreg)
-{
-	emit_op_modrm_mem(emitptr, OP_TEST_Ev_Gv, OP_64BIT, sreg, base, index, scale, disp);
-}
-
-#define emit_test_m64abs_imm(e, addr, imm)					emit_test_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_test_m64bd_imm(e, base, disp, imm)				emit_test_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_test_m64isd_imm(e, index, scale, disp, imm)	emit_test_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_test_m64abs_r64(e, addr, sreg)					emit_test_m64bisd_r64(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_test_m64bd_r64(e, base, disp, sreg)			emit_test_m64bisd_r64(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_test_m64isd_r64(e, index, scale, disp, sreg)	emit_test_m64bisd_r64(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-#endif
-
-
-
-/***************************************************************************
-    8-BIT ARITHMETIC EMITTERS
-***************************************************************************/
-
-/*
-    Note that the following code relies on this:
-
-        00-05 or /0 = ADD
-        08-0d or /1 = OR
-        10-15 or /2 = ADC
-        18-1d or /3 = SBB
-        20-25 or /4 = AND
-        28-2d or /5 = SUB
-        30-35 or /6 = XOR
-        38-3d or /7 = CMP
-*/
-
-/*------------------------------------------------------------------
+/*-------------------------------------------------
     emit_arith_r8_*
-------------------------------------------------------------------*/
-
-INLINE void emit_arith_r8_imm(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT8 imm)
-{
-	emit_op_modrm_reg(emitptr, OP_G1_Eb_Ib, OP_32BIT, opindex, dreg);
-	emit_byte(emitptr, imm);
-}
-
-INLINE void emit_arith_m8bisd_imm(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 imm)
-{
-	emit_op_modrm_mem(emitptr, OP_G1_Eb_Ib, OP_32BIT, opindex, base, index, scale, disp);
-	emit_byte(emitptr, imm);
-}
-
-INLINE void emit_arith_r8_r8(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT8 sreg)
-{
-	emit_op_modrm_reg(emitptr, OP_ADD_Eb_Gb + 8 * opindex, OP_32BIT, dreg, sreg);
-}
-
-INLINE void emit_arith_r8_m8bisd(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_ADD_Eb_Gb + 8 * opindex, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-INLINE void emit_arith_m8bisd_r8(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 sreg)
-{
-	emit_op_modrm_mem(emitptr, OP_ADD_Gb_Eb + 8 * opindex, OP_32BIT, sreg, base, index, scale, disp);
-}
-
-
-/*------------------------------------------------------------------
-    emit_add_r8_*
-------------------------------------------------------------------*/
-
-#define emit_add_r8_imm(e, dreg, imm)							emit_arith_r8_imm(e, 0, dreg, imm)
-#define emit_add_m8bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m8bisd_imm(e, 0, base, index, scale, disp, imm)
-#define emit_add_r8_r8(e, dreg, sreg)							emit_arith_r8_r8(e, 0, dreg, sreg)
-#define emit_add_r8_m8bisd(e, dreg, base, index, scale, disp)	emit_arith_r8_m8bisd(e, 0, dreg, base, index, scale, disp)
-#define emit_add_m8bisd_r8(e, base, index, scale, disp, sreg)	emit_arith_m8bisd_r8(e, 0, base, index, scale, disp, sreg)
-
-#define emit_add_m8abs_imm(e, addr, imm)						emit_add_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_add_m8bd_imm(e, base, disp, imm)					emit_add_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_add_m8isd_imm(e, index, scale, disp, imm)			emit_add_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_add_r8_m8abs(e, dreg, addr)						emit_add_r8_m8bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_add_r8_m8bd(e, dreg, base, disp)					emit_add_r8_m8bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_add_r8_m8isd(e, dreg, index, scale, disp)			emit_add_r8_m8bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_add_m8abs_r8(e, addr, sreg)						emit_add_m8bisd_r8(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_add_m8bd_r8(e, base, disp, sreg)					emit_add_m8bisd_r8(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_add_m8isd_r8(e, index, scale, disp, sreg)			emit_add_m8bisd_r8(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_or_r8_*
-------------------------------------------------------------------*/
-
-#define emit_or_r8_imm(e, dreg, imm)							emit_arith_r8_imm(e, 1, dreg, imm)
-#define emit_or_m8bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m8bisd_imm(e, 1, base, index, scale, disp, imm)
-#define emit_or_r8_r8(e, dreg, sreg)							emit_arith_r8_r8(e, 1, dreg, sreg)
-#define emit_or_r8_m8bisd(e, dreg, base, index, scale, disp)	emit_arith_r8_m8bisd(e, 1, dreg, base, index, scale, disp)
-#define emit_or_m8bisd_r8(e, base, index, scale, disp, sreg)	emit_arith_m8bisd_r8(e, 1, base, index, scale, disp, sreg)
-
-#define emit_or_m8abs_imm(e, addr, imm)							emit_or_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_or_m8bd_imm(e, base, disp, imm)					emit_or_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_or_m8isd_imm(e, index, scale, disp, imm)			emit_or_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_or_r8_m8abs(e, dreg, addr)							emit_or_r8_m8bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_or_r8_m8bd(e, dreg, base, disp)					emit_or_r8_m8bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_or_r8_m8isd(e, dreg, index, scale, disp)			emit_or_r8_m8bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_or_m8abs_r8(e, addr, sreg)							emit_or_m8bisd_r8(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_or_m8bd_r8(e, base, disp, sreg)					emit_or_m8bisd_r8(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_or_m8isd_r8(e, index, scale, disp, sreg)			emit_or_m8bisd_r8(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_adc_r8_*
-------------------------------------------------------------------*/
-
-#define emit_adc_r8_imm(e, dreg, imm)							emit_arith_r8_imm(e, 2, dreg, imm)
-#define emit_adc_m8bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m8bisd_imm(e, 2, base, index, scale, disp, imm)
-#define emit_adc_r8_r8(e, dreg, sreg)							emit_arith_r8_r8(e, 2, dreg, sreg)
-#define emit_adc_r8_m8bisd(e, dreg, base, index, scale, disp)	emit_arith_r8_m8bisd(e, 2, dreg, base, index, scale, disp)
-#define emit_adc_m8bisd_r8(e, base, index, scale, disp, sreg)	emit_arith_m8bisd_r8(e, 2, base, index, scale, disp, sreg)
-
-#define emit_adc_m8abs_imm(e, addr, imm)						emit_adc_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_adc_m8bd_imm(e, base, disp, imm)					emit_adc_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_adc_m8isd_imm(e, index, scale, disp, imm)			emit_adc_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_adc_r8_m8abs(e, dreg, addr)						emit_adc_r8_m8bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_adc_r8_m8bd(e, dreg, base, disp)					emit_adc_r8_m8bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_adc_r8_m8isd(e, dreg, index, scale, disp)			emit_adc_r8_m8bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_adc_m8abs_r8(e, addr, sreg)						emit_adc_m8bisd_r8(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_adc_m8bd_r8(e, base, disp, sreg)					emit_adc_m8bisd_r8(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_adc_m8isd_r8(e, index, scale, disp, sreg)			emit_adc_m8bisd_r8(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_sbb_r8_*
-------------------------------------------------------------------*/
-
-#define emit_sbb_r8_imm(e, dreg, imm)							emit_arith_r8_imm(e, 3, dreg, imm)
-#define emit_sbb_m8bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m8bisd_imm(e, 3, base, index, scale, disp, imm)
-#define emit_sbb_r8_r8(e, dreg, sreg)							emit_arith_r8_r8(e, 3, dreg, sreg)
-#define emit_sbb_r8_m8bisd(e, dreg, base, index, scale, disp)	emit_arith_r8_m8bisd(e, 3, dreg, base, index, scale, disp)
-#define emit_sbb_m8bisd_r8(e, base, index, scale, disp, sreg)	emit_arith_m8bisd_r8(e, 3, base, index, scale, disp, sreg)
-
-#define emit_sbb_m8abs_imm(e, addr, imm)						emit_sbb_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_sbb_m8bd_imm(e, base, disp, imm)					emit_sbb_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_sbb_m8isd_imm(e, index, scale, disp, imm)			emit_sbb_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_sbb_r8_m8abs(e, dreg, addr)						emit_sbb_r8_m8bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sbb_r8_m8bd(e, dreg, base, disp)					emit_sbb_r8_m8bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sbb_r8_m8isd(e, dreg, index, scale, disp)			emit_sbb_r8_m8bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_sbb_m8abs_r8(e, addr, sreg)						emit_sbb_m8bisd_r8(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_sbb_m8bd_r8(e, base, disp, sreg)					emit_sbb_m8bisd_r8(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_sbb_m8isd_r8(e, index, scale, disp, sreg)			emit_sbb_m8bisd_r8(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_and_r8_*
-------------------------------------------------------------------*/
-
-#define emit_and_r8_imm(e, dreg, imm)							emit_arith_r8_imm(e, 4, dreg, imm)
-#define emit_and_m8bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m8bisd_imm(e, 4, base, index, scale, disp, imm)
-#define emit_and_r8_r8(e, dreg, sreg)							emit_arith_r8_r8(e, 4, dreg, sreg)
-#define emit_and_r8_m8bisd(e, dreg, base, index, scale, disp)	emit_arith_r8_m8bisd(e, 4, dreg, base, index, scale, disp)
-#define emit_and_m8bisd_r8(e, base, index, scale, disp, sreg)	emit_arith_m8bisd_r8(e, 4, base, index, scale, disp, sreg)
-
-#define emit_and_m8abs_imm(e, addr, imm)						emit_and_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_and_m8bd_imm(e, base, disp, imm)					emit_and_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_and_m8isd_imm(e, index, scale, disp, imm)			emit_and_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_and_r8_m8abs(e, dreg, addr)						emit_and_r8_m8bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_and_r8_m8bd(e, dreg, base, disp)					emit_and_r8_m8bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_and_r8_m8isd(e, dreg, index, scale, disp)			emit_and_r8_m8bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_and_m8abs_r8(e, addr, sreg)						emit_and_m8bisd_r8(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_and_m8bd_r8(e, base, disp, sreg)					emit_and_m8bisd_r8(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_and_m8isd_r8(e, index, scale, disp, sreg)			emit_and_m8bisd_r8(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_sub_r8_*
-------------------------------------------------------------------*/
-
-#define emit_sub_r8_imm(e, dreg, imm)							emit_arith_r8_imm(e, 5, dreg, imm)
-#define emit_sub_m8bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m8bisd_imm(e, 5, base, index, scale, disp, imm)
-#define emit_sub_r8_r8(e, dreg, sreg)							emit_arith_r8_r8(e, 5, dreg, sreg)
-#define emit_sub_r8_m8bisd(e, dreg, base, index, scale, disp)	emit_arith_r8_m8bisd(e, 5, dreg, base, index, scale, disp)
-#define emit_sub_m8bisd_r8(e, base, index, scale, disp, sreg)	emit_arith_m8bisd_r8(e, 5, base, index, scale, disp, sreg)
-
-#define emit_sub_m8abs_imm(e, addr, imm)						emit_sub_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_sub_m8bd_imm(e, base, disp, imm)					emit_sub_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_sub_m8isd_imm(e, index, scale, disp, imm)			emit_sub_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_sub_r8_m8abs(e, dreg, addr)						emit_sub_r8_m8bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sub_r8_m8bd(e, dreg, base, disp)					emit_sub_r8_m8bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sub_r8_m8isd(e, dreg, index, scale, disp)			emit_sub_r8_m8bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_sub_m8abs_r8(e, addr, sreg)						emit_sub_m8bisd_r8(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_sub_m8bd_r8(e, base, disp, sreg)					emit_sub_m8bisd_r8(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_sub_m8isd_r8(e, index, scale, disp, sreg)			emit_sub_m8bisd_r8(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_xor_r8_*
-------------------------------------------------------------------*/
-
-#define emit_xor_r8_imm(e, dreg, imm)							emit_arith_r8_imm(e, 6, dreg, imm)
-#define emit_xor_m8bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m8bisd_imm(e, 6, base, index, scale, disp, imm)
-#define emit_xor_r8_r8(e, dreg, sreg)							emit_arith_r8_r8(e, 6, dreg, sreg)
-#define emit_xor_r8_m8bisd(e, dreg, base, index, scale, disp)	emit_arith_r8_m8bisd(e, 6, dreg, base, index, scale, disp)
-#define emit_xor_m8bisd_r8(e, base, index, scale, disp, sreg)	emit_arith_m8bisd_r8(e, 6, base, index, scale, disp, sreg)
-
-#define emit_xor_m8abs_imm(e, addr, imm)						emit_xor_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_xor_m8bd_imm(e, base, disp, imm)					emit_xor_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_xor_m8isd_imm(e, index, scale, disp, imm)			emit_xor_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_xor_r8_m8abs(e, dreg, addr)						emit_xor_r8_m8bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_xor_r8_m8bd(e, dreg, base, disp)					emit_xor_r8_m8bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_xor_r8_m8isd(e, dreg, index, scale, disp)			emit_xor_r8_m8bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_xor_m8abs_r8(e, addr, sreg)						emit_xor_m8bisd_r8(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_xor_m8bd_r8(e, base, disp, sreg)					emit_xor_m8bisd_r8(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_xor_m8isd_r8(e, index, scale, disp, sreg)			emit_xor_m8bisd_r8(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_cmp_r8_*
-------------------------------------------------------------------*/
-
-#define emit_cmp_r8_imm(e, dreg, imm)							emit_arith_r8_imm(e, 7, dreg, imm)
-#define emit_cmp_m8bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m8bisd_imm(e, 7, base, index, scale, disp, imm)
-#define emit_cmp_r8_r8(e, dreg, sreg)							emit_arith_r8_r8(e, 7, dreg, sreg)
-#define emit_cmp_r8_m8bisd(e, dreg, base, index, scale, disp)	emit_arith_r8_m8bisd(e, 7, dreg, base, index, scale, disp)
-#define emit_cmp_m8bisd_r8(e, base, index, scale, disp, sreg)	emit_arith_m8bisd_r8(e, 7, base, index, scale, disp, sreg)
-
-#define emit_cmp_m8abs_imm(e, addr, imm)						emit_cmp_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_cmp_m8bd_imm(e, base, disp, imm)					emit_cmp_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_cmp_m8isd_imm(e, index, scale, disp, imm)			emit_cmp_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_cmp_r8_m8abs(e, dreg, addr)						emit_cmp_r8_m8bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cmp_r8_m8bd(e, dreg, base, disp)					emit_cmp_r8_m8bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cmp_r8_m8isd(e, dreg, index, scale, disp)			emit_cmp_r8_m8bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_cmp_m8abs_r8(e, addr, sreg)						emit_cmp_m8bisd_r8(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_cmp_m8bd_r8(e, base, disp, sreg)					emit_cmp_m8bisd_r8(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_cmp_m8isd_r8(e, index, scale, disp, sreg)			emit_cmp_m8bisd_r8(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-
-/***************************************************************************
-    16-BIT ARITHMETIC EMITTERS
-***************************************************************************/
-
-/*
-    Note that the following code relies on this:
-
-        00-05 or /0 = ADD
-        08-0d or /1 = OR
-        10-15 or /2 = ADC
-        18-1d or /3 = SBB
-        20-25 or /4 = AND
-        28-2d or /5 = SUB
-        30-35 or /6 = XOR
-        38-3d or /7 = CMP
-*/
-
-INLINE void emit_arith_r16_imm(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT16 imm)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	if ((INT8)imm == (INT16)imm)
-	{
-		emit_op_modrm_reg(emitptr, OP_G1_Ev_Ib, OP_32BIT, opindex, dreg);
-		emit_byte(emitptr, (INT8)imm);
-	}
-	else
-	{
-		emit_op_modrm_reg(emitptr, OP_G1_Ev_Iz, OP_32BIT, opindex, dreg);
-		emit_word(emitptr, imm);
-	}
-}
-
-INLINE void emit_arith_m16bisd_imm(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT16 imm)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	if ((INT8)imm == (INT16)imm)
-	{
-		emit_op_modrm_mem(emitptr, OP_G1_Ev_Ib, OP_32BIT, opindex, base, index, scale, disp);
-		emit_byte(emitptr, (INT8)imm);
-	}
-	else
-	{
-		emit_op_modrm_mem(emitptr, OP_G1_Ev_Iz, OP_32BIT, opindex, base, index, scale, disp);
-		emit_word(emitptr, imm);
-	}
-}
-
-INLINE void emit_arith_r16_r16(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_ADD_Ev_Gv + 8 * opindex, OP_32BIT, dreg, sreg);
-}
-
-INLINE void emit_arith_r16_m16bisd(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_ADD_Ev_Gv + 8 * opindex, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-INLINE void emit_arith_m16bisd_r16(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 sreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_ADD_Gv_Ev + 8 * opindex, OP_32BIT, sreg, base, index, scale, disp);
-}
-
-
-/*------------------------------------------------------------------
-    emit_add_r16_*
-------------------------------------------------------------------*/
-
-#define emit_add_r16_imm(e, dreg, imm)							emit_arith_r16_imm(e, 0, dreg, imm)
-#define emit_add_m16bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m16bisd_imm(e, 0, base, index, scale, disp, imm)
-#define emit_add_r16_r16(e, dreg, sreg)							emit_arith_r16_r16(e, 0, dreg, sreg)
-#define emit_add_r16_m16bisd(e, dreg, base, index, scale, disp)	emit_arith_r16_m16bisd(e, 0, dreg, base, index, scale, disp)
-#define emit_add_m16bisd_r16(e, base, index, scale, disp, sreg)	emit_arith_m16bisd_r16(e, 0, base, index, scale, disp, sreg)
-
-#define emit_add_m16abs_imm(e, addr, imm)						emit_add_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_add_m16bd_imm(e, base, disp, imm)					emit_add_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_add_m16isd_imm(e, index, scale, disp, imm)			emit_add_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_add_r16_m16abs(e, dreg, addr)						emit_add_r16_m16bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_add_r16_m16bd(e, dreg, base, disp)					emit_add_r16_m16bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_add_r16_m16isd(e, dreg, index, scale, disp)		emit_add_r16_m16bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_add_m16abs_r16(e, addr, sreg)						emit_add_m16bisd_r16(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_add_m16bd_r16(e, base, disp, sreg)					emit_add_m16bisd_r16(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_add_m16isd_r16(e, index, scale, disp, sreg)		emit_add_m16bisd_r16(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_or_r16_*
-------------------------------------------------------------------*/
-
-#define emit_or_r16_imm(e, dreg, imm)							emit_arith_r16_imm(e, 1, dreg, imm)
-#define emit_or_m16bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m16bisd_imm(e, 1, base, index, scale, disp, imm)
-#define emit_or_r16_r16(e, dreg, sreg)							emit_arith_r16_r16(e, 1, dreg, sreg)
-#define emit_or_r16_m16bisd(e, dreg, base, index, scale, disp)	emit_arith_r16_m16bisd(e, 1, dreg, base, index, scale, disp)
-#define emit_or_m16bisd_r16(e, base, index, scale, disp, sreg)	emit_arith_m16bisd_r16(e, 1, base, index, scale, disp, sreg)
-
-#define emit_or_m16abs_imm(e, addr, imm)						emit_or_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_or_m16bd_imm(e, base, disp, imm)					emit_or_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_or_m16isd_imm(e, index, scale, disp, imm)			emit_or_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_or_r16_m16abs(e, dreg, addr)						emit_or_r16_m16bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_or_r16_m16bd(e, dreg, base, disp)					emit_or_r16_m16bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_or_r16_m16isd(e, dreg, index, scale, disp)			emit_or_r16_m16bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_or_m16abs_r16(e, addr, sreg)						emit_or_m16bisd_r16(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_or_m16bd_r16(e, base, disp, sreg)					emit_or_m16bisd_r16(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_or_m16isd_r16(e, index, scale, disp, sreg)			emit_or_m16bisd_r16(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_adc_r16_*
-------------------------------------------------------------------*/
-
-#define emit_adc_r16_imm(e, dreg, imm)							emit_arith_r16_imm(e, 2, dreg, imm)
-#define emit_adc_m16bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m16bisd_imm(e, 2, base, index, scale, disp, imm)
-#define emit_adc_r16_r16(e, dreg, sreg)							emit_arith_r16_r16(e, 2, dreg, sreg)
-#define emit_adc_r16_m16bisd(e, dreg, base, index, scale, disp)	emit_arith_r16_m16bisd(e, 2, dreg, base, index, scale, disp)
-#define emit_adc_m16bisd_r16(e, base, index, scale, disp, sreg)	emit_arith_m16bisd_r16(e, 2, base, index, scale, disp, sreg)
-
-#define emit_adc_m16abs_imm(e, addr, imm)						emit_adc_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_adc_m16bd_imm(e, base, disp, imm)					emit_adc_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_adc_m16isd_imm(e, index, scale, disp, imm)			emit_adc_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_adc_r16_m16abs(e, dreg, addr)						emit_adc_r16_m16bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_adc_r16_m16bd(e, dreg, base, disp)					emit_adc_r16_m16bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_adc_r16_m16isd(e, dreg, index, scale, disp)		emit_adc_r16_m16bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_adc_m16abs_r16(e, addr, sreg)						emit_adc_m16bisd_r16(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_adc_m16bd_r16(e, base, disp, sreg)					emit_adc_m16bisd_r16(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_adc_m16isd_r16(e, index, scale, disp, sreg)		emit_adc_m16bisd_r16(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_sbb_r16_*
-------------------------------------------------------------------*/
-
-#define emit_sbb_r16_imm(e, dreg, imm)							emit_arith_r16_imm(e, 3, dreg, imm)
-#define emit_sbb_m16bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m16bisd_imm(e, 3, base, index, scale, disp, imm)
-#define emit_sbb_r16_r16(e, dreg, sreg)							emit_arith_r16_r16(e, 3, dreg, sreg)
-#define emit_sbb_r16_m16bisd(e, dreg, base, index, scale, disp)	emit_arith_r16_m16bisd(e, 3, dreg, base, index, scale, disp)
-#define emit_sbb_m16bisd_r16(e, base, index, scale, disp, sreg)	emit_arith_m16bisd_r16(e, 3, base, index, scale, disp, sreg)
-
-#define emit_sbb_m16abs_imm(e, addr, imm)						emit_sbb_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_sbb_m16bd_imm(e, base, disp, imm)					emit_sbb_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_sbb_m16isd_imm(e, index, scale, disp, imm)			emit_sbb_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_sbb_r16_m16abs(e, dreg, addr)						emit_sbb_r16_m16bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sbb_r16_m16bd(e, dreg, base, disp)					emit_sbb_r16_m16bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sbb_r16_m16isd(e, dreg, index, scale, disp)		emit_sbb_r16_m16bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_sbb_m16abs_r16(e, addr, sreg)						emit_sbb_m16bisd_r16(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_sbb_m16bd_r16(e, base, disp, sreg)					emit_sbb_m16bisd_r16(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_sbb_m16isd_r16(e, index, scale, disp, sreg)		emit_sbb_m16bisd_r16(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_and_r16_*
-------------------------------------------------------------------*/
-
-#define emit_and_r16_imm(e, dreg, imm)							emit_arith_r16_imm(e, 4, dreg, imm)
-#define emit_and_m16bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m16bisd_imm(e, 4, base, index, scale, disp, imm)
-#define emit_and_r16_r16(e, dreg, sreg)							emit_arith_r16_r16(e, 4, dreg, sreg)
-#define emit_and_r16_m16bisd(e, dreg, base, index, scale, disp)	emit_arith_r16_m16bisd(e, 4, dreg, base, index, scale, disp)
-#define emit_and_m16bisd_r16(e, base, index, scale, disp, sreg)	emit_arith_m16bisd_r16(e, 4, base, index, scale, disp, sreg)
-
-#define emit_and_m16abs_imm(e, addr, imm)						emit_and_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_and_m16bd_imm(e, base, disp, imm)					emit_and_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_and_m16isd_imm(e, index, scale, disp, imm)			emit_and_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_and_r16_m16abs(e, dreg, addr)						emit_and_r16_m16bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_and_r16_m16bd(e, dreg, base, disp)					emit_and_r16_m16bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_and_r16_m16isd(e, dreg, index, scale, disp)		emit_and_r16_m16bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_and_m16abs_r16(e, addr, sreg)						emit_and_m16bisd_r16(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_and_m16bd_r16(e, base, disp, sreg)					emit_and_m16bisd_r16(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_and_m16isd_r16(e, index, scale, disp, sreg)		emit_and_m16bisd_r16(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_sub_r16_*
-------------------------------------------------------------------*/
-
-#define emit_sub_r16_imm(e, dreg, imm)							emit_arith_r16_imm(e, 5, dreg, imm)
-#define emit_sub_m16bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m16bisd_imm(e, 5, base, index, scale, disp, imm)
-#define emit_sub_r16_r16(e, dreg, sreg)							emit_arith_r16_r16(e, 5, dreg, sreg)
-#define emit_sub_r16_m16bisd(e, dreg, base, index, scale, disp)	emit_arith_r16_m16bisd(e, 5, dreg, base, index, scale, disp)
-#define emit_sub_m16bisd_r16(e, base, index, scale, disp, sreg)	emit_arith_m16bisd_r16(e, 5, base, index, scale, disp, sreg)
-
-#define emit_sub_m16abs_imm(e, addr, imm)						emit_sub_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_sub_m16bd_imm(e, base, disp, imm)					emit_sub_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_sub_m16isd_imm(e, index, scale, disp, imm)			emit_sub_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_sub_r16_m16abs(e, dreg, addr)						emit_sub_r16_m16bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sub_r16_m16bd(e, dreg, base, disp)					emit_sub_r16_m16bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sub_r16_m16isd(e, dreg, index, scale, disp)		emit_sub_r16_m16bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_sub_m16abs_r16(e, addr, sreg)						emit_sub_m16bisd_r16(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_sub_m16bd_r16(e, base, disp, sreg)					emit_sub_m16bisd_r16(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_sub_m16isd_r16(e, index, scale, disp, sreg)		emit_sub_m16bisd_r16(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_xor_r16_*
-------------------------------------------------------------------*/
-
-#define emit_xor_r16_imm(e, dreg, imm)							emit_arith_r16_imm(e, 6, dreg, imm)
-#define emit_xor_m16bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m16bisd_imm(e, 6, base, index, scale, disp, imm)
-#define emit_xor_r16_r16(e, dreg, sreg)							emit_arith_r16_r16(e, 6, dreg, sreg)
-#define emit_xor_r16_m16bisd(e, dreg, base, index, scale, disp)	emit_arith_r16_m16bisd(e, 6, dreg, base, index, scale, disp)
-#define emit_xor_m16bisd_r16(e, base, index, scale, disp, sreg)	emit_arith_m16bisd_r16(e, 6, base, index, scale, disp, sreg)
-
-#define emit_xor_m16abs_imm(e, addr, imm)						emit_xor_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_xor_m16bd_imm(e, base, disp, imm)					emit_xor_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_xor_m16isd_imm(e, index, scale, disp, imm)			emit_xor_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_xor_r16_m16abs(e, dreg, addr)						emit_xor_r16_m16bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_xor_r16_m16bd(e, dreg, base, disp)					emit_xor_r16_m16bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_xor_r16_m16isd(e, dreg, index, scale, disp)		emit_xor_r16_m16bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_xor_m16abs_r16(e, addr, sreg)						emit_xor_m16bisd_r16(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_xor_m16bd_r16(e, base, disp, sreg)					emit_xor_m16bisd_r16(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_xor_m16isd_r16(e, index, scale, disp, sreg)		emit_xor_m16bisd_r16(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_cmp_r16_*
-------------------------------------------------------------------*/
-
-#define emit_cmp_r16_imm(e, dreg, imm)							emit_arith_r16_imm(e, 7, dreg, imm)
-#define emit_cmp_m16bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m16bisd_imm(e, 7, base, index, scale, disp, imm)
-#define emit_cmp_r16_r16(e, dreg, sreg)							emit_arith_r16_r16(e, 7, dreg, sreg)
-#define emit_cmp_r16_m16bisd(e, dreg, base, index, scale, disp)	emit_arith_r16_m16bisd(e, 7, dreg, base, index, scale, disp)
-#define emit_cmp_m16bisd_r16(e, base, index, scale, disp, sreg)	emit_arith_m16bisd_r16(e, 7, base, index, scale, disp, sreg)
-
-#define emit_cmp_m16abs_imm(e, addr, imm)						emit_cmp_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_cmp_m16bd_imm(e, base, disp, imm)					emit_cmp_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_cmp_m16isd_imm(e, index, scale, disp, imm)			emit_cmp_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_cmp_r16_m16abs(e, dreg, addr)						emit_cmp_r16_m16bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cmp_r16_m16bd(e, dreg, base, disp)					emit_cmp_r16_m16bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cmp_r16_m16isd(e, dreg, index, scale, disp)		emit_cmp_r16_m16bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_cmp_m16abs_r16(e, addr, sreg)						emit_cmp_m16bisd_r16(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_cmp_m16bd_r16(e, base, disp, sreg)					emit_cmp_m16bisd_r16(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_cmp_m16isd_r16(e, index, scale, disp, sreg)		emit_cmp_m16bisd_r16(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-
-/***************************************************************************
-    32-BIT ARITHMETIC EMITTERS
-***************************************************************************/
-
-/*
-    Note that the following code relies on this:
-
-        00-05 or /0 = ADD
-        08-0d or /1 = OR
-        10-15 or /2 = ADC
-        18-1d or /3 = SBB
-        20-25 or /4 = AND
-        28-2d or /5 = SUB
-        30-35 or /6 = XOR
-        38-3d or /7 = CMP
-*/
-
-INLINE void emit_arith_r32_imm(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT32 imm)
-{
-	if ((INT8)imm == (INT32)imm)
-	{
-		emit_op_modrm_reg(emitptr, OP_G1_Ev_Ib, OP_32BIT, opindex, dreg);
-		emit_byte(emitptr, (INT8)imm);
-	}
-	else
-	{
-		emit_op_modrm_reg(emitptr, OP_G1_Ev_Iz, OP_32BIT, opindex, dreg);
-		emit_dword(emitptr, imm);
-	}
-}
-
-INLINE void emit_arith_m32bisd_imm(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT32 imm)
-{
-	if ((INT8)imm == (INT32)imm)
-	{
-		emit_op_modrm_mem(emitptr, OP_G1_Ev_Ib, OP_32BIT, opindex, base, index, scale, disp);
-		emit_byte(emitptr, (INT8)imm);
-	}
-	else
-	{
-		emit_op_modrm_mem(emitptr, OP_G1_Ev_Iz, OP_32BIT, opindex, base, index, scale, disp);
-		emit_dword(emitptr, imm);
-	}
-}
-
-INLINE void emit_arith_r32_r32(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT8 sreg)
-{
-	emit_op_modrm_reg(emitptr, OP_ADD_Gv_Ev + 8 * opindex, OP_32BIT, dreg, sreg);
-}
-
-INLINE void emit_arith_r32_m32bisd(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_ADD_Gv_Ev + 8 * opindex, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-INLINE void emit_arith_m32bisd_r32(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 sreg)
-{
-	emit_op_modrm_mem(emitptr, OP_ADD_Ev_Gv + 8 * opindex, OP_32BIT, sreg, base, index, scale, disp);
-}
-
-
-/*------------------------------------------------------------------
-    emit_add_r32_*
-------------------------------------------------------------------*/
-
-#define emit_add_r32_imm(e, dreg, imm)							emit_arith_r32_imm(e, 0, dreg, imm)
-#define emit_add_m32bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m32bisd_imm(e, 0, base, index, scale, disp, imm)
-#define emit_add_r32_r32(e, dreg, sreg)							emit_arith_r32_r32(e, 0, dreg, sreg)
-#define emit_add_r32_m32bisd(e, dreg, base, index, scale, disp)	emit_arith_r32_m32bisd(e, 0, dreg, base, index, scale, disp)
-#define emit_add_m32bisd_r32(e, base, index, scale, disp, sreg)	emit_arith_m32bisd_r32(e, 0, base, index, scale, disp, sreg)
-
-#define emit_add_m32abs_imm(e, addr, imm)						emit_add_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_add_m32bd_imm(e, base, disp, imm)					emit_add_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_add_m32isd_imm(e, index, scale, disp, imm)			emit_add_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_add_r32_m32abs(e, dreg, addr)						emit_add_r32_m32bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_add_r32_m32bd(e, dreg, base, disp)					emit_add_r32_m32bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_add_r32_m32isd(e, dreg, index, scale, disp)		emit_add_r32_m32bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_add_m32abs_r32(e, addr, sreg)						emit_add_m32bisd_r32(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_add_m32bd_r32(e, base, disp, sreg)					emit_add_m32bisd_r32(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_add_m32isd_r32(e, index, scale, disp, sreg)		emit_add_m32bisd_r32(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_or_r32_*
-------------------------------------------------------------------*/
-
-#define emit_or_r32_imm(e, dreg, imm)							emit_arith_r32_imm(e, 1, dreg, imm)
-#define emit_or_m32bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m32bisd_imm(e, 1, base, index, scale, disp, imm)
-#define emit_or_r32_r32(e, dreg, sreg)							emit_arith_r32_r32(e, 1, dreg, sreg)
-#define emit_or_r32_m32bisd(e, dreg, base, index, scale, disp)	emit_arith_r32_m32bisd(e, 1, dreg, base, index, scale, disp)
-#define emit_or_m32bisd_r32(e, base, index, scale, disp, sreg)	emit_arith_m32bisd_r32(e, 1, base, index, scale, disp, sreg)
-
-#define emit_or_m32abs_imm(e, addr, imm)						emit_or_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_or_m32bd_imm(e, base, disp, imm)					emit_or_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_or_m32isd_imm(e, index, scale, disp, imm)			emit_or_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_or_r32_m32abs(e, dreg, addr)						emit_or_r32_m32bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_or_r32_m32bd(e, dreg, base, disp)					emit_or_r32_m32bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_or_r32_m32isd(e, dreg, index, scale, disp)			emit_or_r32_m32bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_or_m32abs_r32(e, addr, sreg)						emit_or_m32bisd_r32(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_or_m32bd_r32(e, base, disp, sreg)					emit_or_m32bisd_r32(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_or_m32isd_r32(e, index, scale, disp, sreg)			emit_or_m32bisd_r32(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_adc_r32_*
-------------------------------------------------------------------*/
-
-#define emit_adc_r32_imm(e, dreg, imm)							emit_arith_r32_imm(e, 2, dreg, imm)
-#define emit_adc_m32bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m32bisd_imm(e, 2, base, index, scale, disp, imm)
-#define emit_adc_r32_r32(e, dreg, sreg)							emit_arith_r32_r32(e, 2, dreg, sreg)
-#define emit_adc_r32_m32bisd(e, dreg, base, index, scale, disp)	emit_arith_r32_m32bisd(e, 2, dreg, base, index, scale, disp)
-#define emit_adc_m32bisd_r32(e, base, index, scale, disp, sreg)	emit_arith_m32bisd_r32(e, 2, base, index, scale, disp, sreg)
-
-#define emit_adc_m32abs_imm(e, addr, imm)						emit_adc_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_adc_m32bd_imm(e, base, disp, imm)					emit_adc_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_adc_m32isd_imm(e, index, scale, disp, imm)			emit_adc_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_adc_r32_m32abs(e, dreg, addr)						emit_adc_r32_m32bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_adc_r32_m32bd(e, dreg, base, disp)					emit_adc_r32_m32bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_adc_r32_m32isd(e, dreg, index, scale, disp)		emit_adc_r32_m32bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_adc_m32abs_r32(e, addr, sreg)						emit_adc_m32bisd_r32(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_adc_m32bd_r32(e, base, disp, sreg)					emit_adc_m32bisd_r32(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_adc_m32isd_r32(e, index, scale, disp, sreg)		emit_adc_m32bisd_r32(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_sbb_r32_*
-------------------------------------------------------------------*/
-
-#define emit_sbb_r32_imm(e, dreg, imm)							emit_arith_r32_imm(e, 3, dreg, imm)
-#define emit_sbb_m32bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m32bisd_imm(e, 3, base, index, scale, disp, imm)
-#define emit_sbb_r32_r32(e, dreg, sreg)							emit_arith_r32_r32(e, 3, dreg, sreg)
-#define emit_sbb_r32_m32bisd(e, dreg, base, index, scale, disp)	emit_arith_r32_m32bisd(e, 3, dreg, base, index, scale, disp)
-#define emit_sbb_m32bisd_r32(e, base, index, scale, disp, sreg)	emit_arith_m32bisd_r32(e, 3, base, index, scale, disp, sreg)
-
-#define emit_sbb_m32abs_imm(e, addr, imm)						emit_sbb_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_sbb_m32bd_imm(e, base, disp, imm)					emit_sbb_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_sbb_m32isd_imm(e, index, scale, disp, imm)			emit_sbb_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_sbb_r32_m32abs(e, dreg, addr)						emit_sbb_r32_m32bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sbb_r32_m32bd(e, dreg, base, disp)					emit_sbb_r32_m32bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sbb_r32_m32isd(e, dreg, index, scale, disp)		emit_sbb_r32_m32bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_sbb_m32abs_r32(e, addr, sreg)						emit_sbb_m32bisd_r32(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_sbb_m32bd_r32(e, base, disp, sreg)					emit_sbb_m32bisd_r32(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_sbb_m32isd_r32(e, index, scale, disp, sreg)		emit_sbb_m32bisd_r32(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_and_r32_*
-------------------------------------------------------------------*/
-
-#define emit_and_r32_imm(e, dreg, imm)							emit_arith_r32_imm(e, 4, dreg, imm)
-#define emit_and_m32bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m32bisd_imm(e, 4, base, index, scale, disp, imm)
-#define emit_and_r32_r32(e, dreg, sreg)							emit_arith_r32_r32(e, 4, dreg, sreg)
-#define emit_and_r32_m32bisd(e, dreg, base, index, scale, disp)	emit_arith_r32_m32bisd(e, 4, dreg, base, index, scale, disp)
-#define emit_and_m32bisd_r32(e, base, index, scale, disp, sreg)	emit_arith_m32bisd_r32(e, 4, base, index, scale, disp, sreg)
-
-#define emit_and_m32abs_imm(e, addr, imm)						emit_and_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_and_m32bd_imm(e, base, disp, imm)					emit_and_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_and_m32isd_imm(e, index, scale, disp, imm)			emit_and_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_and_r32_m32abs(e, dreg, addr)						emit_and_r32_m32bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_and_r32_m32bd(e, dreg, base, disp)					emit_and_r32_m32bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_and_r32_m32isd(e, dreg, index, scale, disp)		emit_and_r32_m32bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_and_m32abs_r32(e, addr, sreg)						emit_and_m32bisd_r32(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_and_m32bd_r32(e, base, disp, sreg)					emit_and_m32bisd_r32(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_and_m32isd_r32(e, index, scale, disp, sreg)		emit_and_m32bisd_r32(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_sub_r32_*
-------------------------------------------------------------------*/
-
-#define emit_sub_r32_imm(e, dreg, imm)							emit_arith_r32_imm(e, 5, dreg, imm)
-#define emit_sub_m32bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m32bisd_imm(e, 5, base, index, scale, disp, imm)
-#define emit_sub_r32_r32(e, dreg, sreg)							emit_arith_r32_r32(e, 5, dreg, sreg)
-#define emit_sub_r32_m32bisd(e, dreg, base, index, scale, disp)	emit_arith_r32_m32bisd(e, 5, dreg, base, index, scale, disp)
-#define emit_sub_m32bisd_r32(e, base, index, scale, disp, sreg)	emit_arith_m32bisd_r32(e, 5, base, index, scale, disp, sreg)
-
-#define emit_sub_m32abs_imm(e, addr, imm)						emit_sub_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_sub_m32bd_imm(e, base, disp, imm)					emit_sub_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_sub_m32isd_imm(e, index, scale, disp, imm)			emit_sub_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_sub_r32_m32abs(e, dreg, addr)						emit_sub_r32_m32bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sub_r32_m32bd(e, dreg, base, disp)					emit_sub_r32_m32bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sub_r32_m32isd(e, dreg, index, scale, disp)		emit_sub_r32_m32bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_sub_m32abs_r32(e, addr, sreg)						emit_sub_m32bisd_r32(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_sub_m32bd_r32(e, base, disp, sreg)					emit_sub_m32bisd_r32(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_sub_m32isd_r32(e, index, scale, disp, sreg)		emit_sub_m32bisd_r32(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_xor_r32_*
-------------------------------------------------------------------*/
-
-#define emit_xor_r32_imm(e, dreg, imm)							emit_arith_r32_imm(e, 6, dreg, imm)
-#define emit_xor_m32bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m32bisd_imm(e, 6, base, index, scale, disp, imm)
-#define emit_xor_r32_r32(e, dreg, sreg)							emit_arith_r32_r32(e, 6, dreg, sreg)
-#define emit_xor_r32_m32bisd(e, dreg, base, index, scale, disp)	emit_arith_r32_m32bisd(e, 6, dreg, base, index, scale, disp)
-#define emit_xor_m32bisd_r32(e, base, index, scale, disp, sreg)	emit_arith_m32bisd_r32(e, 6, base, index, scale, disp, sreg)
-
-#define emit_xor_m32abs_imm(e, addr, imm)						emit_xor_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_xor_m32bd_imm(e, base, disp, imm)					emit_xor_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_xor_m32isd_imm(e, index, scale, disp, imm)			emit_xor_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_xor_r32_m32abs(e, dreg, addr)						emit_xor_r32_m32bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_xor_r32_m32bd(e, dreg, base, disp)					emit_xor_r32_m32bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_xor_r32_m32isd(e, dreg, index, scale, disp)		emit_xor_r32_m32bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_xor_m32abs_r32(e, addr, sreg)						emit_xor_m32bisd_r32(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_xor_m32bd_r32(e, base, disp, sreg)					emit_xor_m32bisd_r32(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_xor_m32isd_r32(e, index, scale, disp, sreg)		emit_xor_m32bisd_r32(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_cmp_r32_*
-------------------------------------------------------------------*/
-
-#define emit_cmp_r32_imm(e, dreg, imm)							emit_arith_r32_imm(e, 7, dreg, imm)
-#define emit_cmp_m32bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m32bisd_imm(e, 7, base, index, scale, disp, imm)
-#define emit_cmp_r32_r32(e, dreg, sreg)							emit_arith_r32_r32(e, 7, dreg, sreg)
-#define emit_cmp_r32_m32bisd(e, dreg, base, index, scale, disp)	emit_arith_r32_m32bisd(e, 7, dreg, base, index, scale, disp)
-#define emit_cmp_m32bisd_r32(e, base, index, scale, disp, sreg)	emit_arith_m32bisd_r32(e, 7, base, index, scale, disp, sreg)
-
-#define emit_cmp_m32abs_imm(e, addr, imm)						emit_cmp_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_cmp_m32bd_imm(e, base, disp, imm)					emit_cmp_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_cmp_m32isd_imm(e, index, scale, disp, imm)			emit_cmp_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_cmp_r32_m32abs(e, dreg, addr)						emit_cmp_r32_m32bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cmp_r32_m32bd(e, dreg, base, disp)					emit_cmp_r32_m32bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cmp_r32_m32isd(e, dreg, index, scale, disp)		emit_cmp_r32_m32bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_cmp_m32abs_r32(e, addr, sreg)						emit_cmp_m32bisd_r32(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_cmp_m32bd_r32(e, base, disp, sreg)					emit_cmp_m32bisd_r32(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_cmp_m32isd_r32(e, index, scale, disp, sreg)		emit_cmp_m32bisd_r32(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-
-/***************************************************************************
-    64-BIT ARITHMETIC EMITTERS
-***************************************************************************/
+-------------------------------------------------*/
+
+INLINE void emit_add_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)			{ emit_op_modrm_reg_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 0, dreg, imm); }
+INLINE void emit_add_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)	{ emit_op_modrm_mem_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 0, MEMPARAMS, imm); }
+INLINE void emit_add_r8_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg) 			{ emit_op_modrm_reg(emitptr, OP_ADD_Gb_Eb, OP_32BIT, dreg, sreg); }
+INLINE void emit_add_r8_m8(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_ADD_Gb_Eb, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_add_m8_r8(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_ADD_Eb_Gb, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_or_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)			{ emit_op_modrm_reg_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 1, dreg, imm); }
+INLINE void emit_or_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)		{ emit_op_modrm_mem_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 1, MEMPARAMS, imm); }
+INLINE void emit_or_r8_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg) 			{ emit_op_modrm_reg(emitptr, OP_OR_Gb_Eb, OP_32BIT, dreg, sreg); }
+INLINE void emit_or_r8_m8(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_OR_Gb_Eb, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_or_m8_r8(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_OR_Eb_Gb, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_adc_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)			{ emit_op_modrm_reg_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 2, dreg, imm); }
+INLINE void emit_adc_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)	{ emit_op_modrm_mem_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 2, MEMPARAMS, imm); }
+INLINE void emit_adc_r8_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg) 			{ emit_op_modrm_reg(emitptr, OP_ADC_Gb_Eb, OP_32BIT, dreg, sreg); }
+INLINE void emit_adc_r8_m8(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_ADC_Gb_Eb, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_adc_m8_r8(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_ADC_Eb_Gb, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_sbb_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)			{ emit_op_modrm_reg_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 3, dreg, imm); }
+INLINE void emit_sbb_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)	{ emit_op_modrm_mem_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 3, MEMPARAMS, imm); }
+INLINE void emit_sbb_r8_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg) 			{ emit_op_modrm_reg(emitptr, OP_SBB_Gb_Eb, OP_32BIT, dreg, sreg); }
+INLINE void emit_sbb_r8_m8(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_SBB_Gb_Eb, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_sbb_m8_r8(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_SBB_Eb_Gb, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_and_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)			{ emit_op_modrm_reg_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 4, dreg, imm); }
+INLINE void emit_and_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)	{ emit_op_modrm_mem_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 4, MEMPARAMS, imm); }
+INLINE void emit_and_r8_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg) 			{ emit_op_modrm_reg(emitptr, OP_AND_Gb_Eb, OP_32BIT, dreg, sreg); }
+INLINE void emit_and_r8_m8(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_AND_Gb_Eb, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_and_m8_r8(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_AND_Eb_Gb, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_sub_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)			{ emit_op_modrm_reg_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 5, dreg, imm); }
+INLINE void emit_sub_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)	{ emit_op_modrm_mem_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 5, MEMPARAMS, imm); }
+INLINE void emit_sub_r8_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg) 			{ emit_op_modrm_reg(emitptr, OP_SUB_Gb_Eb, OP_32BIT, dreg, sreg); }
+INLINE void emit_sub_r8_m8(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_SUB_Gb_Eb, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_sub_m8_r8(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_SUB_Eb_Gb, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_xor_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)			{ emit_op_modrm_reg_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 6, dreg, imm); }
+INLINE void emit_xor_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)	{ emit_op_modrm_mem_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 6, MEMPARAMS, imm); }
+INLINE void emit_xor_r8_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg) 			{ emit_op_modrm_reg(emitptr, OP_XOR_Gb_Eb, OP_32BIT, dreg, sreg); }
+INLINE void emit_xor_r8_m8(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_XOR_Gb_Eb, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_xor_m8_r8(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_XOR_Eb_Gb, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_cmp_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)			{ emit_op_modrm_reg_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 7, dreg, imm); }
+INLINE void emit_cmp_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)	{ emit_op_modrm_mem_imm8(emitptr, OP_G1_Eb_Ib, OP_32BIT, 7, MEMPARAMS, imm); }
+INLINE void emit_cmp_r8_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg) 			{ emit_op_modrm_reg(emitptr, OP_CMP_Gb_Eb, OP_32BIT, dreg, sreg); }
+INLINE void emit_cmp_r8_m8(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_CMP_Gb_Eb, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_cmp_m8_r8(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_CMP_Eb_Gb, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_test_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)			{ emit_op_modrm_reg_imm8(emitptr, OP_G3_Eb, OP_32BIT, 0, dreg, imm); }
+INLINE void emit_test_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)	{ emit_op_modrm_mem_imm8(emitptr, OP_G3_Eb, OP_32BIT, 0, MEMPARAMS, imm); }
+INLINE void emit_test_r8_r8(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_TEST_Eb_Gb, OP_32BIT, sreg, dreg); }
+INLINE void emit_test_m8_r8(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)	{ emit_op_modrm_mem(emitptr, OP_TEST_Eb_Gb, OP_32BIT, sreg, MEMPARAMS); }
+
+
+/*-------------------------------------------------
+    emit_arith_r16_*
+-------------------------------------------------*/
+
+INLINE void emit_add_r16_imm(x86code **emitptr, UINT8 dreg, UINT16 imm)			{ emit_op_modrm_reg_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 0, dreg, imm); }
+INLINE void emit_add_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT16 imm)	{ emit_op_modrm_mem_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 0, MEMPARAMS, imm); }
+INLINE void emit_add_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_ADD_Gv_Ev, OP_16BIT, dreg, sreg); }
+INLINE void emit_add_r16_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_ADD_Gv_Ev, OP_16BIT, dreg, MEMPARAMS); }
+INLINE void emit_add_m16_r16(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_ADD_Ev_Gv, OP_16BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_or_r16_imm(x86code **emitptr, UINT8 dreg, UINT16 imm)			{ emit_op_modrm_reg_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 1, dreg, imm); }
+INLINE void emit_or_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT16 imm)	{ emit_op_modrm_mem_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 1, MEMPARAMS, imm); }
+INLINE void emit_or_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg) 			{ emit_op_modrm_reg(emitptr, OP_OR_Gv_Ev, OP_16BIT, dreg, sreg); }
+INLINE void emit_or_r16_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_OR_Gv_Ev, OP_16BIT, dreg, MEMPARAMS); }
+INLINE void emit_or_m16_r16(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_OR_Ev_Gv, OP_16BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_adc_r16_imm(x86code **emitptr, UINT8 dreg, UINT16 imm)			{ emit_op_modrm_reg_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 2, dreg, imm); }
+INLINE void emit_adc_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT16 imm)	{ emit_op_modrm_mem_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 2, MEMPARAMS, imm); }
+INLINE void emit_adc_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_ADC_Gv_Ev, OP_16BIT, dreg, sreg); }
+INLINE void emit_adc_r16_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_ADC_Gv_Ev, OP_16BIT, dreg, MEMPARAMS); }
+INLINE void emit_adc_m16_r16(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_ADC_Ev_Gv, OP_16BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_sbb_r16_imm(x86code **emitptr, UINT8 dreg, UINT16 imm)			{ emit_op_modrm_reg_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 3, dreg, imm); }
+INLINE void emit_sbb_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT16 imm)	{ emit_op_modrm_mem_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 3, MEMPARAMS, imm); }
+INLINE void emit_sbb_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_SBB_Gv_Ev, OP_16BIT, dreg, sreg); }
+INLINE void emit_sbb_r16_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_SBB_Gv_Ev, OP_16BIT, dreg, MEMPARAMS); }
+INLINE void emit_sbb_m16_r16(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_SBB_Ev_Gv, OP_16BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_and_r16_imm(x86code **emitptr, UINT8 dreg, UINT16 imm)			{ emit_op_modrm_reg_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 4, dreg, imm); }
+INLINE void emit_and_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT16 imm)	{ emit_op_modrm_mem_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 4, MEMPARAMS, imm); }
+INLINE void emit_and_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_AND_Gv_Ev, OP_16BIT, dreg, sreg); }
+INLINE void emit_and_r16_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_AND_Gv_Ev, OP_16BIT, dreg, MEMPARAMS); }
+INLINE void emit_and_m16_r16(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_AND_Ev_Gv, OP_16BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_sub_r16_imm(x86code **emitptr, UINT8 dreg, UINT16 imm)			{ emit_op_modrm_reg_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 5, dreg, imm); }
+INLINE void emit_sub_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT16 imm)	{ emit_op_modrm_mem_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 5, MEMPARAMS, imm); }
+INLINE void emit_sub_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_SUB_Gv_Ev, OP_16BIT, dreg, sreg); }
+INLINE void emit_sub_r16_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_SUB_Gv_Ev, OP_16BIT, dreg, MEMPARAMS); }
+INLINE void emit_sub_m16_r16(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_SUB_Ev_Gv, OP_16BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_xor_r16_imm(x86code **emitptr, UINT8 dreg, UINT16 imm)			{ emit_op_modrm_reg_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 6, dreg, imm); }
+INLINE void emit_xor_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT16 imm)	{ emit_op_modrm_mem_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 6, MEMPARAMS, imm); }
+INLINE void emit_xor_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_XOR_Gv_Ev, OP_16BIT, dreg, sreg); }
+INLINE void emit_xor_r16_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_XOR_Gv_Ev, OP_16BIT, dreg, MEMPARAMS); }
+INLINE void emit_xor_m16_r16(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_XOR_Ev_Gv, OP_16BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_cmp_r16_imm(x86code **emitptr, UINT8 dreg, UINT16 imm)			{ emit_op_modrm_reg_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 7, dreg, imm); }
+INLINE void emit_cmp_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT16 imm)	{ emit_op_modrm_mem_imm816(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_16BIT, 7, MEMPARAMS, imm); }
+INLINE void emit_cmp_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_CMP_Gv_Ev, OP_16BIT, dreg, sreg); }
+INLINE void emit_cmp_r16_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_CMP_Gv_Ev, OP_16BIT, dreg, MEMPARAMS); }
+INLINE void emit_cmp_m16_r16(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_CMP_Ev_Gv, OP_16BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_test_r16_imm(x86code **emitptr, UINT8 dreg, UINT16 imm)		{ emit_op_modrm_reg_imm16(emitptr, OP_G3_Ev, OP_16BIT, 0, dreg, imm); }
+INLINE void emit_test_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT16 imm)	{ emit_op_modrm_mem_imm16(emitptr, OP_G3_Ev, OP_16BIT, 0, MEMPARAMS, imm); }
+INLINE void emit_test_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)		{ emit_op_modrm_reg(emitptr, OP_TEST_Ev_Gv, OP_16BIT, sreg, dreg); }
+INLINE void emit_test_m16_r16(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)	{ emit_op_modrm_mem(emitptr, OP_TEST_Ev_Gv, OP_16BIT, sreg, MEMPARAMS); }
+
+
+/*-------------------------------------------------
+    emit_arith_r32_*
+-------------------------------------------------*/
+
+INLINE void emit_add_r32_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 0, dreg, imm); }
+INLINE void emit_add_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 0, MEMPARAMS, imm); }
+INLINE void emit_add_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_ADD_Gv_Ev, OP_32BIT, dreg, sreg); }
+INLINE void emit_add_r32_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_ADD_Gv_Ev, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_add_m32_r32(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_ADD_Ev_Gv, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_or_r32_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 1, dreg, imm); }
+INLINE void emit_or_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 1, MEMPARAMS, imm); }
+INLINE void emit_or_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg) 			{ emit_op_modrm_reg(emitptr, OP_OR_Gv_Ev, OP_32BIT, dreg, sreg); }
+INLINE void emit_or_r32_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_OR_Gv_Ev, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_or_m32_r32(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_OR_Ev_Gv, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_adc_r32_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 2, dreg, imm); }
+INLINE void emit_adc_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 2, MEMPARAMS, imm); }
+INLINE void emit_adc_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_ADC_Gv_Ev, OP_32BIT, dreg, sreg); }
+INLINE void emit_adc_r32_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_ADC_Gv_Ev, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_adc_m32_r32(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_ADC_Ev_Gv, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_sbb_r32_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 3, dreg, imm); }
+INLINE void emit_sbb_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 3, MEMPARAMS, imm); }
+INLINE void emit_sbb_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_SBB_Gv_Ev, OP_32BIT, dreg, sreg); }
+INLINE void emit_sbb_r32_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_SBB_Gv_Ev, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_sbb_m32_r32(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_SBB_Ev_Gv, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_and_r32_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 4, dreg, imm); }
+INLINE void emit_and_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 4, MEMPARAMS, imm); }
+INLINE void emit_and_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_AND_Gv_Ev, OP_32BIT, dreg, sreg); }
+INLINE void emit_and_r32_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_AND_Gv_Ev, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_and_m32_r32(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_AND_Ev_Gv, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_sub_r32_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 5, dreg, imm); }
+INLINE void emit_sub_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 5, MEMPARAMS, imm); }
+INLINE void emit_sub_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_SUB_Gv_Ev, OP_32BIT, dreg, sreg); }
+INLINE void emit_sub_r32_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_SUB_Gv_Ev, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_sub_m32_r32(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_SUB_Ev_Gv, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_xor_r32_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 6, dreg, imm); }
+INLINE void emit_xor_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 6, MEMPARAMS, imm); }
+INLINE void emit_xor_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_XOR_Gv_Ev, OP_32BIT, dreg, sreg); }
+INLINE void emit_xor_r32_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_XOR_Gv_Ev, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_xor_m32_r32(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_XOR_Ev_Gv, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_cmp_r32_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 7, dreg, imm); }
+INLINE void emit_cmp_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_32BIT, 7, MEMPARAMS, imm); }
+INLINE void emit_cmp_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_CMP_Gv_Ev, OP_32BIT, dreg, sreg); }
+INLINE void emit_cmp_r32_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_CMP_Gv_Ev, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_cmp_m32_r32(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_CMP_Ev_Gv, OP_32BIT, sreg, MEMPARAMS); }
+
+INLINE void emit_test_r32_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)		{ emit_op_modrm_reg_imm32(emitptr, OP_G3_Ev, OP_32BIT, 0, dreg, imm); }
+INLINE void emit_test_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm32(emitptr, OP_G3_Ev, OP_32BIT, 0, MEMPARAMS, imm); }
+INLINE void emit_test_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg)		{ emit_op_modrm_reg(emitptr, OP_TEST_Ev_Gv, OP_32BIT, sreg, dreg); }
+INLINE void emit_test_m32_r32(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)	{ emit_op_modrm_mem(emitptr, OP_TEST_Ev_Gv, OP_32BIT, sreg, MEMPARAMS); }
+
+
+/*-------------------------------------------------
+    emit_arith_r64_*
+-------------------------------------------------*/
 
 #ifdef PTR64
-/*
-    Note that the following code relies on this:
 
-        00-05 or /0 = ADD
-        08-0d or /1 = OR
-        10-15 or /2 = ADC
-        18-1d or /3 = SBB
-        20-25 or /4 = AND
-        28-2d or /5 = SUB
-        30-35 or /6 = XOR
-        38-3d or /7 = CMP
-*/
+INLINE void emit_add_r64_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 0, dreg, imm); }
+INLINE void emit_add_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 0, MEMPARAMS, imm); }
+INLINE void emit_add_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_ADD_Gv_Ev, OP_64BIT, dreg, sreg); }
+INLINE void emit_add_r64_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_ADD_Gv_Ev, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_add_m64_r64(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_ADD_Ev_Gv, OP_64BIT, sreg, MEMPARAMS); }
 
-INLINE void emit_arith_r64_imm(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT32 imm)
-{
-	if ((INT8)imm == (INT32)imm)
-	{
-		emit_op_modrm_reg(emitptr, OP_G1_Ev_Ib, OP_64BIT, opindex, dreg);
-		emit_byte(emitptr, (INT8)imm);
-	}
-	else
-	{
-		emit_op_modrm_reg(emitptr, OP_G1_Ev_Iz, OP_64BIT, opindex, dreg);
-		emit_dword(emitptr, imm);
-	}
-}
+INLINE void emit_or_r64_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 1, dreg, imm); }
+INLINE void emit_or_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 1, MEMPARAMS, imm); }
+INLINE void emit_or_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg) 			{ emit_op_modrm_reg(emitptr, OP_OR_Gv_Ev, OP_64BIT, dreg, sreg); }
+INLINE void emit_or_r64_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_OR_Gv_Ev, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_or_m64_r64(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_OR_Ev_Gv, OP_64BIT, sreg, MEMPARAMS); }
 
-INLINE void emit_arith_m64bisd_imm(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT32 imm)
-{
-	if ((INT8)imm == (INT32)imm)
-	{
-		emit_op_modrm_mem(emitptr, OP_G1_Ev_Ib, OP_64BIT, opindex, base, index, scale, disp);
-		emit_byte(emitptr, (INT8)imm);
-	}
-	else
-	{
-		emit_op_modrm_mem(emitptr, OP_G1_Ev_Iz, OP_64BIT, opindex, base, index, scale, disp);
-		emit_dword(emitptr, imm);
-	}
-}
+INLINE void emit_adc_r64_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 2, dreg, imm); }
+INLINE void emit_adc_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 2, MEMPARAMS, imm); }
+INLINE void emit_adc_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_ADC_Gv_Ev, OP_64BIT, dreg, sreg); }
+INLINE void emit_adc_r64_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_ADC_Gv_Ev, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_adc_m64_r64(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_ADC_Ev_Gv, OP_64BIT, sreg, MEMPARAMS); }
 
-INLINE void emit_arith_r64_r64(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT8 sreg)
-{
-	emit_op_modrm_reg(emitptr, OP_ADD_Gv_Ev + 8 * opindex, OP_64BIT, dreg, sreg);
-}
+INLINE void emit_sbb_r64_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 3, dreg, imm); }
+INLINE void emit_sbb_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 3, MEMPARAMS, imm); }
+INLINE void emit_sbb_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_SBB_Gv_Ev, OP_64BIT, dreg, sreg); }
+INLINE void emit_sbb_r64_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_SBB_Gv_Ev, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_sbb_m64_r64(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_SBB_Ev_Gv, OP_64BIT, sreg, MEMPARAMS); }
 
-INLINE void emit_arith_r64_m64bisd(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_ADD_Gv_Ev + 8 * opindex, OP_64BIT, dreg, base, index, scale, disp);
-}
+INLINE void emit_and_r64_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 4, dreg, imm); }
+INLINE void emit_and_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 4, MEMPARAMS, imm); }
+INLINE void emit_and_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_AND_Gv_Ev, OP_64BIT, dreg, sreg); }
+INLINE void emit_and_r64_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_AND_Gv_Ev, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_and_m64_r64(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_AND_Ev_Gv, OP_64BIT, sreg, MEMPARAMS); }
 
-INLINE void emit_arith_m64bisd_r64(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 sreg)
-{
-	emit_op_modrm_mem(emitptr, OP_ADD_Ev_Gv + 8 * opindex, OP_64BIT, sreg, base, index, scale, disp);
-}
+INLINE void emit_sub_r64_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 5, dreg, imm); }
+INLINE void emit_sub_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 5, MEMPARAMS, imm); }
+INLINE void emit_sub_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_SUB_Gv_Ev, OP_64BIT, dreg, sreg); }
+INLINE void emit_sub_r64_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_SUB_Gv_Ev, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_sub_m64_r64(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_SUB_Ev_Gv, OP_64BIT, sreg, MEMPARAMS); }
 
+INLINE void emit_xor_r64_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 6, dreg, imm); }
+INLINE void emit_xor_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 6, MEMPARAMS, imm); }
+INLINE void emit_xor_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_XOR_Gv_Ev, OP_64BIT, dreg, sreg); }
+INLINE void emit_xor_r64_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_XOR_Gv_Ev, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_xor_m64_r64(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_XOR_Ev_Gv, OP_64BIT, sreg, MEMPARAMS); }
 
-/*------------------------------------------------------------------
-    emit_add_r64_*
-------------------------------------------------------------------*/
+INLINE void emit_cmp_r64_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)			{ emit_op_modrm_reg_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 7, dreg, imm); }
+INLINE void emit_cmp_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_G1_Ev_Ib, OP_G1_Ev_Iz, OP_64BIT, 7, MEMPARAMS, imm); }
+INLINE void emit_cmp_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_CMP_Gv_Ev, OP_64BIT, dreg, sreg); }
+INLINE void emit_cmp_r64_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_CMP_Gv_Ev, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_cmp_m64_r64(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) 	{ emit_op_modrm_mem(emitptr, OP_CMP_Ev_Gv, OP_64BIT, sreg, MEMPARAMS); }
 
-#define emit_add_r64_imm(e, dreg, imm)							emit_arith_r64_imm(e, 0, dreg, imm)
-#define emit_add_m64bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m64bisd_imm(e, 0, base, index, scale, disp, imm)
-#define emit_add_r64_r64(e, dreg, sreg)							emit_arith_r64_r64(e, 0, dreg, sreg)
-#define emit_add_r64_m64bisd(e, dreg, base, index, scale, disp)	emit_arith_r64_m64bisd(e, 0, dreg, base, index, scale, disp)
-#define emit_add_m64bisd_r64(e, base, index, scale, disp, sreg)	emit_arith_m64bisd_r64(e, 0, base, index, scale, disp, sreg)
-
-#define emit_add_m64abs_imm(e, addr, imm)						emit_add_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_add_m64bd_imm(e, base, disp, imm)					emit_add_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_add_m64isd_imm(e, index, scale, disp, imm)			emit_add_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_add_r64_m64abs(e, dreg, addr)						emit_add_r64_m64bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_add_r64_m64bd(e, dreg, base, disp)					emit_add_r64_m64bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_add_r64_m64isd(e, dreg, index, scale, disp)		emit_add_r64_m64bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_add_m64abs_r64(e, addr, sreg)						emit_add_m64bisd_r64(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_add_m64bd_r64(e, base, disp, sreg)					emit_add_m64bisd_r64(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_add_m64isd_r64(e, index, scale, disp, sreg)		emit_add_m64bisd_r64(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_or_r64_*
-------------------------------------------------------------------*/
-
-#define emit_or_r64_imm(e, dreg, imm)							emit_arith_r64_imm(e, 1, dreg, imm)
-#define emit_or_m64bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m64bisd_imm(e, 1, base, index, scale, disp, imm)
-#define emit_or_r64_r64(e, dreg, sreg)							emit_arith_r64_r64(e, 1, dreg, sreg)
-#define emit_or_r64_m64bisd(e, dreg, base, index, scale, disp)	emit_arith_r64_m64bisd(e, 1, dreg, base, index, scale, disp)
-#define emit_or_m64bisd_r64(e, base, index, scale, disp, sreg)	emit_arith_m64bisd_r64(e, 1, base, index, scale, disp, sreg)
-
-#define emit_or_m64abs_imm(e, addr, imm)						emit_or_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_or_m64bd_imm(e, base, disp, imm)					emit_or_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_or_m64isd_imm(e, index, scale, disp, imm)			emit_or_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_or_r64_m64abs(e, dreg, addr)						emit_or_r64_m64bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_or_r64_m64bd(e, dreg, base, disp)					emit_or_r64_m64bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_or_r64_m64isd(e, dreg, index, scale, disp)			emit_or_r64_m64bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_or_m64abs_r64(e, addr, sreg)						emit_or_m64bisd_r64(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_or_m64bd_r64(e, base, disp, sreg)					emit_or_m64bisd_r64(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_or_m64isd_r64(e, index, scale, disp, sreg)			emit_or_m64bisd_r64(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_adc_r64_*
-------------------------------------------------------------------*/
-
-#define emit_adc_r64_imm(e, dreg, imm)							emit_arith_r64_imm(e, 2, dreg, imm)
-#define emit_adc_m64bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m64bisd_imm(e, 2, base, index, scale, disp, imm)
-#define emit_adc_r64_r64(e, dreg, sreg)							emit_arith_r64_r64(e, 2, dreg, sreg)
-#define emit_adc_r64_m64bisd(e, dreg, base, index, scale, disp)	emit_arith_r64_m64bisd(e, 2, dreg, base, index, scale, disp)
-#define emit_adc_m64bisd_r64(e, base, index, scale, disp, sreg)	emit_arith_m64bisd_r64(e, 2, base, index, scale, disp, sreg)
-
-#define emit_adc_m64abs_imm(e, addr, imm)						emit_adc_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_adc_m64bd_imm(e, base, disp, imm)					emit_adc_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_adc_m64isd_imm(e, index, scale, disp, imm)			emit_adc_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_adc_r64_m64abs(e, dreg, addr)						emit_adc_r64_m64bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_adc_r64_m64bd(e, dreg, base, disp)					emit_adc_r64_m64bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_adc_r64_m64isd(e, dreg, index, scale, disp)		emit_adc_r64_m64bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_adc_m64abs_r64(e, addr, sreg)						emit_adc_m64bisd_r64(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_adc_m64bd_r64(e, base, disp, sreg)					emit_adc_m64bisd_r64(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_adc_m64isd_r64(e, index, scale, disp, sreg)		emit_adc_m64bisd_r64(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_sbb_r64_*
-------------------------------------------------------------------*/
-
-#define emit_sbb_r64_imm(e, dreg, imm)							emit_arith_r64_imm(e, 3, dreg, imm)
-#define emit_sbb_m64bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m64bisd_imm(e, 3, base, index, scale, disp, imm)
-#define emit_sbb_r64_r64(e, dreg, sreg)							emit_arith_r64_r64(e, 3, dreg, sreg)
-#define emit_sbb_r64_m64bisd(e, dreg, base, index, scale, disp)	emit_arith_r64_m64bisd(e, 3, dreg, base, index, scale, disp)
-#define emit_sbb_m64bisd_r64(e, base, index, scale, disp, sreg)	emit_arith_m64bisd_r64(e, 3, base, index, scale, disp, sreg)
-
-#define emit_sbb_m64abs_imm(e, addr, imm)						emit_sbb_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_sbb_m64bd_imm(e, base, disp, imm)					emit_sbb_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_sbb_m64isd_imm(e, index, scale, disp, imm)			emit_sbb_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_sbb_r64_m64abs(e, dreg, addr)						emit_sbb_r64_m64bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sbb_r64_m64bd(e, dreg, base, disp)					emit_sbb_r64_m64bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sbb_r64_m64isd(e, dreg, index, scale, disp)		emit_sbb_r64_m64bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_sbb_m64abs_r64(e, addr, sreg)						emit_sbb_m64bisd_r64(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_sbb_m64bd_r64(e, base, disp, sreg)					emit_sbb_m64bisd_r64(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_sbb_m64isd_r64(e, index, scale, disp, sreg)		emit_sbb_m64bisd_r64(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_and_r64_*
-------------------------------------------------------------------*/
-
-#define emit_and_r64_imm(e, dreg, imm)							emit_arith_r64_imm(e, 4, dreg, imm)
-#define emit_and_m64bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m64bisd_imm(e, 4, base, index, scale, disp, imm)
-#define emit_and_r64_r64(e, dreg, sreg)							emit_arith_r64_r64(e, 4, dreg, sreg)
-#define emit_and_r64_m64bisd(e, dreg, base, index, scale, disp)	emit_arith_r64_m64bisd(e, 4, dreg, base, index, scale, disp)
-#define emit_and_m64bisd_r64(e, base, index, scale, disp, sreg)	emit_arith_m64bisd_r64(e, 4, base, index, scale, disp, sreg)
-
-#define emit_and_m64abs_imm(e, addr, imm)						emit_and_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_and_m64bd_imm(e, base, disp, imm)					emit_and_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_and_m64isd_imm(e, index, scale, disp, imm)			emit_and_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_and_r64_m64abs(e, dreg, addr)						emit_and_r64_m64bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_and_r64_m64bd(e, dreg, base, disp)					emit_and_r64_m64bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_and_r64_m64isd(e, dreg, index, scale, disp)		emit_and_r64_m64bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_and_m64abs_r64(e, addr, sreg)						emit_and_m64bisd_r64(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_and_m64bd_r64(e, base, disp, sreg)					emit_and_m64bisd_r64(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_and_m64isd_r64(e, index, scale, disp, sreg)		emit_and_m64bisd_r64(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_sub_r64_*
-------------------------------------------------------------------*/
-
-#define emit_sub_r64_imm(e, dreg, imm)							emit_arith_r64_imm(e, 5, dreg, imm)
-#define emit_sub_m64bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m64bisd_imm(e, 5, base, index, scale, disp, imm)
-#define emit_sub_r64_r64(e, dreg, sreg)							emit_arith_r64_r64(e, 5, dreg, sreg)
-#define emit_sub_r64_m64bisd(e, dreg, base, index, scale, disp)	emit_arith_r64_m64bisd(e, 5, dreg, base, index, scale, disp)
-#define emit_sub_m64bisd_r64(e, base, index, scale, disp, sreg)	emit_arith_m64bisd_r64(e, 5, base, index, scale, disp, sreg)
-
-#define emit_sub_m64abs_imm(e, addr, imm)						emit_sub_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_sub_m64bd_imm(e, base, disp, imm)					emit_sub_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_sub_m64isd_imm(e, index, scale, disp, imm)			emit_sub_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_sub_r64_m64abs(e, dreg, addr)						emit_sub_r64_m64bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sub_r64_m64bd(e, dreg, base, disp)					emit_sub_r64_m64bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sub_r64_m64isd(e, dreg, index, scale, disp)		emit_sub_r64_m64bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_sub_m64abs_r64(e, addr, sreg)						emit_sub_m64bisd_r64(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_sub_m64bd_r64(e, base, disp, sreg)					emit_sub_m64bisd_r64(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_sub_m64isd_r64(e, index, scale, disp, sreg)		emit_sub_m64bisd_r64(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_xor_r64_*
-------------------------------------------------------------------*/
-
-#define emit_xor_r64_imm(e, dreg, imm)							emit_arith_r64_imm(e, 6, dreg, imm)
-#define emit_xor_m64bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m64bisd_imm(e, 6, base, index, scale, disp, imm)
-#define emit_xor_r64_r64(e, dreg, sreg)							emit_arith_r64_r64(e, 6, dreg, sreg)
-#define emit_xor_r64_m64bisd(e, dreg, base, index, scale, disp)	emit_arith_r64_m64bisd(e, 6, dreg, base, index, scale, disp)
-#define emit_xor_m64bisd_r64(e, base, index, scale, disp, sreg)	emit_arith_m64bisd_r64(e, 6, base, index, scale, disp, sreg)
-
-#define emit_xor_m64abs_imm(e, addr, imm)						emit_xor_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_xor_m64bd_imm(e, base, disp, imm)					emit_xor_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_xor_m64isd_imm(e, index, scale, disp, imm)			emit_xor_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_xor_r64_m64abs(e, dreg, addr)						emit_xor_r64_m64bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_xor_r64_m64bd(e, dreg, base, disp)					emit_xor_r64_m64bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_xor_r64_m64isd(e, dreg, index, scale, disp)		emit_xor_r64_m64bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_xor_m64abs_r64(e, addr, sreg)						emit_xor_m64bisd_r64(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_xor_m64bd_r64(e, base, disp, sreg)					emit_xor_m64bisd_r64(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_xor_m64isd_r64(e, index, scale, disp, sreg)		emit_xor_m64bisd_r64(e, REG_NONE, (index),  (scale), (disp), sreg)
-
-
-/*------------------------------------------------------------------
-    emit_cmp_r64_*
-------------------------------------------------------------------*/
-
-#define emit_cmp_r64_imm(e, dreg, imm)							emit_arith_r64_imm(e, 7, dreg, imm)
-#define emit_cmp_m64bisd_imm(e, base, index, scale, disp, imm)	emit_arith_m64bisd_imm(e, 7, base, index, scale, disp, imm)
-#define emit_cmp_r64_r64(e, dreg, sreg)							emit_arith_r64_r64(e, 7, dreg, sreg)
-#define emit_cmp_r64_m64bisd(e, dreg, base, index, scale, disp)	emit_arith_r64_m64bisd(e, 7, dreg, base, index, scale, disp)
-#define emit_cmp_m64bisd_r64(e, base, index, scale, disp, sreg)	emit_arith_m64bisd_r64(e, 7, base, index, scale, disp, sreg)
-
-#define emit_cmp_m64abs_imm(e, addr, imm)						emit_cmp_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_cmp_m64bd_imm(e, base, disp, imm)					emit_cmp_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_cmp_m64isd_imm(e, index, scale, disp, imm)			emit_cmp_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_cmp_r64_m64abs(e, dreg, addr)						emit_cmp_r64_m64bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cmp_r64_m64bd(e, dreg, base, disp)					emit_cmp_r64_m64bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cmp_r64_m64isd(e, dreg, index, scale, disp)		emit_cmp_r64_m64bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-#define emit_cmp_m64abs_r64(e, addr, sreg)						emit_cmp_m64bisd_r64(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), sreg)
-#define emit_cmp_m64bd_r64(e, base, disp, sreg)					emit_cmp_m64bisd_r64(e, (base),   REG_NONE, 1,       (disp), sreg)
-#define emit_cmp_m64isd_r64(e, index, scale, disp, sreg)		emit_cmp_m64bisd_r64(e, REG_NONE, (index),  (scale), (disp), sreg)
+INLINE void emit_test_r64_imm(x86code **emitptr, UINT8 dreg, UINT32 imm)		{ emit_op_modrm_reg_imm32(emitptr, OP_G3_Ev, OP_64BIT, 0, dreg, imm); }
+INLINE void emit_test_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT32 imm)	{ emit_op_modrm_mem_imm32(emitptr, OP_G3_Ev, OP_64BIT, 0, MEMPARAMS, imm); }
+INLINE void emit_test_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg)		{ emit_op_modrm_reg(emitptr, OP_TEST_Ev_Gv, OP_64BIT, sreg, dreg); }
+INLINE void emit_test_m64_r64(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)	{ emit_op_modrm_mem(emitptr, OP_TEST_Ev_Gv, OP_64BIT, sreg, MEMPARAMS); }
 
 #endif
 
 
 
 /***************************************************************************
-    8-BIT SHIFT EMITTERS
+    SHIFT EMITTERS
 ***************************************************************************/
 
-/*
-    Note that the following code relies on this:
+/*-------------------------------------------------
+    emit_shift_reg_imm
+-------------------------------------------------*/
 
-        /0 = ROL
-        /1 = ROR
-        /2 = RCL
-        /3 = RCR
-        /4 = SHL
-        /5 = SHR
-        /7 = SAR
-*/
+INLINE void emit_shift_reg_imm(x86code **emitptr, UINT32 op1, UINT32 opn, UINT8 opsize, UINT8 opindex, UINT8 dreg, UINT8 imm)
+{
+	if (imm == 1)
+		emit_op_modrm_reg(emitptr, op1, OP_32BIT, opindex, dreg);
+	else
+		emit_op_modrm_reg_imm8(emitptr, opn, OP_32BIT, opindex, dreg, imm);
+}
 
-/*------------------------------------------------------------------
+INLINE void emit_shift_mem_imm(x86code **emitptr, UINT32 op1, UINT32 opn, UINT8 opsize, UINT8 opindex, DECLARE_MEMPARAMS, UINT8 imm)
+{
+	if (imm == 1)
+		emit_op_modrm_mem(emitptr, op1, OP_32BIT, opindex, MEMPARAMS);
+	else
+		emit_op_modrm_mem_imm8(emitptr, opn, OP_32BIT, opindex, MEMPARAMS, imm);
+}
+
+
+/*-------------------------------------------------
     emit_shift_r8_*
-------------------------------------------------------------------*/
+-------------------------------------------------*/
 
-INLINE void emit_shift_r8_imm(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT8 imm)
-{
-	if (imm == 1)
-		emit_op_modrm_reg(emitptr, OP_G2_Eb_1, OP_32BIT, opindex, dreg);
-	else
-	{
-		emit_op_modrm_reg(emitptr, OP_G2_Eb_Ib, OP_32BIT, opindex, dreg);
-		emit_byte(emitptr, imm);
-	}
-}
+INLINE void emit_rol_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Eb_1, OP_G2_Eb_Ib, OP_32BIT, 0, dreg, imm); }
+INLINE void emit_rol_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Eb_1, OP_G2_Eb_Ib, OP_32BIT, 0, MEMPARAMS, imm); }
+INLINE void emit_rol_r8_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Eb_CL, OP_32BIT, 0, dreg); }
+INLINE void emit_rol_m8_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Eb_CL, OP_32BIT, 0, MEMPARAMS); }
 
-INLINE void emit_shift_m8bisd_imm(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 imm)
-{
-	if (imm == 1)
-		emit_op_modrm_mem(emitptr, OP_G2_Eb_1, OP_32BIT, opindex, base, index, scale, disp);
-	else
-	{
-		emit_op_modrm_mem(emitptr, OP_G2_Eb_Ib, OP_32BIT, opindex, base, index, scale, disp);
-		emit_byte(emitptr, imm);
-	}
-}
+INLINE void emit_ror_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Eb_1, OP_G2_Eb_Ib, OP_32BIT, 1, dreg, imm); }
+INLINE void emit_ror_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Eb_1, OP_G2_Eb_Ib, OP_32BIT, 1, MEMPARAMS, imm); }
+INLINE void emit_ror_r8_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Eb_CL, OP_32BIT, 1, dreg); }
+INLINE void emit_ror_m8_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Eb_CL, OP_32BIT, 1, MEMPARAMS); }
 
-INLINE void emit_shift_r8_cl(x86code **emitptr, UINT8 opindex, UINT8 dreg)
-{
-	emit_op_modrm_reg(emitptr, OP_G2_Eb_CL, OP_32BIT, opindex, dreg);
-}
+INLINE void emit_rcl_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Eb_1, OP_G2_Eb_Ib, OP_32BIT, 2, dreg, imm); }
+INLINE void emit_rcl_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Eb_1, OP_G2_Eb_Ib, OP_32BIT, 2, MEMPARAMS, imm); }
+INLINE void emit_rcl_r8_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Eb_CL, OP_32BIT, 2, dreg); }
+INLINE void emit_rcl_m8_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Eb_CL, OP_32BIT, 2, MEMPARAMS); }
 
-INLINE void emit_shift_m8bisd_cl(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_G2_Eb_CL, OP_32BIT, opindex, base, index, scale, disp);
-}
+INLINE void emit_rcr_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Eb_1, OP_G2_Eb_Ib, OP_32BIT, 3, dreg, imm); }
+INLINE void emit_rcr_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Eb_1, OP_G2_Eb_Ib, OP_32BIT, 3, MEMPARAMS, imm); }
+INLINE void emit_rcr_r8_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Eb_CL, OP_32BIT, 3, dreg); }
+INLINE void emit_rcr_m8_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Eb_CL, OP_32BIT, 3, MEMPARAMS); }
 
+INLINE void emit_shl_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Eb_1, OP_G2_Eb_Ib, OP_32BIT, 4, dreg, imm); }
+INLINE void emit_shl_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Eb_1, OP_G2_Eb_Ib, OP_32BIT, 4, MEMPARAMS, imm); }
+INLINE void emit_shl_r8_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Eb_CL, OP_32BIT, 4, dreg); }
+INLINE void emit_shl_m8_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Eb_CL, OP_32BIT, 4, MEMPARAMS); }
 
-/*------------------------------------------------------------------
-    emit_rol_r8_*
-------------------------------------------------------------------*/
+INLINE void emit_shr_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Eb_1, OP_G2_Eb_Ib, OP_32BIT, 5, dreg, imm); }
+INLINE void emit_shr_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Eb_1, OP_G2_Eb_Ib, OP_32BIT, 5, MEMPARAMS, imm); }
+INLINE void emit_shr_r8_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Eb_CL, OP_32BIT, 5, dreg); }
+INLINE void emit_shr_m8_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Eb_CL, OP_32BIT, 5, MEMPARAMS); }
 
-#define emit_rol_r8_imm(e, dreg, imm)							emit_shift_r8_imm(e, 0, dreg, imm)
-#define emit_rol_m8bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m8bisd_imm(e, 0, base, index, scale, disp, imm)
-#define emit_rol_r8_cl(e, dreg)									emit_shift_r8_cl(e, 0, dreg)
-#define emit_rol_m8bisd_cl(e, base, index, scale, disp)			emit_shift_m8bisd_cl(e, 0, base, index, scale, disp)
-
-#define emit_rol_m8abs_imm(e, addr, imm)						emit_rol_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_rol_m8bd_imm(e, base, disp, imm)					emit_rol_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_rol_m8isd_imm(e, index, scale, disp, imm)			emit_rol_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_rol_m8abs_cl(e, addr)								emit_rol_m8bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rol_m8bd_cl(e, base, disp)							emit_rol_m8bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_rol_m8isd_cl(e, index, scale, disp)				emit_rol_m8bisd_cl(e, REG_NONE, (index),  (scale), (disp))
+INLINE void emit_sar_r8_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Eb_1, OP_G2_Eb_Ib, OP_32BIT, 7, dreg, imm); }
+INLINE void emit_sar_m8_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Eb_1, OP_G2_Eb_Ib, OP_32BIT, 7, MEMPARAMS, imm); }
+INLINE void emit_sar_r8_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Eb_CL, OP_32BIT, 7, dreg); }
+INLINE void emit_sar_m8_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Eb_CL, OP_32BIT, 7, MEMPARAMS); }
 
 
-/*------------------------------------------------------------------
-    emit_ror_r8_*
-------------------------------------------------------------------*/
-
-#define emit_ror_r8_imm(e, dreg, imm)							emit_shift_r8_imm(e, 1, dreg, imm)
-#define emit_ror_m8bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m8bisd_imm(e, 1, base, index, scale, disp, imm)
-#define emit_ror_r8_cl(e, dreg)									emit_shift_r8_cl(e, 1, dreg)
-#define emit_ror_m8bisd_cl(e, base, index, scale, disp)			emit_shift_m8bisd_cl(e, 1, base, index, scale, disp)
-
-#define emit_ror_m8abs_imm(e, addr, imm)						emit_ror_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_ror_m8bd_imm(e, base, disp, imm)					emit_ror_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_ror_m8isd_imm(e, index, scale, disp, imm)			emit_ror_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_ror_m8abs_cl(e, addr)								emit_ror_m8bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_ror_m8bd_cl(e, base, disp)							emit_ror_m8bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_ror_m8isd_cl(e, index, scale, disp)				emit_ror_m8bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_rcl_r8_*
-------------------------------------------------------------------*/
-
-#define emit_rcl_r8_imm(e, dreg, imm)							emit_shift_r8_imm(e, 2, dreg, imm)
-#define emit_rcl_m8bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m8bisd_imm(e, 2, base, index, scale, disp, imm)
-#define emit_rcl_r8_cl(e, dreg)									emit_shift_r8_cl(e, 2, dreg)
-#define emit_rcl_m8bisd_cl(e, base, index, scale, disp)			emit_shift_m8bisd_cl(e, 2, base, index, scale, disp)
-
-#define emit_rcl_m8abs_imm(e, addr, imm)						emit_rcl_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_rcl_m8bd_imm(e, base, disp, imm)					emit_rcl_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_rcl_m8isd_imm(e, index, scale, disp, imm)			emit_rcl_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_rcl_m8abs_cl(e, addr)								emit_rcl_m8bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rcl_m8bd_cl(e, base, disp)							emit_rcl_m8bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_rcl_m8isd_cl(e, index, scale, disp)				emit_rcl_m8bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_rcr_r8_*
-------------------------------------------------------------------*/
-
-#define emit_rcr_r8_imm(e, dreg, imm)							emit_shift_r8_imm(e, 3, dreg, imm)
-#define emit_rcr_m8bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m8bisd_imm(e, 3, base, index, scale, disp, imm)
-#define emit_rcr_r8_cl(e, dreg)									emit_shift_r8_cl(e, 3, dreg)
-#define emit_rcr_m8bisd_cl(e, base, index, scale, disp)			emit_shift_m8bisd_cl(e, 3, base, index, scale, disp)
-
-#define emit_rcr_m8abs_imm(e, addr, imm)						emit_rcr_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_rcr_m8bd_imm(e, base, disp, imm)					emit_rcr_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_rcr_m8isd_imm(e, index, scale, disp, imm)			emit_rcr_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_rcr_m8abs_cl(e, addr)								emit_rcr_m8bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rcr_m8bd_cl(e, base, disp)							emit_rcr_m8bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_rcr_m8isd_cl(e, index, scale, disp)				emit_rcr_m8bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_shl_r8_*
-------------------------------------------------------------------*/
-
-#define emit_shl_r8_imm(e, dreg, imm)							emit_shift_r8_imm(e, 4, dreg, imm)
-#define emit_shl_m8bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m8bisd_imm(e, 4, base, index, scale, disp, imm)
-#define emit_shl_r8_cl(e, dreg)									emit_shift_r8_cl(e, 4, dreg)
-#define emit_shl_m8bisd_cl(e, base, index, scale, disp)			emit_shift_m8bisd_cl(e, 4, base, index, scale, disp)
-
-#define emit_shl_m8abs_imm(e, addr, imm)						emit_shl_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_shl_m8bd_imm(e, base, disp, imm)					emit_shl_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_shl_m8isd_imm(e, index, scale, disp, imm)			emit_shl_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_shl_m8abs_cl(e, addr)								emit_shl_m8bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_shl_m8bd_cl(e, base, disp)							emit_shl_m8bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_shl_m8isd_cl(e, index, scale, disp)				emit_shl_m8bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_shr_r8_*
-------------------------------------------------------------------*/
-
-#define emit_shr_r8_imm(e, dreg, imm)							emit_shift_r8_imm(e, 5, dreg, imm)
-#define emit_shr_m8bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m8bisd_imm(e, 5, base, index, scale, disp, imm)
-#define emit_shr_r8_cl(e, dreg)									emit_shift_r8_cl(e, 5, dreg)
-#define emit_shr_m8bisd_cl(e, base, index, scale, disp)			emit_shift_m8bisd_cl(e, 5, base, index, scale, disp)
-
-#define emit_shr_m8abs_imm(e, addr, imm)						emit_shr_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_shr_m8bd_imm(e, base, disp, imm)					emit_shr_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_shr_m8isd_imm(e, index, scale, disp, imm)			emit_shr_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_shr_m8abs_cl(e, addr)								emit_shr_m8bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_shr_m8bd_cl(e, base, disp)							emit_shr_m8bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_shr_m8isd_cl(e, index, scale, disp)				emit_shr_m8bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_sar_r8_*
-------------------------------------------------------------------*/
-
-#define emit_sar_r8_imm(e, dreg, imm)							emit_shift_r8_imm(e, 7, dreg, imm)
-#define emit_sar_m8bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m8bisd_imm(e, 7, base, index, scale, disp, imm)
-#define emit_sar_r8_cl(e, dreg)									emit_shift_r8_cl(e, 7, dreg)
-#define emit_sar_m8bisd_cl(e, base, index, scale, disp)			emit_shift_m8bisd_cl(e, 7, base, index, scale, disp)
-
-#define emit_sar_m8abs_imm(e, addr, imm)						emit_sar_m8bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_sar_m8bd_imm(e, base, disp, imm)					emit_sar_m8bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_sar_m8isd_imm(e, index, scale, disp, imm)			emit_sar_m8bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_sar_m8abs_cl(e, addr)								emit_sar_m8bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sar_m8bd_cl(e, base, disp)							emit_sar_m8bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_sar_m8isd_cl(e, index, scale, disp)				emit_sar_m8bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-
-/***************************************************************************
-    16-BIT SHIFT EMITTERS
-***************************************************************************/
-
-/*
-    Note that the following code relies on this:
-
-        /0 = ROL
-        /1 = ROR
-        /2 = RCL
-        /3 = RCR
-        /4 = SHL
-        /5 = SHR
-        /7 = SAR
-*/
-
-/*------------------------------------------------------------------
+/*-------------------------------------------------
     emit_shift_r16_*
-------------------------------------------------------------------*/
+-------------------------------------------------*/
 
-INLINE void emit_shift_r16_imm(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT8 imm)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	if (imm == 1)
-		emit_op_modrm_reg(emitptr, OP_G2_Ev_1, OP_32BIT, opindex, dreg);
-	else
-	{
-		emit_op_modrm_reg(emitptr, OP_G2_Ev_Ib, OP_32BIT, opindex, dreg);
-		emit_byte(emitptr, imm);
-	}
-}
+INLINE void emit_rol_r16_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_16BIT, 0, dreg, imm); }
+INLINE void emit_rol_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_16BIT, 0, MEMPARAMS, imm); }
+INLINE void emit_rol_r16_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_16BIT, 0, dreg); }
+INLINE void emit_rol_m16_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_16BIT, 0, MEMPARAMS); }
 
-INLINE void emit_shift_m16bisd_imm(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 imm)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	if (imm == 1)
-		emit_op_modrm_mem(emitptr, OP_G2_Ev_1, OP_32BIT, opindex, base, index, scale, disp);
-	else
-	{
-		emit_op_modrm_mem(emitptr, OP_G2_Ev_Ib, OP_32BIT, opindex, base, index, scale, disp);
-		emit_byte(emitptr, imm);
-	}
-}
+INLINE void emit_ror_r16_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_16BIT, 1, dreg, imm); }
+INLINE void emit_ror_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_16BIT, 1, MEMPARAMS, imm); }
+INLINE void emit_ror_r16_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_16BIT, 1, dreg); }
+INLINE void emit_ror_m16_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_16BIT, 1, MEMPARAMS); }
 
-INLINE void emit_shift_r16_cl(x86code **emitptr, UINT8 opindex, UINT8 dreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_32BIT, opindex, dreg);
-}
+INLINE void emit_rcl_r16_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_16BIT, 2, dreg, imm); }
+INLINE void emit_rcl_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_16BIT, 2, MEMPARAMS, imm); }
+INLINE void emit_rcl_r16_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_16BIT, 2, dreg); }
+INLINE void emit_rcl_m16_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_16BIT, 2, MEMPARAMS); }
 
-INLINE void emit_shift_m16bisd_cl(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_32BIT, opindex, base, index, scale, disp);
-}
+INLINE void emit_rcr_r16_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_16BIT, 3, dreg, imm); }
+INLINE void emit_rcr_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_16BIT, 3, MEMPARAMS, imm); }
+INLINE void emit_rcr_r16_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_16BIT, 3, dreg); }
+INLINE void emit_rcr_m16_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_16BIT, 3, MEMPARAMS); }
 
+INLINE void emit_shl_r16_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_16BIT, 4, dreg, imm); }
+INLINE void emit_shl_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_16BIT, 4, MEMPARAMS, imm); }
+INLINE void emit_shl_r16_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_16BIT, 4, dreg); }
+INLINE void emit_shl_m16_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_16BIT, 4, MEMPARAMS); }
 
-/*------------------------------------------------------------------
-    emit_rol_r16_*
-------------------------------------------------------------------*/
+INLINE void emit_shr_r16_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_16BIT, 5, dreg, imm); }
+INLINE void emit_shr_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_16BIT, 5, MEMPARAMS, imm); }
+INLINE void emit_shr_r16_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_16BIT, 5, dreg); }
+INLINE void emit_shr_m16_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_16BIT, 5, MEMPARAMS); }
 
-#define emit_rol_r16_imm(e, dreg, imm)							emit_shift_r16_imm(e, 0, dreg, imm)
-#define emit_rol_m16bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m16bisd_imm(e, 0, base, index, scale, disp, imm)
-#define emit_rol_r16_cl(e, dreg)								emit_shift_r16_cl(e, 0, dreg)
-#define emit_rol_m16bisd_cl(e, base, index, scale, disp)		emit_shift_m16bisd_cl(e, 0, base, index, scale, disp)
-
-#define emit_rol_m16abs_imm(e, addr, imm)						emit_rol_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_rol_m16bd_imm(e, base, disp, imm)					emit_rol_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_rol_m16isd_imm(e, index, scale, disp, imm)			emit_rol_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_rol_m16abs_cl(e, addr)								emit_rol_m16bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rol_m16bd_cl(e, base, disp)						emit_rol_m16bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_rol_m16isd_cl(e, index, scale, disp)				emit_rol_m16bisd_cl(e, REG_NONE, (index),  (scale), (disp))
+INLINE void emit_sar_r16_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_16BIT, 7, dreg, imm); }
+INLINE void emit_sar_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_16BIT, 7, MEMPARAMS, imm); }
+INLINE void emit_sar_r16_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_16BIT, 7, dreg); }
+INLINE void emit_sar_m16_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_16BIT, 7, MEMPARAMS); }
 
 
-/*------------------------------------------------------------------
-    emit_ror_r16_*
-------------------------------------------------------------------*/
-
-#define emit_ror_r16_imm(e, dreg, imm)							emit_shift_r16_imm(e, 1, dreg, imm)
-#define emit_ror_m16bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m16bisd_imm(e, 1, base, index, scale, disp, imm)
-#define emit_ror_r16_cl(e, dreg)								emit_shift_r16_cl(e, 1, dreg)
-#define emit_ror_m16bisd_cl(e, base, index, scale, disp)		emit_shift_m16bisd_cl(e, 1, base, index, scale, disp)
-
-#define emit_ror_m16abs_imm(e, addr, imm)						emit_ror_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_ror_m16bd_imm(e, base, disp, imm)					emit_ror_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_ror_m16isd_imm(e, index, scale, disp, imm)			emit_ror_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_ror_m16abs_cl(e, addr)								emit_ror_m16bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_ror_m16bd_cl(e, base, disp)						emit_ror_m16bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_ror_m16isd_cl(e, index, scale, disp)				emit_ror_m16bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_rcl_r16_*
-------------------------------------------------------------------*/
-
-#define emit_rcl_r16_imm(e, dreg, imm)							emit_shift_r16_imm(e, 2, dreg, imm)
-#define emit_rcl_m16bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m16bisd_imm(e, 2, base, index, scale, disp, imm)
-#define emit_rcl_r16_cl(e, dreg)								emit_shift_r16_cl(e, 2, dreg)
-#define emit_rcl_m16bisd_cl(e, base, index, scale, disp)		emit_shift_m16bisd_cl(e, 2, base, index, scale, disp)
-
-#define emit_rcl_m16abs_imm(e, addr, imm)						emit_rcl_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_rcl_m16bd_imm(e, base, disp, imm)					emit_rcl_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_rcl_m16isd_imm(e, index, scale, disp, imm)			emit_rcl_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_rcl_m16abs_cl(e, addr)								emit_rcl_m16bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rcl_m16bd_cl(e, base, disp)						emit_rcl_m16bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_rcl_m16isd_cl(e, index, scale, disp)				emit_rcl_m16bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_rcr_r16_*
-------------------------------------------------------------------*/
-
-#define emit_rcr_r16_imm(e, dreg, imm)							emit_shift_r16_imm(e, 3, dreg, imm)
-#define emit_rcr_m16bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m16bisd_imm(e, 31, base, index, scale, disp, imm)
-#define emit_rcr_r16_cl(e, dreg)								emit_shift_r16_cl(e, 3, dreg)
-#define emit_rcr_m16bisd_cl(e, base, index, scale, disp)		emit_shift_m16bisd_cl(e, 3, base, index, scale, disp)
-
-#define emit_rcr_m16abs_imm(e, addr, imm)						emit_rcr_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_rcr_m16bd_imm(e, base, disp, imm)					emit_rcr_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_rcr_m16isd_imm(e, index, scale, disp, imm)			emit_rcr_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_rcr_m16abs_cl(e, addr)								emit_rcr_m16bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rcr_m16bd_cl(e, base, disp)						emit_rcr_m16bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_rcr_m16isd_cl(e, index, scale, disp)				emit_rcr_m16bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_shl_r16_*
-------------------------------------------------------------------*/
-
-#define emit_shl_r16_imm(e, dreg, imm)							emit_shift_r16_imm(e, 4, dreg, imm)
-#define emit_shl_m16bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m16bisd_imm(e, 4, base, index, scale, disp, imm)
-#define emit_shl_r16_cl(e, dreg)								emit_shift_r16_cl(e, 4, dreg)
-#define emit_shl_m16bisd_cl(e, base, index, scale, disp)		emit_shift_m16bisd_cl(e, 4, base, index, scale, disp)
-
-#define emit_shl_m16abs_imm(e, addr, imm)						emit_shl_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_shl_m16bd_imm(e, base, disp, imm)					emit_shl_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_shl_m16isd_imm(e, index, scale, disp, imm)			emit_shl_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_shl_m16abs_cl(e, addr)								emit_shl_m16bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_shl_m16bd_cl(e, base, disp)						emit_shl_m16bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_shl_m16isd_cl(e, index, scale, disp)				emit_shl_m16bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_shr_r16_*
-------------------------------------------------------------------*/
-
-#define emit_shr_r16_imm(e, dreg, imm)							emit_shift_r16_imm(e, 5, dreg, imm)
-#define emit_shr_m16bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m16bisd_imm(e, 5, base, index, scale, disp, imm)
-#define emit_shr_r16_cl(e, dreg)								emit_shift_r16_cl(e, 5, dreg)
-#define emit_shr_m16bisd_cl(e, base, index, scale, disp)		emit_shift_m16bisd_cl(e, 5, base, index, scale, disp)
-
-#define emit_shr_m16abs_imm(e, addr, imm)						emit_shr_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_shr_m16bd_imm(e, base, disp, imm)					emit_shr_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_shr_m16isd_imm(e, index, scale, disp, imm)			emit_shr_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_shr_m16abs_cl(e, addr)								emit_shr_m16bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_shr_m16bd_cl(e, base, disp)						emit_shr_m16bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_shr_m16isd_cl(e, index, scale, disp)				emit_shr_m16bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_sar_r16_*
-------------------------------------------------------------------*/
-
-#define emit_sar_r16_imm(e, dreg, imm)							emit_shift_r16_imm(e, 7, dreg, imm)
-#define emit_sar_m16bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m16bisd_imm(e, 7, base, index, scale, disp, imm)
-#define emit_sar_r16_cl(e, dreg)								emit_shift_r16_cl(e, 7, dreg)
-#define emit_sar_m16bisd_cl(e, base, index, scale, disp)		emit_shift_m16bisd_cl(e, 7, base, index, scale, disp)
-
-#define emit_sar_m16abs_imm(e, addr, imm)						emit_sar_m16bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_sar_m16bd_imm(e, base, disp, imm)					emit_sar_m16bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_sar_m16isd_imm(e, index, scale, disp, imm)			emit_sar_m16bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_sar_m16abs_cl(e, addr)								emit_sar_m16bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sar_m16bd_cl(e, base, disp)						emit_sar_m16bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_sar_m16isd_cl(e, index, scale, disp)				emit_sar_m16bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-
-/***************************************************************************
-    32-BIT SHIFT EMITTERS
-***************************************************************************/
-
-/*
-    Note that the following code relies on this:
-
-        /0 = ROL
-        /1 = ROR
-        /2 = RCL
-        /3 = RCR
-        /4 = SHL
-        /5 = SHR
-        /7 = SAR
-*/
-
-/*------------------------------------------------------------------
+/*-------------------------------------------------
     emit_shift_r32_*
-------------------------------------------------------------------*/
+-------------------------------------------------*/
 
-INLINE void emit_shift_r32_imm(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT8 imm)
-{
-	if (imm == 1)
-		emit_op_modrm_reg(emitptr, OP_G2_Ev_1, OP_32BIT, opindex, dreg);
-	else
-	{
-		emit_op_modrm_reg(emitptr, OP_G2_Ev_Ib, OP_32BIT, opindex, dreg);
-		emit_byte(emitptr, imm);
-	}
-}
+INLINE void emit_rol_r32_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_32BIT, 0, dreg, imm); }
+INLINE void emit_rol_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_32BIT, 0, MEMPARAMS, imm); }
+INLINE void emit_rol_r32_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_32BIT, 0, dreg); }
+INLINE void emit_rol_m32_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_32BIT, 0, MEMPARAMS); }
 
-INLINE void emit_shift_m32bisd_imm(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 imm)
-{
-	if (imm == 1)
-		emit_op_modrm_mem(emitptr, OP_G2_Ev_1, OP_32BIT, opindex, base, index, scale, disp);
-	else
-	{
-		emit_op_modrm_mem(emitptr, OP_G2_Ev_Ib, OP_32BIT, opindex, base, index, scale, disp);
-		emit_byte(emitptr, imm);
-	}
-}
+INLINE void emit_ror_r32_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_32BIT, 1, dreg, imm); }
+INLINE void emit_ror_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_32BIT, 1, MEMPARAMS, imm); }
+INLINE void emit_ror_r32_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_32BIT, 1, dreg); }
+INLINE void emit_ror_m32_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_32BIT, 1, MEMPARAMS); }
 
-INLINE void emit_shift_r32_cl(x86code **emitptr, UINT8 opindex, UINT8 dreg)
-{
-	emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_32BIT, opindex, dreg);
-}
+INLINE void emit_rcl_r32_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_32BIT, 2, dreg, imm); }
+INLINE void emit_rcl_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_32BIT, 2, MEMPARAMS, imm); }
+INLINE void emit_rcl_r32_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_32BIT, 2, dreg); }
+INLINE void emit_rcl_m32_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_32BIT, 2, MEMPARAMS); }
 
-INLINE void emit_shift_m32bisd_cl(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_32BIT, opindex, base, index, scale, disp);
-}
+INLINE void emit_rcr_r32_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_32BIT, 3, dreg, imm); }
+INLINE void emit_rcr_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_32BIT, 3, MEMPARAMS, imm); }
+INLINE void emit_rcr_r32_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_32BIT, 3, dreg); }
+INLINE void emit_rcr_m32_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_32BIT, 3, MEMPARAMS); }
 
+INLINE void emit_shl_r32_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_32BIT, 4, dreg, imm); }
+INLINE void emit_shl_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_32BIT, 4, MEMPARAMS, imm); }
+INLINE void emit_shl_r32_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_32BIT, 4, dreg); }
+INLINE void emit_shl_m32_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_32BIT, 4, MEMPARAMS); }
 
-/*------------------------------------------------------------------
-    emit_rol_r32_*
-------------------------------------------------------------------*/
+INLINE void emit_shr_r32_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_32BIT, 5, dreg, imm); }
+INLINE void emit_shr_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_32BIT, 5, MEMPARAMS, imm); }
+INLINE void emit_shr_r32_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_32BIT, 5, dreg); }
+INLINE void emit_shr_m32_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_32BIT, 5, MEMPARAMS); }
 
-#define emit_rol_r32_imm(e, dreg, imm)							emit_shift_r32_imm(e, 0, dreg, imm)
-#define emit_rol_m32bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m32bisd_imm(e, 0, base, index, scale, disp, imm)
-#define emit_rol_r32_cl(e, dreg)								emit_shift_r32_cl(e, 0, dreg)
-#define emit_rol_m32bisd_cl(e, base, index, scale, disp)		emit_shift_m32bisd_cl(e, 0, base, index, scale, disp)
+INLINE void emit_sar_r32_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_32BIT, 7, dreg, imm); }
+INLINE void emit_sar_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_32BIT, 7, MEMPARAMS, imm); }
+INLINE void emit_sar_r32_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_32BIT, 7, dreg); }
+INLINE void emit_sar_m32_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_32BIT, 7, MEMPARAMS); }
 
-#define emit_rol_m32abs_imm(e, addr, imm)						emit_rol_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_rol_m32bd_imm(e, base, disp, imm)					emit_rol_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_rol_m32isd_imm(e, index, scale, disp, imm)			emit_rol_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
+INLINE void emit_shld_r32_r32_imm(x86code **emitptr, UINT8 dreg, UINT8 sreg, UINT8 imm) 		{ emit_op_modrm_reg_imm8(emitptr, OP_SHLD_Ev_Gv_Ib, OP_32BIT, sreg, dreg, imm); }
+INLINE void emit_shld_m32_r32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg, UINT8 imm)	{ emit_op_modrm_mem_imm8(emitptr, OP_SHLD_Ev_Gv_Ib, OP_32BIT, sreg, MEMPARAMS, imm); }
+INLINE void emit_shld_r32_r32_cl(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_SHLD_Ev_Gv_CL, OP_32BIT, sreg, dreg); }
+INLINE void emit_shld_m32_r32_cl(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)				{ emit_op_modrm_mem(emitptr, OP_SHLD_Ev_Gv_CL, OP_32BIT, sreg, MEMPARAMS); }
 
-#define emit_rol_m32abs_cl(e, addr)								emit_rol_m32bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rol_m32bd_cl(e, base, disp)						emit_rol_m32bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_rol_m32isd_cl(e, index, scale, disp)				emit_rol_m32bisd_cl(e, REG_NONE, (index),  (scale), (disp))
+INLINE void emit_shrd_r32_r32_imm(x86code **emitptr, UINT8 dreg, UINT8 sreg, UINT8 imm)			{ emit_op_modrm_reg_imm8(emitptr, OP_SHRD_Ev_Gv_Ib, OP_32BIT, sreg, dreg, imm); }
+INLINE void emit_shrd_m32_r32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg, UINT8 imm)	{ emit_op_modrm_mem_imm8(emitptr, OP_SHRD_Ev_Gv_Ib, OP_32BIT, sreg, MEMPARAMS, imm); }
+INLINE void emit_shrd_r32_r32_cl(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_SHRD_Ev_Gv_CL, OP_32BIT, sreg, dreg); }
+INLINE void emit_shrd_m32_r32_cl(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)				{ emit_op_modrm_mem(emitptr, OP_SHRD_Ev_Gv_CL, OP_32BIT, sreg, MEMPARAMS); }
 
 
-/*------------------------------------------------------------------
-    emit_ror_r32_*
-------------------------------------------------------------------*/
-
-#define emit_ror_r32_imm(e, dreg, imm)							emit_shift_r32_imm(e, 1, dreg, imm)
-#define emit_ror_m32bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m32bisd_imm(e, 1, base, index, scale, disp, imm)
-#define emit_ror_r32_cl(e, dreg)								emit_shift_r32_cl(e, 1, dreg)
-#define emit_ror_m32bisd_cl(e, base, index, scale, disp)		emit_shift_m32bisd_cl(e, 1, base, index, scale, disp)
-
-#define emit_ror_m32abs_imm(e, addr, imm)						emit_ror_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_ror_m32bd_imm(e, base, disp, imm)					emit_ror_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_ror_m32isd_imm(e, index, scale, disp, imm)			emit_ror_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_ror_m32abs_cl(e, addr)								emit_ror_m32bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_ror_m32bd_cl(e, base, disp)						emit_ror_m32bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_ror_m32isd_cl(e, index, scale, disp)				emit_ror_m32bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_rcl_r32_*
-------------------------------------------------------------------*/
-
-#define emit_rcl_r32_imm(e, dreg, imm)							emit_shift_r32_imm(e, 2, dreg, imm)
-#define emit_rcl_m32bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m32bisd_imm(e, 2, base, index, scale, disp, imm)
-#define emit_rcl_r32_cl(e, dreg)								emit_shift_r32_cl(e, 2, dreg)
-#define emit_rcl_m32bisd_cl(e, base, index, scale, disp)		emit_shift_m32bisd_cl(e, 2, base, index, scale, disp)
-
-#define emit_rcl_m32abs_imm(e, addr, imm)						emit_rcl_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_rcl_m32bd_imm(e, base, disp, imm)					emit_rcl_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_rcl_m32isd_imm(e, index, scale, disp, imm)			emit_rcl_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_rcl_m32abs_cl(e, addr)								emit_rcl_m32bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rcl_m32bd_cl(e, base, disp)						emit_rcl_m32bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_rcl_m32isd_cl(e, index, scale, disp)				emit_rcl_m32bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_rcr_r32_*
-------------------------------------------------------------------*/
-
-#define emit_rcr_r32_imm(e, dreg, imm)							emit_shift_r32_imm(e, 3, dreg, imm)
-#define emit_rcr_m32bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m32bisd_imm(e, 3, base, index, scale, disp, imm)
-#define emit_rcr_r32_cl(e, dreg)								emit_shift_r32_cl(e, 3, dreg)
-#define emit_rcr_m32bisd_cl(e, base, index, scale, disp)		emit_shift_m32bisd_cl(e, 3, base, index, scale, disp)
-
-#define emit_rcr_m32abs_imm(e, addr, imm)						emit_rcr_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_rcr_m32bd_imm(e, base, disp, imm)					emit_rcr_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_rcr_m32isd_imm(e, index, scale, disp, imm)			emit_rcr_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_rcr_m32abs_cl(e, addr)								emit_rcr_m32bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rcr_m32bd_cl(e, base, disp)						emit_rcr_m32bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_rcr_m32isd_cl(e, index, scale, disp)				emit_rcr_m32bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_shl_r32_*
-------------------------------------------------------------------*/
-
-#define emit_shl_r32_imm(e, dreg, imm)							emit_shift_r32_imm(e, 4, dreg, imm)
-#define emit_shl_m32bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m32bisd_imm(e, 4, base, index, scale, disp, imm)
-#define emit_shl_r32_cl(e, dreg)								emit_shift_r32_cl(e, 4, dreg)
-#define emit_shl_m32bisd_cl(e, base, index, scale, disp)		emit_shift_m32bisd_cl(e, 4, base, index, scale, disp)
-
-#define emit_shl_m32abs_imm(e, addr, imm)						emit_shl_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_shl_m32bd_imm(e, base, disp, imm)					emit_shl_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_shl_m32isd_imm(e, index, scale, disp, imm)			emit_shl_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_shl_m32abs_cl(e, addr)								emit_shl_m32bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_shl_m32bd_cl(e, base, disp)						emit_shl_m32bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_shl_m32isd_cl(e, index, scale, disp)				emit_shl_m32bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_shr_r32_*
-------------------------------------------------------------------*/
-
-#define emit_shr_r32_imm(e, dreg, imm)							emit_shift_r32_imm(e, 5, dreg, imm)
-#define emit_shr_m32bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m32bisd_imm(e, 5, base, index, scale, disp, imm)
-#define emit_shr_r32_cl(e, dreg)								emit_shift_r32_cl(e, 5, dreg)
-#define emit_shr_m32bisd_cl(e, base, index, scale, disp)		emit_shift_m32bisd_cl(e, 5, base, index, scale, disp)
-
-#define emit_shr_m32abs_imm(e, addr, imm)						emit_shr_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_shr_m32bd_imm(e, base, disp, imm)					emit_shr_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_shr_m32isd_imm(e, index, scale, disp, imm)			emit_shr_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_shr_m32abs_cl(e, addr)								emit_shr_m32bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_shr_m32bd_cl(e, base, disp)						emit_shr_m32bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_shr_m32isd_cl(e, index, scale, disp)				emit_shr_m32bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_sar_r32_*
-------------------------------------------------------------------*/
-
-#define emit_sar_r32_imm(e, dreg, imm)							emit_shift_r32_imm(e, 7, dreg, imm)
-#define emit_sar_m32bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m32bisd_imm(e, 7, base, index, scale, disp, imm)
-#define emit_sar_r32_cl(e, dreg)								emit_shift_r32_cl(e, 7, dreg)
-#define emit_sar_m32bisd_cl(e, base, index, scale, disp)		emit_shift_m32bisd_cl(e, 7, base, index, scale, disp)
-
-#define emit_sar_m32abs_imm(e, addr, imm)						emit_sar_m32bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_sar_m32bd_imm(e, base, disp, imm)					emit_sar_m32bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_sar_m32isd_imm(e, index, scale, disp, imm)			emit_sar_m32bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_sar_m32abs_cl(e, addr)								emit_sar_m32bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sar_m32bd_cl(e, base, disp)						emit_sar_m32bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_sar_m32isd_cl(e, index, scale, disp)				emit_sar_m32bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-
-/***************************************************************************
-    64-BIT SHIFT EMITTERS
-***************************************************************************/
+/*-------------------------------------------------
+    emit_shift_r64_*
+-------------------------------------------------*/
 
 #ifdef PTR64
-/*
-    Note that the following code relies on this:
 
-        /0 = ROL
-        /1 = ROR
-        /2 = RCL
-        /3 = RCR
-        /4 = SHL
-        /5 = SHR
-        /7 = SAR
-*/
+INLINE void emit_rol_r64_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_64BIT, 0, dreg, imm); }
+INLINE void emit_rol_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_64BIT, 0, MEMPARAMS, imm); }
+INLINE void emit_rol_r64_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_64BIT, 0, dreg); }
+INLINE void emit_rol_m64_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_64BIT, 0, MEMPARAMS); }
 
-/*------------------------------------------------------------------
-    emit_shift_r64_*
-------------------------------------------------------------------*/
+INLINE void emit_ror_r64_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_64BIT, 1, dreg, imm); }
+INLINE void emit_ror_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_64BIT, 1, MEMPARAMS, imm); }
+INLINE void emit_ror_r64_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_64BIT, 1, dreg); }
+INLINE void emit_ror_m64_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_64BIT, 1, MEMPARAMS); }
 
-INLINE void emit_shift_r64_imm(x86code **emitptr, UINT8 opindex, UINT8 dreg, UINT8 imm)
-{
-	if (imm == 1)
-		emit_op_modrm_reg(emitptr, OP_G2_Ev_1, OP_64BIT, opindex, dreg);
-	else
-	{
-		emit_op_modrm_reg(emitptr, OP_G2_Ev_Ib, OP_64BIT, opindex, dreg);
-		emit_byte(emitptr, imm);
-	}
-}
+INLINE void emit_rcl_r64_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_64BIT, 2, dreg, imm); }
+INLINE void emit_rcl_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_64BIT, 2, MEMPARAMS, imm); }
+INLINE void emit_rcl_r64_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_64BIT, 2, dreg); }
+INLINE void emit_rcl_m64_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_64BIT, 2, MEMPARAMS); }
 
-INLINE void emit_shift_m64bisd_imm(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp, UINT8 imm)
-{
-	if (imm == 1)
-		emit_op_modrm_mem(emitptr, OP_G2_Ev_1, OP_64BIT, opindex, base, index, scale, disp);
-	else
-	{
-		emit_op_modrm_mem(emitptr, OP_G2_Ev_Ib, OP_64BIT, opindex, base, index, scale, disp);
-		emit_byte(emitptr, imm);
-	}
-}
+INLINE void emit_rcr_r64_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_64BIT, 3, dreg, imm); }
+INLINE void emit_rcr_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_64BIT, 3, MEMPARAMS, imm); }
+INLINE void emit_rcr_r64_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_64BIT, 3, dreg); }
+INLINE void emit_rcr_m64_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_64BIT, 3, MEMPARAMS); }
 
-INLINE void emit_shift_r64_cl(x86code **emitptr, UINT8 opindex, UINT8 dreg)
-{
-	emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_64BIT, opindex, dreg);
-}
+INLINE void emit_shl_r64_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_64BIT, 4, dreg, imm); }
+INLINE void emit_shl_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_64BIT, 4, MEMPARAMS, imm); }
+INLINE void emit_shl_r64_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_64BIT, 4, dreg); }
+INLINE void emit_shl_m64_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_64BIT, 4, MEMPARAMS); }
 
-INLINE void emit_shift_m64bisd_cl(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_64BIT, opindex, base, index, scale, disp);
-}
+INLINE void emit_shr_r64_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_64BIT, 5, dreg, imm); }
+INLINE void emit_shr_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_64BIT, 5, MEMPARAMS, imm); }
+INLINE void emit_shr_r64_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_64BIT, 5, dreg); }
+INLINE void emit_shr_m64_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_64BIT, 5, MEMPARAMS); }
 
+INLINE void emit_sar_r64_imm(x86code **emitptr, UINT8 dreg, UINT8 imm) 			{ emit_shift_reg_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_64BIT, 7, dreg, imm); }
+INLINE void emit_sar_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm) 	{ emit_shift_mem_imm(emitptr, OP_G2_Ev_1, OP_G2_Ev_Ib, OP_64BIT, 7, MEMPARAMS, imm); }
+INLINE void emit_sar_r64_cl(x86code **emitptr, UINT8 dreg)			 			{ emit_op_modrm_reg(emitptr, OP_G2_Ev_CL, OP_64BIT, 7, dreg); }
+INLINE void emit_sar_m64_cl(x86code **emitptr, DECLARE_MEMPARAMS)			 	{ emit_op_modrm_mem(emitptr, OP_G2_Ev_CL, OP_64BIT, 7, MEMPARAMS); }
 
-/*------------------------------------------------------------------
-    emit_rol_r64_*
-------------------------------------------------------------------*/
+INLINE void emit_shld_r64_r64_imm(x86code **emitptr, UINT8 dreg, UINT8 sreg, UINT8 imm)			{ emit_op_modrm_reg_imm8(emitptr, OP_SHLD_Ev_Gv_Ib, OP_64BIT, sreg, dreg, imm); }
+INLINE void emit_shld_m64_r64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg, UINT8 imm)	{ emit_op_modrm_mem_imm8(emitptr, OP_SHLD_Ev_Gv_Ib, OP_64BIT, sreg, MEMPARAMS, imm); }
+INLINE void emit_shld_r64_r64_cl(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_SHLD_Ev_Gv_CL, OP_64BIT, sreg, dreg); }
+INLINE void emit_shld_m64_r64_cl(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)				{ emit_op_modrm_mem(emitptr, OP_SHLD_Ev_Gv_CL, OP_64BIT, sreg, MEMPARAMS); }
 
-#define emit_rol_r64_imm(e, dreg, imm)							emit_shift_r64_imm(e, 0, dreg, imm)
-#define emit_rol_m64bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m64bisd_imm(e, 0, base, index, scale, disp, imm)
-#define emit_rol_r64_cl(e, dreg)								emit_shift_r64_cl(e, 0, dreg)
-#define emit_rol_m64bisd_cl(e, base, index, scale, disp)		emit_shift_m64bisd_cl(e, 0, base, index, scale, disp)
-
-#define emit_rol_m64abs_imm(e, addr, imm)						emit_rol_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_rol_m64bd_imm(e, base, disp, imm)					emit_rol_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_rol_m64isd_imm(e, index, scale, disp, imm)			emit_rol_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_rol_m64abs_cl(e, addr)								emit_rol_m64bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rol_m64bd_cl(e, base, disp)						emit_rol_m64bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_rol_m64isd_cl(e, index, scale, disp)				emit_rol_m64bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_ror_r64_*
-------------------------------------------------------------------*/
-
-#define emit_ror_r64_imm(e, dreg, imm)							emit_shift_r64_imm(e, 1, dreg, imm)
-#define emit_ror_m64bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m64bisd_imm(e, 1, base, index, scale, disp, imm)
-#define emit_ror_r64_cl(e, dreg)								emit_shift_r64_cl(e, 1, dreg)
-#define emit_ror_m64bisd_cl(e, base, index, scale, disp)		emit_shift_m64bisd_cl(e, 1, base, index, scale, disp)
-
-#define emit_ror_m64abs_imm(e, addr, imm)						emit_ror_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_ror_m64bd_imm(e, base, disp, imm)					emit_ror_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_ror_m64isd_imm(e, index, scale, disp, imm)			emit_ror_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_ror_m64abs_cl(e, addr)								emit_ror_m64bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_ror_m64bd_cl(e, base, disp)						emit_ror_m64bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_ror_m64isd_cl(e, index, scale, disp)				emit_ror_m64bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_rcl_r64_*
-------------------------------------------------------------------*/
-
-#define emit_rcl_r64_imm(e, dreg, imm)							emit_shift_r64_imm(e, 2, dreg, imm)
-#define emit_rcl_m64bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m64bisd_imm(e, 2, base, index, scale, disp, imm)
-#define emit_rcl_r64_cl(e, dreg)								emit_shift_r64_cl(e, 2, dreg)
-#define emit_rcl_m64bisd_cl(e, base, index, scale, disp)		emit_shift_m64bisd_cl(e, 2, base, index, scale, disp)
-
-#define emit_rcl_m64abs_imm(e, addr, imm)						emit_rcl_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_rcl_m64bd_imm(e, base, disp, imm)					emit_rcl_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_rcl_m64isd_imm(e, index, scale, disp, imm)			emit_rcl_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_rcl_m64abs_cl(e, addr)								emit_rcl_m64bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rcl_m64bd_cl(e, base, disp)						emit_rcl_m64bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_rcl_m64isd_cl(e, index, scale, disp)				emit_rcl_m64bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_rcr_r64_*
-------------------------------------------------------------------*/
-
-#define emit_rcr_r64_imm(e, dreg, imm)							emit_shift_r64_imm(e, 3, dreg, imm)
-#define emit_rcr_m64bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m64bisd_imm(e, 3, base, index, scale, disp, imm)
-#define emit_rcr_r64_cl(e, dreg)								emit_shift_r64_cl(e, 3, dreg)
-#define emit_rcr_m64bisd_cl(e, base, index, scale, disp)		emit_shift_m64bisd_cl(e, 3, base, index, scale, disp)
-
-#define emit_rcr_m64abs_imm(e, addr, imm)						emit_rcr_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_rcr_m64bd_imm(e, base, disp, imm)					emit_rcr_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_rcr_m64isd_imm(e, index, scale, disp, imm)			emit_rcr_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_rcr_m64abs_cl(e, addr)								emit_rcr_m64bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rcr_m64bd_cl(e, base, disp)						emit_rcr_m64bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_rcr_m64isd_cl(e, index, scale, disp)				emit_rcr_m64bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_shl_r64_*
-------------------------------------------------------------------*/
-
-#define emit_shl_r64_imm(e, dreg, imm)							emit_shift_r64_imm(e, 4, dreg, imm)
-#define emit_shl_m64bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m64bisd_imm(e, 4, base, index, scale, disp, imm)
-#define emit_shl_r64_cl(e, dreg)								emit_shift_r64_cl(e, 4, dreg)
-#define emit_shl_m64bisd_cl(e, base, index, scale, disp)		emit_shift_m64bisd_cl(e, 4, base, index, scale, disp)
-
-#define emit_shl_m64abs_imm(e, addr, imm)						emit_shl_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_shl_m64bd_imm(e, base, disp, imm)					emit_shl_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_shl_m64isd_imm(e, index, scale, disp, imm)			emit_shl_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_shl_m64abs_cl(e, addr)								emit_shl_m64bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_shl_m64bd_cl(e, base, disp)						emit_shl_m64bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_shl_m64isd_cl(e, index, scale, disp)				emit_shl_m64bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_shr_r64_*
-------------------------------------------------------------------*/
-
-#define emit_shr_r64_imm(e, dreg, imm)							emit_shift_r64_imm(e, 5, dreg, imm)
-#define emit_shr_m64bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m64bisd_imm(e, 5, base, index, scale, disp, imm)
-#define emit_shr_r64_cl(e, dreg)								emit_shift_r64_cl(e, 5, dreg)
-#define emit_shr_m64bisd_cl(e, base, index, scale, disp)		emit_shift_m64bisd_cl(e, 5, base, index, scale, disp)
-
-#define emit_shr_m64abs_imm(e, addr, imm)						emit_shr_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_shr_m64bd_imm(e, base, disp, imm)					emit_shr_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_shr_m64isd_imm(e, index, scale, disp, imm)			emit_shr_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_shr_m64abs_cl(e, addr)								emit_shr_m64bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_shr_m64bd_cl(e, base, disp)						emit_shr_m64bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_shr_m64isd_cl(e, index, scale, disp)				emit_shr_m64bisd_cl(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_sar_r64_*
-------------------------------------------------------------------*/
-
-#define emit_sar_r64_imm(e, dreg, imm)							emit_shift_r64_imm(e, 7, dreg, imm)
-#define emit_sar_m64bisd_imm(e, base, index, scale, disp, imm)	emit_shift_m64bisd_imm(e, 7, base, index, scale, disp, imm)
-#define emit_sar_r64_cl(e, dreg)								emit_shift_r64_cl(e, 7, dreg)
-#define emit_sar_m64bisd_cl(e, base, index, scale, disp)		emit_shift_m64bisd_cl(e, 7, base, index, scale, disp)
-
-#define emit_sar_m64abs_imm(e, addr, imm)						emit_sar_m64bisd_imm(e, REG_NONE, REG_NONE, 1,       (INT32)(addr), imm)
-#define emit_sar_m64bd_imm(e, base, disp, imm)					emit_sar_m64bisd_imm(e, (base),   REG_NONE, 1,       (disp), imm)
-#define emit_sar_m64isd_imm(e, index, scale, disp, imm)			emit_sar_m64bisd_imm(e, REG_NONE, (index),  (scale), (disp), imm)
-
-#define emit_sar_m64abs_cl(e, addr)								emit_sar_m64bisd_cl(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sar_m64bd_cl(e, base, disp)						emit_sar_m64bisd_cl(e, (base),   REG_NONE, 1,       (disp))
-#define emit_sar_m64isd_cl(e, index, scale, disp)				emit_sar_m64bisd_cl(e, REG_NONE, (index),  (scale), (disp))
+INLINE void emit_shrd_r64_r64_imm(x86code **emitptr, UINT8 dreg, UINT8 sreg, UINT8 imm)			{ emit_op_modrm_reg_imm8(emitptr, OP_SHRD_Ev_Gv_Ib, OP_64BIT, sreg, dreg, imm); }
+INLINE void emit_shrd_m64_r64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg, UINT8 imm)	{ emit_op_modrm_mem_imm8(emitptr, OP_SHRD_Ev_Gv_Ib, OP_64BIT, sreg, MEMPARAMS, imm); }
+INLINE void emit_shrd_r64_r64_cl(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_SHRD_Ev_Gv_CL, OP_64BIT, sreg, dreg); }
+INLINE void emit_shrd_m64_r64_cl(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)				{ emit_op_modrm_mem(emitptr, OP_SHRD_Ev_Gv_CL, OP_64BIT, sreg, MEMPARAMS); }
 
 #endif
 
 
 
 /***************************************************************************
-    8-BIT GROUP3 EMITTERS
+    GROUP3 EMITTERS
 ***************************************************************************/
 
-/*
-    Note that the following code relies on this:
-
-        /2 = NOT
-        /3 = NEG
-        /4 = MUL
-        /5 = IMUL
-        /6 = DIV
-        /7 = IDIV
-*/
-
-/*------------------------------------------------------------------
+/*-------------------------------------------------
     emit_group3_r8_*
-------------------------------------------------------------------*/
+-------------------------------------------------*/
 
-INLINE void emit_group3_r8(x86code **emitptr, UINT8 opindex, UINT8 dreg)
-{
-	emit_op_modrm_reg(emitptr, OP_G3_Eb, OP_32BIT, opindex, dreg);
-}
+INLINE void emit_not_r8(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, 2, dreg); }
+INLINE void emit_not_m8(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, 2, MEMPARAMS); }
 
-INLINE void emit_group3_m8bisd(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_G3_Eb, OP_32BIT, opindex, base, index, scale, disp);
-}
+INLINE void emit_neg_r8(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, 3, dreg); }
+INLINE void emit_neg_m8(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, 3, MEMPARAMS); }
 
+INLINE void emit_mul_r8(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, 4, dreg); }
+INLINE void emit_mul_m8(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, 4, MEMPARAMS); }
 
-/*------------------------------------------------------------------
-    emit_not_r8_*
-------------------------------------------------------------------*/
+INLINE void emit_imul_r8(x86code **emitptr, UINT8 dreg)        { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, 5, dreg); }
+INLINE void emit_imul_m8(x86code **emitptr, DECLARE_MEMPARAMS) { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, 5, MEMPARAMS); }
 
-#define emit_not_r8(e, dreg)								emit_group3_r8(e, 2, dreg)
-#define emit_not_m8bisd(e, base, index, scale, disp)		emit_group3_m8bisd(e, 2, base, index, scale, disp)
+INLINE void emit_div_r8(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, 6, dreg); }
+INLINE void emit_div_m8(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, 6, MEMPARAMS); }
 
-#define emit_not_m8abs(e, addr)								emit_not_m8bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_not_m8bd(e, base, disp)						emit_not_m8bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_not_m8isd(e, index, scale, disp)				emit_not_m8bisd(e, REG_NONE, (index),  (scale), (disp))
+INLINE void emit_idiv_r8(x86code **emitptr, UINT8 dreg)        { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, 7, dreg); }
+INLINE void emit_idiv_m8(x86code **emitptr, DECLARE_MEMPARAMS) { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, 7, MEMPARAMS); }
 
 
-/*------------------------------------------------------------------
-    emit_neg_r8_*
-------------------------------------------------------------------*/
-
-#define emit_neg_r8(e, dreg)								emit_group3_r8(e, 3, dreg)
-#define emit_neg_m8bisd(e, base, index, scale, disp)		emit_group3_m8bisd(e, 3, base, index, scale, disp)
-
-#define emit_neg_m8abs(e, addr)								emit_neg_m8bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_neg_m8bd(e, base, disp)						emit_neg_m8bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_neg_m8isd(e, index, scale, disp)				emit_neg_m8bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_mul_r8_*
-------------------------------------------------------------------*/
-
-#define emit_mul_r8(e, dreg)								emit_group3_r8(e, 4, dreg)
-#define emit_mul_m8bisd(e, base, index, scale, disp)		emit_group3_m8bisd(e, 4, base, index, scale, disp)
-
-#define emit_mul_m8abs(e, addr)								emit_mul_m8bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mul_m8bd(e, base, disp)						emit_mul_m8bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_mul_m8isd(e, index, scale, disp)				emit_mul_m8bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_imul_r8_*
-------------------------------------------------------------------*/
-
-#define emit_imul_r8(e, dreg)								emit_group3_r8(e, 5, dreg)
-#define emit_imul_m8bisd(e, base, index, scale, disp)		emit_group3_m8bisd(e, 5, base, index, scale, disp)
-
-#define emit_imul_m8abs(e, addr)							emit_imul_m8bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_imul_m8bd(e, base, disp)						emit_imul_m8bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_imul_m8isd(e, index, scale, disp)				emit_imul_m8bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_div_r8_*
-------------------------------------------------------------------*/
-
-#define emit_div_r8(e, dreg)								emit_group3_r8(e, 6, dreg)
-#define emit_div_m8bisd(e, base, index, scale, disp)		emit_group3_m8bisd(e, 6, base, index, scale, disp)
-
-#define emit_div_m8abs(e, addr)								emit_div_m8bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_div_m8bd(e, base, disp)						emit_div_m8bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_div_m8isd(e, index, scale, disp)				emit_div_m8bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_idiv_r8_*
-------------------------------------------------------------------*/
-
-#define emit_idiv_r8(e, dreg)								emit_group3_r8(e, 7, dreg)
-#define emit_idiv_m8bisd(e, base, index, scale, disp)		emit_group3_m8bisd(e, 7, base, index, scale, disp)
-
-#define emit_idiv_m8abs(e, addr)							emit_idiv_m8bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_idiv_m8bd(e, base, disp)						emit_idiv_m8bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_idiv_m8isd(e, index, scale, disp)				emit_idiv_m8bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-
-/***************************************************************************
-    16-BIT GROUP3 EMITTERS
-***************************************************************************/
-
-/*
-    Note that the following code relies on this:
-
-        /0 = ROL
-        /1 = ROR
-        /2 = RCL
-        /3 = RCR
-        /4 = SHL
-        /5 = SHR
-        /7 = SAR
-*/
-
-/*------------------------------------------------------------------
+/*-------------------------------------------------
     emit_group3_r16_*
-------------------------------------------------------------------*/
+-------------------------------------------------*/
 
-INLINE void emit_group3_r16(x86code **emitptr, UINT8 opindex, UINT8 dreg)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, opindex, dreg);
-}
+INLINE void emit_not_r16(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_16BIT, 2, dreg); }
+INLINE void emit_not_m16(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_16BIT, 2, MEMPARAMS); }
 
-INLINE void emit_group3_m16bisd(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_byte(emitptr, PREFIX_OPSIZE);
-	emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, opindex, base, index, scale, disp);
-}
+INLINE void emit_neg_r16(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_16BIT, 3, dreg); }
+INLINE void emit_neg_m16(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_16BIT, 3, MEMPARAMS); }
 
+INLINE void emit_mul_r16(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_16BIT, 4, dreg); }
+INLINE void emit_mul_m16(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_16BIT, 4, MEMPARAMS); }
 
-/*------------------------------------------------------------------
-    emit_not_r16_*
-------------------------------------------------------------------*/
+INLINE void emit_imul_r16(x86code **emitptr, UINT8 dreg)        { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_16BIT, 5, dreg); }
+INLINE void emit_imul_m16(x86code **emitptr, DECLARE_MEMPARAMS) { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_16BIT, 5, MEMPARAMS); }
 
-#define emit_not_r16(e, dreg)								emit_group3_r16(e, 2, dreg)
-#define emit_not_m16bisd(e, base, index, scale, disp)		emit_group3_m16bisd(e, 2, base, index, scale, disp)
+INLINE void emit_div_r16(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_16BIT, 6, dreg); }
+INLINE void emit_div_m16(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_16BIT, 6, MEMPARAMS); }
 
-#define emit_not_m16abs(e, addr)							emit_not_m16bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_not_m16bd(e, base, disp)						emit_not_m16bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_not_m16isd(e, index, scale, disp)				emit_not_m16bisd(e, REG_NONE, (index),  (scale), (disp))
+INLINE void emit_idiv_r16(x86code **emitptr, UINT8 dreg)        { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_16BIT, 7, dreg); }
+INLINE void emit_idiv_m16(x86code **emitptr, DECLARE_MEMPARAMS) { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_16BIT, 7, MEMPARAMS); }
 
 
-/*------------------------------------------------------------------
-    emit_neg_r16_*
-------------------------------------------------------------------*/
-
-#define emit_neg_r16(e, dreg)								emit_group3_r16(e, 3, dreg)
-#define emit_neg_m16bisd(e, base, index, scale, disp)		emit_group3_m16bisd(e, 3, base, index, scale, disp)
-
-#define emit_neg_m16abs(e, addr)							emit_neg_m16bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_neg_m16bd(e, base, disp)						emit_neg_m16bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_neg_m16isd(e, index, scale, disp)				emit_neg_m16bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_mul_r16_*
-------------------------------------------------------------------*/
-
-#define emit_mul_r16(e, dreg)								emit_group3_r16(e, 4, dreg)
-#define emit_mul_m16bisd(e, base, index, scale, disp)		emit_group3_m16bisd(e, 4, base, index, scale, disp)
-
-#define emit_mul_m16abs(e, addr)							emit_mul_m16bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mul_m16bd(e, base, disp)						emit_mul_m16bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_mul_m16isd(e, index, scale, disp)				emit_mul_m16bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_imul_r16_*
-------------------------------------------------------------------*/
-
-#define emit_imul_r16(e, dreg)								emit_group3_r16(e, 5, dreg)
-#define emit_imul_m16bisd(e, base, index, scale, disp)		emit_group3_m16bisd(e, 5, base, index, scale, disp)
-
-#define emit_imul_m16abs(e, addr)							emit_imul_m16bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_imul_m16bd(e, base, disp)						emit_imul_m16bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_imul_m16isd(e, index, scale, disp)				emit_imul_m16bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_div_r16_*
-------------------------------------------------------------------*/
-
-#define emit_div_r16(e, dreg)								emit_group3_r16(e, 6, dreg)
-#define emit_div_m16bisd(e, base, index, scale, disp)		emit_group3_m16bisd(e, 6, base, index, scale, disp)
-
-#define emit_div_m16abs(e, addr)							emit_div_m16bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_div_m16bd(e, base, disp)						emit_div_m16bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_div_m16isd(e, index, scale, disp)				emit_div_m16bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_idiv_r16_*
-------------------------------------------------------------------*/
-
-#define emit_idiv_r16(e, dreg)								emit_group3_r16(e, 7, dreg)
-#define emit_idiv_m16bisd(e, base, index, scale, disp)		emit_group3_m16bisd(e, 7, base, index, scale, disp)
-
-#define emit_idiv_m16abs(e, addr)							emit_idiv_m16bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_idiv_m16bd(e, base, disp)						emit_idiv_m16bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_idiv_m16isd(e, index, scale, disp)				emit_idiv_m16bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-
-/***************************************************************************
-    32-BIT GROUP3 EMITTERS
-***************************************************************************/
-
-/*
-    Note that the following code relies on this:
-
-        /0 = ROL
-        /1 = ROR
-        /2 = RCL
-        /3 = RCR
-        /4 = SHL
-        /5 = SHR
-        /7 = SAR
-*/
-
-/*------------------------------------------------------------------
+/*-------------------------------------------------
     emit_group3_r32_*
-------------------------------------------------------------------*/
+-------------------------------------------------*/
 
-INLINE void emit_group3_r32(x86code **emitptr, UINT8 opindex, UINT8 dreg)
-{
-	emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, opindex, dreg);
-}
+INLINE void emit_not_r32(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, 2, dreg); }
+INLINE void emit_not_m32(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, 2, MEMPARAMS); }
 
-INLINE void emit_group3_m32bisd(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, opindex, base, index, scale, disp);
-}
+INLINE void emit_neg_r32(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, 3, dreg); }
+INLINE void emit_neg_m32(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, 3, MEMPARAMS); }
 
+INLINE void emit_mul_r32(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, 4, dreg); }
+INLINE void emit_mul_m32(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, 4, MEMPARAMS); }
 
-/*------------------------------------------------------------------
-    emit_not_r32_*
-------------------------------------------------------------------*/
+INLINE void emit_imul_r32(x86code **emitptr, UINT8 dreg)        { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, 5, dreg); }
+INLINE void emit_imul_m32(x86code **emitptr, DECLARE_MEMPARAMS) { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, 5, MEMPARAMS); }
 
-#define emit_not_r32(e, dreg)								emit_group3_r32(e, 2, dreg)
-#define emit_not_m32bisd(e, base, index, scale, disp)		emit_group3_m32bisd(e, 2, base, index, scale, disp)
+INLINE void emit_div_r32(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, 6, dreg); }
+INLINE void emit_div_m32(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, 6, MEMPARAMS); }
 
-#define emit_not_m32abs(e, addr)							emit_not_m32bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_not_m32bd(e, base, disp)						emit_not_m32bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_not_m32isd(e, index, scale, disp)				emit_not_m32bisd(e, REG_NONE, (index),  (scale), (disp))
+INLINE void emit_idiv_r32(x86code **emitptr, UINT8 dreg)        { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_32BIT, 7, dreg); }
+INLINE void emit_idiv_m32(x86code **emitptr, DECLARE_MEMPARAMS) { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_32BIT, 7, MEMPARAMS); }
 
 
-/*------------------------------------------------------------------
-    emit_neg_r32_*
-------------------------------------------------------------------*/
-
-#define emit_neg_r32(e, dreg)								emit_group3_r32(e, 3, dreg)
-#define emit_neg_m32bisd(e, base, index, scale, disp)		emit_group3_m32bisd(e, 3, base, index, scale, disp)
-
-#define emit_neg_m32abs(e, addr)							emit_neg_m32bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_neg_m32bd(e, base, disp)						emit_neg_m32bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_neg_m32isd(e, index, scale, disp)				emit_neg_m32bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_mul_r32_*
-------------------------------------------------------------------*/
-
-#define emit_mul_r32(e, dreg)								emit_group3_r32(e, 4, dreg)
-#define emit_mul_m32bisd(e, base, index, scale, disp)		emit_group3_m32bisd(e, 4, base, index, scale, disp)
-
-#define emit_mul_m32abs(e, addr)							emit_mul_m32bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mul_m32bd(e, base, disp)						emit_mul_m32bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_mul_m32isd(e, index, scale, disp)				emit_mul_m32bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_imul_r32_*
-------------------------------------------------------------------*/
-
-#define emit_imul_r32(e, dreg)								emit_group3_r32(e, 5, dreg)
-#define emit_imul_m32bisd(e, base, index, scale, disp)		emit_group3_m32bisd(e, 5, base, index, scale, disp)
-
-#define emit_imul_m32abs(e, addr)							emit_imul_m32bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_imul_m32bd(e, base, disp)						emit_imul_m32bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_imul_m32isd(e, index, scale, disp)				emit_imul_m32bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_div_r32_*
-------------------------------------------------------------------*/
-
-#define emit_div_r32(e, dreg)								emit_group3_r32(e, 6, dreg)
-#define emit_div_m32bisd(e, base, index, scale, disp)		emit_group3_m32bisd(e, 6, base, index, scale, disp)
-
-#define emit_div_m32abs(e, addr)							emit_div_m32bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_div_m32bd(e, base, disp)						emit_div_m32bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_div_m32isd(e, index, scale, disp)				emit_div_m32bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_idiv_r32_*
-------------------------------------------------------------------*/
-
-#define emit_idiv_r32(e, dreg)								emit_group3_r32(e, 7, dreg)
-#define emit_idiv_m32bisd(e, base, index, scale, disp)		emit_group3_m32bisd(e, 7, base, index, scale, disp)
-
-#define emit_idiv_m32abs(e, addr)							emit_idiv_m32bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_idiv_m32bd(e, base, disp)						emit_idiv_m32bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_idiv_m32isd(e, index, scale, disp)				emit_idiv_m32bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-
-/***************************************************************************
-    64-BIT GROUP3 EMITTERS
-***************************************************************************/
+/*-------------------------------------------------
+    emit_group3_r64_*
+-------------------------------------------------*/
 
 #ifdef PTR64
-/*
-    Note that the following code relies on this:
 
-        /0 = ROL
-        /1 = ROR
-        /2 = RCL
-        /3 = RCR
-        /4 = SHL
-        /5 = SHR
-        /7 = SAR
-*/
+INLINE void emit_not_r64(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_64BIT, 2, dreg); }
+INLINE void emit_not_m64(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_64BIT, 2, MEMPARAMS); }
 
-/*------------------------------------------------------------------
-    emit_group3_r64_*
-------------------------------------------------------------------*/
+INLINE void emit_neg_r64(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_64BIT, 3, dreg); }
+INLINE void emit_neg_m64(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_64BIT, 3, MEMPARAMS); }
 
-INLINE void emit_group3_r64(x86code **emitptr, UINT8 opindex, UINT8 dreg)
-{
-	emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_64BIT, opindex, dreg);
-}
+INLINE void emit_mul_r64(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_64BIT, 4, dreg); }
+INLINE void emit_mul_m64(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_64BIT, 4, MEMPARAMS); }
 
-INLINE void emit_group3_m64bisd(x86code **emitptr, UINT8 opindex, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_64BIT, opindex, base, index, scale, disp);
-}
+INLINE void emit_imul_r64(x86code **emitptr, UINT8 dreg)        { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_64BIT, 5, dreg); }
+INLINE void emit_imul_m64(x86code **emitptr, DECLARE_MEMPARAMS) { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_64BIT, 5, MEMPARAMS); }
+
+INLINE void emit_div_r64(x86code **emitptr, UINT8 dreg)         { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_64BIT, 6, dreg); }
+INLINE void emit_div_m64(x86code **emitptr, DECLARE_MEMPARAMS)  { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_64BIT, 6, MEMPARAMS); }
+
+INLINE void emit_idiv_r64(x86code **emitptr, UINT8 dreg)        { emit_op_modrm_reg(emitptr, OP_G3_Ev, OP_64BIT, 7, dreg); }
+INLINE void emit_idiv_m64(x86code **emitptr, DECLARE_MEMPARAMS) { emit_op_modrm_mem(emitptr, OP_G3_Ev, OP_64BIT, 7, MEMPARAMS); }
+
+#endif
 
 
-/*------------------------------------------------------------------
-    emit_not_r64_*
-------------------------------------------------------------------*/
 
-#define emit_not_r64(e, dreg)								emit_group3_r64(e, 2, dreg)
-#define emit_not_m64bisd(e, base, index, scale, disp)		emit_group3_m64bisd(e, 2, base, index, scale, disp)
+/***************************************************************************
+    IMUL EMITTERS
+***************************************************************************/
 
-#define emit_not_m64abs(e, addr)							emit_not_m64bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_not_m64bd(e, base, disp)						emit_not_m64bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_not_m64isd(e, index, scale, disp)				emit_not_m64bisd(e, REG_NONE, (index),  (scale), (disp))
+/*-------------------------------------------------
+    emit_imul_r16_*
+-------------------------------------------------*/
 
+INLINE void emit_imul_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_IMUL_Gv_Ev, OP_16BIT, dreg, sreg); }
+INLINE void emit_imul_r16_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)					{ emit_op_modrm_mem(emitptr, OP_IMUL_Gv_Ev, OP_16BIT, dreg, MEMPARAMS); }
+INLINE void emit_imul_r16_r16_imm(x86code **emitptr, UINT8 dreg, UINT8 sreg, INT16 imm) 		{ emit_op_modrm_reg_imm816(emitptr, OP_IMUL_Gv_Ev_Ib, OP_IMUL_Gv_Ev_Iz, OP_16BIT, dreg, sreg, imm); }
+INLINE void emit_imul_r16_m16_imm(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS, INT16 imm)	{ emit_op_modrm_mem_imm816(emitptr, OP_IMUL_Gv_Ev_Ib, OP_IMUL_Gv_Ev_Iz, OP_16BIT, dreg, MEMPARAMS, imm); }
 
-/*------------------------------------------------------------------
-    emit_neg_r64_*
-------------------------------------------------------------------*/
+INLINE void emit_imul_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_IMUL_Gv_Ev, OP_32BIT, dreg, sreg); }
+INLINE void emit_imul_r32_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)					{ emit_op_modrm_mem(emitptr, OP_IMUL_Gv_Ev, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_imul_r32_r32_imm(x86code **emitptr, UINT8 dreg, UINT8 sreg, INT32 imm) 		{ emit_op_modrm_reg_imm832(emitptr, OP_IMUL_Gv_Ev_Ib, OP_IMUL_Gv_Ev_Iz, OP_32BIT, dreg, sreg, imm); }
+INLINE void emit_imul_r32_m32_imm(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS, INT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_IMUL_Gv_Ev_Ib, OP_IMUL_Gv_Ev_Iz, OP_32BIT, dreg, MEMPARAMS, imm); }
 
-#define emit_neg_r64(e, dreg)								emit_group3_r64(e, 3, dreg)
-#define emit_neg_m64bisd(e, base, index, scale, disp)		emit_group3_m64bisd(e, 3, base, index, scale, disp)
+#ifdef PTR64
 
-#define emit_neg_m64abs(e, addr)							emit_neg_m64bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_neg_m64bd(e, base, disp)						emit_neg_m64bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_neg_m64isd(e, index, scale, disp)				emit_neg_m64bisd(e, REG_NONE, (index),  (scale), (disp))
+INLINE void emit_imul_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg)						{ emit_op_modrm_reg(emitptr, OP_IMUL_Gv_Ev, OP_64BIT, dreg, sreg); }
+INLINE void emit_imul_r64_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 				{ emit_op_modrm_mem(emitptr, OP_IMUL_Gv_Ev, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_imul_r64_r64_imm(x86code **emitptr, UINT8 dreg, UINT8 sreg, INT32 imm) 		{ emit_op_modrm_reg_imm832(emitptr, OP_IMUL_Gv_Ev_Ib, OP_IMUL_Gv_Ev_Iz, OP_64BIT, dreg, sreg, imm); }
+INLINE void emit_imul_r64_m64_imm(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS, INT32 imm)	{ emit_op_modrm_mem_imm832(emitptr, OP_IMUL_Gv_Ev_Ib, OP_IMUL_Gv_Ev_Iz, OP_64BIT, dreg, MEMPARAMS, imm); }
 
-
-/*------------------------------------------------------------------
-    emit_mul_r64_*
-------------------------------------------------------------------*/
-
-#define emit_mul_r64(e, dreg)								emit_group3_r64(e, 4, dreg)
-#define emit_mul_m64bisd(e, base, index, scale, disp)		emit_group3_m64bisd(e, 4, base, index, scale, disp)
-
-#define emit_mul_m64abs(e, addr)							emit_mul_m64bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mul_m64bd(e, base, disp)						emit_mul_m64bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_mul_m64isd(e, index, scale, disp)				emit_mul_m64bisd(e, REG_NONE, (index),  (scale), (disp))
+#endif
 
 
-/*------------------------------------------------------------------
-    emit_imul_r64_*
-------------------------------------------------------------------*/
 
-#define emit_imul_r64(e, dreg)								emit_group3_r64(e, 5, dreg)
-#define emit_imul_m64bisd(e, base, index, scale, disp)		emit_group3_m64bisd(e, 5, base, index, scale, disp)
+/***************************************************************************
+    BIT OPERATION EMITTERS
+***************************************************************************/
 
-#define emit_imul_m64abs(e, addr)							emit_imul_m64bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_imul_m64bd(e, base, disp)						emit_imul_m64bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_imul_m64isd(e, index, scale, disp)				emit_imul_m64bisd(e, REG_NONE, (index),  (scale), (disp))
+/*-------------------------------------------------
+    emit_bswap_*
+-------------------------------------------------*/
 
-
-/*------------------------------------------------------------------
-    emit_div_r64_*
-------------------------------------------------------------------*/
-
-#define emit_div_r64(e, dreg)								emit_group3_r64(e, 6, dreg)
-#define emit_div_m64bisd(e, base, index, scale, disp)		emit_group3_m64bisd(e, 6, base, index, scale, disp)
-
-#define emit_div_m64abs(e, addr)							emit_div_m64bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_div_m64bd(e, base, disp)						emit_div_m64bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_div_m64isd(e, index, scale, disp)				emit_div_m64bisd(e, REG_NONE, (index),  (scale), (disp))
+INLINE void emit_bswap_r32(x86code **emitptr, UINT8 dreg) 						{ emit_op_reg(emitptr, OP_BSWAP_EAX + (dreg & 7), OP_32BIT, dreg); }
+INLINE void emit_bswap_r64(x86code **emitptr, UINT8 dreg) 						{ emit_op_reg(emitptr, OP_BSWAP_EAX + (dreg & 7), OP_64BIT, dreg); }
 
 
-/*------------------------------------------------------------------
-    emit_idiv_r64_*
-------------------------------------------------------------------*/
+/*-------------------------------------------------
+    emit_bsr/bsf_r16_*
+-------------------------------------------------*/
 
-#define emit_idiv_r64(e, dreg)								emit_group3_r64(e, 7, dreg)
-#define emit_idiv_m64bisd(e, base, index, scale, disp)		emit_group3_m64bisd(e, 7, base, index, scale, disp)
+INLINE void emit_bsf_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_BSF_Gv_Ev, OP_16BIT, dreg, sreg); }
+INLINE void emit_bsf_r16_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_BSF_Gv_Ev, OP_16BIT, dreg, MEMPARAMS); }
+INLINE void emit_bsr_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg) 		{ emit_op_modrm_reg(emitptr, OP_BSR_Gv_Ev, OP_16BIT, dreg, sreg); }
+INLINE void emit_bsr_r16_m16(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_BSR_Gv_Ev, OP_16BIT, dreg, MEMPARAMS); }
 
-#define emit_idiv_m64abs(e, addr)							emit_idiv_m64bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_idiv_m64bd(e, base, disp)						emit_idiv_m64bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_idiv_m64isd(e, index, scale, disp)				emit_idiv_m64bisd(e, REG_NONE, (index),  (scale), (disp))
+INLINE void emit_bsf_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_BSF_Gv_Ev, OP_32BIT, dreg, sreg); }
+INLINE void emit_bsf_r32_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_BSF_Gv_Ev, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_bsr_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_BSR_Gv_Ev, OP_32BIT, dreg, sreg); }
+INLINE void emit_bsr_r32_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_BSR_Gv_Ev, OP_32BIT, dreg, MEMPARAMS); }
+
+#ifdef PTR64
+INLINE void emit_bsf_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_BSF_Gv_Ev, OP_64BIT, dreg, sreg); }
+INLINE void emit_bsf_r64_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_BSF_Gv_Ev, OP_64BIT, dreg, MEMPARAMS); }
+INLINE void emit_bsr_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_BSR_Gv_Ev, OP_64BIT, dreg, sreg); }
+INLINE void emit_bsr_r64_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_BSR_Gv_Ev, OP_64BIT, dreg, MEMPARAMS); }
+#endif
+
+
+/*-------------------------------------------------
+    emit_bit_r16_*
+-------------------------------------------------*/
+
+INLINE void emit_bt_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)         { emit_op_modrm_reg(emitptr, OP_BT_Ev_Gv, OP_16BIT, sreg, dreg); }
+INLINE void emit_bt_m16_r16(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)  { emit_op_modrm_mem(emitptr, OP_BT_Ev_Gv, OP_16BIT, sreg, MEMPARAMS); }
+INLINE void emit_bt_r16_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)          { emit_op_modrm_reg_imm8(emitptr, OP_G8_Ev_Ib, OP_16BIT, 4, dreg, imm); }
+INLINE void emit_bt_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)   { emit_op_modrm_mem_imm8(emitptr, OP_G8_Ev_Ib, OP_16BIT, 4, MEMPARAMS, imm); }
+
+INLINE void emit_bts_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)        { emit_op_modrm_reg(emitptr, OP_BTS_Ev_Gv, OP_16BIT, sreg, dreg); }
+INLINE void emit_bts_m16_r16(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) { emit_op_modrm_mem(emitptr, OP_BTS_Ev_Gv, OP_16BIT, sreg, MEMPARAMS); }
+INLINE void emit_bts_r16_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)         { emit_op_modrm_reg_imm8(emitptr, OP_G8_Ev_Ib, OP_16BIT, 5, dreg, imm); }
+INLINE void emit_bts_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)  { emit_op_modrm_mem_imm8(emitptr, OP_G8_Ev_Ib, OP_16BIT, 5, MEMPARAMS, imm); }
+
+INLINE void emit_btr_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)        { emit_op_modrm_reg(emitptr, OP_BTR_Ev_Gv, OP_16BIT, sreg, dreg); }
+INLINE void emit_btr_m16_r16(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) { emit_op_modrm_mem(emitptr, OP_BTR_Ev_Gv, OP_16BIT, sreg, MEMPARAMS); }
+INLINE void emit_btr_r16_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)         { emit_op_modrm_reg_imm8(emitptr, OP_G8_Ev_Ib, OP_16BIT, 6, dreg, imm); }
+INLINE void emit_btr_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)  { emit_op_modrm_mem_imm8(emitptr, OP_G8_Ev_Ib, OP_16BIT, 6, MEMPARAMS, imm); }
+
+INLINE void emit_btc_r16_r16(x86code **emitptr, UINT8 dreg, UINT8 sreg)        { emit_op_modrm_reg(emitptr, OP_BTC_Ev_Gv, OP_16BIT, sreg, dreg); }
+INLINE void emit_btc_m16_r16(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) { emit_op_modrm_mem(emitptr, OP_BTC_Ev_Gv, OP_16BIT, sreg, MEMPARAMS); }
+INLINE void emit_btc_r16_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)         { emit_op_modrm_reg_imm8(emitptr, OP_G8_Ev_Ib, OP_16BIT, 7, dreg, imm); }
+INLINE void emit_btc_m16_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)  { emit_op_modrm_mem_imm8(emitptr, OP_G8_Ev_Ib, OP_16BIT, 7, MEMPARAMS, imm); }
+
+
+/*-------------------------------------------------
+    emit_bit_r32_*
+-------------------------------------------------*/
+
+INLINE void emit_bt_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg)         { emit_op_modrm_reg(emitptr, OP_BT_Ev_Gv, OP_32BIT, sreg, dreg); }
+INLINE void emit_bt_m32_r32(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)  { emit_op_modrm_mem(emitptr, OP_BT_Ev_Gv, OP_32BIT, sreg, MEMPARAMS); }
+INLINE void emit_bt_r32_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)          { emit_op_modrm_reg_imm8(emitptr, OP_G8_Ev_Ib, OP_32BIT, 4, dreg, imm); }
+INLINE void emit_bt_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)   { emit_op_modrm_mem_imm8(emitptr, OP_G8_Ev_Ib, OP_32BIT, 4, MEMPARAMS, imm); }
+
+INLINE void emit_bts_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg)        { emit_op_modrm_reg(emitptr, OP_BTS_Ev_Gv, OP_32BIT, sreg, dreg); }
+INLINE void emit_bts_m32_r32(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) { emit_op_modrm_mem(emitptr, OP_BTS_Ev_Gv, OP_32BIT, sreg, MEMPARAMS); }
+INLINE void emit_bts_r32_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)         { emit_op_modrm_reg_imm8(emitptr, OP_G8_Ev_Ib, OP_32BIT, 5, dreg, imm); }
+INLINE void emit_bts_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)  { emit_op_modrm_mem_imm8(emitptr, OP_G8_Ev_Ib, OP_32BIT, 5, MEMPARAMS, imm); }
+
+INLINE void emit_btr_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg)        { emit_op_modrm_reg(emitptr, OP_BTR_Ev_Gv, OP_32BIT, sreg, dreg); }
+INLINE void emit_btr_m32_r32(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) { emit_op_modrm_mem(emitptr, OP_BTR_Ev_Gv, OP_32BIT, sreg, MEMPARAMS); }
+INLINE void emit_btr_r32_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)         { emit_op_modrm_reg_imm8(emitptr, OP_G8_Ev_Ib, OP_32BIT, 6, dreg, imm); }
+INLINE void emit_btr_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)  { emit_op_modrm_mem_imm8(emitptr, OP_G8_Ev_Ib, OP_32BIT, 6, MEMPARAMS, imm); }
+
+INLINE void emit_btc_r32_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg)        { emit_op_modrm_reg(emitptr, OP_BTC_Ev_Gv, OP_32BIT, sreg, dreg); }
+INLINE void emit_btc_m32_r32(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) { emit_op_modrm_mem(emitptr, OP_BTC_Ev_Gv, OP_32BIT, sreg, MEMPARAMS); }
+INLINE void emit_btc_r32_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)         { emit_op_modrm_reg_imm8(emitptr, OP_G8_Ev_Ib, OP_32BIT, 7, dreg, imm); }
+INLINE void emit_btc_m32_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)  { emit_op_modrm_mem_imm8(emitptr, OP_G8_Ev_Ib, OP_32BIT, 7, MEMPARAMS, imm); }
+
+
+/*-------------------------------------------------
+    emit_bit_r64_*
+-------------------------------------------------*/
+
+#ifdef PTR64
+
+INLINE void emit_bt_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg)         { emit_op_modrm_reg(emitptr, OP_BT_Ev_Gv, OP_64BIT, sreg, dreg); }
+INLINE void emit_bt_m64_r64(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)  { emit_op_modrm_mem(emitptr, OP_BT_Ev_Gv, OP_64BIT, sreg, MEMPARAMS); }
+INLINE void emit_bt_r64_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)          { emit_op_modrm_reg_imm8(emitptr, OP_G8_Ev_Ib, OP_64BIT, 4, dreg, imm); }
+INLINE void emit_bt_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)   { emit_op_modrm_mem_imm8(emitptr, OP_G8_Ev_Ib, OP_64BIT, 4, MEMPARAMS, imm); }
+
+INLINE void emit_bts_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg)        { emit_op_modrm_reg(emitptr, OP_BTS_Ev_Gv, OP_64BIT, sreg, dreg); }
+INLINE void emit_bts_m64_r64(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) { emit_op_modrm_mem(emitptr, OP_BTS_Ev_Gv, OP_64BIT, sreg, MEMPARAMS); }
+INLINE void emit_bts_r64_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)         { emit_op_modrm_reg_imm8(emitptr, OP_G8_Ev_Ib, OP_64BIT, 5, dreg, imm); }
+INLINE void emit_bts_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)  { emit_op_modrm_mem_imm8(emitptr, OP_G8_Ev_Ib, OP_64BIT, 5, MEMPARAMS, imm); }
+
+INLINE void emit_btr_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg)        { emit_op_modrm_reg(emitptr, OP_BTR_Ev_Gv, OP_64BIT, sreg, dreg); }
+INLINE void emit_btr_m64_r64(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) { emit_op_modrm_mem(emitptr, OP_BTR_Ev_Gv, OP_64BIT, sreg, MEMPARAMS); }
+INLINE void emit_btr_r64_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)         { emit_op_modrm_reg_imm8(emitptr, OP_G8_Ev_Ib, OP_64BIT, 6, dreg, imm); }
+INLINE void emit_btr_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)  { emit_op_modrm_mem_imm8(emitptr, OP_G8_Ev_Ib, OP_64BIT, 6, MEMPARAMS, imm); }
+
+INLINE void emit_btc_r64_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg)        { emit_op_modrm_reg(emitptr, OP_BTC_Ev_Gv, OP_64BIT, sreg, dreg); }
+INLINE void emit_btc_m64_r64(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg) { emit_op_modrm_mem(emitptr, OP_BTC_Ev_Gv, OP_64BIT, sreg, MEMPARAMS); }
+INLINE void emit_btc_r64_imm(x86code **emitptr, UINT8 dreg, UINT8 imm)         { emit_op_modrm_reg_imm8(emitptr, OP_G8_Ev_Ib, OP_64BIT, 7, dreg, imm); }
+INLINE void emit_btc_m64_imm(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 imm)  { emit_op_modrm_mem_imm8(emitptr, OP_G8_Ev_Ib, OP_64BIT, 7, MEMPARAMS, imm); }
 
 #endif
 
@@ -4223,76 +2443,10 @@ INLINE void emit_group3_m64bisd(x86code **emitptr, UINT8 opindex, UINT8 base, UI
     LEA EMITTERS
 ***************************************************************************/
 
-/*------------------------------------------------------------------
-    emit_lea_r32_*
-------------------------------------------------------------------*/
-
-INLINE void emit_lea_r32_m32bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_LEA_Gv_M, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-#define emit_lea_r32_m32abs(e, dreg, addr)					emit_lea_r32_m32bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_lea_r32_m32bd(e, dreg, base, disp)				emit_lea_r32_m32bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_lea_r32_m32isd(e, dreg, index, scale, disp)	emit_lea_r32_m32bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_lea_r64_*
-------------------------------------------------------------------*/
+INLINE void emit_lea_r32_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_LEA_Gv_M, OP_32BIT, dreg, MEMPARAMS); }
 
 #ifdef PTR64
-INLINE void emit_lea_r64_m64bisd(x86code **emitptr, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_LEA_Gv_M, OP_64BIT, dreg, base, index, scale, disp);
-}
-
-#define emit_lea_r64_m64abs(e, dreg, addr)					emit_lea_r64_m64bisd(e, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_lea_r64_m64bd(e, dreg, base, disp)				emit_lea_r64_m64bisd(e, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_lea_r64_m64isd(e, dreg, index, scale, disp)	emit_lea_r64_m64bisd(e, dreg, REG_NONE, (index),  (scale), (disp))
-#endif
-
-
-
-/***************************************************************************
-    PUSH/POP EMITTERS
-***************************************************************************/
-
-/*------------------------------------------------------------------
-    emit_push_*
-------------------------------------------------------------------*/
-
-#ifndef PTR64
-INLINE void emit_push_r32(x86code **emitptr, UINT8 reg)
-{
-	emit_op(emitptr, OP_PUSH_rAX + (reg & 7), OP_32BIT, 0, 0, reg);
-}
-#endif
-
-#ifdef PTR64
-INLINE void emit_push_r64(x86code **emitptr, UINT8 reg)
-{
-	emit_op(emitptr, OP_PUSH_rAX + (reg & 7), OP_32BIT, 0, 0, reg);
-}
-#endif
-
-
-/*------------------------------------------------------------------
-    emit_pop_*
-------------------------------------------------------------------*/
-
-#ifndef PTR64
-INLINE void emit_pop_r32(x86code **emitptr, UINT8 reg)
-{
-	emit_op(emitptr, OP_POP_rAX + (reg & 7), OP_32BIT, 0, 0, reg);
-}
-#endif
-
-#ifdef PTR64
-INLINE void emit_pop_r64(x86code **emitptr, UINT8 reg)
-{
-	emit_op(emitptr, OP_POP_rAX + (reg & 7), OP_32BIT, 0, 0, reg);
-}
+INLINE void emit_lea_r64_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_LEA_Gv_M, OP_64BIT, dreg, MEMPARAMS); }
 #endif
 
 
@@ -4301,45 +2455,12 @@ INLINE void emit_pop_r64(x86code **emitptr, UINT8 reg)
     SET EMITTERS
 ***************************************************************************/
 
-/*------------------------------------------------------------------
+/*-------------------------------------------------
     emit_setcc_*
-------------------------------------------------------------------*/
+-------------------------------------------------*/
 
-INLINE void emit_setcc_r8(x86code **emitptr, UINT8 condition, UINT8 dreg)
-{
-	emit_op_modrm_reg(emitptr, OP_SETCC_O_Eb + condition, OP_32BIT, 0, dreg);
-}
-
-INLINE void emit_setcc_m8bisd(x86code **emitptr, UINT8 condition, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_SETCC_O_Eb + condition, OP_32BIT, 0, base, index, scale, disp);
-}
-
-#define emit_setcc_m8abs(e, cond, addr)						emit_setcc_m8bisd(e, cond, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_setcc_m8bd(e, cond, base, disp)				emit_setcc_m8bisd(e, cond, (base),   REG_NONE, 1,       (disp))
-#define emit_setcc_m8isd(e, cond, index, scale, disp)		emit_setcc_m8bisd(e, cond, REG_NONE, (index),  (scale), (disp))
-
-
-
-/***************************************************************************
-    FPU EMITTERS
-***************************************************************************/
-
-#ifndef PTR64
-INLINE void emit_fp_simple(x86code **emitptr, UINT8 op)
-{
-	emit_op_simple(emitptr, op, OP_32BIT);
-}
-
-INLINE void emit_fp_reg(x86code **emitptr, UINT8 op, UINT8 reg)
-{
-	emit_op_simple(emitptr, op + reg, OP_32BIT);
-}
-
-INLINE void emit_fp_modrm(x86code **emitptr, UINT32 op, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, op, OP_32BIT, dreg, base, index, scale, disp);
-}
+INLINE void emit_setcc_r8(x86code **emitptr, UINT8 cond, UINT8 dreg)			{ emit_op_modrm_reg(emitptr, OP_SETCC_O_Eb + cond, OP_32BIT, 0, dreg); }
+INLINE void emit_setcc_m8(x86code **emitptr, UINT8 cond, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_SETCC_O_Eb + cond, OP_32BIT, 0, MEMPARAMS); }
 
 
 
@@ -4347,39 +2468,43 @@ INLINE void emit_fp_modrm(x86code **emitptr, UINT32 op, UINT8 dreg, UINT8 base, 
     SIMPLE FPU EMITTERS
 ***************************************************************************/
 
-#define emit_fnop(e)									emit_fp_simple(e, OP_FNOP)
-#define emit_fchs(e)									emit_fp_simple(e, OP_FCHS)
-#define emit_fabs(e)									emit_fp_simple(e, OP_FABS)
-#define emit_ftst(e)									emit_fp_simple(e, OP_FTST)
-#define emit_fxam(e)									emit_fp_simple(e, OP_FXAM)
-#define emit_fld1(e)									emit_fp_simple(e, OP_FLD1)
-#define emit_fldl2t(e)									emit_fp_simple(e, OP_FLDL2T)
-#define emit_fldl2e(e)									emit_fp_simple(e, OP_FLDL2E)
-#define emit_fldpi(e)									emit_fp_simple(e, OP_FLDPI)
-#define emit_fldlg2(e)									emit_fp_simple(e, OP_FLDLG2)
-#define emit_fldln2(e)									emit_fp_simple(e, OP_FLDLN2)
-#define emit_fldz(e)									emit_fp_simple(e, OP_FLDZ)
-#define emit_f2xm1(e)									emit_fp_simple(e, OP_F2XM1)
-#define emit_fyl2x(e)									emit_fp_simple(e, OP_FYL2X)
-#define emit_fptan(e)									emit_fp_simple(e, OP_FPTAN)
-#define emit_fpatan(e)									emit_fp_simple(e, OP_FPATAN)
-#define emit_fxtract(e)									emit_fp_simple(e, OP_FXTRACT)
-#define emit_fprem1(e)									emit_fp_simple(e, OP_FPREM1)
-#define emit_fdecstp(e)									emit_fp_simple(e, OP_FDECSTP)
-#define emit_fincstp(e)									emit_fp_simple(e, OP_FINCSTP)
-#define emit_fprem(e)									emit_fp_simple(e, OP_FPREM)
-#define emit_fyl2xp1(e)									emit_fp_simple(e, OP_FYl2XP1)
-#define emit_fsqrt(e)									emit_fp_simple(e, OP_FSQRT)
-#define emit_fsincos(e)									emit_fp_simple(e, OP_FSINCOS)
-#define emit_frndint(e)									emit_fp_simple(e, OP_FRNDINT)
-#define emit_fscale(e)									emit_fp_simple(e, OP_FSCALE)
-#define emit_fsin(e)									emit_fp_simple(e, OP_FSIN)
-#define emit_fcos(e)									emit_fp_simple(e, OP_FCOS)
-#define emit_fucompp(e)									emit_fp_simple(e, OP_FUCOMPP)
-#define emit_fclex(e)									emit_fp_simple(e, OP_FCLEX)
-#define emit_finit(e)									emit_fp_simple(e, OP_FINIT)
-#define emit_fcompp(e)									emit_fp_simple(e, OP_FCOMPP)
-#define emit_fstsw_ax(e)								emit_fp_simple(e, OP_FSTSW_AX)
+#ifndef PTR64
+
+INLINE void emit_fnop(x86code **emitptr)     { emit_op_simple(emitptr, OP_FNOP, OP_32BIT); }
+INLINE void emit_fchs(x86code **emitptr)     { emit_op_simple(emitptr, OP_FCHS, OP_32BIT); }
+INLINE void emit_fabs(x86code **emitptr)     { emit_op_simple(emitptr, OP_FABS, OP_32BIT); }
+INLINE void emit_ftst(x86code **emitptr)     { emit_op_simple(emitptr, OP_FTST, OP_32BIT); }
+INLINE void emit_fxam(x86code **emitptr)     { emit_op_simple(emitptr, OP_FXAM, OP_32BIT); }
+INLINE void emit_fld1(x86code **emitptr)     { emit_op_simple(emitptr, OP_FLD1, OP_32BIT); }
+INLINE void emit_fldl2t(x86code **emitptr)   { emit_op_simple(emitptr, OP_FLDL2T, OP_32BIT); }
+INLINE void emit_fldl2e(x86code **emitptr)   { emit_op_simple(emitptr, OP_FLDL2E, OP_32BIT); }
+INLINE void emit_fldpi(x86code **emitptr)    { emit_op_simple(emitptr, OP_FLDPI, OP_32BIT); }
+INLINE void emit_fldlg2(x86code **emitptr)   { emit_op_simple(emitptr, OP_FLDLG2, OP_32BIT); }
+INLINE void emit_fldln2(x86code **emitptr)   { emit_op_simple(emitptr, OP_FLDLN2, OP_32BIT); }
+INLINE void emit_fldz(x86code **emitptr)     { emit_op_simple(emitptr, OP_FLDZ, OP_32BIT); }
+INLINE void emit_f2xm1(x86code **emitptr)    { emit_op_simple(emitptr, OP_F2XM1, OP_32BIT); }
+INLINE void emit_fyl2x(x86code **emitptr)    { emit_op_simple(emitptr, OP_FYL2X, OP_32BIT); }
+INLINE void emit_fptan(x86code **emitptr)    { emit_op_simple(emitptr, OP_FPTAN, OP_32BIT); }
+INLINE void emit_fpatan(x86code **emitptr)   { emit_op_simple(emitptr, OP_FPATAN, OP_32BIT); }
+INLINE void emit_fxtract(x86code **emitptr)  { emit_op_simple(emitptr, OP_FXTRACT, OP_32BIT); }
+INLINE void emit_fprem1(x86code **emitptr)   { emit_op_simple(emitptr, OP_FPREM1, OP_32BIT); }
+INLINE void emit_fdecstp(x86code **emitptr)  { emit_op_simple(emitptr, OP_FDECSTP, OP_32BIT); }
+INLINE void emit_fincstp(x86code **emitptr)  { emit_op_simple(emitptr, OP_FINCSTP, OP_32BIT); }
+INLINE void emit_fprem(x86code **emitptr)    { emit_op_simple(emitptr, OP_FPREM, OP_32BIT); }
+INLINE void emit_fyl2xp1(x86code **emitptr)  { emit_op_simple(emitptr, OP_FYL2XP1, OP_32BIT); }
+INLINE void emit_fsqrt(x86code **emitptr)    { emit_op_simple(emitptr, OP_FSQRT, OP_32BIT); }
+INLINE void emit_fsincos(x86code **emitptr)  { emit_op_simple(emitptr, OP_FSINCOS, OP_32BIT); }
+INLINE void emit_frndint(x86code **emitptr)  { emit_op_simple(emitptr, OP_FRNDINT, OP_32BIT); }
+INLINE void emit_fscale(x86code **emitptr)   { emit_op_simple(emitptr, OP_FSCALE, OP_32BIT); }
+INLINE void emit_fsin(x86code **emitptr)     { emit_op_simple(emitptr, OP_FSIN, OP_32BIT); }
+INLINE void emit_fcos(x86code **emitptr)     { emit_op_simple(emitptr, OP_FCOS, OP_32BIT); }
+INLINE void emit_fucompp(x86code **emitptr)  { emit_op_simple(emitptr, OP_FUCOMPP, OP_32BIT); }
+INLINE void emit_fclex(x86code **emitptr)    { emit_op_simple(emitptr, OP_FCLEX, OP_32BIT); }
+INLINE void emit_finit(x86code **emitptr)    { emit_op_simple(emitptr, OP_FINIT, OP_32BIT); }
+INLINE void emit_fcompp(x86code **emitptr)   { emit_op_simple(emitptr, OP_FCOMPP, OP_32BIT); }
+INLINE void emit_fstsw_ax(x86code **emitptr) { emit_op_simple(emitptr, OP_FSTSW_AX, OP_32BIT); }
+
+#endif
 
 
 
@@ -4387,46 +2512,57 @@ INLINE void emit_fp_modrm(x86code **emitptr, UINT32 op, UINT8 dreg, UINT8 base, 
     REGISTER-BASED FPU EMITTERS
 ***************************************************************************/
 
-#define emit_ffree_stn(e, reg)							emit_fp_reg(e, OP_FFREE_STn, reg)
-#define emit_fst_stn(e, reg)							emit_fp_reg(e, OP_FST_STn, reg)
-#define emit_fstp_stn(e, reg)							emit_fp_reg(e, OP_FSTP_STn, reg)
-#define emit_fucomp_stn(e, reg)							emit_fp_reg(e, OP_FUCOMP_STn, reg)
+#ifndef PTR64
 
-#define emit_fadd_st0_stn(e, reg)						emit_fp_reg(e, OP_FADD_ST0_STn, reg)
-#define emit_fmul_st0_stn(e, reg)						emit_fp_reg(e, OP_FMUL_ST0_STn, reg)
-#define emit_fcom_st0_stn(e, reg)						emit_fp_reg(e, OP_FCOM_ST0_STn, reg)
-#define emit_fcomp_st0_stn(e, reg)						emit_fp_reg(e, OP_FCOMP_ST0_STn, reg)
-#define emit_fsub_st0_stn(e, reg)						emit_fp_reg(e, OP_FSUB_ST0_STn, reg)
-#define emit_fsubr_st0_stn(e, reg)						emit_fp_reg(e, OP_FSUBR_ST0_STn, reg)
-#define emit_fdiv_st0_stn(e, reg)						emit_fp_reg(e, OP_FDIV_ST0_STn, reg)
-#define emit_fdivr_st0_stn(e, reg)						emit_fp_reg(e, OP_FDIVR_ST0_STn, reg)
-#define emit_fld_st0_stn(e, reg)						emit_fp_reg(e, OP_FLD_ST0_STn, reg)
-#define emit_fxch_st0_stn(e, reg)						emit_fp_reg(e, OP_FXCH_ST0_STn, reg)
-#define emit_fcmovb_st0_stn(e, reg)						emit_fp_reg(e, OP_FCMOVB_ST0_STn, reg)
-#define emit_fcmove_st0_stn(e, reg)						emit_fp_reg(e, OP_FCMOVE_ST0_STn, reg)
-#define emit_fcmovbe_st0_stn(e, reg)					emit_fp_reg(e, OP_FCMOVBE_ST0_STn, reg)
-#define emit_fcmovu_st0_stn(e, reg)						emit_fp_reg(e, OP_FCMOVU_ST0_STn, reg)
-#define emit_fcmovnb_st0_stn(e, reg)					emit_fp_reg(e, OP_FCMOVNB_ST0_STn, reg)
-#define emit_fcmovne_st0_stn(e, reg)					emit_fp_reg(e, OP_FCMOVNE_ST0_STn, reg)
-#define emit_fcmovnbe_st0_stn(e, reg)					emit_fp_reg(e, OP_FCMOVNBE_ST0_STn, reg)
-#define emit_fcmovnu_st0_stn(e, reg)					emit_fp_reg(e, OP_FCMOVNU_ST0_STn, reg)
-#define emit_fucomi_st0_stn(e, reg)						emit_fp_reg(e, OP_FUCOMI_ST0_STn, reg)
-#define emit_fcomi_st0_stn(e, reg)						emit_fp_reg(e, OP_FCOMI_ST0_STn, reg)
-#define emit_fcomip_st0_stn(e, reg)						emit_fp_reg(e, OP_FCOMIP_ST0_STn, reg)
+INLINE void emit_ffree_stn(x86code **emitptr, UINT8 reg)		{ emit_op_simple(emitptr, OP_FFREE_STn + reg, OP_32BIT); }
+INLINE void emit_fst_stn(x86code **emitptr, UINT8 reg)			{ emit_op_simple(emitptr, OP_FST_STn + reg, OP_32BIT); }
+INLINE void emit_fstp_stn(x86code **emitptr, UINT8 reg)			{ emit_op_simple(emitptr, OP_FSTP_STn + reg, OP_32BIT); }
+INLINE void emit_fucomp_stn(x86code **emitptr, UINT8 reg)		{ emit_op_simple(emitptr, OP_FUCOMP_STn + reg, OP_32BIT); }
 
-#define emit_fadd_stn_st0(e, reg)						emit_fp_reg(e, OP_FADD_STn_ST0, reg)
-#define emit_fmul_stn_st0(e, reg)						emit_fp_reg(e, OP_FMUL_STn_ST0, reg)
-#define emit_fsubr_stn_st0(e, reg)						emit_fp_reg(e, OP_FSUBR_STn_ST0, reg)
-#define emit_fsub_stn_st0(e, reg)						emit_fp_reg(e, OP_FSUB_STn_ST0, reg)
-#define emit_fdivr_stn_st0(e, reg)						emit_fp_reg(e, OP_FDIVR_STn_ST0, reg)
-#define emit_fdiv_stn_st0(e, reg)						emit_fp_reg(e, OP_FDIV_STn_ST0, reg)
-#define emit_fucom_stn_st0(e, reg)						emit_fp_reg(e, OP_FUCOM_STn_ST0, reg)
-#define emit_faddp_stn_st0(e, reg)						emit_fp_reg(e, OP_FADDP_STn_ST0, reg)
-#define emit_fmulp_stn_st0(e, reg)						emit_fp_reg(e, OP_FMULP_STn_ST0, reg)
-#define emit_fsubrp_stn_st0(e, reg)						emit_fp_reg(e, OP_FSUBRP_STn_ST0, reg)
-#define emit_fsubp_stn_st0(e, reg)						emit_fp_reg(e, OP_FSUBP_STn_ST0, reg)
-#define emit_fdivrp_stn_st0(e, reg)						emit_fp_reg(e, OP_FDIVRP_STn_ST0, reg)
-#define emit_fdivp_stn_st0(e, reg)						emit_fp_reg(e, OP_FDIVP_STn_ST0, reg)
+INLINE void emit_fadd_st0_stn(x86code **emitptr, UINT8 reg)		{ emit_op_simple(emitptr, OP_FADD_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fmul_st0_stn(x86code **emitptr, UINT8 reg)		{ emit_op_simple(emitptr, OP_FMUL_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fcom_st0_stn(x86code **emitptr, UINT8 reg)		{ emit_op_simple(emitptr, OP_FCOM_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fcomp_st0_stn(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FCOMP_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fsub_st0_stn(x86code **emitptr, UINT8 reg)		{ emit_op_simple(emitptr, OP_FSUB_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fsubr_st0_stn(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FSUBR_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fdiv_st0_stn(x86code **emitptr, UINT8 reg)		{ emit_op_simple(emitptr, OP_FDIV_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fdivr_st0_stn(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FDIVR_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fld_st0_stn(x86code **emitptr, UINT8 reg)		{ emit_op_simple(emitptr, OP_FLD_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fxch_st0_stn(x86code **emitptr, UINT8 reg)		{ emit_op_simple(emitptr, OP_FXCH_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fcmovb_st0_stn(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FCMOVB_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fcmove_st0_stn(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FCMOVE_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fcmovbe_st0_stn(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FCMOVBE_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fcmovu_st0_stn(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FCMOVU_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fcmovnb_st0_stn(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FCMOVNB_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fcmovne_st0_stn(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FCMOVNE_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fcmovnbe_st0_stn(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FCMOVNBE_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fcmovnu_st0_stn(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FCMOVNU_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fucomi_st0_stn(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FUCOMI_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fcomi_st0_stn(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FCOMI_ST0_STn + reg, OP_32BIT); }
+INLINE void emit_fcomip_st0_stn(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FCOMIP_ST0_STn + reg, OP_32BIT); }
+
+INLINE void emit_fadd_stn_st0(x86code **emitptr, UINT8 reg)		{ emit_op_simple(emitptr, OP_FADD_STn_ST0 + reg, OP_32BIT); }
+INLINE void emit_fmul_stn_st0(x86code **emitptr, UINT8 reg)		{ emit_op_simple(emitptr, OP_FMUL_STn_ST0 + reg, OP_32BIT); }
+INLINE void emit_fsubr_stn_st0(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FSUBR_STn_ST0 + reg, OP_32BIT); }
+INLINE void emit_fsub_stn_st0(x86code **emitptr, UINT8 reg)		{ emit_op_simple(emitptr, OP_FSUB_STn_ST0 + reg, OP_32BIT); }
+INLINE void emit_fdivr_stn_st0(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FDIVR_STn_ST0 + reg, OP_32BIT); }
+INLINE void emit_fdiv_stn_st0(x86code **emitptr, UINT8 reg)		{ emit_op_simple(emitptr, OP_FDIV_STn_ST0 + reg, OP_32BIT); }
+INLINE void emit_fucom_stn_st0(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FUCOM_STn_ST0 + reg, OP_32BIT); }
+INLINE void emit_faddp_stn_st0(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FADDP_STn_ST0 + reg, OP_32BIT); }
+INLINE void emit_fmulp_stn_st0(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FMULP_STn_ST0 + reg, OP_32BIT); }
+INLINE void emit_fsubrp_stn_st0(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FSUBRP_STn_ST0 + reg, OP_32BIT); }
+INLINE void emit_fsubp_stn_st0(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FSUBP_STn_ST0 + reg, OP_32BIT); }
+INLINE void emit_fdivrp_stn_st0(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FDIVRP_STn_ST0 + reg, OP_32BIT); }
+INLINE void emit_fdivp_stn_st0(x86code **emitptr, UINT8 reg)	{ emit_op_simple(emitptr, OP_FDIVP_STn_ST0 + reg, OP_32BIT); }
+
+INLINE void emit_faddp(x86code **emitptr)						{ emit_faddp_stn_st0(emitptr, 1); }
+INLINE void emit_fmulp(x86code **emitptr)						{ emit_fmulp_stn_st0(emitptr, 1); }
+INLINE void emit_fsubrp(x86code **emitptr)						{ emit_fsubrp_stn_st0(emitptr, 1); }
+INLINE void emit_fsubp(x86code **emitptr)						{ emit_fsubp_stn_st0(emitptr, 1); }
+INLINE void emit_fdivrp(x86code **emitptr)						{ emit_fdivrp_stn_st0(emitptr, 1); }
+INLINE void emit_fdivp(x86code **emitptr)						{ emit_fdivp_stn_st0(emitptr, 1); }
+
+#endif
 
 
 
@@ -4434,312 +2570,75 @@ INLINE void emit_fp_modrm(x86code **emitptr, UINT32 op, UINT8 dreg, UINT8 base, 
     MEMORY FPU EMITTERS
 ***************************************************************************/
 
-#define emit_fadd_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fadd_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 0, (base),   REG_NONE, 1,       (disp))
-#define emit_fadd_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D8, 0, REG_NONE, (index),  (scale), (disp))
-#define emit_fadd_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 0, (base),   (index),  (scale), (disp))
-
-#define emit_fmul_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 1, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fmul_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 1, (base),   REG_NONE, 1,       (disp))
-#define emit_fmul_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D8, 1, REG_NONE, (index),  (scale), (disp))
-#define emit_fmul_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 1, (base),   (index),  (scale), (disp))
-
-#define emit_fcom_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fcom_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 2, (base),   REG_NONE, 1,       (disp))
-#define emit_fcom_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D8, 2, REG_NONE, (index),  (scale), (disp))
-#define emit_fcom_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 2, (base),   (index),  (scale), (disp))
-
-#define emit_fcomp_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fcomp_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 3, (base),   REG_NONE, 1,       (disp))
-#define emit_fcomp_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_D8, 3, REG_NONE, (index),  (scale), (disp))
-#define emit_fcomp_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 3, (base),   (index),  (scale), (disp))
-
-#define emit_fsub_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 4, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fsub_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 4, (base),   REG_NONE, 1,       (disp))
-#define emit_fsub_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D8, 4, REG_NONE, (index),  (scale), (disp))
-#define emit_fsub_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 4, (base),   (index),  (scale), (disp))
-
-#define emit_fsubr_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 5, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fsubr_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 5, (base),   REG_NONE, 1,       (disp))
-#define emit_fsubr_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_D8, 5, REG_NONE, (index),  (scale), (disp))
-#define emit_fsubr_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 5, (base),   (index),  (scale), (disp))
-
-#define emit_fdiv_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 6, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fdiv_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 6, (base),   REG_NONE, 1,       (disp))
-#define emit_fdiv_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D8, 6, REG_NONE, (index),  (scale), (disp))
-#define emit_fdiv_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 6, (base),   (index),  (scale), (disp))
-
-#define emit_fdivr_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D8, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fdivr_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D8, 7, (base),   REG_NONE, 1,       (disp))
-#define emit_fdivr_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_D8, 7, REG_NONE, (index),  (scale), (disp))
-#define emit_fdivr_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D8, 7, (base),   (index),  (scale), (disp))
-
-
-#define emit_fld_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D9, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fld_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D9, 0, (base),   REG_NONE, 1,       (disp))
-#define emit_fld_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D9, 0, REG_NONE, (index),  (scale), (disp))
-#define emit_fld_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D9, 0, (base),   (index),  (scale), (disp))
-
-#define emit_fst_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D9, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fst_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D9, 2, (base),   REG_NONE, 1,       (disp))
-#define emit_fst_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D9, 2, REG_NONE, (index),  (scale), (disp))
-#define emit_fst_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D9, 2, (base),   (index),  (scale), (disp))
-
-#define emit_fstp_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_D9, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fstp_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D9, 3, (base),   REG_NONE, 1,       (disp))
-#define emit_fstp_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D9, 3, REG_NONE, (index),  (scale), (disp))
-#define emit_fstp_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D9, 3, (base),   (index),  (scale), (disp))
-
-#define emit_fldenv_mabs(e, addr)							emit_fp_modrm(e, OP_ESC_D9, 4, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fldenv_mbd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D9, 4, (base),   REG_NONE, 1,       (disp))
-#define emit_fldenv_misd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D9, 4, REG_NONE, (index),  (scale), (disp))
-#define emit_fldenv_mbisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D9, 4, (base),   (index),  (scale), (disp))
-
-#define emit_fldcw_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_D9, 5, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fldcw_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D9, 5, (base),   REG_NONE, 1,       (disp))
-#define emit_fldcw_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_D9, 5, REG_NONE, (index),  (scale), (disp))
-#define emit_fldcw_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D9, 5, (base),   (index),  (scale), (disp))
-
-#define emit_fstenv_mabs(e, addr)							emit_fp_modrm(e, OP_ESC_D9, 6, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fstenv_mbd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D9, 6, (base),   REG_NONE, 1,       (disp))
-#define emit_fstenv_misd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_D9, 6, REG_NONE, (index),  (scale), (disp))
-#define emit_fstenv_mbisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D9, 6, (base),   (index),  (scale), (disp))
-
-#define emit_fstcw_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_D9, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fstcw_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_D9, 7, (base),   REG_NONE, 1,       (disp))
-#define emit_fstcw_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_D9, 7, REG_NONE, (index),  (scale), (disp))
-#define emit_fstcw_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_D9, 7, (base),   (index),  (scale), (disp))
-
-
-#define emit_fiadd_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fiadd_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DA, 0, (base),   REG_NONE, 1,       (disp))
-#define emit_fiadd_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 0, REG_NONE, (index),  (scale), (disp))
-#define emit_fiadd_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DA, 0, (base),   (index),  (scale), (disp))
-
-#define emit_fimul_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 1, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fimul_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DA, 1, (base),   REG_NONE, 1,       (disp))
-#define emit_fimul_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 1, REG_NONE, (index),  (scale), (disp))
-#define emit_fimul_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DA, 1, (base),   (index),  (scale), (disp))
-
-#define emit_ficom_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_ficom_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DA, 2, (base),   REG_NONE, 1,       (disp))
-#define emit_ficom_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 2, REG_NONE, (index),  (scale), (disp))
-#define emit_ficom_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DA, 2, (base),   (index),  (scale), (disp))
-
-#define emit_ficomp_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_ficomp_m32bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DA, 3, (base),   REG_NONE, 1,       (disp))
-#define emit_ficomp_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 3, REG_NONE, (index),  (scale), (disp))
-#define emit_ficomp_m32bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DA, 3, (base),   (index),  (scale), (disp))
-
-#define emit_fisub_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 4, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fisub_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DA, 4, (base),   REG_NONE, 1,       (disp))
-#define emit_fisub_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 4, REG_NONE, (index),  (scale), (disp))
-#define emit_fisub_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DA, 4, (base),   (index),  (scale), (disp))
-
-#define emit_fisubr_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 5, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fisubr_m32bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DA, 5, (base),   REG_NONE, 1,       (disp))
-#define emit_fisubr_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 5, REG_NONE, (index),  (scale), (disp))
-#define emit_fisubr_m32bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DA, 5, (base),   (index),  (scale), (disp))
-
-#define emit_fidiv_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 6, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fidiv_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DA, 6, (base),   REG_NONE, 1,       (disp))
-#define emit_fidiv_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 6, REG_NONE, (index),  (scale), (disp))
-#define emit_fidiv_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DA, 6, (base),   (index),  (scale), (disp))
-
-#define emit_fidivr_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DA, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fidivr_m32bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DA, 7, (base),   REG_NONE, 1,       (disp))
-#define emit_fidivr_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DA, 7, REG_NONE, (index),  (scale), (disp))
-#define emit_fidivr_m32bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DA, 7, (base),   (index),  (scale), (disp))
-
-
-#define emit_fild_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DB, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fild_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DB, 0, (base),   REG_NONE, 1,       (disp))
-#define emit_fild_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DB, 0, REG_NONE, (index),  (scale), (disp))
-#define emit_fild_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DB, 0, (base),   (index),  (scale), (disp))
-
-#define emit_fisttp_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DB, 1, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fisttp_m32bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DB, 1, (base),   REG_NONE, 1,       (disp))
-#define emit_fisttp_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DB, 1, REG_NONE, (index),  (scale), (disp))
-#define emit_fisttp_m32bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DB, 1, (base),   (index),  (scale), (disp))
-
-#define emit_fist_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DB, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fist_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DB, 2, (base),   REG_NONE, 1,       (disp))
-#define emit_fist_m32isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DB, 2, REG_NONE, (index),  (scale), (disp))
-#define emit_fist_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DB, 2, (base),   (index),  (scale), (disp))
-
-#define emit_fistp_m32abs(e, addr)							emit_fp_modrm(e, OP_ESC_DB, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fistp_m32bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DB, 3, (base),   REG_NONE, 1,       (disp))
-#define emit_fistp_m32isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DB, 3, REG_NONE, (index),  (scale), (disp))
-#define emit_fistp_m32bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DB, 3, (base),   (index),  (scale), (disp))
-
-#define emit_fld_m80abs(e, addr)							emit_fp_modrm(e, OP_ESC_DB, 5, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fld_m80bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DB, 5, (base),   REG_NONE, 1,       (disp))
-#define emit_fld_m80isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DB, 5, REG_NONE, (index),  (scale), (disp))
-#define emit_fld_m80bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DB, 5, (base),   (index),  (scale), (disp))
-
-#define emit_fstp_m80abs(e, addr)							emit_fp_modrm(e, OP_ESC_DB, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fstp_m80bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DB, 7, (base),   REG_NONE, 1,       (disp))
-#define emit_fstp_m80isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DB, 7, REG_NONE, (index),  (scale), (disp))
-#define emit_fstp_m80bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DB, 7, (base),   (index),  (scale), (disp))
-
-
-#define emit_fadd_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fadd_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 0, (base),   REG_NONE, 1,       (disp))
-#define emit_fadd_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DC, 0, REG_NONE, (index),  (scale), (disp))
-#define emit_fadd_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 0, (base),   (index),  (scale), (disp))
-
-#define emit_fmul_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 1, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fmul_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 1, (base),   REG_NONE, 1,       (disp))
-#define emit_fmul_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DC, 1, REG_NONE, (index),  (scale), (disp))
-#define emit_fmul_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 1, (base),   (index),  (scale), (disp))
-
-#define emit_fcom_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fcom_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 2, (base),   REG_NONE, 1,       (disp))
-#define emit_fcom_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DC, 2, REG_NONE, (index),  (scale), (disp))
-#define emit_fcom_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 2, (base),   (index),  (scale), (disp))
-
-#define emit_fcomp_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fcomp_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 3, (base),   REG_NONE, 1,       (disp))
-#define emit_fcomp_m64isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DC, 3, REG_NONE, (index),  (scale), (disp))
-#define emit_fcomp_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 3, (base),   (index),  (scale), (disp))
-
-#define emit_fsub_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 4, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fsub_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 4, (base),   REG_NONE, 1,       (disp))
-#define emit_fsub_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DC, 4, REG_NONE, (index),  (scale), (disp))
-#define emit_fsub_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 4, (base),   (index),  (scale), (disp))
-
-#define emit_fsubr_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 5, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fsubr_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 5, (base),   REG_NONE, 1,       (disp))
-#define emit_fsubr_m64isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DC, 5, REG_NONE, (index),  (scale), (disp))
-#define emit_fsubr_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 5, (base),   (index),  (scale), (disp))
-
-#define emit_fdiv_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 6, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fdiv_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 6, (base),   REG_NONE, 1,       (disp))
-#define emit_fdiv_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DC, 6, REG_NONE, (index),  (scale), (disp))
-#define emit_fdiv_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 6, (base),   (index),  (scale), (disp))
-
-#define emit_fdivr_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DC, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fdivr_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DC, 7, (base),   REG_NONE, 1,       (disp))
-#define emit_fdivr_m64isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DC, 7, REG_NONE, (index),  (scale), (disp))
-#define emit_fdivr_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DC, 7, (base),   (index),  (scale), (disp))
-
-
-#define emit_fld_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DD, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fld_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DD, 0, (base),   REG_NONE, 1,       (disp))
-#define emit_fld_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DD, 0, REG_NONE, (index),  (scale), (disp))
-#define emit_fld_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DD, 0, (base),   (index),  (scale), (disp))
-
-#define emit_fisttp_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DD, 1, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fisttp_m64bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DD, 1, (base),   REG_NONE, 1,       (disp))
-#define emit_fisttp_m64isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DD, 1, REG_NONE, (index),  (scale), (disp))
-#define emit_fisttp_m64bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DD, 1, (base),   (index),  (scale), (disp))
-
-#define emit_fst_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DD, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fst_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DD, 2, (base),   REG_NONE, 1,       (disp))
-#define emit_fst_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DD, 2, REG_NONE, (index),  (scale), (disp))
-#define emit_fst_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DD, 2, (base),   (index),  (scale), (disp))
-
-#define emit_fstp_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DD, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fstp_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DD, 3, (base),   REG_NONE, 1,       (disp))
-#define emit_fstp_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DD, 3, REG_NONE, (index),  (scale), (disp))
-#define emit_fstp_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DD, 3, (base),   (index),  (scale), (disp))
-
-#define emit_frstor_mabs(e, addr)							emit_fp_modrm(e, OP_ESC_DD, 4, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_frstor_mbd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DD, 4, (base),   REG_NONE, 1,       (disp))
-#define emit_frstor_misd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DD, 4, REG_NONE, (index),  (scale), (disp))
-#define emit_frstor_mbisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DD, 4, (base),   (index),  (scale), (disp))
-
-#define emit_fsave_mabs(e, addr)							emit_fp_modrm(e, OP_ESC_DD, 6, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fsave_mbd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DD, 6, (base),   REG_NONE, 1,       (disp))
-#define emit_fsave_misd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DD, 6, REG_NONE, (index),  (scale), (disp))
-#define emit_fsave_mbisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DD, 6, (base),   (index),  (scale), (disp))
-
-#define emit_fstsw_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DD, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fstsw_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DD, 7, (base),   REG_NONE, 1,       (disp))
-#define emit_fstsw_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DD, 7, REG_NONE, (index),  (scale), (disp))
-#define emit_fstsw_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DD, 7, (base),   (index),  (scale), (disp))
-
-
-#define emit_fiadd_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fiadd_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DE, 0, (base),   REG_NONE, 1,       (disp))
-#define emit_fiadd_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 0, REG_NONE, (index),  (scale), (disp))
-#define emit_fiadd_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DE, 0, (base),   (index),  (scale), (disp))
-
-#define emit_fimul_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 1, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fimul_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DE, 1, (base),   REG_NONE, 1,       (disp))
-#define emit_fimul_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 1, REG_NONE, (index),  (scale), (disp))
-#define emit_fimul_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DE, 1, (base),   (index),  (scale), (disp))
-
-#define emit_ficom_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_ficom_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DE, 2, (base),   REG_NONE, 1,       (disp))
-#define emit_ficom_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 2, REG_NONE, (index),  (scale), (disp))
-#define emit_ficom_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DE, 2, (base),   (index),  (scale), (disp))
-
-#define emit_ficomp_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_ficomp_m16bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DE, 3, (base),   REG_NONE, 1,       (disp))
-#define emit_ficomp_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 3, REG_NONE, (index),  (scale), (disp))
-#define emit_ficomp_m16bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DE, 3, (base),   (index),  (scale), (disp))
-
-#define emit_fisub_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 4, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fisub_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DE, 4, (base),   REG_NONE, 1,       (disp))
-#define emit_fisub_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 4, REG_NONE, (index),  (scale), (disp))
-#define emit_fisub_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DE, 4, (base),   (index),  (scale), (disp))
-
-#define emit_fisubr_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 5, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fisubr_m16bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DE, 5, (base),   REG_NONE, 1,       (disp))
-#define emit_fisubr_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 5, REG_NONE, (index),  (scale), (disp))
-#define emit_fisubr_m16bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DE, 5, (base),   (index),  (scale), (disp))
-
-#define emit_fidiv_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 6, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fidiv_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DE, 6, (base),   REG_NONE, 1,       (disp))
-#define emit_fidiv_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 6, REG_NONE, (index),  (scale), (disp))
-#define emit_fidiv_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DE, 6, (base),   (index),  (scale), (disp))
-
-#define emit_fidivr_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DE, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fidivr_m16bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DE, 7, (base),   REG_NONE, 1,       (disp))
-#define emit_fidivr_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DE, 7, REG_NONE, (index),  (scale), (disp))
-#define emit_fidivr_m16bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DE, 7, (base),   (index),  (scale), (disp))
-
-
-#define emit_fild_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 0, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fild_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DF, 0, (base),   REG_NONE, 1,       (disp))
-#define emit_fild_m16isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DF, 0, REG_NONE, (index),  (scale), (disp))
-#define emit_fild_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DF, 0, (base),   (index),  (scale), (disp))
-
-#define emit_fisttp_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 1, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fisttp_m16bd(e, base, disp)					emit_fp_modrm(e, OP_ESC_DF, 1, (base),   REG_NONE, 1,       (disp))
-#define emit_fisttp_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DF, 1, REG_NONE, (index),  (scale), (disp))
-#define emit_fisttp_m16bisd(e, base, index, scale, disp)	emit_fp_modrm(e, OP_ESC_DF, 1, (base),   (index),  (scale), (disp))
-
-#define emit_fist_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 2, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fist_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DF, 2, (base),   REG_NONE, 1,       (disp))
-#define emit_fist_m16isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DF, 2, REG_NONE, (index),  (scale), (disp))
-#define emit_fist_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DF, 2, (base),   (index),  (scale), (disp))
-
-#define emit_fistp_m16abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 3, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fistp_m16bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DF, 3, (base),   REG_NONE, 1,       (disp))
-#define emit_fistp_m16isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DF, 3, REG_NONE, (index),  (scale), (disp))
-#define emit_fistp_m16bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DF, 3, (base),   (index),  (scale), (disp))
-
-#define emit_fbld_m80abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 4, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fbld_m80bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DF, 4, (base),   REG_NONE, 1,       (disp))
-#define emit_fbld_m80isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DF, 4, REG_NONE, (index),  (scale), (disp))
-#define emit_fbld_m80bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DF, 4, (base),   (index),  (scale), (disp))
-
-#define emit_fild_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 5, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fild_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DF, 5, (base),   REG_NONE, 1,       (disp))
-#define emit_fild_m64isd(e, index, scale, disp)				emit_fp_modrm(e, OP_ESC_DF, 5, REG_NONE, (index),  (scale), (disp))
-#define emit_fild_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DF, 5, (base),   (index),  (scale), (disp))
-
-#define emit_fbstp_m80abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 6, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fbstp_m80bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DF, 6, (base),   REG_NONE, 1,       (disp))
-#define emit_fbstp_m80isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DF, 6, REG_NONE, (index),  (scale), (disp))
-#define emit_fbstp_m80bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DF, 6, (base),   (index),  (scale), (disp))
-
-#define emit_fistp_m64abs(e, addr)							emit_fp_modrm(e, OP_ESC_DF, 7, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_fistp_m64bd(e, base, disp)						emit_fp_modrm(e, OP_ESC_DF, 7, (base),   REG_NONE, 1,       (disp))
-#define emit_fistp_m64isd(e, index, scale, disp)			emit_fp_modrm(e, OP_ESC_DF, 7, REG_NONE, (index),  (scale), (disp))
-#define emit_fistp_m64bisd(e, base, index, scale, disp)		emit_fp_modrm(e, OP_ESC_DF, 7, (base),   (index),  (scale), (disp))
+#ifndef PTR64
+
+INLINE void emit_fadd_m32(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_D8, OP_32BIT, 0, MEMPARAMS); }
+INLINE void emit_fmul_m32(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_D8, OP_32BIT, 1, MEMPARAMS); }
+INLINE void emit_fcom_m32(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_D8, OP_32BIT, 2, MEMPARAMS); }
+INLINE void emit_fcomp_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_D8, OP_32BIT, 3, MEMPARAMS); }
+INLINE void emit_fsub_m32(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_D8, OP_32BIT, 4, MEMPARAMS); }
+INLINE void emit_fsubr_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_D8, OP_32BIT, 5, MEMPARAMS); }
+INLINE void emit_fdiv_m32(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_D8, OP_32BIT, 6, MEMPARAMS); }
+INLINE void emit_fdivr_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_D8, OP_32BIT, 7, MEMPARAMS); }
+
+INLINE void emit_fld_m32(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_D9, OP_32BIT, 0, MEMPARAMS); }
+INLINE void emit_fst_m32(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_D9, OP_32BIT, 2, MEMPARAMS); }
+INLINE void emit_fstp_m32(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_D9, OP_32BIT, 3, MEMPARAMS); }
+INLINE void emit_fldenv_m(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_D9, OP_32BIT, 4, MEMPARAMS); }
+INLINE void emit_fldcw_m16(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_D9, OP_32BIT, 5, MEMPARAMS); }
+INLINE void emit_fstenv_m(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_D9, OP_32BIT, 6, MEMPARAMS); }
+INLINE void emit_fstcw_m16(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_D9, OP_32BIT, 7, MEMPARAMS); }
+
+INLINE void emit_fiadd_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DA, OP_32BIT, 0, MEMPARAMS); }
+INLINE void emit_fimul_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DA, OP_32BIT, 1, MEMPARAMS); }
+INLINE void emit_ficom_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DA, OP_32BIT, 2, MEMPARAMS); }
+INLINE void emit_ficomp_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DA, OP_32BIT, 3, MEMPARAMS); }
+INLINE void emit_fisub_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DA, OP_32BIT, 4, MEMPARAMS); }
+INLINE void emit_fisubr_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DA, OP_32BIT, 5, MEMPARAMS); }
+INLINE void emit_fidiv_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DA, OP_32BIT, 6, MEMPARAMS); }
+INLINE void emit_fidivr_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DA, OP_32BIT, 7, MEMPARAMS); }
+
+INLINE void emit_fild_m32(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DB, OP_32BIT, 0, MEMPARAMS); }
+INLINE void emit_fisttp_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DB, OP_32BIT, 1, MEMPARAMS); }
+INLINE void emit_fist_m32(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DB, OP_32BIT, 2, MEMPARAMS); }
+INLINE void emit_fistp_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DB, OP_32BIT, 3, MEMPARAMS); }
+INLINE void emit_fld_m80(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DB, OP_32BIT, 5, MEMPARAMS); }
+INLINE void emit_fstp_m80(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DB, OP_32BIT, 7, MEMPARAMS); }
+
+INLINE void emit_fadd_m64(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DC, OP_32BIT, 0, MEMPARAMS); }
+INLINE void emit_fmul_m64(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DC, OP_32BIT, 1, MEMPARAMS); }
+INLINE void emit_fcom_m64(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DC, OP_32BIT, 2, MEMPARAMS); }
+INLINE void emit_fcomp_m64(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DC, OP_32BIT, 3, MEMPARAMS); }
+INLINE void emit_fsub_m64(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DC, OP_32BIT, 4, MEMPARAMS); }
+INLINE void emit_fsubr_m64(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DC, OP_32BIT, 5, MEMPARAMS); }
+INLINE void emit_fdiv_m64(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DC, OP_32BIT, 6, MEMPARAMS); }
+INLINE void emit_fdivr_m64(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DC, OP_32BIT, 7, MEMPARAMS); }
+
+INLINE void emit_fld_m64(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DD, OP_32BIT, 0, MEMPARAMS); }
+INLINE void emit_fisttp_m64(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DD, OP_32BIT, 1, MEMPARAMS); }
+INLINE void emit_fst_m64(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DD, OP_32BIT, 2, MEMPARAMS); }
+INLINE void emit_fstp_m64(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DD, OP_32BIT, 3, MEMPARAMS); }
+INLINE void emit_frstor_m(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DD, OP_32BIT, 4, MEMPARAMS); }
+INLINE void emit_fsave_m(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DD, OP_32BIT, 6, MEMPARAMS); }
+INLINE void emit_fstsw_m16(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DD, OP_32BIT, 7, MEMPARAMS); }
+
+INLINE void emit_fiadd_m16(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DE, OP_32BIT, 0, MEMPARAMS); }
+INLINE void emit_fimul_m16(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DE, OP_32BIT, 1, MEMPARAMS); }
+INLINE void emit_ficom_m16(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DE, OP_32BIT, 2, MEMPARAMS); }
+INLINE void emit_ficomp_m16(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DE, OP_32BIT, 3, MEMPARAMS); }
+INLINE void emit_fisub_m16(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DE, OP_32BIT, 4, MEMPARAMS); }
+INLINE void emit_fisubr_m16(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DE, OP_32BIT, 5, MEMPARAMS); }
+INLINE void emit_fidiv_m16(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DE, OP_32BIT, 6, MEMPARAMS); }
+INLINE void emit_fidivr_m16(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DE, OP_32BIT, 7, MEMPARAMS); }
+
+INLINE void emit_fild_m16(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DF, OP_32BIT, 0, MEMPARAMS); }
+INLINE void emit_fisttp_m16(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DF, OP_32BIT, 1, MEMPARAMS); }
+INLINE void emit_fist_m16(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DF, OP_32BIT, 2, MEMPARAMS); }
+INLINE void emit_fistp_m16(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DF, OP_32BIT, 3, MEMPARAMS); }
+INLINE void emit_fbld_m80(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DF, OP_32BIT, 4, MEMPARAMS); }
+INLINE void emit_fild_m64(x86code **emitptr, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ESC_DF, OP_32BIT, 5, MEMPARAMS); }
+INLINE void emit_fbstp_m80(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DF, OP_32BIT, 6, MEMPARAMS); }
+INLINE void emit_fistp_m64(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_ESC_DF, OP_32BIT, 7, MEMPARAMS); }
 
 #endif
 
@@ -4749,58 +2648,8 @@ INLINE void emit_fp_modrm(x86code **emitptr, UINT32 op, UINT8 dreg, UINT8 base, 
     GROUP16 EMITTERS
 ***************************************************************************/
 
-/*------------------------------------------------------------------
-    emit_ldmxcsr_*
-------------------------------------------------------------------*/
-
-INLINE void emit_ldmxcsr_m32bisd(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_G16, OP_32BIT, 2, base, index, scale, disp);
-}
-
-#define emit_ldmxcsr_m32abs(e, addr)					emit_ldmxcsr_m32bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_ldmxcsr_m32bd(e, base, disp)				emit_ldmxcsr_m32bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_ldmxcsr_m32isd(e, index, scale, disp)		emit_ldmxcsr_m32bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-/*------------------------------------------------------------------
-    emit_stmxcsr_*
-------------------------------------------------------------------*/
-
-INLINE void emit_stmxcsr_m32bisd(x86code **emitptr, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, OP_G16, OP_32BIT, 3, base, index, scale, disp);
-}
-
-#define emit_stmxcsr_m32abs(e, addr)					emit_stmxcsr_m32bisd(e, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_stmxcsr_m32bd(e, base, disp)				emit_stmxcsr_m32bisd(e, (base),   REG_NONE, 1,       (disp))
-#define emit_stmxcsr_m32isd(e, index, scale, disp)		emit_stmxcsr_m32bisd(e, REG_NONE, (index),  (scale), (disp))
-
-
-
-/***************************************************************************
-    SSE EMITTERS
-***************************************************************************/
-
-INLINE void emit_sse_r128_r128(x86code **emitptr, UINT32 op, UINT8 dreg, UINT8 sreg)
-{
-	emit_op_modrm_reg(emitptr, op, OP_32BIT, dreg, sreg);
-}
-
-INLINE void emit_sse_r128_mbisd(x86code **emitptr, UINT32 op, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, op, OP_32BIT, dreg, base, index, scale, disp);
-}
-
-INLINE void emit_sse_r128_r128_rex(x86code **emitptr, UINT32 op, UINT8 dreg, UINT8 sreg)
-{
-	emit_op_modrm_reg(emitptr, op, OP_64BIT, dreg, sreg);
-}
-
-INLINE void emit_sse_r128_mbisd_rex(x86code **emitptr, UINT32 op, UINT8 dreg, UINT8 base, UINT8 index, UINT8 scale, INT32 disp)
-{
-	emit_op_modrm_mem(emitptr, op, OP_64BIT, dreg, base, index, scale, disp);
-}
+INLINE void emit_ldmxcsr_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_G16, OP_32BIT, 2, MEMPARAMS); }
+INLINE void emit_stmxcsr_m32(x86code **emitptr, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_G16, OP_32BIT, 3, MEMPARAMS); }
 
 
 
@@ -4808,117 +2657,62 @@ INLINE void emit_sse_r128_mbisd_rex(x86code **emitptr, UINT32 op, UINT8 dreg, UI
     SSE SCALAR SINGLE EMITTERS
 ***************************************************************************/
 
-#define emit_movss_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MOVSS_Vss_Wss, dreg, sreg)
-#define emit_movss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MOVSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MOVSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movss_r128_m32isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_MOVSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_movss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MOVSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_movss_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_MOVSS_Vss_Wss, OP_32BIT, dreg, sreg); }
+INLINE void emit_movss_r128_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_MOVSS_Vss_Wss, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_movss_m32_r128(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)		{ emit_op_modrm_mem(emitptr, OP_MOVSS_Wss_Vss, OP_32BIT, sreg, MEMPARAMS); }
 
-#define emit_movss_m32abs_r128(e, addr, sreg)							emit_sse_r128_mbisd(e, OP_MOVSS_Wss_Vss, sreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movss_m32bd_r128(e, base, disp, sreg)						emit_sse_r128_mbisd(e, OP_MOVSS_Wss_Vss, sreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movss_m32isd_r128(e, index, scale, disp, sreg)				emit_sse_r128_mbisd(e, OP_MOVSS_Wss_Vss, sreg, REG_NONE, (index),  (scale), (disp))
-#define emit_movss_m32bisd_r128(e, base, index, scale, disp, sreg)		emit_sse_r128_mbisd(e, OP_MOVSS_Wss_Vss, sreg, (base),   (index),  (scale), (disp))
+INLINE void emit_addss_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_ADDSS_Vss_Wss, OP_32BIT, dreg, sreg); }
+INLINE void emit_addss_r128_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ADDSS_Vss_Wss, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_addss_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ADDSS_Vss_Wss, dreg, sreg)
-#define emit_addss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ADDSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_addss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ADDSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_addss_r128_m32isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_ADDSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_addss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ADDSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_subss_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_SUBSS_Vss_Wss, OP_32BIT, dreg, sreg); }
+INLINE void emit_subss_r128_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_SUBSS_Vss_Wss, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_subss_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_SUBSS_Vss_Wss, dreg, sreg)
-#define emit_subss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SUBSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_subss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_SUBSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_subss_r128_m32isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_SUBSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_subss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_SUBSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_mulss_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_MULSS_Vss_Wss, OP_32BIT, dreg, sreg); }
+INLINE void emit_mulss_r128_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_MULSS_Vss_Wss, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_mulss_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MULSS_Vss_Wss, dreg, sreg)
-#define emit_mulss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MULSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mulss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MULSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_mulss_r128_m32isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_MULSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_mulss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MULSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_divss_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_DIVSS_Vss_Wss, OP_32BIT, dreg, sreg); }
+INLINE void emit_divss_r128_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_DIVSS_Vss_Wss, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_divss_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_DIVSS_Vss_Wss, dreg, sreg)
-#define emit_divss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_DIVSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_divss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_DIVSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_divss_r128_m32isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_DIVSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_divss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_DIVSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_rcpss_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_RCPSS_Vss_Wss, OP_32BIT, dreg, sreg); }
+INLINE void emit_rcpss_r128_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_RCPSS_Vss_Wss, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_rcpss_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_RCPSS_Vss_Wss, dreg, sreg)
-#define emit_rcpss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_RCPSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rcpss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_RCPSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_rcpss_r128_m32isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_RCPSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_rcpss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_RCPSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_sqrtss_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_SQRTSS_Vss_Wss, OP_32BIT, dreg, sreg); }
+INLINE void emit_sqrtss_r128_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_SQRTSS_Vss_Wss, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_sqrtss_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_SQRTSS_Vss_Wss, dreg, sreg)
-#define emit_sqrtss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SQRTSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sqrtss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_SQRTSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sqrtss_r128_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_SQRTSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_sqrtss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_SQRTSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_rsqrtss_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_RSQRTSS_Vss_Wss, OP_32BIT, dreg, sreg); }
+INLINE void emit_rsqrtss_r128_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_RSQRTSS_Vss_Wss, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_rsqrtss_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_RSQRTSS_Vss_Wss, dreg, sreg)
-#define emit_rsqrtss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_RSQRTSS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rsqrtss_r128_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_RSQRTSS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_rsqrtss_r128_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_RSQRTSS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_rsqrtss_r128_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_RSQRTSS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_comiss_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_COMISS_Vss_Wss, OP_32BIT, dreg, sreg); }
+INLINE void emit_comiss_r128_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_COMISS_Vss_Wss, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_comiss_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_COMISS_Vss_Wss, dreg, sreg)
-#define emit_comiss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_COMISS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_comiss_r128_m32bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_COMISS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_comiss_r128_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_COMISS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_comiss_r128_m32bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_COMISS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_ucomiss_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_UCOMISS_Vss_Wss, OP_32BIT, dreg, sreg); }
+INLINE void emit_ucomiss_r128_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_UCOMISS_Vss_Wss, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_ucomiss_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_UCOMISS_Vss_Wss, dreg, sreg)
-#define emit_ucomiss_r128_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_UCOMISS_Vss_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_ucomiss_r128_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_UCOMISS_Vss_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_ucomiss_r128_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_UCOMISS_Vss_Wss, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_ucomiss_r128_m32bisd(e, dreg, base, index, scale, disp) 	emit_sse_r128_mbisd(e, OP_UCOMISS_Vss_Wss, dreg, (base),   (index),  (scale), (disp))
-
-#define emit_cvtsi2ss_r128_r32(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTSI2SS_Vss_Ed, dreg, sreg)
-#define emit_cvtsi2ss_r128_m32abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTSI2SS_Vss_Ed, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtsi2ss_r128_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTSI2SS_Vss_Ed, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtsi2ss_r128_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTSI2SS_Vss_Ed, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtsi2ss_r128_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSI2SS_Vss_Ed, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtsi2ss_r128_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTSI2SS_Vss_Ed, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvtsi2ss_r128_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTSI2SS_Vss_Ed, OP_32BIT, dreg, MEMPARAMS); }
 
 #ifdef PTR64
-#define emit_cvtsi2ss_r128_r64(e, dreg, sreg)							emit_sse_r128_r128_rex(e, OP_CVTSI2SS_Vss_Ed, dreg, sreg)
-#define emit_cvtsi2ss_r128_m64abs(e, dreg, addr)						emit_sse_r128_mbisd_rex(e, OP_CVTSI2SS_Vss_Ed, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtsi2ss_r128_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd_rex(e, OP_CVTSI2SS_Vss_Ed, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtsi2ss_r128_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTSI2SS_Vss_Ed, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtsi2ss_r128_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTSI2SS_Vss_Ed, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtsi2ss_r128_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTSI2SS_Vss_Ed, OP_64BIT, dreg, sreg); }
+INLINE void emit_cvtsi2ss_r128_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTSI2SS_Vss_Ed, OP_64BIT, dreg, MEMPARAMS); }
 #endif
 
-#define emit_cvtsd2ss_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTSD2SS_Vss_Wsd, dreg, sreg)
-#define emit_cvtsd2ss_r128_m64abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTSD2SS_Vss_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtsd2ss_r128_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTSD2SS_Vss_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtsd2ss_r128_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTSD2SS_Vss_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtsd2ss_r128_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSD2SS_Vss_Wsd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtsd2ss_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTSD2SS_Vss_Wsd, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvtsd2ss_r128_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTSD2SS_Vss_Wsd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_cvtss2si_r32_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTSS2SI_Gd_Wss, dreg, sreg)
-#define emit_cvtss2si_r32_m32abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_CVTSS2SI_Gd_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtss2si_r32_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTSS2SI_Gd_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtss2si_r32_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTSS2SI_Gd_Wss, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtss2si_r32_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSS2SI_Gd_Wss, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtss2si_r32_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTSS2SI_Gd_Wss, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvtss2si_r32_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_CVTSS2SI_Gd_Wss, OP_32BIT, dreg, MEMPARAMS); }
 
 #ifdef PTR64
-#define emit_cvtss2si_r64_r128(e, dreg, sreg)							emit_sse_r128_r128_rex(e, OP_CVTSS2SI_Gd_Wss, dreg, sreg)
-#define emit_cvtss2si_r64_m32abs(e, dreg, addr)							emit_sse_r128_mbisd_rex(e, OP_CVTSS2SI_Gd_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtss2si_r64_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd_rex(e, OP_CVTSS2SI_Gd_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtss2si_r64_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTSS2SI_Gd_Wss, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtss2si_r64_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTSS2SI_Gd_Wss, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtss2si_r64_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTSS2SI_Gd_Wss, OP_64BIT, dreg, sreg); }
+INLINE void emit_cvtss2si_r64_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_CVTSS2SI_Gd_Wss, OP_64BIT, dreg, MEMPARAMS); }
 #endif
 
-#define emit_cvttss2si_r32_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTTSS2SI_Gd_Wss, dreg, sreg)
-#define emit_cvttss2si_r32_m32abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTTSS2SI_Gd_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvttss2si_r32_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTTSS2SI_Gd_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvttss2si_r32_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTTSS2SI_Gd_Wss, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvttss2si_r32_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTTSS2SI_Gd_Wss, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvttss2si_r32_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTTSS2SI_Gd_Wss, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvttss2si_r32_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTTSS2SI_Gd_Wss, OP_32BIT, dreg, MEMPARAMS); }
 
 #ifdef PTR64
-#define emit_cvttss2si_r64_r128(e, dreg, sreg)							emit_sse_r128_r128_rex(e, OP_CVTTSS2SI_Gd_Wss, dreg, sreg)
-#define emit_cvttss2si_r64_m32abs(e, dreg, addr)						emit_sse_r128_mbisd_rex(e, OP_CVTTSS2SI_Gd_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvttss2si_r64_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd_rex(e, OP_CVTTSS2SI_Gd_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvttss2si_r64_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTTSS2SI_Gd_Wss, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvttss2si_r64_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTTSS2SI_Gd_Wss, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvttss2si_r64_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTTSS2SI_Gd_Wss, OP_64BIT, dreg, sreg); }
+INLINE void emit_cvttss2si_r64_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTTSS2SI_Gd_Wss, OP_64BIT, dreg, MEMPARAMS); }
 #endif
 
 
@@ -4927,106 +2721,54 @@ INLINE void emit_sse_r128_mbisd_rex(x86code **emitptr, UINT32 op, UINT8 dreg, UI
     SSE PACKED SINGLE EMITTERS
 ***************************************************************************/
 
-#define emit_movps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MOVPS_Vps_Wps, dreg, sreg)
-#define emit_movps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MOVPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MOVPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_MOVPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_movps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MOVPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_movps_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_MOVAPS_Vps_Wps, OP_32BIT, dreg, sreg); }
+INLINE void emit_movps_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_MOVAPS_Vps_Wps, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_movps_m128_r128(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)		{ emit_op_modrm_mem(emitptr, OP_MOVAPS_Wps_Vps, OP_32BIT, sreg, MEMPARAMS); }
 
-#define emit_movps_m128abs_r128(e, addr, sreg)							emit_sse_r128_mbisd(e, OP_MOVPS_Wps_Vps, sreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movps_m128bd_r128(e, base, disp, sreg)						emit_sse_r128_mbisd(e, OP_MOVPS_Wps_Vps, sreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movps_m128isd_r128(e, index, scale, disp, sreg)			emit_sse_r128_mbisd(e, OP_MOVPS_Wps_Vps, sreg, REG_NONE, (index),  (scale), (disp))
-#define emit_movps_m128bisd_r128(e, base, index, scale, disp, sreg)		emit_sse_r128_mbisd(e, OP_MOVPS_Wps_Vps, sreg, (base),   (index),  (scale), (disp))
+INLINE void emit_addps_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_ADDPS_Vps_Wps, OP_32BIT, dreg, sreg); }
+INLINE void emit_addps_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ADDPS_Vps_Wps, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_addps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ADDPS_Vps_Wps, dreg, sreg)
-#define emit_addps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ADDPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_addps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ADDPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_addps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_ADDPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_addps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ADDPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_subps_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_SUBPS_Vps_Wps, OP_32BIT, dreg, sreg); }
+INLINE void emit_subps_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_SUBPS_Vps_Wps, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_subps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_SUBPS_Vps_Wps, dreg, sreg)
-#define emit_subps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SUBPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_subps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_SUBPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_subps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_SUBPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_subps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_SUBPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_mulps_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_MULPS_Vps_Wps, OP_32BIT, dreg, sreg); }
+INLINE void emit_mulps_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_MULPS_Vps_Wps, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_mulps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MULPS_Vps_Wps, dreg, sreg)
-#define emit_mulps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MULPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mulps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MULPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_mulps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_MULPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_mulps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MULPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_divps_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_DIVPS_Vps_Wps, OP_32BIT, dreg, sreg); }
+INLINE void emit_divps_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_DIVPS_Vps_Wps, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_divps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_DIVPS_Vps_Wps, dreg, sreg)
-#define emit_divps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_DIVPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_divps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_DIVPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_divps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_DIVPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_divps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_DIVPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_rcpps_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_RCPPS_Vps_Wps, OP_32BIT, dreg, sreg); }
+INLINE void emit_rcpps_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_RCPPS_Vps_Wps, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_rcpps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_RCPPS_Vps_Wps, dreg, sreg)
-#define emit_rcpps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_RCPPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rcpps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_RCPPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_rcpps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_RCPPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_rcpps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_RCPPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_sqrtps_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_SQRTPS_Vps_Wps, OP_32BIT, dreg, sreg); }
+INLINE void emit_sqrtps_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_SQRTPS_Vps_Wps, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_sqrtps_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_SQRTPS_Vps_Wps, dreg, sreg)
-#define emit_sqrtps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SQRTPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sqrtps_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_SQRTPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sqrtps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_SQRTPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_sqrtps_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_SQRTPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_rsqrtps_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_RSQRTPS_Vps_Wps, OP_32BIT, dreg, sreg); }
+INLINE void emit_rsqrtps_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_RSQRTPS_Vps_Wps, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_rsqrtps_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_RSQRTPS_Vps_Wps, dreg, sreg)
-#define emit_rsqrtps_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_RSQRTPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_rsqrtps_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_RSQRTPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_rsqrtps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_RSQRTPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_rsqrtps_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_RSQRTPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_andps_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_ANDPS_Vps_Wps, OP_32BIT, dreg, sreg); }
+INLINE void emit_andps_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ANDPS_Vps_Wps, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_andps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ANDPS_Vps_Wps, dreg, sreg)
-#define emit_andps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ANDPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_andps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ANDPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_andps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_ANDPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_andps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ANDPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_andnps_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_ANDNPS_Vps_Wps, OP_32BIT, dreg, sreg); }
+INLINE void emit_andnps_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ANDNPS_Vps_Wps, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_andnps_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_ANDNPS_Vps_Wps, dreg, sreg)
-#define emit_andnps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ANDNPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_andnps_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_ANDNPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_andnps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_ANDNPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_andnps_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_ANDNPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_orps_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_ORPS_Vps_Wps, OP_32BIT, dreg, sreg); }
+INLINE void emit_orps_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ORPS_Vps_Wps, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_orps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ORPS_Vps_Wps, dreg, sreg)
-#define emit_orps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ORPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_orps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ORPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_orps_r128_m128isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_ORPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_orps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ORPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_xorps_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_XORPS_Vps_Wps, OP_32BIT, dreg, sreg); }
+INLINE void emit_xorps_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_XORPS_Vps_Wps, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_xorps_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_XORPS_Vps_Wps, dreg, sreg)
-#define emit_xorps_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_XORPS_Vps_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_xorps_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_XORPS_Vps_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_xorps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_XORPS_Vps_Wps, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_xorps_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_XORPS_Vps_Wps, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtdq2ps_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTDQ2PS_Vps_Wdq, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvtdq2ps_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTDQ2PS_Vps_Wdq, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_cvtdq2ps_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTDQ2PS_Vps_Wdq, dreg, sreg)
-#define emit_cvtdq2ps_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTDQ2PS_Vps_Wdq, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtdq2ps_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTDQ2PS_Vps_Wdq, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtdq2ps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTDQ2PS_Vps_Wdq, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtdq2ps_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTDQ2PS_Vps_Wdq, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtpd2ps_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTPD2PS_Vps_Wpd, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvtpd2ps_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTPD2PS_Vps_Wpd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_cvtpd2ps_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTPD2PS_Vps_Wpd, dreg, sreg)
-#define emit_cvtpd2ps_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTPD2PS_Vps_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtpd2ps_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTPD2PS_Vps_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtpd2ps_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTPD2PS_Vps_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtpd2ps_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTPD2PS_Vps_Wpd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtps2dq_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTPS2DQ_Vdq_Wps, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvtps2dq_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTPS2DQ_Vdq_Wps, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_cvtps2dq_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTPS2DQ_Vdq_Wps, dreg, sreg)
-#define emit_cvtps2dq_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTPS2DQ_Vdq_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtps2dq_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTPS2DQ_Vdq_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtps2dq_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTPS2DQ_Vdq_Wps, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtps2dq_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTPS2DQ_Vdq_Wps, dreg, (base),   (index),  (scale), (disp))
-
-#define emit_cvttps2dq_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTTPS2DQ_Vdq_Wps, dreg, sreg)
-#define emit_cvttps2dq_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTTPS2DQ_Vdq_Wps, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvttps2dq_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTTPS2DQ_Vdq_Wps, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvttps2dq_r128_m128isd(e, dreg, index, scale, disp)		emit_sse_r128_mbisd(e, OP_CVTTPS2DQ_Vdq_Wps, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvttps2dq_r128_m128bisd(e, dreg, base, index, scale, disp) emit_sse_r128_mbisd(e, OP_CVTTPS2DQ_Vdq_Wps, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvttps2dq_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTTPS2DQ_Vdq_Wps, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvttps2dq_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_CVTTPS2DQ_Vdq_Wps, OP_32BIT, dreg, MEMPARAMS); }
 
 
 
@@ -5034,105 +2776,56 @@ INLINE void emit_sse_r128_mbisd_rex(x86code **emitptr, UINT32 op, UINT8 dreg, UI
     SSE SCALAR DOUBLE EMITTERS
 ***************************************************************************/
 
-#define emit_movsd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MOVSD_Vsd_Wsd, dreg, sreg)
-#define emit_movsd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MOVSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movsd_r128_m64bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MOVSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movsd_r128_m64isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_MOVSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_movsd_r128_m64bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MOVSD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_movsd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_MOVSD_Vsd_Wsd, OP_32BIT, dreg, sreg); }
+INLINE void emit_movsd_r128_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_MOVSD_Vsd_Wsd, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_movsd_m64_r128(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)		{ emit_op_modrm_mem(emitptr, OP_MOVSD_Wsd_Vsd, OP_32BIT, sreg, MEMPARAMS); }
 
-#define emit_movsd_m64abs_r128(e, addr, sreg)							emit_sse_r128_mbisd(e, OP_MOVSD_Wsd_Vsd, sreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movsd_m64bd_r128(e, base, disp, sreg)						emit_sse_r128_mbisd(e, OP_MOVSD_Wsd_Vsd, sreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movsd_m64isd_r128(e, index, scale, disp, sreg)				emit_sse_r128_mbisd(e, OP_MOVSD_Wsd_Vsd, sreg, REG_NONE, (index),  (scale), (disp))
-#define emit_movsd_m64bisd_r128(e, base, index, scale, disp, sreg)		emit_sse_r128_mbisd(e, OP_MOVSD_Wsd_Vsd, sreg, (base),   (index),  (scale), (disp))
+INLINE void emit_addsd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_ADDSD_Vsd_Wsd, OP_32BIT, dreg, sreg); }
+INLINE void emit_addsd_r128_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ADDSD_Vsd_Wsd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_addsd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ADDSD_Vsd_Wsd, dreg, sreg)
-#define emit_addsd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ADDSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_addsd_r128_m64bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ADDSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_addsd_r128_m64isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_ADDSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_addsd_r128_m64bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ADDSD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_subsd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_SUBSD_Vsd_Wsd, OP_32BIT, dreg, sreg); }
+INLINE void emit_subsd_r128_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_SUBSD_Vsd_Wsd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_subsd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_SUBSD_Vsd_Wsd, dreg, sreg)
-#define emit_subsd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SUBSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_subsd_r128_m64bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_SUBSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_subsd_r128_m64isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_SUBSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_subsd_r128_m64bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_SUBSD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_mulsd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_MULSD_Vsd_Wsd, OP_32BIT, dreg, sreg); }
+INLINE void emit_mulsd_r128_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_MULSD_Vsd_Wsd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_mulsd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MULSD_Vsd_Wsd, dreg, sreg)
-#define emit_mulsd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MULSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mulsd_r128_m64bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MULSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_mulsd_r128_m64isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_MULSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_mulsd_r128_m64bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MULSD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_divsd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_DIVSD_Vsd_Wsd, OP_32BIT, dreg, sreg); }
+INLINE void emit_divsd_r128_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_DIVSD_Vsd_Wsd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_divsd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_DIVSD_Vsd_Wsd, dreg, sreg)
-#define emit_divsd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_DIVSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_divsd_r128_m64bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_DIVSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_divsd_r128_m64isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_DIVSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_divsd_r128_m64bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_DIVSD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_sqrtsd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_SQRTSD_Vsd_Wsd, OP_32BIT, dreg, sreg); }
+INLINE void emit_sqrtsd_r128_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_SQRTSD_Vsd_Wsd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_sqrtsd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_SQRTSD_Vsd_Wsd, dreg, sreg)
-#define emit_sqrtsd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SQRTSD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sqrtsd_r128_m64bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_SQRTSD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sqrtsd_r128_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_SQRTSD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_sqrtsd_r128_m64bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_SQRTSD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_comisd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_COMISD_Vsd_Wsd, OP_32BIT, dreg, sreg); }
+INLINE void emit_comisd_r128_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_COMISD_Vsd_Wsd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_comisd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_COMISD_Vsd_Wsd, dreg, sreg)
-#define emit_comisd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_COMISD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_comisd_r128_m64bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_COMISD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_comisd_r128_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_COMISD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_comisd_r128_m64bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_COMISD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_ucomisd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_UCOMISD_Vsd_Wsd, OP_32BIT, dreg, sreg); }
+INLINE void emit_ucomisd_r128_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_UCOMISD_Vsd_Wsd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_ucomisd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_UCOMISD_Vsd_Wsd, dreg, sreg)
-#define emit_ucomisd_r128_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_UCOMISD_Vsd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_ucomisd_r128_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_UCOMISD_Vsd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_ucomisd_r128_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_UCOMISD_Vsd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_ucomisd_r128_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_UCOMISD_Vsd_Wsd, dreg, (base),   (index),  (scale), (disp))
-
-#define emit_cvtsi2sd_r128_r32(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTSI2SD_Vsd_Ed, dreg, sreg)
-#define emit_cvtsi2sd_r128_m32abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTSI2SD_Vsd_Ed, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtsi2sd_r128_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTSI2SD_Vsd_Ed, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtsi2sd_r128_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTSI2SD_Vsd_Ed, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtsi2sd_r128_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSI2SD_Vsd_Ed, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtsi2sd_r128_r32(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTSI2SD_Vsd_Ed, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvtsi2sd_r128_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTSI2SD_Vsd_Ed, OP_32BIT, dreg, MEMPARAMS); }
 
 #ifdef PTR64
-#define emit_cvtsi2sd_r128_r64(e, dreg, sreg)							emit_sse_r128_r128_rex(e, OP_CVTSI2SD_Vsd_Ed, dreg, sreg)
-#define emit_cvtsi2sd_r128_m64abs(e, dreg, addr)						emit_sse_r128_mbisd_rex(e, OP_CVTSI2SD_Vsd_Ed, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtsi2sd_r128_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd_rex(e, OP_CVTSI2SD_Vsd_Ed, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtsi2sd_r128_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTSI2SD_Vsd_Ed, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtsi2sd_r128_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTSI2SD_Vsd_Ed, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtsi2sd_r128_r64(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTSI2SD_Vsd_Ed, OP_64BIT, dreg, sreg); }
+INLINE void emit_cvtsi2sd_r128_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTSI2SD_Vsd_Ed, OP_64BIT, dreg, MEMPARAMS); }
 #endif
 
-#define emit_cvtss2sd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTSS2SD_Vsd_Wss, dreg, sreg)
-#define emit_cvtss2sd_r128_m32abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTSS2SD_Vsd_Wss, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtss2sd_r128_m32bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTSS2SD_Vsd_Wss, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtss2sd_r128_m32isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTSS2SD_Vsd_Wss, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtss2sd_r128_m32bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSS2SD_Vsd_Wss, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtss2sd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTSS2SD_Vsd_Wss, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvtss2sd_r128_m32(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTSS2SD_Vsd_Wss, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_cvtsd2si_r32_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTSD2SI_Gd_Wsd, dreg, sreg)
-#define emit_cvtsd2si_r32_m64abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_CVTSD2SI_Gd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtsd2si_r32_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTSD2SI_Gd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtsd2si_r32_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTSD2SI_Gd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtsd2si_r32_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTSD2SI_Gd_Wsd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtsd2si_r32_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTSD2SI_Gd_Wsd, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvtsd2si_r32_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_CVTSD2SI_Gd_Wsd, OP_32BIT, dreg, MEMPARAMS); }
 
 #ifdef PTR64
-#define emit_cvtsd2si_r64_r128(e, dreg, sreg)							emit_sse_r128_r128_rex(e, OP_CVTSD2SI_Gd_Wsd, dreg, sreg)
-#define emit_cvtsd2si_r64_m64abs(e, dreg, addr)							emit_sse_r128_mbisd_rex(e, OP_CVTSD2SI_Gd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtsd2si_r64_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd_rex(e, OP_CVTSD2SI_Gd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtsd2si_r64_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTSD2SI_Gd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtsd2si_r64_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTSD2SI_Gd_Wsd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtsd2si_r64_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTSD2SI_Gd_Wsd, OP_64BIT, dreg, sreg); }
+INLINE void emit_cvtsd2si_r64_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_CVTSD2SI_Gd_Wsd, OP_64BIT, dreg, MEMPARAMS); }
 #endif
 
-#define emit_cvttsd2si_r32_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTTSD2SI_Gd_Wsd, dreg, sreg)
-#define emit_cvttsd2si_r32_m64abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTTSD2SI_Gd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvttsd2si_r32_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTTSD2SI_Gd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvttsd2si_r32_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTTSD2SI_Gd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvttsd2si_r32_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTTSD2SI_Gd_Wsd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvttsd2si_r32_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTTSD2SI_Gd_Wsd, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvttsd2si_r32_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTTSD2SI_Gd_Wsd, OP_32BIT, dreg, MEMPARAMS); }
 
 #ifdef PTR64
-#define emit_cvttsd2si_r64_r128(e, dreg, sreg)							emit_sse_r128_r128_rex(e, OP_CVTTSD2SI_Gd_Wsd, dreg, sreg)
-#define emit_cvttsd2si_r64_m64abs(e, dreg, addr)						emit_sse_r128_mbisd_rex(e, OP_CVTTSD2SI_Gd_Wsd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvttsd2si_r64_m64bd(e, dreg, base, disp)					emit_sse_r128_mbisd_rex(e, OP_CVTTSD2SI_Gd_Wsd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvttsd2si_r64_m64isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd_rex(e, OP_CVTTSD2SI_Gd_Wsd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvttsd2si_r64_m64bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd_rex(e, OP_CVTTSD2SI_Gd_Wsd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvttsd2si_r64_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTTSD2SI_Gd_Wsd, OP_64BIT, dreg, sreg); }
+INLINE void emit_cvttsd2si_r64_m64(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTTSD2SI_Gd_Wsd, OP_64BIT, dreg, MEMPARAMS); }
 #endif
 
 
@@ -5141,91 +2834,47 @@ INLINE void emit_sse_r128_mbisd_rex(x86code **emitptr, UINT32 op, UINT8 dreg, UI
     SSE PACKED DOUBLE EMITTERS
 ***************************************************************************/
 
-#define emit_movpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MOVPD_Vpd_Wpd, dreg, sreg)
-#define emit_movpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MOVPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MOVPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_MOVPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_movpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MOVPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_movpd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_MOVAPD_Vpd_Wpd, OP_32BIT, dreg, sreg); }
+INLINE void emit_movpd_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_MOVAPD_Vpd_Wpd, OP_32BIT, dreg, MEMPARAMS); }
+INLINE void emit_movpd_m128_r128(x86code **emitptr, DECLARE_MEMPARAMS, UINT8 sreg)		{ emit_op_modrm_mem(emitptr, OP_MOVAPD_Wpd_Vpd, OP_32BIT, sreg, MEMPARAMS); }
 
-#define emit_movpd_m128abs_r128(e, addr, sreg)							emit_sse_r128_mbisd(e, OP_MOVPD_Wpd_Vpd, sreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_movpd_m128bd_r128(e, base, disp, sreg)						emit_sse_r128_mbisd(e, OP_MOVPD_Wpd_Vpd, sreg, (base),   REG_NONE, 1,       (disp))
-#define emit_movpd_m128isd_r128(e, index, scale, disp, sreg)			emit_sse_r128_mbisd(e, OP_MOVPD_Wpd_Vpd, sreg, REG_NONE, (index),  (scale), (disp))
-#define emit_movpd_m128bisd_r128(e, base, index, scale, disp, sreg)		emit_sse_r128_mbisd(e, OP_MOVPD_Wpd_Vpd, sreg, (base),   (index),  (scale), (disp))
+INLINE void emit_addpd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_ADDPD_Vpd_Wpd, OP_32BIT, dreg, sreg); }
+INLINE void emit_addpd_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ADDPD_Vpd_Wpd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_addpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ADDPD_Vpd_Wpd, dreg, sreg)
-#define emit_addpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ADDPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_addpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ADDPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_addpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_ADDPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_addpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ADDPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_subpd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_SUBPD_Vpd_Wpd, OP_32BIT, dreg, sreg); }
+INLINE void emit_subpd_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_SUBPD_Vpd_Wpd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_subpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_SUBPD_Vpd_Wpd, dreg, sreg)
-#define emit_subpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SUBPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_subpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_SUBPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_subpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_SUBPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_subpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_SUBPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_mulpd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_MULPD_Vpd_Wpd, OP_32BIT, dreg, sreg); }
+INLINE void emit_mulpd_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_MULPD_Vpd_Wpd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_mulpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_MULPD_Vpd_Wpd, dreg, sreg)
-#define emit_mulpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_MULPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_mulpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_MULPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_mulpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_MULPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_mulpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_MULPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_divpd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_DIVPD_Vpd_Wpd, OP_32BIT, dreg, sreg); }
+INLINE void emit_divpd_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_DIVPD_Vpd_Wpd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_divpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_DIVPD_Vpd_Wpd, dreg, sreg)
-#define emit_divpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_DIVPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_divpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_DIVPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_divpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_DIVPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_divpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_DIVPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_sqrtpd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_SQRTPD_Vpd_Wpd, OP_32BIT, dreg, sreg); }
+INLINE void emit_sqrtpd_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_SQRTPD_Vpd_Wpd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_sqrtpd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_SQRTPD_Vpd_Wpd, dreg, sreg)
-#define emit_sqrtpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_SQRTPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_sqrtpd_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_SQRTPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_sqrtpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_SQRTPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_sqrtpd_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_SQRTPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_andpd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_ANDPD_Vpd_Wpd, OP_32BIT, dreg, sreg); }
+INLINE void emit_andpd_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ANDPD_Vpd_Wpd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_andpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ANDPD_Vpd_Wpd, dreg, sreg)
-#define emit_andpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ANDPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_andpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ANDPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_andpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_ANDPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_andpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ANDPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_andnpd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_ANDNPD_Vpd_Wpd, OP_32BIT, dreg, sreg); }
+INLINE void emit_andnpd_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ANDNPD_Vpd_Wpd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_andnpd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_ANDNPD_Vpd_Wpd, dreg, sreg)
-#define emit_andnpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ANDNPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_andnpd_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_ANDNPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_andnpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_ANDNPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_andnpd_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_ANDNPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_orpd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_ORPD_Vpd_Wpd, OP_32BIT, dreg, sreg); }
+INLINE void emit_orpd_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_ORPD_Vpd_Wpd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_orpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_ORPD_Vpd_Wpd, dreg, sreg)
-#define emit_orpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_ORPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_orpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_ORPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_orpd_r128_m128isd(e, dreg, index, scale, disp)				emit_sse_r128_mbisd(e, OP_ORPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_orpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_ORPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_xorpd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)				{ emit_op_modrm_reg(emitptr, OP_XORPD_Vpd_Wpd, OP_32BIT, dreg, sreg); }
+INLINE void emit_xorpd_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)		{ emit_op_modrm_mem(emitptr, OP_XORPD_Vpd_Wpd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_xorpd_r128_r128(e, dreg, sreg)								emit_sse_r128_r128(e, OP_XORPD_Vpd_Wpd, dreg, sreg)
-#define emit_xorpd_r128_m128abs(e, dreg, addr)							emit_sse_r128_mbisd(e, OP_XORPD_Vpd_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_xorpd_r128_m128bd(e, dreg, base, disp)						emit_sse_r128_mbisd(e, OP_XORPD_Vpd_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_xorpd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_XORPD_Vpd_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_xorpd_r128_m128bisd(e, dreg, base, index, scale, disp)		emit_sse_r128_mbisd(e, OP_XORPD_Vpd_Wpd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtdq2pd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTDQ2PD_Vpd_Wq, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvtdq2pd_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTDQ2PD_Vpd_Wq, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_cvtdq2pd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTDQ2PD_Vpd_Wq, dreg, sreg)
-#define emit_cvtdq2pd_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTDQ2PD_Vpd_Wq, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtdq2pd_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTDQ2PD_Vpd_Wq, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtdq2pd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTDQ2PD_Vpd_Wq, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtdq2pd_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTDQ2PD_Vpd_Wq, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtps2pd_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTPS2PD_Vpd_Wq, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvtps2pd_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTPS2PD_Vpd_Wq, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_cvtps2pd_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTPS2PD_Vpd_Wq, dreg, sreg)
-#define emit_cvtps2pd_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTPS2PD_Vpd_Wq, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtps2pd_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTPS2PD_Vpd_Wq, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtps2pd_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTPS2PD_Vpd_Wq, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtps2pd_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTPS2PD_Vpd_Wq, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvtpd2dq_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTPD2DQ_Vdq_Wpd, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvtpd2dq_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS)	{ emit_op_modrm_mem(emitptr, OP_CVTPD2DQ_Vdq_Wpd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_cvtpd2dq_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTPD2DQ_Vdq_Wpd, dreg, sreg)
-#define emit_cvtpd2dq_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTPD2DQ_Vdq_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvtpd2dq_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTPD2DQ_Vdq_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvtpd2dq_r128_m128isd(e, dreg, index, scale, disp)			emit_sse_r128_mbisd(e, OP_CVTPD2DQ_Vdq_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvtpd2dq_r128_m128bisd(e, dreg, base, index, scale, disp)	emit_sse_r128_mbisd(e, OP_CVTPD2DQ_Vdq_Wpd, dreg, (base),   (index),  (scale), (disp))
+INLINE void emit_cvttpd2dq_r128_r128(x86code **emitptr, UINT8 dreg, UINT8 sreg)			{ emit_op_modrm_reg(emitptr, OP_CVTTPD2DQ_Vdq_Wpd, OP_32BIT, dreg, sreg); }
+INLINE void emit_cvttpd2dq_r128_m128(x86code **emitptr, UINT8 dreg, DECLARE_MEMPARAMS) 	{ emit_op_modrm_mem(emitptr, OP_CVTTPD2DQ_Vdq_Wpd, OP_32BIT, dreg, MEMPARAMS); }
 
-#define emit_cvttpd2dq_r128_r128(e, dreg, sreg)							emit_sse_r128_r128(e, OP_CVTTPD2DQ_Vdq_Wpd, dreg, sreg)
-#define emit_cvttpd2dq_r128_m128abs(e, dreg, addr)						emit_sse_r128_mbisd(e, OP_CVTTPD2DQ_Vdq_Wpd, dreg, REG_NONE, REG_NONE, 1,       (INT32)(addr))
-#define emit_cvttpd2dq_r128_m128bd(e, dreg, base, disp)					emit_sse_r128_mbisd(e, OP_CVTTPD2DQ_Vdq_Wpd, dreg, (base),   REG_NONE, 1,       (disp))
-#define emit_cvttpd2dq_r128_m128isd(e, dreg, index, scale, disp) 		emit_sse_r128_mbisd(e, OP_CVTTPD2DQ_Vdq_Wpd, dreg, REG_NONE, (index),  (scale), (disp))
-#define emit_cvttpd2dq_r128_m128bisd(e, dreg, base, index, scale, disp) emit_sse_r128_mbisd(e, OP_CVTTPD2DQ_Vdq_Wpd, dreg, (base),   (index),  (scale), (disp))
+#endif
