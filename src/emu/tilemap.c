@@ -1272,8 +1272,12 @@ static UINT8 tile_draw(tilemap *tmap, const UINT8 *pendata, UINT32 x0, UINT32 y0
 		dx0 = -1;
 	}
 
-	/* we draw in groups of 2 pixels, so halve the width now */
-	width /= 2;
+	/* in 4bpp mode, we draw in groups of 2 pixels, so halve the width now */
+	if (flags & TILE_4BPP)
+	{
+		assert(width % 2 == 0);
+		width /= 2;
+	}
 
 	/* iterate over rows */
 	for (ty = 0; ty < height; ty++)
@@ -1290,18 +1294,8 @@ static UINT8 tile_draw(tilemap *tmap, const UINT8 *pendata, UINT32 x0, UINT32 y0
 		{
 			for (tx = 0; tx < width; tx++)
 			{
-				UINT8 pen, map;
-
-				pen = *pendata++;
-				map = penmap[pen];
-				pixptr[xoffs] = palette_base + pen;
-				flagsptr[xoffs] = map | category;
-				andmask &= map;
-				ormask |= map;
-				xoffs += dx0;
-
-				pen = *pendata++;
-				map = penmap[pen];
+				UINT8 pen = *pendata++;
+				UINT8 map = penmap[pen];
 				pixptr[xoffs] = palette_base + pen;
 				flagsptr[xoffs] = map | category;
 				andmask &= map;
@@ -1376,8 +1370,12 @@ static UINT8 tile_draw_colortable(tilemap *tmap, const UINT8 *pendata, UINT32 x0
 		dx0 = -1;
 	}
 
-	/* we draw in groups of 2 pixels, so halve the width now */
-	width /= 2;
+	/* in 4bpp mode, we draw in groups of 2 pixels, so halve the width now */
+	if (flags & TILE_4BPP)
+	{
+		assert(width % 2 == 0);
+		width /= 2;
+	}
 
 	/* iterate over rows */
 	for (ty = 0; ty < height; ty++)
@@ -1394,19 +1392,8 @@ static UINT8 tile_draw_colortable(tilemap *tmap, const UINT8 *pendata, UINT32 x0
 		{
 			for (tx = 0; tx < width; tx++)
 			{
-				pen_t pen;
-				UINT8 map;
-
-				pen = *pendata++;
-				map = penmap[pen];
-				pixptr[xoffs] = palette_lookup[pen];
-				flagsptr[xoffs] = map | category;
-				andmask &= map;
-				ormask |= map;
-				xoffs += dx0;
-
-				pen = *pendata++;
-				map = penmap[pen];
+				UINT8 pen = *pendata++;
+				UINT8 map = penmap[pen];
 				pixptr[xoffs] = palette_lookup[pen];
 				flagsptr[xoffs] = map | category;
 				andmask &= map;
@@ -1481,8 +1468,12 @@ static UINT8 tile_draw_colortrans(tilemap *tmap, const UINT8 *pendata, UINT32 x0
 		dx0 = -1;
 	}
 
-	/* we draw in groups of 2 pixels, so halve the width now */
-	width /= 2;
+	/* in 4bpp mode, we draw in groups of 2 pixels, so halve the width now */
+	if (flags & TILE_4BPP)
+	{
+		assert(width % 2 == 0);
+		width /= 2;
+	}
 
 	/* iterate over rows */
 	for (ty = 0; ty < height; ty++)
@@ -1499,19 +1490,8 @@ static UINT8 tile_draw_colortrans(tilemap *tmap, const UINT8 *pendata, UINT32 x0
 		{
 			for (tx = 0; tx < width; tx++)
 			{
-				pen_t pen;
-				UINT8 map;
-
-				pen = palette_lookup[*pendata++];
-				map = penmap[pen];
-				pixptr[xoffs] = pen;
-				flagsptr[xoffs] = map | category;
-				andmask &= map;
-				ormask |= map;
-				xoffs += dx0;
-
-				pen = palette_lookup[*pendata++];
-				map = penmap[pen];
+				pen_t pen = palette_lookup[*pendata++];
+				UINT8 map = penmap[pen];
 				pixptr[xoffs] = pen;
 				flagsptr[xoffs] = map | category;
 				andmask &= map;
