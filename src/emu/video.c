@@ -168,8 +168,8 @@ static void video_exit(running_machine *machine);
 static void init_buffered_spriteram(void);
 
 /* graphics decoding */
-static void allocate_graphics(running_machine *machine, const gfx_decode *gfxdecodeinfo);
-static void decode_graphics(running_machine *machine, const gfx_decode *gfxdecodeinfo);
+static void allocate_graphics(running_machine *machine, const gfx_decode_entry *gfxdecodeinfo);
+static void decode_graphics(running_machine *machine, const gfx_decode_entry *gfxdecodeinfo);
 
 /* global rendering */
 static TIMER_CALLBACK( scanline0_callback );
@@ -485,7 +485,7 @@ static void init_buffered_spriteram(void)
     graphics
 -------------------------------------------------*/
 
-static void allocate_graphics(running_machine *machine, const gfx_decode *gfxdecodeinfo)
+static void allocate_graphics(running_machine *machine, const gfx_decode_entry *gfxdecodeinfo)
 {
 	int i;
 
@@ -594,7 +594,7 @@ static void allocate_graphics(running_machine *machine, const gfx_decode *gfxdec
     decode_graphics - decode the graphics
 -------------------------------------------------*/
 
-static void decode_graphics(running_machine *machine, const gfx_decode *gfxdecodeinfo)
+static void decode_graphics(running_machine *machine, const gfx_decode_entry *gfxdecodeinfo)
 {
 	int totalgfx = 0, curgfx = 0;
 	char buffer[200];
