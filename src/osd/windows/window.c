@@ -46,7 +46,6 @@ extern int drawnone_init(win_draw_callbacks *callbacks);
 extern int drawgdi_init(win_draw_callbacks *callbacks);
 extern int drawdd_init(win_draw_callbacks *callbacks);
 extern int drawd3d_init(win_draw_callbacks *callbacks);
-static LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 
 
 //============================================================
@@ -1252,7 +1251,7 @@ static int complete_create(win_window_info *window)
 //  (window thread)
 //============================================================
 
-static LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
+LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
 	LONG_PTR ptr = GetWindowLongPtr(wnd, GWLP_USERDATA);
 	win_window_info *window = (win_window_info *)ptr;

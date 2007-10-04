@@ -96,14 +96,6 @@ struct _win_draw_callbacks
 // windows
 extern win_window_info *win_window_list;
 
-// visible bounds
-extern RECT			win_visible_rect;
-extern int			win_visible_width;
-extern int			win_visible_height;
-
-// raw input support
-extern int			win_use_raw_mouse;
-
 
 
 //============================================================
@@ -121,6 +113,7 @@ void winwindow_update_cursor_state(void);
 void winwindow_video_window_update(win_window_info *window);
 win_monitor_info *winwindow_video_window_monitor(win_window_info *window, const RECT *proposed);
 
+LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 void winwindow_toggle_full_screen(void);
 
 void winwindow_process_events_periodic(void);
