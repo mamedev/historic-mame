@@ -1,3 +1,94 @@
+0.120
+-----
+
+
+MAMETesters Bugs Fixed
+----------------------
+
+
+Source Changes
+--------------
+Added "native" architecture option to the makefile. Use this to have
+gcc automatically pick the most appropriate architecture based on
+the system that it is compiling on. [Christophe Jaillet]
+
+Hooked up the KL5C80 communications CPU to the HNG64 BIOS and emulated
+some of its features. [Andrew Gardner, Justin Kerk]
+
+Fixed a few pointer truncation bugs in the Windows 64-bit code. 
+Enabled warnings for 64-bit pointer truncations. Merged the x86 and
+x64 manifests. [Atari Ace]
+
+Changed 6821 PIA logging so that it only logs core messages once.
+[Tim Lindner]
+
+Updates to various NeoGeo ROMsets. Some ROM names updated to match
+verified names from chip labels. A lot of "older" sets have been 
+redumped to investigate the "64k m1/s1 issue" (also the m1 
+"overdumps"). Result was, ALL m1 ARE at least 128kx8; ALL s1 ARE 
+128kx8. The old m1 "overdumps" were incomplete dumps. In addition, 
+it has been discovered that all "p-roms" do have a minimum size of 
+4mbit. A number of sets have been restored to their "original" 
+state, and a number of others have been marked as bad dumps where
+appropriate. Specific changes include: [Johnboy]
+ - bjourney: readded 128k m1 from Mame v0.34b5
+ - bstars: fully redumped, added correct m1
+ - bstars2: fully redumped, added correct m1 
+ - goalx3: readded 128k m1 from Mame v0.34b5 
+ - janshin: readded 128k m1 from Mame v0.34b5 
+ - joyjoy: added correct m1
+ - legendos: readded 128k m1 from Mame v0.34b5 
+ - maglord: fully redumped, added correct m1 
+ - mutnat: partially redumped, added correct m1
+ - nam1975: fully redumped, added correct m1/s1
+ - ncombata: fully redumped, renamed set to ncombath
+ - neomrdo: readded 128k s1 from Mame v0.34b5 
+ - pbobblen: readded 128k m1 from Mame v0.34b5 
+ - puzzledp: readded 128k s1 from Mame v0.34b5 
+ - ridhero: fully redumped, added correct s1 
+ - socbrawl: readded 128k s1 from Mame v0.34b5 
+ - ssideki2: fully redumped
+ - strhoop: readded 128k m1 from Mame v0.34b5
+ - svc: removed MVS tag, only one version exists (AES/MVS/PCB) 
+ - svcboot: removed MVS tag 
+ - tws96: readded 128k m1 from Mame v0.34b5 
+ - viewpoin: readded 128k m1/s1 from Mame v0.34b5
+ - wh2j: partially redumped, renamed to wh2jh, is verified AES version 
+ - wh2j: fully redumped, is verified MVS version
+ - wh1h: fully redumped, is verified AES version 
+ - wh1ha: renamed from wh1h to wh1ha
+
+Made several more traditional optimizations to the voodoo emulations,
+gaining a few percent improvement. [Aaron Giles]
+
+Further tweaked the work code to appropriately check for work items
+versus checking for the number of outstanding items. [Aaron Giles]
+
+Simplified some of the model2 rendering code. [Aaron Giles]
+
+Moved a number of files from mame/machine and mame/video to
+emu/machine and emu/video. In general, files that emulate a common
+industry standard chip (as opposed to custom, manufacturer-specific
+chips) were moved. Further moves may happen in the future to
+isolate common system-level components (such as amiga, snes, etc.).
+[Aaron Giles, Curt Coder]
+
+
+
+New games added or promoted from NOT_WORKING status
+---------------------------------------------------
+Hayaoshi Quiz Ouza Ketteisen - The King Of Quiz [Luca Elia]
+
+
+
+New clones added
+----------------
+World Heroes (set 3) [Johnboy]
+World Heroes 2 Jet (set 2) [Johnboy]
+Nightmare in the Dark (bootleg) [Johnboy]
+
+
+
 0.119u4
 -------
 
