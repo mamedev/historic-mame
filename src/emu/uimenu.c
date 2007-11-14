@@ -100,6 +100,7 @@ struct _dip_descriptor
 	const char * 	dip_name;
 	UINT16			total_dip_mask;
 	UINT16			total_dip_settings;
+	UINT16			dip_invert_mask;
 	UINT16 			selected_dip_feature_mask;
 };
 
@@ -167,8 +168,10 @@ static UINT32 menu_quit_game(UINT32 state);
 static UINT32 menu_select_game(UINT32 state);
 #ifdef MESS
 static UINT32 menu_file_manager(UINT32 state);
+#if HAS_WAVE
 static UINT32 menu_tape_control(UINT32 state);
-#endif
+#endif /* HAS_WAVE */
+#endif /* MESS */
 
 /* menu helpers */
 static void menu_render_triangle(mame_bitmap *dest, const mame_bitmap *source, const rectangle *sbounds, void *param);
@@ -1727,6 +1730,7 @@ static UINT32 menu_file_manager(UINT32 state)
 -------------------------------------------------*/
 
 #ifdef MESS
+#if HAS_WAVE
 static UINT32 menu_tape_control(UINT32 state)
 {
 	int result = tapecontrol(state);
@@ -1734,7 +1738,8 @@ static UINT32 menu_tape_control(UINT32 state)
 	return ui_menu_stack_pop();
 	return result;
 }
-#endif
+#endif /* HAS_WAVE */
+#endif /* MESS */
 
 
 
@@ -2209,6 +2214,10 @@ static void dip_switch_build_model(input_port_entry *entry, int item_is_selected
 		/* indicate the toggle exists in the switch */
 		dip_switch_model[model_index].total_dip_mask |= toggle_switch_mask;
 
+		/* if it's inverted, mark it as such */
+		if (entry->diploc[dip_declaration_index].invert)
+			dip_switch_model[model_index].dip_invert_mask |= toggle_switch_mask;
+
 		/* if isolated bit is on, set the toggle on */
 		if ((1 << value_mask_bit) & entry->default_value)
 			dip_switch_model[model_index].total_dip_settings |= toggle_switch_mask;
@@ -2279,7 +2288,7 @@ static void dip_switch_draw_one(float dip_menu_x1, float dip_menu_y1, float dip_
 		{
 			/* yes, draw the switch position for a single toggle switch in a switch field */
 			int feature_field_selected = ((bit_mask & dip_switch_model[model_index].selected_dip_feature_mask) != 0);
-			dip_on = ((bit_mask & dip_switch_model[model_index].total_dip_settings) != 0);
+			dip_on = ((bit_mask & (dip_switch_model[model_index].total_dip_settings ^ dip_switch_model[model_index].dip_invert_mask)) != 0);
 
 			render_ui_add_rect(x1, dip_on ? y1_on : y1_off,
 							   x2, dip_on ? y2_on : y2_off,
