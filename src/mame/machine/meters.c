@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //                                                                       //
-// mmtr.c electro mechanical meters                                      //
+// Electro mechanical meters                                             //
 //                                                                       //
 // 23-07-2004: Re-Animator                                               //
 //                                                                       //
@@ -9,12 +9,10 @@
 //         It should tick if the signal goes from low to high AND stays  //
 //         high for at least xxx milliseconds                            //
 //                                                                       //
-// Any fixes for this driver should be forwarded to AGEMAME HQ           //
-// (http://www.mameworld.net/agemame/)                                   //
 ///////////////////////////////////////////////////////////////////////////
 
 #include "driver.h"
-#include "mmtr.h"
+#include "meters.h"
 
 // local vars /////////////////////////////////////////////////////////////
 
@@ -113,4 +111,3 @@ int Mechmtr_update(int id, long cycles, int state)
 
   return res;
 }
-
