@@ -308,17 +308,18 @@ INLINE INT64 compare_exchange64(INT64 volatile *ptr, INT64 compare, INT64 exchan
     return the previous value at 'ptr'.
 -------------------------------------------------*/
 
-#ifdef PTR64
 #ifndef compare_exchange_ptr
 INLINE void *compare_exchange_ptr(void * volatile *ptr, void *compare, void *exchange)
 {
 #ifdef PTR64
-	return (void *)compare_exchange64((INT64 volatile *)ptr, (INT64)compare, (INT64)exchange);
+	INT64 result;
+	result = compare_exchange64((INT64 volatile *)ptr, (INT64)compare, (INT64)exchange);
 #else
-	return (void *)compare_exchange32((INT32 volatile *)ptr, (INT32)compare, (INT32)exchange);
+	INT32 result;
+	result = compare_exchange32((INT32 volatile *)ptr, (INT32)compare, (INT32)exchange);
 #endif
+	return (void *)result;
 }
-#endif
 #endif
 
 
@@ -358,6 +359,44 @@ INLINE INT32 atomic_exchange32(INT32 volatile *ptr, INT32 exchange)
 INLINE INT32 atomic_add32(INT32 volatile *ptr, INT32 delta)
 {
 	return (*ptr += delta);
+}
+#endif
+
+
+/*-------------------------------------------------
+    atomic_increment32 - atomically increment the
+    32-bit value in memory at 'ptr', returning the
+    final result.
+
+    Note that the default implementation does
+    no synchronization. You MUST override this
+    in osinline.h for it to be useful in a
+    multithreaded environment!
+-------------------------------------------------*/
+
+#ifndef atomic_increment32
+INLINE INT32 atomic_increment32(INT32 volatile *ptr, INT32 delta)
+{
+	return atomic_add32(ptr, 1);
+}
+#endif
+
+
+/*-------------------------------------------------
+    atomic_decrement32 - atomically decrement the
+    32-bit value in memory at 'ptr', returning the
+    final result.
+
+    Note that the default implementation does
+    no synchronization. You MUST override this
+    in osinline.h for it to be useful in a
+    multithreaded environment!
+-------------------------------------------------*/
+
+#ifndef atomic_decrement32
+INLINE INT32 atomic_decrement32(INT32 volatile *ptr, INT32 delta)
+{
+	return atomic_add32(ptr, -1);
 }
 #endif
 
